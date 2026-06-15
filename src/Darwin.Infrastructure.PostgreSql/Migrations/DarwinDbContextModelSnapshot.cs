@@ -1128,6 +1128,172 @@ namespace Darwin.Infrastructure.PostgreSql.Migrations
                     b.ToTable("SupplierInvoiceLines", "Billing");
                 });
 
+            modelBuilder.Entity("Darwin.Domain.Entities.Billing.SupplierPayment", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("BusinessId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime?>("CancelledAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("CreatedByUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Currency")
+                        .IsRequired()
+                        .HasMaxLength(3)
+                        .HasColumnType("character varying(3)");
+
+                    b.Property<string>("InternalNotes")
+                        .HasMaxLength(4000)
+                        .HasColumnType("character varying(4000)");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("MetadataJson")
+                        .IsRequired()
+                        .HasMaxLength(4000)
+                        .HasColumnType("jsonb");
+
+                    b.Property<DateTime?>("ModifiedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("ModifiedByUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("PaymentDateUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("PaymentMethod")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<string>("PaymentNumber")
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)");
+
+                    b.Property<DateTime?>("PostedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("PostingJournalEntryId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Reference")
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
+                    b.Property<Guid?>("ReversalJournalEntryId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("ReversalReason")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
+                    b.Property<DateTime?>("ReversedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .HasColumnType("bytea");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<Guid>("SupplierId")
+                        .HasColumnType("uuid");
+
+                    b.Property<long>("TotalAmountMinor")
+                        .HasColumnType("bigint");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BusinessId");
+
+                    b.HasIndex("PaymentDateUtc");
+
+                    b.HasIndex("PostingJournalEntryId");
+
+                    b.HasIndex("ReversalJournalEntryId");
+
+                    b.HasIndex("ReversedAtUtc");
+
+                    b.HasIndex("Status");
+
+                    b.HasIndex("SupplierId");
+
+                    b.HasIndex("BusinessId", "PaymentNumber")
+                        .IsUnique()
+                        .HasDatabaseName("UX_SupplierPayments_Business_Number_Active")
+                        .HasFilter("\"PaymentNumber\" IS NOT NULL AND \"IsDeleted\" = FALSE");
+
+                    b.ToTable("SupplierPayments", "Billing");
+                });
+
+            modelBuilder.Entity("Darwin.Domain.Entities.Billing.SupplierPaymentAllocation", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<long>("AmountMinor")
+                        .HasColumnType("bigint");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("CreatedByUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Memo")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
+                    b.Property<DateTime?>("ModifiedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("ModifiedByUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .HasColumnType("bytea");
+
+                    b.Property<Guid>("SupplierInvoiceId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("SupplierPaymentId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("SupplierInvoiceId");
+
+                    b.HasIndex("SupplierPaymentId");
+
+                    b.HasIndex("SupplierPaymentId", "SupplierInvoiceId")
+                        .IsUnique()
+                        .HasDatabaseName("UX_SupplierPaymentAllocations_Payment_Invoice_Active")
+                        .HasFilter("\"IsDeleted\" = FALSE");
+
+                    b.ToTable("SupplierPaymentAllocations", "Billing");
+                });
+
             modelBuilder.Entity("Darwin.Domain.Entities.Businesses.Business", b =>
                 {
                     b.Property<Guid>("Id")
@@ -11082,6 +11248,15 @@ namespace Darwin.Infrastructure.PostgreSql.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("Darwin.Domain.Entities.Billing.SupplierPaymentAllocation", b =>
+                {
+                    b.HasOne("Darwin.Domain.Entities.Billing.SupplierPayment", null)
+                        .WithMany("Allocations")
+                        .HasForeignKey("SupplierPaymentId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("Darwin.Domain.Entities.Businesses.BusinessEngagementStats", b =>
                 {
                     b.HasOne("Darwin.Domain.Entities.Businesses.Business", "Business")
@@ -12122,6 +12297,11 @@ namespace Darwin.Infrastructure.PostgreSql.Migrations
             modelBuilder.Entity("Darwin.Domain.Entities.Billing.SupplierInvoice", b =>
                 {
                     b.Navigation("Lines");
+                });
+
+            modelBuilder.Entity("Darwin.Domain.Entities.Billing.SupplierPayment", b =>
+                {
+                    b.Navigation("Allocations");
                 });
 
             modelBuilder.Entity("Darwin.Domain.Entities.Businesses.Business", b =>

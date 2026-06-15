@@ -44,6 +44,7 @@ public enum NumberSequenceDocumentType
     CreditNote = 9,
     GoodsReceipt = 10,
     SupplierInvoice = 11,
+    SupplierPayment = 12,
     Custom = 99
 }
 

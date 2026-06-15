@@ -47,7 +47,7 @@ These items require external credentials, deployment configuration, provider acc
 
 This roadmap makes Darwin a complete independent ERP while keeping it integration-ready for customers that already use external business systems. Darwin must keep English names, its current architecture, and its own canonical model. Do not import legacy framework concepts, customer-specific names, vendor-specific naming, or non-English entity names into Darwin.
 
-Status detail for the redesign track lives in [docs/domain-expansion/erp-expansion-master-status.md](docs/domain-expansion/erp-expansion-master-status.md). Capability decisions remain in [docs/domain-expansion/domain-capability-catalog.md](docs/domain-expansion/domain-capability-catalog.md). Purchasing decisions are now tracked in [docs/domain-expansion/purchasing-supplier-lifecycle-design.md](docs/domain-expansion/purchasing-supplier-lifecycle-design.md) and [docs/domain-expansion/supplier-invoice-payables-boundary-design.md](docs/domain-expansion/supplier-invoice-payables-boundary-design.md).
+Status detail for the redesign track lives in [docs/domain-expansion/erp-expansion-master-status.md](docs/domain-expansion/erp-expansion-master-status.md). Capability decisions remain in [docs/domain-expansion/domain-capability-catalog.md](docs/domain-expansion/domain-capability-catalog.md). Purchasing decisions are now tracked in [docs/domain-expansion/purchasing-supplier-lifecycle-design.md](docs/domain-expansion/purchasing-supplier-lifecycle-design.md), [docs/domain-expansion/supplier-invoice-payables-boundary-design.md](docs/domain-expansion/supplier-invoice-payables-boundary-design.md), [docs/domain-expansion/supplier-payment-boundary-design.md](docs/domain-expansion/supplier-payment-boundary-design.md), and [docs/domain-expansion/supplier-payment-reversal-bank-treasury-boundary-design.md](docs/domain-expansion/supplier-payment-reversal-bank-treasury-boundary-design.md).
 
 Completed in the ERP expansion track:
 
@@ -60,21 +60,22 @@ Completed in the ERP expansion track:
 In progress:
 
 - `Finance/accounting integration`: file-delivery is production-safe when configured. Accounting API target adapters remain blocked until a real target, credential owner, payload mapping, and error contract are selected.
-- `Inventory and procurement baseline`: `Warehouse`, `StockLevel`, `StockTransfer`, `Supplier`, `PurchaseOrder`, formal `GoodsReceipt`, and formal `SupplierInvoice` core/admin/posting exist with WebAdmin operational coverage. Supplier master, purchase order core hardening, goods receipt inventory reconciliation, supplier invoice/payables boundary design, supplier invoice core/admin, and supplier invoice posting are complete; supplier contacts/documents, supplier payment settlement, and warehouse task depth still need the ERP expansion sequence below.
+- `Inventory and procurement baseline`: `Warehouse`, `StockLevel`, `StockTransfer`, `Supplier`, `PurchaseOrder`, formal `GoodsReceipt`, formal `SupplierInvoice`, and formal `SupplierPayment` core/admin/posting/reversal exist with WebAdmin operational coverage. Supplier master, purchase order core hardening, goods receipt inventory reconciliation, supplier invoice/payables boundary design, supplier invoice core/admin, supplier invoice posting, supplier payment boundary design, supplier payment core/admin, supplier payment reversal/bank-treasury boundary design, and supplier payment reversal implementation are complete; bank/treasury design, supplier contacts/documents, and warehouse task depth still need the ERP expansion sequence below.
 
 Next gate:
 
-1. `Supplier Payment Boundary Design Slice`: define supplier payment settlement, partial payments, payable aging, payment posting, export impact, and reversal policy before any payment implementation, without reusing customer payment/refund flows.
+1. `Bank/Treasury Foundation Design Slice`: design bank account ownership, treasury clearing, bank statement import, reconciliation, returned transfer handling, duplicate payment handling, and overpayment/advance boundaries before any direct bank settlement implementation.
 
 Remaining ERP expansion order:
 
-1. `Purchasing Documents And Supplier Contacts`: add structured supplier contacts and purchasing document metadata exposure after supplier payment ownership and visibility are stable.
-2. `Inventory Ledger, Warehouse Tasks, And Mobile-First Warehouse PWA`: extend warehouse structure, bins, stock ledger, reservations, counts, lots, serials, handling units, receiving tasks, picking tasks, and mobile-first warehouse workflows. Use a PWA as the default warehouse surface unless device/offline requirements require native mobile.
-3. `Supplier Invoice And Payables`: supplier invoice core/admin/posting is implemented; next design supplier payment settlement before implementation.
-4. `HR And Time Tracking`: define employee, department, position, employment contract, personnel file, work schedule, attendance event, time entry, absence, leave request, timesheet, and payroll-period concepts. Payroll implementation remains later-phase unless a deployment requires it.
-5. `AI-Readiness And Automation Governance`: prepare sensitive-field classification, scoped data access, recommendation records, action drafts, and approval-required AI execution paths. AI must propose or draft operational actions before normal application commands execute them.
-6. `SyncState And SyncConflict`: design and implement two-way sync only after concrete inbound reconciliation needs exist. Outbound export and external references are already available; they are not a full sync engine.
-7. `Accounting API Target Adapter`: implement only after a real target, credential owner, payload mapping, retry policy, and error contract are selected. Until then, finance export file-delivery remains the production-safe outbound path.
+1. `Bank/Treasury Foundation`: design bank account ownership, treasury clearing, statement import, reconciliation, returned transfer handling, and supplier advance/overpayment boundaries before direct bank settlement.
+2. `Purchasing Documents And Supplier Contacts`: add structured supplier contacts and purchasing document metadata exposure after supplier payment ownership and visibility are stable.
+3. `Inventory Ledger, Warehouse Tasks, And Mobile-First Warehouse PWA`: extend warehouse structure, bins, stock ledger, reservations, counts, lots, serials, handling units, receiving tasks, picking tasks, and mobile-first warehouse workflows. Use a PWA as the default warehouse surface unless device/offline requirements require native mobile.
+4. `Supplier Payment Settlement`: supplier payment core/admin/posting/reversal is complete; direct bank settlement and reconciliation wait for bank/treasury foundation.
+5. `HR And Time Tracking`: define employee, department, position, employment contract, personnel file, work schedule, attendance event, time entry, absence, leave request, timesheet, and payroll-period concepts. Payroll implementation remains later-phase unless a deployment requires it.
+6. `AI-Readiness And Automation Governance`: prepare sensitive-field classification, scoped data access, recommendation records, action drafts, and approval-required AI execution paths. AI must propose or draft operational actions before normal application commands execute them.
+7. `SyncState And SyncConflict`: design and implement two-way sync only after concrete inbound reconciliation needs exist. Outbound export and external references are already available; they are not a full sync engine.
+8. `Accounting API Target Adapter`: implement only after a real target, credential owner, payload mapping, retry policy, and error contract are selected. Until then, finance export file-delivery remains the production-safe outbound path.
 
 Storage rules:
 

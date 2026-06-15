@@ -120,6 +120,110 @@ public sealed class SupplierInvoiceCoreModelTests
         roles.Should().Contain(nameof(FinancePostingAccountRole.TaxReceivable));
     }
 
+    [Theory]
+    [InlineData("SqlServer")]
+    [InlineData("PostgreSql")]
+    public void SupplierPayment_Should_Map_To_Billing_Schema_With_Stable_Indexes(string provider)
+    {
+        using var context = CreateContext(provider);
+        var payment = GetEntity(context, typeof(SupplierPayment));
+        var allocation = GetEntity(context, typeof(SupplierPaymentAllocation));
+
+        payment.GetSchema().Should().Be("Billing");
+        payment.GetTableName().Should().Be("SupplierPayments");
+        payment.FindProperty(nameof(SupplierPayment.PaymentNumber))!.GetMaxLength().Should().Be(128);
+        payment.FindProperty(nameof(SupplierPayment.Status))!.GetMaxLength().Should().Be(64);
+        payment.FindProperty(nameof(SupplierPayment.PaymentMethod))!.GetMaxLength().Should().Be(64);
+        payment.FindProperty(nameof(SupplierPayment.Currency))!.GetMaxLength().Should().Be(3);
+        payment.FindProperty(nameof(SupplierPayment.Reference))!.GetMaxLength().Should().Be(256);
+        payment.FindProperty(nameof(SupplierPayment.ReversalReason))!.GetMaxLength().Should().Be(1000);
+        payment.GetIndexes().Single(x => x.GetDatabaseName() == "UX_SupplierPayments_Business_Number_Active").IsUnique.Should().BeTrue();
+        payment.GetIndexes().Single(x => x.GetDatabaseName() == "IX_SupplierPayments_PostingJournalEntryId");
+        payment.GetIndexes().Single(x => x.GetDatabaseName() == "IX_SupplierPayments_ReversalJournalEntryId");
+        payment.GetIndexes().Single(x => x.GetDatabaseName() == "IX_SupplierPayments_ReversedAtUtc");
+
+        if (provider == "PostgreSql")
+        {
+            payment.FindProperty(nameof(SupplierPayment.MetadataJson))!.GetColumnType().Should().Be("jsonb");
+        }
+
+        allocation.GetSchema().Should().Be("Billing");
+        allocation.GetTableName().Should().Be("SupplierPaymentAllocations");
+        allocation.FindProperty(nameof(SupplierPaymentAllocation.Memo))!.GetMaxLength().Should().Be(1000);
+        allocation.GetIndexes().Single(x => x.GetDatabaseName() == "UX_SupplierPaymentAllocations_Payment_Invoice_Active").IsUnique.Should().BeTrue();
+        allocation.GetIndexes().Single(x => x.GetDatabaseName() == "IX_SupplierPaymentAllocations_SupplierInvoiceId");
+    }
+
+    [Fact]
+    public void SupplierPayment_Migrations_Should_Create_OnlySupplierPaymentObjects()
+    {
+        var root = FindRepositoryRoot();
+        var migrationFiles = Directory
+            .GetFiles(Path.Combine(root, "src"), "*SupplierPaymentCoreModel.cs", SearchOption.AllDirectories)
+            .Where(x => !x.EndsWith(".Designer.cs", StringComparison.OrdinalIgnoreCase))
+            .OrderBy(x => x)
+            .ToArray();
+
+        migrationFiles.Should().HaveCount(2);
+        foreach (var file in migrationFiles)
+        {
+            var migration = File.ReadAllText(file);
+            migration.Should().Contain("SupplierPayments");
+            migration.Should().Contain("SupplierPaymentAllocations");
+            migration.Should().Contain("UX_SupplierPayments_Business_Number_Active");
+            migration.Should().Contain("UX_SupplierPaymentAllocations_Payment_Invoice_Active");
+            migration.Should().NotContain("CreateTable(\r\n                name: \"Payments\"");
+            migration.Should().NotContain("Refunds");
+            migration.Should().NotContain("Payables");
+            migration.Should().NotContain("SalesInvoices");
+            migration.Should().NotContain("FinanceInvoices");
+        }
+
+        File.ReadAllText(migrationFiles.Single(x => x.Contains("PostgreSql", StringComparison.OrdinalIgnoreCase))).Should().Contain("type: \"jsonb\"");
+    }
+
+    [Fact]
+    public void SupplierPayment_Enums_Should_IncludePaymentKindAndSequence()
+    {
+        Enum.GetNames<SupplierPaymentStatus>().Should().Contain(nameof(SupplierPaymentStatus.Posted));
+        Enum.GetNames<SupplierPaymentStatus>().Should().Contain(nameof(SupplierPaymentStatus.Reversed));
+        Enum.GetNames<SupplierPaymentMethod>().Should().Contain(nameof(SupplierPaymentMethod.BankTransfer));
+        Enum.GetNames<JournalEntryPostingKind>().Should().Contain(nameof(JournalEntryPostingKind.SupplierPaymentPosted));
+        Enum.GetNames<JournalEntryPostingKind>().Should().Contain(nameof(JournalEntryPostingKind.Reversal));
+        Enum.GetNames<NumberSequenceDocumentType>().Should().Contain(nameof(NumberSequenceDocumentType.SupplierPayment));
+    }
+
+    [Fact]
+    public void SupplierPaymentReversal_Migrations_Should_AddOnlyReversalFields()
+    {
+        var root = FindRepositoryRoot();
+        var migrationFiles = Directory
+            .GetFiles(Path.Combine(root, "src"), "*SupplierPaymentReversalCore.cs", SearchOption.AllDirectories)
+            .Where(x => !x.EndsWith(".Designer.cs", StringComparison.OrdinalIgnoreCase))
+            .OrderBy(x => x)
+            .ToArray();
+
+        migrationFiles.Should().HaveCount(2);
+        foreach (var file in migrationFiles)
+        {
+            var migration = File.ReadAllText(file);
+            migration.Should().Contain("ReversalJournalEntryId");
+            migration.Should().Contain("ReversalReason");
+            migration.Should().Contain("ReversedAtUtc");
+            migration.Should().Contain("IX_SupplierPayments_ReversalJournalEntryId");
+            migration.Should().Contain("IX_SupplierPayments_ReversedAtUtc");
+            migration.Should().NotContain("CreateTable");
+            migration.Should().NotContain("BankAccount");
+            migration.Should().NotContain("TreasuryLedger");
+            migration.Should().NotContain("SupplierAdvance");
+            migration.Should().NotContain("SupplierCredit");
+            migration.Should().NotContain("SupplierPaymentRefund");
+            migration.Should().NotContain("table: \"Payments\"");
+            migration.Should().NotContain("Refunds");
+            migration.Should().NotContain("FinanceExport");
+        }
+    }
+
     private static IEntityType GetEntity(DarwinDbContext context, Type type)
         => context.Model.FindEntityType(type)!;
 

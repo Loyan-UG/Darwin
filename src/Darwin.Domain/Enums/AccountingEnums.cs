@@ -36,7 +36,8 @@ namespace Darwin.Domain.Enums
         Reversal = 5,
         Adjustment = 6,
         Import = 7,
-        SupplierInvoicePosted = 8
+        SupplierInvoicePosted = 8,
+        SupplierPaymentPosted = 9
     }
 
     /// <summary>
@@ -107,5 +108,28 @@ namespace Darwin.Domain.Enums
         Unmatched = 0,
         Matched = 1,
         Discrepancy = 2
+    }
+
+    /// <summary>
+    /// Represents the lifecycle state of a formal supplier payment.
+    /// </summary>
+    public enum SupplierPaymentStatus : short
+    {
+        Draft = 0,
+        Posted = 1,
+        Cancelled = 2,
+        Reversed = 3
+    }
+
+    /// <summary>
+    /// Represents the operator-entered settlement method for a supplier payment.
+    /// </summary>
+    public enum SupplierPaymentMethod : short
+    {
+        BankTransfer = 0,
+        Cash = 1,
+        Card = 2,
+        DirectDebit = 3,
+        Other = 4
     }
 }

@@ -14,6 +14,8 @@ namespace Darwin.Infrastructure.Persistence.Configurations.Billing
         IEntityTypeConfiguration<FinanceExportAttempt>,
         IEntityTypeConfiguration<SupplierInvoice>,
         IEntityTypeConfiguration<SupplierInvoiceLine>,
+        IEntityTypeConfiguration<SupplierPayment>,
+        IEntityTypeConfiguration<SupplierPaymentAllocation>,
         IEntityTypeConfiguration<JournalEntry>,
         IEntityTypeConfiguration<JournalEntryLine>,
         IEntityTypeConfiguration<Expense>
@@ -218,6 +220,55 @@ namespace Darwin.Infrastructure.Persistence.Configurations.Billing
             builder.HasIndex(x => x.GoodsReceiptLineId);
             builder.HasIndex(x => x.ProductVariantId);
             builder.HasIndex(x => x.MatchStatus);
+        }
+
+        /// <inheritdoc />
+        public void Configure(EntityTypeBuilder<SupplierPayment> builder)
+        {
+            builder.ToTable("SupplierPayments", schema: "Billing");
+            builder.HasKey(x => x.Id);
+
+            builder.Property(x => x.PaymentNumber).HasMaxLength(128);
+            builder.Property(x => x.Status).HasConversion<string>().HasMaxLength(64).IsRequired();
+            builder.Property(x => x.PaymentMethod).HasConversion<string>().HasMaxLength(64).IsRequired();
+            builder.Property(x => x.Currency).IsRequired().HasMaxLength(3);
+            builder.Property(x => x.Reference).HasMaxLength(256);
+            builder.Property(x => x.ReversalReason).HasMaxLength(1000);
+            builder.Property(x => x.InternalNotes).HasMaxLength(4000);
+            builder.Property(x => x.MetadataJson).IsRequired().HasMaxLength(4000);
+
+            builder.HasIndex(x => x.BusinessId);
+            builder.HasIndex(x => x.SupplierId);
+            builder.HasIndex(x => x.Status);
+            builder.HasIndex(x => x.PaymentDateUtc);
+            builder.HasIndex(x => x.PostingJournalEntryId);
+            builder.HasIndex(x => x.ReversalJournalEntryId);
+            builder.HasIndex(x => x.ReversedAtUtc);
+            builder.HasIndex(x => new { x.BusinessId, x.PaymentNumber })
+                .IsUnique()
+                .HasDatabaseName("UX_SupplierPayments_Business_Number_Active")
+                .HasFilter("[PaymentNumber] IS NOT NULL AND [IsDeleted] = 0");
+
+            builder.HasMany(x => x.Allocations)
+                .WithOne()
+                .HasForeignKey(x => x.SupplierPaymentId)
+                .OnDelete(DeleteBehavior.Cascade);
+        }
+
+        /// <inheritdoc />
+        public void Configure(EntityTypeBuilder<SupplierPaymentAllocation> builder)
+        {
+            builder.ToTable("SupplierPaymentAllocations", schema: "Billing");
+            builder.HasKey(x => x.Id);
+
+            builder.Property(x => x.Memo).HasMaxLength(1000);
+
+            builder.HasIndex(x => x.SupplierPaymentId);
+            builder.HasIndex(x => x.SupplierInvoiceId);
+            builder.HasIndex(x => new { x.SupplierPaymentId, x.SupplierInvoiceId })
+                .IsUnique()
+                .HasDatabaseName("UX_SupplierPaymentAllocations_Payment_Invoice_Active")
+                .HasFilter("[IsDeleted] = 0");
         }
 
         /// <inheritdoc />

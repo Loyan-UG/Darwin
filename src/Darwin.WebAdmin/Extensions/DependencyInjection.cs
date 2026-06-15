@@ -495,6 +495,15 @@ namespace Darwin.WebAdmin.Extensions
             services.AddScoped<UpdateSupplierInvoiceHandler>();
             services.AddScoped<UpdateSupplierInvoiceLifecycleHandler>();
             services.AddScoped<PostSupplierInvoiceHandler>();
+            services.AddScoped<SupplierPaymentWorkflowPolicy>();
+            services.AddScoped<GetSupplierPaymentsPageHandler>();
+            services.AddScoped<GetSupplierPaymentDetailHandler>();
+            services.AddScoped<GetSupplierPaymentDraftHandler>();
+            services.AddScoped<CreateSupplierPaymentHandler>();
+            services.AddScoped<UpdateSupplierPaymentHandler>();
+            services.AddScoped<PostSupplierPaymentHandler>();
+            services.AddScoped<CancelSupplierPaymentHandler>();
+            services.AddScoped<ReverseSupplierPaymentHandler>();
             services.AddScoped<GetWarehousesPageHandler>();
             services.AddScoped<GetWarehouseForEditHandler>();
             services.AddScoped<CreateWarehouseHandler>();

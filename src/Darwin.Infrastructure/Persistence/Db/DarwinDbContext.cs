@@ -189,6 +189,7 @@ namespace Darwin.Infrastructure.Persistence.Db
                 modelBuilder.Entity<FinanceExportBatch>().Property(x => x.MetadataJson).HasColumnType("jsonb");
                 modelBuilder.Entity<FinanceExportAttempt>().Property(x => x.MetadataJson).HasColumnType("jsonb");
                 modelBuilder.Entity<SupplierInvoice>().Property(x => x.MetadataJson).HasColumnType("jsonb");
+                modelBuilder.Entity<SupplierPayment>().Property(x => x.MetadataJson).HasColumnType("jsonb");
                 modelBuilder.Entity<JournalEntry>().Property(x => x.MetadataJson).HasColumnType("jsonb");
             }
 

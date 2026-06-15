@@ -21,6 +21,10 @@
         {
             <a asp-action="EditSupplierInvoice" asp-route-id="@Model.Id" class="btn btn-outline-primary">@T.T("Edit")</a>
         }
+        @if (Model.Status == SupplierInvoiceStatus.Posted)
+        {
+            <a asp-action="CreateSupplierPayment" asp-route-businessId="@Model.BusinessId" asp-route-supplierId="@Model.SupplierId" asp-route-supplierInvoiceId="@Model.Id" class="btn btn-primary">@T.T("CreateSupplierPayment")</a>
+        }
     </div>
 </div>
 

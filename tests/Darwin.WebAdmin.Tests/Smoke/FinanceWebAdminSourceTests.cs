@@ -15,6 +15,7 @@ public sealed class FinanceWebAdminSourceTests
         layout.Should().Contain("asp-controller=\"Finance\" asp-action=\"AccountMappings\"");
         layout.Should().Contain("asp-controller=\"Finance\" asp-action=\"Exports\"");
         layout.Should().Contain("asp-controller=\"Finance\" asp-action=\"SupplierInvoices\"");
+        layout.Should().Contain("asp-controller=\"Finance\" asp-action=\"SupplierPayments\"");
     }
 
     [Fact]
@@ -39,6 +40,13 @@ public sealed class FinanceWebAdminSourceTests
         controller.Should().Contain("UpdateSupplierInvoiceHandler");
         controller.Should().Contain("UpdateSupplierInvoiceLifecycleHandler");
         controller.Should().Contain("PostSupplierInvoiceHandler");
+        controller.Should().Contain("GetSupplierPaymentsPageHandler");
+        controller.Should().Contain("GetSupplierPaymentDetailHandler");
+        controller.Should().Contain("CreateSupplierPaymentHandler");
+        controller.Should().Contain("UpdateSupplierPaymentHandler");
+        controller.Should().Contain("PostSupplierPaymentHandler");
+        controller.Should().Contain("CancelSupplierPaymentHandler");
+        controller.Should().Contain("ReverseSupplierPaymentHandler");
         controller.Should().Contain("[HttpGet]");
         controller.Should().Contain("[HttpPost]");
         controller.Should().Contain("UpsertAccountMapping");
@@ -51,6 +59,12 @@ public sealed class FinanceWebAdminSourceTests
         controller.Should().Contain("EditSupplierInvoice");
         controller.Should().Contain("UpdateSupplierInvoiceLifecycle");
         controller.Should().Contain("PostSupplierInvoice");
+        controller.Should().Contain("SupplierPayments");
+        controller.Should().Contain("CreateSupplierPayment");
+        controller.Should().Contain("EditSupplierPayment");
+        controller.Should().Contain("PostSupplierPayment");
+        controller.Should().Contain("CancelSupplierPayment");
+        controller.Should().Contain("ReverseSupplierPayment");
         controller.Should().NotContain("CreateJournalEntry");
         controller.Should().NotContain("UpdateJournalEntry");
         controller.Should().NotContain("CreateCreditNote");
@@ -58,7 +72,9 @@ public sealed class FinanceWebAdminSourceTests
         controller.Should().NotContain("CreateCustomerInvoice");
         controller.Should().NotContain("DownloadInvoiceArchive");
         controller.Should().NotContain("CreateRefund");
-        controller.Should().NotContain("CreatePayment");
+        controller.Should().NotContain("CreatePayment(");
+        controller.Should().NotContain("BankAccount");
+        controller.Should().NotContain("TreasuryLedger");
     }
 
     [Fact]
@@ -86,6 +102,14 @@ public sealed class FinanceWebAdminSourceTests
         allFinanceViews.Should().Contain("asp-action=\"UpdateSupplierInvoiceLifecycle\"");
         allFinanceViews.Should().Contain("asp-action=\"PostSupplierInvoice\"");
         allFinanceViews.Should().Contain("PostPayable");
+        allFinanceViews.Should().Contain("asp-action=\"SupplierPayments\"");
+        allFinanceViews.Should().Contain("asp-action=\"CreateSupplierPayment\"");
+        allFinanceViews.Should().Contain("asp-action=\"EditSupplierPayment\"");
+        allFinanceViews.Should().Contain("asp-action=\"PostSupplierPayment\"");
+        allFinanceViews.Should().Contain("asp-action=\"CancelSupplierPayment\"");
+        allFinanceViews.Should().Contain("asp-action=\"ReverseSupplierPayment\"");
+        allFinanceViews.Should().Contain("PostSupplierPayment");
+        allFinanceViews.Should().Contain("ReversePayment");
         allFinanceViews.Should().Contain("asp-action=\"Postings\"");
         allFinanceViews.Should().Contain("DownloadExportPackage");
         allFinanceViews.Should().Contain("ConnectorReadinessMessage");
@@ -97,10 +121,9 @@ public sealed class FinanceWebAdminSourceTests
         allFinanceViews.Should().NotContain("RegenerateExportPackage");
         allFinanceViews.Should().NotContain("CreateJournalEntry");
         allFinanceViews.Should().NotContain("CreatePayable");
-        allFinanceViews.Should().NotContain("SupplierPayment");
         allFinanceViews.Should().NotContain("CreateCustomerInvoice");
         allFinanceViews.Should().NotContain("DownloadInvoiceArchive");
-        allFinanceViews.Should().NotContain("CreatePayment");
+        allFinanceViews.Should().NotContain("CreatePayment(");
         allFinanceViews.Should().NotContain("CreateRefund");
         allFinanceViews.Should().NotContain("AddPayment");
         allFinanceViews.Should().NotContain("AddShipment");
@@ -109,6 +132,10 @@ public sealed class FinanceWebAdminSourceTests
         allFinanceViews.Should().NotContain("ConnectorPush");
         allFinanceViews.Should().NotContain("FinanceInvoice");
         allFinanceViews.Should().NotContain("SalesInvoice");
+        allFinanceViews.Should().NotContain("BankAccount");
+        allFinanceViews.Should().NotContain("TreasuryLedger");
+        allFinanceViews.Should().NotContain("BankReconciliation");
+        allFinanceViews.Should().NotContain("ReturnedPayment");
     }
 
     [Fact]
@@ -133,6 +160,15 @@ public sealed class FinanceWebAdminSourceTests
         composition.Should().Contain("services.AddScoped<UpdateSupplierInvoiceHandler>();");
         composition.Should().Contain("services.AddScoped<UpdateSupplierInvoiceLifecycleHandler>();");
         composition.Should().Contain("services.AddScoped<PostSupplierInvoiceHandler>();");
+        composition.Should().Contain("services.AddScoped<SupplierPaymentWorkflowPolicy>();");
+        composition.Should().Contain("services.AddScoped<GetSupplierPaymentsPageHandler>();");
+        composition.Should().Contain("services.AddScoped<GetSupplierPaymentDetailHandler>();");
+        composition.Should().Contain("services.AddScoped<GetSupplierPaymentDraftHandler>();");
+        composition.Should().Contain("services.AddScoped<CreateSupplierPaymentHandler>();");
+        composition.Should().Contain("services.AddScoped<UpdateSupplierPaymentHandler>();");
+        composition.Should().Contain("services.AddScoped<PostSupplierPaymentHandler>();");
+        composition.Should().Contain("services.AddScoped<CancelSupplierPaymentHandler>();");
+        composition.Should().Contain("services.AddScoped<ReverseSupplierPaymentHandler>();");
         composition.Should().Contain("services.AddFinanceExportFileDeliveryAdapterIfConfigured(config);");
         composition.Should().NotContain("NoNetwork");
         composition.Should().NotContain("TestFinanceExportConnectorAdapter");

@@ -112,7 +112,11 @@ Provider-specific live readiness is not complete until the matching provider smo
 - Supplier invoice core/admin/posting is implemented in the Finance workspace. Operators can create, update, match, approve, post, and void eligible formal supplier invoices linked to suppliers, purchase orders, and goods receipts.
 - Supplier payable liability comes only from the supplier invoice posting command and existing finance posting services, not from WebAdmin status text, supplier invoice attachment upload, approval state alone, or manual journal shortcuts.
 - Posted supplier invoices link back to read-only Finance posting review. They must not create supplier payment, customer payment, refund, customer invoice, archive/download, or manual journal edit shortcuts.
-- Supplier payment settlement remains a future flow; WebAdmin purchasing pages must not create supplier payment, refund, customer invoice, or archive/download mutations as shortcuts.
+- Supplier payment core/admin is implemented in the Finance workspace as a formal settlement flow from posted supplier invoices. It supports draft/update/post/cancel-draft, full-payment reversal, partial allocations across one or more posted supplier invoices, cumulative overpayment guards, read-only journal links, and deterministic event/audit evidence.
+- Supplier payment posting debits `AccountsPayable` and credits `CashClearing` through finance posting services. Partial supplier payment is allowed, overpayment is blocked by default, and posted supplier payment correction is full-payment reversal only.
+- Supplier payment reversal is implemented in WebAdmin only for posted payments. It posts a balanced reversal journal through finance posting services, stores the reversal reason and reversal journal link, and keeps reversed payments out of paid/open-payable totals.
+- Bank/treasury workflows must remain read-only or absent until canonical bank account, treasury clearing, statement import, returned-transfer handling, and reconciliation ownership are designed.
+- WebAdmin purchasing pages must not create supplier payment, refund, customer invoice, journal shortcut, note-only settlement, attachment-only settlement, or archive/download mutations as shortcuts.
 - Public WebApi, mobile/member, storefront checkout, issued invoice archive/download, finance export, payment, refund, and credit-note flows remain outside this purchasing hardening surface.
 
 ## Security And UX Rules

@@ -289,6 +289,89 @@ public sealed class SupplierInvoiceLifecycleActionDto
     public string Action { get; set; } = string.Empty;
 }
 
+public sealed class SupplierPaymentsPageDto
+{
+    public Guid? BusinessId { get; set; }
+    public string BusinessName { get; set; } = string.Empty;
+    public string Query { get; set; } = string.Empty;
+    public SupplierPaymentStatus? Status { get; set; }
+    public int Page { get; set; } = 1;
+    public int PageSize { get; set; } = 20;
+    public int Total { get; set; }
+    public int DraftCount { get; set; }
+    public int PostedCount { get; set; }
+    public int CancelledCount { get; set; }
+    public int ReversedCount { get; set; }
+    public List<FinanceBusinessOptionDto> BusinessOptions { get; set; } = new();
+    public List<SupplierPaymentListItemDto> Items { get; set; } = new();
+}
+
+public sealed class SupplierPaymentListItemDto
+{
+    public Guid Id { get; set; }
+    public Guid BusinessId { get; set; }
+    public Guid SupplierId { get; set; }
+    public string SupplierName { get; set; } = string.Empty;
+    public string PaymentNumber { get; set; } = string.Empty;
+    public SupplierPaymentStatus Status { get; set; }
+    public SupplierPaymentMethod PaymentMethod { get; set; }
+    public DateTime PaymentDateUtc { get; set; }
+    public string Currency { get; set; } = "EUR";
+    public long TotalAmountMinor { get; set; }
+    public int AllocationCount { get; set; }
+    public string Reference { get; set; } = string.Empty;
+    public byte[] RowVersion { get; set; } = Array.Empty<byte>();
+}
+
+public sealed class SupplierPaymentAllocationDto
+{
+    public Guid SupplierInvoiceId { get; set; }
+    public string SupplierInvoiceNumber { get; set; } = string.Empty;
+    public string InternalInvoiceNumber { get; set; } = string.Empty;
+    public DateTime? DueDateUtc { get; set; }
+    public long InvoiceGrossMinor { get; set; }
+    public long AlreadyPaidMinor { get; set; }
+    public long OpenAmountMinor { get; set; }
+    public long AmountMinor { get; set; }
+    public string? Memo { get; set; }
+}
+
+public class SupplierPaymentCreateDto
+{
+    public Guid BusinessId { get; set; }
+    public Guid SupplierId { get; set; }
+    public SupplierPaymentMethod PaymentMethod { get; set; } = SupplierPaymentMethod.BankTransfer;
+    public DateTime PaymentDateUtc { get; set; }
+    public string Currency { get; set; } = "EUR";
+    public string? Reference { get; set; }
+    public string? InternalNotes { get; set; }
+    public string MetadataJson { get; set; } = "{}";
+    public List<SupplierPaymentAllocationDto> Allocations { get; set; } = new();
+}
+
+public sealed class SupplierPaymentEditDto : SupplierPaymentCreateDto
+{
+    public Guid Id { get; set; }
+    public byte[] RowVersion { get; set; } = Array.Empty<byte>();
+    public string PaymentNumber { get; set; } = string.Empty;
+    public SupplierPaymentStatus Status { get; set; } = SupplierPaymentStatus.Draft;
+    public long TotalAmountMinor { get; set; }
+    public Guid? PostingJournalEntryId { get; set; }
+    public DateTime? PostedAtUtc { get; set; }
+    public Guid? ReversalJournalEntryId { get; set; }
+    public DateTime? ReversedAtUtc { get; set; }
+    public string? ReversalReason { get; set; }
+    public DateTime? CancelledAtUtc { get; set; }
+}
+
+public sealed class SupplierPaymentLifecycleActionDto
+{
+    public Guid Id { get; set; }
+    public byte[] RowVersion { get; set; } = Array.Empty<byte>();
+    public string Action { get; set; } = string.Empty;
+    public string? Reason { get; set; }
+}
+
 public sealed class FinancePostingListItemDto
 {
     public Guid Id { get; set; }

@@ -566,6 +566,42 @@ namespace Darwin.Domain.Entities.Billing
     }
 
     /// <summary>
+    /// Represents a formal supplier payment settlement for posted payables.
+    /// </summary>
+    public sealed class SupplierPayment : BaseEntity
+    {
+        public Guid BusinessId { get; set; }
+        public Guid SupplierId { get; set; }
+        public string? PaymentNumber { get; set; }
+        public SupplierPaymentStatus Status { get; set; } = SupplierPaymentStatus.Draft;
+        public SupplierPaymentMethod PaymentMethod { get; set; } = SupplierPaymentMethod.BankTransfer;
+        public DateTime PaymentDateUtc { get; set; }
+        public string Currency { get; set; } = DomainDefaults.DefaultCurrency;
+        public long TotalAmountMinor { get; set; }
+        public string? Reference { get; set; }
+        public Guid? PostingJournalEntryId { get; set; }
+        public DateTime? PostedAtUtc { get; set; }
+        public Guid? ReversalJournalEntryId { get; set; }
+        public DateTime? ReversedAtUtc { get; set; }
+        public string? ReversalReason { get; set; }
+        public DateTime? CancelledAtUtc { get; set; }
+        public string? InternalNotes { get; set; }
+        public string MetadataJson { get; set; } = "{}";
+        public List<SupplierPaymentAllocation> Allocations { get; set; } = new();
+    }
+
+    /// <summary>
+    /// Represents one allocation from a supplier payment to a posted supplier invoice.
+    /// </summary>
+    public sealed class SupplierPaymentAllocation : BaseEntity
+    {
+        public Guid SupplierPaymentId { get; set; }
+        public Guid SupplierInvoiceId { get; set; }
+        public long AmountMinor { get; set; }
+        public string? Memo { get; set; }
+    }
+
+    /// <summary>
     /// Represents a journal entry that groups balanced debit and credit lines.
     /// </summary>
     public sealed class JournalEntry : BaseEntity

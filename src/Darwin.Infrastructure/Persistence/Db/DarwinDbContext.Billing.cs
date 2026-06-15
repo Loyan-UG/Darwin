@@ -59,6 +59,16 @@ namespace Darwin.Infrastructure.Persistence.Db
         public DbSet<SupplierInvoiceLine> SupplierInvoiceLines => Set<SupplierInvoiceLine>();
 
         /// <summary>
+        /// Supplier payments used as formal payables settlement records.
+        /// </summary>
+        public DbSet<SupplierPayment> SupplierPayments => Set<SupplierPayment>();
+
+        /// <summary>
+        /// Supplier payment allocations to posted supplier invoices.
+        /// </summary>
+        public DbSet<SupplierPaymentAllocation> SupplierPaymentAllocations => Set<SupplierPaymentAllocation>();
+
+        /// <summary>
         /// Journal entries.
         /// </summary>
         public DbSet<JournalEntry> JournalEntries => Set<JournalEntry>();

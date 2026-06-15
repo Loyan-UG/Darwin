@@ -4,6 +4,7 @@ using Darwin.Infrastructure.Persistence.Db;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Darwin.Infrastructure.SqlServer.Migrations
 {
     [DbContext(typeof(DarwinDbContext))]
-    partial class DarwinDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260615200209_SupplierPaymentCoreModel")]
+    partial class SupplierPaymentCoreModel
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -1202,16 +1205,6 @@ namespace Darwin.Infrastructure.SqlServer.Migrations
                         .HasMaxLength(256)
                         .HasColumnType("nvarchar(256)");
 
-                    b.Property<Guid?>("ReversalJournalEntryId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<string>("ReversalReason")
-                        .HasMaxLength(1000)
-                        .HasColumnType("nvarchar(1000)");
-
-                    b.Property<DateTime?>("ReversedAtUtc")
-                        .HasColumnType("datetime2");
-
                     b.Property<byte[]>("RowVersion")
                         .IsConcurrencyToken()
                         .IsRequired()
@@ -1236,10 +1229,6 @@ namespace Darwin.Infrastructure.SqlServer.Migrations
                     b.HasIndex("PaymentDateUtc");
 
                     b.HasIndex("PostingJournalEntryId");
-
-                    b.HasIndex("ReversalJournalEntryId");
-
-                    b.HasIndex("ReversedAtUtc");
 
                     b.HasIndex("Status");
 

@@ -2,6 +2,7 @@ using Darwin.Application.Abstractions.Persistence;
 using Darwin.Application.Abstractions.Services;
 using Darwin.Application.Billing.Commands;
 using Darwin.Application.Billing.DTOs;
+using Darwin.Application.Billing.Queries;
 using Darwin.Application.Billing.Services;
 using Darwin.Application.Foundation;
 using Darwin.Domain.Entities.Billing;
@@ -278,11 +279,325 @@ public sealed class SupplierInvoiceHandlersTests
         await act.Should().ThrowAsync<InvalidOperationException>().WithMessage("*SupplierInvoiceLifecycleUnsupportedAction*");
     }
 
+    [Fact]
+    public async Task SupplierPayment_Create_Should_PersistDraftAllocationsWithoutPosting()
+    {
+        await using var db = SupplierInvoiceTestDbContext.Create();
+        var ids = await SeedPurchasingAsync(db, postedReceipt: true);
+        var invoiceId = await CreatePostedSupplierInvoiceAsync(db, ids, [60]);
+        var handler = new CreateSupplierPaymentHandler(db, new FixedClock(Now));
+
+        var paymentId = await handler.HandleAsync(BuildPaymentCreate(ids, invoiceId, 1000), TestContext.Current.CancellationToken);
+
+        var payment = await db.Set<SupplierPayment>().Include(x => x.Allocations).SingleAsync(TestContext.Current.CancellationToken);
+        payment.Id.Should().Be(paymentId);
+        payment.Status.Should().Be(SupplierPaymentStatus.Draft);
+        payment.Currency.Should().Be("EUR");
+        payment.TotalAmountMinor.Should().Be(1000);
+        payment.Allocations.Should().ContainSingle(x => x.SupplierInvoiceId == invoiceId && x.AmountMinor == 1000);
+        db.Set<JournalEntry>().Count().Should().Be(1);
+    }
+
+    [Fact]
+    public async Task SupplierPayment_Create_Should_RejectNonPostedInvoice()
+    {
+        await using var db = SupplierInvoiceTestDbContext.Create();
+        var ids = await SeedPurchasingAsync(db, postedReceipt: true);
+        var invoiceId = await CreateApprovedInvoiceAsync(db, ids, [70]);
+
+        var act = async () => await new CreateSupplierPaymentHandler(db, new FixedClock(Now))
+            .HandleAsync(BuildPaymentCreate(ids, invoiceId, 1000), TestContext.Current.CancellationToken);
+
+        await act.Should().ThrowAsync<InvalidOperationException>().WithMessage("*SupplierPaymentRequiresPostedInvoice*");
+    }
+
+    [Fact]
+    public async Task SupplierPayment_Create_Should_RejectCumulativeOverpayment()
+    {
+        await using var db = SupplierInvoiceTestDbContext.Create();
+        var ids = await SeedPurchasingAsync(db, postedReceipt: true);
+        var invoiceId = await CreatePostedSupplierInvoiceAsync(db, ids, [80]);
+        db.Set<SupplierPayment>().Add(new SupplierPayment
+        {
+            BusinessId = ids.BusinessId,
+            SupplierId = ids.SupplierId,
+            Status = SupplierPaymentStatus.Posted,
+            PaymentDateUtc = Now,
+            Currency = "EUR",
+            TotalAmountMinor = 2000,
+            MetadataJson = "{}",
+            Allocations = [new SupplierPaymentAllocation { SupplierInvoiceId = invoiceId, AmountMinor = 2000 }]
+        });
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var act = async () => await new CreateSupplierPaymentHandler(db, new FixedClock(Now))
+            .HandleAsync(BuildPaymentCreate(ids, invoiceId, 381), TestContext.Current.CancellationToken);
+
+        await act.Should().ThrowAsync<InvalidOperationException>().WithMessage("*SupplierPaymentOverpaymentRejected*");
+    }
+
+    [Fact]
+    public async Task SupplierPayment_Post_Should_CreateBalancedSettlementPosting()
+    {
+        await using var db = SupplierInvoiceTestDbContext.Create();
+        var ids = await SeedPurchasingAsync(db, postedReceipt: true);
+        SeedPostingAccounts(db, ids.BusinessId);
+        SeedMappedAccount(db, ids.BusinessId, FinancePostingAccountRole.CashClearing, AccountType.Asset);
+        db.Set<NumberSequence>().Add(new NumberSequence
+        {
+            BusinessId = ids.BusinessId,
+            DocumentType = NumberSequenceDocumentType.SupplierPayment,
+            ScopeKey = NumberSequenceService.GlobalScopeKey,
+            PrefixPattern = "SP-{seq}",
+            NextValue = 3,
+            PaddingLength = 3,
+            IsActive = true,
+            MetadataJson = "{}"
+        });
+        var invoiceId = await CreatePostedSupplierInvoiceAsync(db, ids, [90]);
+        var paymentId = await new CreateSupplierPaymentHandler(db, new FixedClock(Now))
+            .HandleAsync(BuildPaymentCreate(ids, invoiceId, 2380), TestContext.Current.CancellationToken);
+        var payment = await db.Set<SupplierPayment>().SingleAsync(x => x.Id == paymentId, TestContext.Current.CancellationToken);
+        payment.RowVersion = [91];
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        await CreatePostSupplierPaymentHandler(db).HandleAsync(new SupplierPaymentLifecycleActionDto { Id = paymentId, RowVersion = [91], Action = "Post" }, TestContext.Current.CancellationToken);
+
+        var posted = await db.Set<SupplierPayment>().SingleAsync(x => x.Id == paymentId, TestContext.Current.CancellationToken);
+        posted.Status.Should().Be(SupplierPaymentStatus.Posted);
+        posted.PaymentNumber.Should().Be("SP-003");
+        posted.PostedAtUtc.Should().Be(Now);
+        posted.PostingJournalEntryId.Should().NotBeNull();
+        var entry = await db.Set<JournalEntry>().Include(x => x.Lines).SingleAsync(x => x.PostingKind == JournalEntryPostingKind.SupplierPaymentPosted, TestContext.Current.CancellationToken);
+        entry.PostingKey.Should().Be($"{PostSupplierPaymentHandler.PostingKeyPrefix}:{paymentId}");
+        entry.SourceEntityType.Should().Be("SupplierPayment");
+        entry.Lines.Sum(x => x.DebitMinor).Should().Be(2380);
+        entry.Lines.Sum(x => x.CreditMinor).Should().Be(2380);
+        entry.Lines.Should().Contain(x => x.DebitMinor == 2380 && x.Memo == "Accounts payable settlement");
+        entry.Lines.Should().Contain(x => x.CreditMinor == 2380 && x.Memo == "Cash clearing");
+    }
+
+    [Fact]
+    public async Task SupplierPayment_Post_Should_RejectMissingCashClearingMapping()
+    {
+        await using var db = SupplierInvoiceTestDbContext.Create();
+        var ids = await SeedPurchasingAsync(db, postedReceipt: true);
+        SeedMappedAccount(db, ids.BusinessId, FinancePostingAccountRole.AccountsPayable, AccountType.Liability);
+        var invoiceId = await CreatePostedSupplierInvoiceAsync(db, ids, [100]);
+        var paymentId = await new CreateSupplierPaymentHandler(db, new FixedClock(Now))
+            .HandleAsync(BuildPaymentCreate(ids, invoiceId, 1000), TestContext.Current.CancellationToken);
+        var payment = await db.Set<SupplierPayment>().SingleAsync(x => x.Id == paymentId, TestContext.Current.CancellationToken);
+        payment.RowVersion = [101];
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var act = async () => await CreatePostSupplierPaymentHandler(db).HandleAsync(new SupplierPaymentLifecycleActionDto { Id = paymentId, RowVersion = [101], Action = "Post" }, TestContext.Current.CancellationToken);
+
+        await act.Should().ThrowAsync<InvalidOperationException>().WithMessage("*Missing finance account mappings*");
+        db.Set<JournalEntry>().Count(x => x.PostingKind == JournalEntryPostingKind.SupplierPaymentPosted).Should().Be(0);
+    }
+
+    [Fact]
+    public async Task SupplierPayment_Cancel_Should_RejectPostedPayment()
+    {
+        await using var db = SupplierInvoiceTestDbContext.Create();
+        var ids = await SeedPurchasingAsync(db, postedReceipt: true);
+        var invoiceId = await CreatePostedSupplierInvoiceAsync(db, ids, [110]);
+        db.Set<SupplierPayment>().Add(new SupplierPayment
+        {
+            Id = Guid.NewGuid(),
+            BusinessId = ids.BusinessId,
+            SupplierId = ids.SupplierId,
+            Status = SupplierPaymentStatus.Posted,
+            PaymentDateUtc = Now,
+            Currency = "EUR",
+            TotalAmountMinor = 1000,
+            RowVersion = [111],
+            MetadataJson = "{}",
+            Allocations = [new SupplierPaymentAllocation { SupplierInvoiceId = invoiceId, AmountMinor = 1000 }]
+        });
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+        var payment = await db.Set<SupplierPayment>().SingleAsync(TestContext.Current.CancellationToken);
+
+        var act = async () => await new CancelSupplierPaymentHandler(db, new FixedClock(Now), new SupplierPaymentWorkflowPolicy())
+            .HandleAsync(new SupplierPaymentLifecycleActionDto { Id = payment.Id, RowVersion = [111], Action = "Cancel" }, TestContext.Current.CancellationToken);
+
+        await act.Should().ThrowAsync<InvalidOperationException>().WithMessage("*SupplierPaymentLifecycleUnsupportedAction*");
+    }
+
+    [Fact]
+    public async Task SupplierPayment_Reverse_Should_CreateBalancedReversalPosting()
+    {
+        await using var db = SupplierInvoiceTestDbContext.Create();
+        var ids = await SeedPurchasingAsync(db, postedReceipt: true);
+        SeedPostingAccounts(db, ids.BusinessId);
+        SeedMappedAccount(db, ids.BusinessId, FinancePostingAccountRole.CashClearing, AccountType.Asset);
+        var invoiceId = await CreatePostedSupplierInvoiceAsync(db, ids, [120]);
+        var paymentId = await CreatePostedSupplierPaymentAsync(db, ids, invoiceId, 1200, [121]);
+        var payment = await db.Set<SupplierPayment>().SingleAsync(x => x.Id == paymentId, TestContext.Current.CancellationToken);
+        payment.RowVersion = [122];
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        await CreateReverseSupplierPaymentHandler(db).HandleAsync(new SupplierPaymentLifecycleActionDto
+        {
+            Id = paymentId,
+            RowVersion = [122],
+            Action = "Reverse",
+            Reason = "Duplicate transfer correction"
+        }, TestContext.Current.CancellationToken);
+
+        var reversed = await db.Set<SupplierPayment>().SingleAsync(x => x.Id == paymentId, TestContext.Current.CancellationToken);
+        reversed.Status.Should().Be(SupplierPaymentStatus.Reversed);
+        reversed.ReversedAtUtc.Should().Be(Now);
+        reversed.ReversalReason.Should().Be("Duplicate transfer correction");
+        reversed.ReversalJournalEntryId.Should().NotBeNull();
+        var entry = await db.Set<JournalEntry>().Include(x => x.Lines).SingleAsync(x => x.PostingKind == JournalEntryPostingKind.Reversal && x.SourceEntityId == paymentId, TestContext.Current.CancellationToken);
+        entry.PostingKey.Should().Be($"{ReverseSupplierPaymentHandler.PostingKeyPrefix}:{paymentId}");
+        entry.SourceEntityType.Should().Be("SupplierPayment");
+        entry.Lines.Sum(x => x.DebitMinor).Should().Be(1200);
+        entry.Lines.Sum(x => x.CreditMinor).Should().Be(1200);
+        entry.Lines.Should().Contain(x => x.DebitMinor == 1200 && x.Memo == "Cash clearing reversal");
+        entry.Lines.Should().Contain(x => x.CreditMinor == 1200 && x.Memo == "Accounts payable reinstatement");
+    }
+
+    [Theory]
+    [InlineData(SupplierPaymentStatus.Draft)]
+    [InlineData(SupplierPaymentStatus.Cancelled)]
+    [InlineData(SupplierPaymentStatus.Reversed)]
+    public async Task SupplierPayment_Reverse_Should_RejectInvalidStatuses(SupplierPaymentStatus status)
+    {
+        await using var db = SupplierInvoiceTestDbContext.Create();
+        var ids = await SeedPurchasingAsync(db, postedReceipt: true);
+        var invoiceId = await CreatePostedSupplierInvoiceAsync(db, ids, [130]);
+        db.Set<SupplierPayment>().Add(new SupplierPayment
+        {
+            Id = Guid.NewGuid(),
+            BusinessId = ids.BusinessId,
+            SupplierId = ids.SupplierId,
+            Status = status,
+            PaymentDateUtc = Now,
+            Currency = "EUR",
+            TotalAmountMinor = 1000,
+            PostingJournalEntryId = status == SupplierPaymentStatus.Draft ? null : Guid.NewGuid(),
+            RowVersion = [131],
+            MetadataJson = "{}",
+            Allocations = [new SupplierPaymentAllocation { SupplierInvoiceId = invoiceId, AmountMinor = 1000 }]
+        });
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+        var payment = await db.Set<SupplierPayment>().SingleAsync(TestContext.Current.CancellationToken);
+
+        var act = async () => await CreateReverseSupplierPaymentHandler(db).HandleAsync(new SupplierPaymentLifecycleActionDto
+        {
+            Id = payment.Id,
+            RowVersion = [131],
+            Action = "Reverse",
+            Reason = "Operator correction"
+        }, TestContext.Current.CancellationToken);
+
+        await act.Should().ThrowAsync<InvalidOperationException>().WithMessage("*SupplierPaymentLifecycleUnsupportedAction*");
+    }
+
+    [Fact]
+    public async Task SupplierPayment_Reverse_Should_RejectMissingPostingAndSensitiveReason()
+    {
+        await using var db = SupplierInvoiceTestDbContext.Create();
+        var ids = await SeedPurchasingAsync(db, postedReceipt: true);
+        var invoiceId = await CreatePostedSupplierInvoiceAsync(db, ids, [140]);
+        db.Set<SupplierPayment>().Add(new SupplierPayment
+        {
+            Id = Guid.NewGuid(),
+            BusinessId = ids.BusinessId,
+            SupplierId = ids.SupplierId,
+            Status = SupplierPaymentStatus.Posted,
+            PaymentDateUtc = Now,
+            Currency = "EUR",
+            TotalAmountMinor = 1000,
+            RowVersion = [141],
+            MetadataJson = "{}",
+            Allocations = [new SupplierPaymentAllocation { SupplierInvoiceId = invoiceId, AmountMinor = 1000 }]
+        });
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+        var payment = await db.Set<SupplierPayment>().SingleAsync(TestContext.Current.CancellationToken);
+
+        var missingPosting = async () => await CreateReverseSupplierPaymentHandler(db).HandleAsync(new SupplierPaymentLifecycleActionDto
+        {
+            Id = payment.Id,
+            RowVersion = [141],
+            Action = "Reverse",
+            Reason = "Operator correction"
+        }, TestContext.Current.CancellationToken);
+        var sensitiveReason = async () => await CreateReverseSupplierPaymentHandler(db).HandleAsync(new SupplierPaymentLifecycleActionDto
+        {
+            Id = payment.Id,
+            RowVersion = [141],
+            Action = "Reverse",
+            Reason = "token leaked"
+        }, TestContext.Current.CancellationToken);
+
+        await missingPosting.Should().ThrowAsync<InvalidOperationException>().WithMessage("*SupplierPaymentPostingRequired*");
+        await sensitiveReason.Should().ThrowAsync<ArgumentException>().WithMessage("*SensitiveMetadataRejected*");
+    }
+
+    [Fact]
+    public async Task SupplierPayment_Reverse_Should_ReopenPayableAndNotDuplicateOnRetry()
+    {
+        await using var db = SupplierInvoiceTestDbContext.Create();
+        var ids = await SeedPurchasingAsync(db, postedReceipt: true);
+        SeedPostingAccounts(db, ids.BusinessId);
+        SeedMappedAccount(db, ids.BusinessId, FinancePostingAccountRole.CashClearing, AccountType.Asset);
+        var invoiceId = await CreatePostedSupplierInvoiceAsync(db, ids, [150]);
+        var paymentId = await CreatePostedSupplierPaymentAsync(db, ids, invoiceId, 2380, [151]);
+        var beforeReverse = await SupplierPaymentQuerySupport.GetPostedPaidByInvoiceAsync(db, [invoiceId], null, TestContext.Current.CancellationToken);
+        beforeReverse[invoiceId].Should().Be(2380);
+        var payment = await db.Set<SupplierPayment>().SingleAsync(x => x.Id == paymentId, TestContext.Current.CancellationToken);
+        payment.RowVersion = [152];
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        await CreateReverseSupplierPaymentHandler(db).HandleAsync(new SupplierPaymentLifecycleActionDto
+        {
+            Id = paymentId,
+            RowVersion = [152],
+            Action = "Reverse",
+            Reason = "Payment entered against wrong account"
+        }, TestContext.Current.CancellationToken);
+        var reversed = await db.Set<SupplierPayment>().SingleAsync(x => x.Id == paymentId, TestContext.Current.CancellationToken);
+        reversed.RowVersion = [153];
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+        var retry = async () => await CreateReverseSupplierPaymentHandler(db).HandleAsync(new SupplierPaymentLifecycleActionDto
+        {
+            Id = paymentId,
+            RowVersion = [153],
+            Action = "Reverse",
+            Reason = "Payment entered against wrong account"
+        }, TestContext.Current.CancellationToken);
+
+        await retry.Should().ThrowAsync<InvalidOperationException>().WithMessage("*SupplierPaymentLifecycleUnsupportedAction*");
+        db.Set<JournalEntry>().Count(x => x.PostingKind == JournalEntryPostingKind.Reversal && x.SourceEntityId == paymentId).Should().Be(1);
+        var afterReverse = await SupplierPaymentQuerySupport.GetPostedPaidByInvoiceAsync(db, [invoiceId], null, TestContext.Current.CancellationToken);
+        afterReverse.Should().NotContainKey(invoiceId);
+    }
+
     private static UpdateSupplierInvoiceLifecycleHandler CreateLifecycleHandler(SupplierInvoiceTestDbContext db)
         => new(db, new FixedClock(Now), new NumberSequenceService(db, new FixedClock(Now)), new SupplierInvoiceWorkflowPolicy());
 
     private static PostSupplierInvoiceHandler CreatePostHandler(SupplierInvoiceTestDbContext db)
         => new(db, new FixedClock(Now), new SupplierInvoiceWorkflowPolicy(), new FinanceAccountMappingService(db), new FinancePostingService(db, new FixedClock(Now)));
+
+    private static PostSupplierPaymentHandler CreatePostSupplierPaymentHandler(SupplierInvoiceTestDbContext db)
+        => new(db, new FixedClock(Now), new NumberSequenceService(db, new FixedClock(Now)), new SupplierPaymentWorkflowPolicy(), new FinanceAccountMappingService(db), new FinancePostingService(db, new FixedClock(Now)));
+
+    private static ReverseSupplierPaymentHandler CreateReverseSupplierPaymentHandler(SupplierInvoiceTestDbContext db)
+        => new(db, new FixedClock(Now), new SupplierPaymentWorkflowPolicy(), new FinanceAccountMappingService(db), new FinancePostingService(db, new FixedClock(Now)));
+
+    private static async Task<Guid> CreatePostedSupplierPaymentAsync(SupplierInvoiceTestDbContext db, SeedIds ids, Guid invoiceId, long amountMinor, byte[] rowVersion)
+    {
+        var paymentId = await new CreateSupplierPaymentHandler(db, new FixedClock(Now))
+            .HandleAsync(BuildPaymentCreate(ids, invoiceId, amountMinor), TestContext.Current.CancellationToken);
+        var payment = await db.Set<SupplierPayment>().SingleAsync(x => x.Id == paymentId, TestContext.Current.CancellationToken);
+        payment.RowVersion = rowVersion;
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+        await CreatePostSupplierPaymentHandler(db).HandleAsync(new SupplierPaymentLifecycleActionDto { Id = paymentId, RowVersion = rowVersion, Action = "Post" }, TestContext.Current.CancellationToken);
+        return paymentId;
+    }
 
     private static async Task<Guid> CreateApprovedInvoiceAsync(SupplierInvoiceTestDbContext db, SeedIds ids, byte[] rowVersion)
     {
@@ -299,12 +614,31 @@ public sealed class SupplierInvoiceHandlersTests
         return invoiceId;
     }
 
+    private static async Task<Guid> CreatePostedSupplierInvoiceAsync(SupplierInvoiceTestDbContext db, SeedIds ids, byte[] rowVersion)
+    {
+        SeedPostingAccountsIfMissing(db, ids.BusinessId);
+        var invoiceId = await CreateApprovedInvoiceAsync(db, ids, rowVersion);
+        var invoice = await db.Set<SupplierInvoice>().SingleAsync(x => x.Id == invoiceId, TestContext.Current.CancellationToken);
+        invoice.RowVersion = [200];
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+        await CreatePostHandler(db).HandleAsync(new SupplierInvoiceLifecycleActionDto { Id = invoiceId, RowVersion = [200], Action = "Post" }, TestContext.Current.CancellationToken);
+        return invoiceId;
+    }
+
     private static void SeedPostingAccounts(SupplierInvoiceTestDbContext db, Guid businessId)
     {
         SeedMappedAccount(db, businessId, FinancePostingAccountRole.AccountsPayable, AccountType.Liability);
         SeedMappedAccount(db, businessId, FinancePostingAccountRole.PurchaseExpense, AccountType.Expense);
         SeedMappedAccount(db, businessId, FinancePostingAccountRole.InventoryClearing, AccountType.Asset);
         SeedMappedAccount(db, businessId, FinancePostingAccountRole.TaxReceivable, AccountType.Asset);
+    }
+
+    private static void SeedPostingAccountsIfMissing(SupplierInvoiceTestDbContext db, Guid businessId)
+    {
+        SeedMappedAccountIfMissing(db, businessId, FinancePostingAccountRole.AccountsPayable, AccountType.Liability);
+        SeedMappedAccountIfMissing(db, businessId, FinancePostingAccountRole.PurchaseExpense, AccountType.Expense);
+        SeedMappedAccountIfMissing(db, businessId, FinancePostingAccountRole.InventoryClearing, AccountType.Asset);
+        SeedMappedAccountIfMissing(db, businessId, FinancePostingAccountRole.TaxReceivable, AccountType.Asset);
     }
 
     private static void SeedMappedAccount(SupplierInvoiceTestDbContext db, Guid businessId, FinancePostingAccountRole role, AccountType type)
@@ -325,6 +659,12 @@ public sealed class SupplierInvoiceHandlersTests
             IsActive = true,
             MetadataJson = "{}"
         });
+    }
+
+    private static void SeedMappedAccountIfMissing(SupplierInvoiceTestDbContext db, Guid businessId, FinancePostingAccountRole role, AccountType type)
+    {
+        if (db.Set<FinancePostingAccountMapping>().Any(x => x.BusinessId == businessId && x.Role == role && !x.IsDeleted)) return;
+        SeedMappedAccount(db, businessId, role, type);
     }
 
     private static SupplierInvoiceCreateDto BuildCreate(SeedIds ids)
@@ -351,6 +691,19 @@ public sealed class SupplierInvoiceHandlersTests
                     UnitGrossMinor = 1190
                 }
             ]
+        };
+
+    private static SupplierPaymentCreateDto BuildPaymentCreate(SeedIds ids, Guid invoiceId, long amountMinor)
+        => new()
+        {
+            BusinessId = ids.BusinessId,
+            SupplierId = ids.SupplierId,
+            PaymentMethod = SupplierPaymentMethod.BankTransfer,
+            PaymentDateUtc = Now,
+            Currency = " eur ",
+            Reference = " REF-1 ",
+            MetadataJson = "{}",
+            Allocations = [new SupplierPaymentAllocationDto { SupplierInvoiceId = invoiceId, AmountMinor = amountMinor, Memo = " invoice settlement " }]
         };
 
     private static async Task<SeedIds> SeedPurchasingAsync(SupplierInvoiceTestDbContext db, bool postedReceipt)
@@ -400,6 +753,8 @@ public sealed class SupplierInvoiceHandlersTests
             modelBuilder.Entity<GoodsReceiptLine>().HasKey(x => x.Id);
             modelBuilder.Entity<SupplierInvoice>(b => { b.HasKey(x => x.Id); b.HasMany(x => x.Lines).WithOne().HasForeignKey(x => x.SupplierInvoiceId); });
             modelBuilder.Entity<SupplierInvoiceLine>().HasKey(x => x.Id);
+            modelBuilder.Entity<SupplierPayment>(b => { b.HasKey(x => x.Id); b.HasMany(x => x.Allocations).WithOne().HasForeignKey(x => x.SupplierPaymentId); });
+            modelBuilder.Entity<SupplierPaymentAllocation>().HasKey(x => x.Id);
             modelBuilder.Entity<JournalEntry>(b => { b.HasKey(x => x.Id); b.HasMany(x => x.Lines).WithOne().HasForeignKey(x => x.JournalEntryId); });
             modelBuilder.Entity<JournalEntryLine>().HasKey(x => x.Id);
             modelBuilder.Entity<FinancialAccount>().HasKey(x => x.Id);

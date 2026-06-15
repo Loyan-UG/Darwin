@@ -14460,4 +14460,109 @@
   <data name="Posted" xml:space="preserve">
     <value>Gebucht</value>
   </data>
+  <data name="SupplierPayments" xml:space="preserve">
+    <value>Lieferantenzahlungen</value>
+  </data>
+  <data name="SupplierPayment" xml:space="preserve">
+    <value>Lieferantenzahlung</value>
+  </data>
+  <data name="CreateSupplierPayment" xml:space="preserve">
+    <value>Lieferantenzahlung erstellen</value>
+  </data>
+  <data name="EditSupplierPayment" xml:space="preserve">
+    <value>Lieferantenzahlung bearbeiten</value>
+  </data>
+  <data name="SupplierPaymentCreated" xml:space="preserve">
+    <value>Lieferantenzahlung wurde erstellt.</value>
+  </data>
+  <data name="SupplierPaymentUpdated" xml:space="preserve">
+    <value>Lieferantenzahlung wurde aktualisiert.</value>
+  </data>
+  <data name="SupplierPaymentPosted" xml:space="preserve">
+    <value>Lieferantenzahlung wurde gebucht.</value>
+  </data>
+  <data name="SupplierPaymentCancelled" xml:space="preserve">
+    <value>Lieferantenzahlung wurde storniert.</value>
+  </data>
+  <data name="SupplierPaymentReversed" xml:space="preserve">
+    <value>Lieferantenzahlung wurde rückgebucht.</value>
+  </data>
+  <data name="SupplierPaymentCreateFailed" xml:space="preserve">
+    <value>Die Lieferantenzahlung konnte nicht erstellt werden.</value>
+  </data>
+  <data name="SupplierPaymentUpdateFailed" xml:space="preserve">
+    <value>Die Lieferantenzahlung konnte nicht aktualisiert werden.</value>
+  </data>
+  <data name="SupplierPaymentPostFailed" xml:space="preserve">
+    <value>Die Lieferantenzahlung konnte nicht gebucht werden.</value>
+  </data>
+  <data name="SupplierPaymentCancelFailed" xml:space="preserve">
+    <value>Die Lieferantenzahlung konnte nicht storniert werden.</value>
+  </data>
+  <data name="SupplierPaymentReverseFailed" xml:space="preserve">
+    <value>Die Lieferantenzahlung konnte nicht rückgebucht werden.</value>
+  </data>
+  <data name="SupplierPaymentNotFound" xml:space="preserve">
+    <value>Die Lieferantenzahlung wurde nicht gefunden.</value>
+  </data>
+  <data name="NoSupplierPayments" xml:space="preserve">
+    <value>Keine Lieferantenzahlungen gefunden.</value>
+  </data>
+  <data name="PaymentNumber" xml:space="preserve">
+    <value>Zahlungsnummer</value>
+  </data>
+  <data name="PaymentDate" xml:space="preserve">
+    <value>Zahlungsdatum</value>
+  </data>
+  <data name="PaymentMethod" xml:space="preserve">
+    <value>Zahlungsart</value>
+  </data>
+  <data name="PaymentPosting" xml:space="preserve">
+    <value>Zahlungsbuchung</value>
+  </data>
+  <data name="PaymentReversal" xml:space="preserve">
+    <value>Zahlungsrückbuchung</value>
+  </data>
+  <data name="NotReversed" xml:space="preserve">
+    <value>Nicht rückgebucht</value>
+  </data>
+  <data name="ViewReversal" xml:space="preserve">
+    <value>Rückbuchung anzeigen</value>
+  </data>
+  <data name="ReversePayment" xml:space="preserve">
+    <value>Zahlung rückbuchen</value>
+  </data>
+  <data name="ReversalReason" xml:space="preserve">
+    <value>Rückbuchungsgrund</value>
+  </data>
+  <data name="PostSupplierPayment" xml:space="preserve">
+    <value>Lieferantenzahlung buchen</value>
+  </data>
+  <data name="SupplierInvoiceId" xml:space="preserve">
+    <value>Lieferantenrechnungs-ID</value>
+  </data>
+  <data name="InvoiceTotal" xml:space="preserve">
+    <value>Rechnungssumme</value>
+  </data>
+  <data name="AlreadyPaid" xml:space="preserve">
+    <value>Bereits bezahlt</value>
+  </data>
+  <data name="OpenAmount" xml:space="preserve">
+    <value>Offener Betrag</value>
+  </data>
+  <data name="BankTransfer" xml:space="preserve">
+    <value>Banküberweisung</value>
+  </data>
+  <data name="Cash" xml:space="preserve">
+    <value>Barzahlung</value>
+  </data>
+  <data name="DirectDebit" xml:space="preserve">
+    <value>Lastschrift</value>
+  </data>
+  <data name="Card" xml:space="preserve">
+    <value>Karte</value>
+  </data>
+  <data name="Other" xml:space="preserve">
+    <value>Sonstige</value>
+  </data>
 </root>
