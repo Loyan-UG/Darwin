@@ -2,11 +2,14 @@ using Darwin.Application;
 using Darwin.Application.Abstractions.Payments;
 using Darwin.Application.Abstractions.Persistence;
 using Darwin.Application.Abstractions.Services;
+using Darwin.Application.Foundation;
 using Darwin.Application.Orders.Commands;
 using Darwin.Application.Orders.DTOs;
 using Darwin.Application.Orders.Validators;
+using Darwin.Application.Sales.Services;
 using Darwin.Domain.Entities.Billing;
 using Darwin.Domain.Entities.CRM;
+using Darwin.Domain.Entities.Foundation;
 using Darwin.Domain.Entities.Orders;
 using Darwin.Domain.Entities.Settings;
 using Darwin.Domain.Enums;
@@ -71,6 +74,52 @@ public sealed class OrderBillingHandlerTests
         payment.Status.Should().Be(PaymentStatus.Refunded);
         order.Status.Should().Be(OrderStatus.Refunded);
         refund.Status.Should().Be(RefundStatus.Completed);
+    }
+
+    [Fact]
+    public async Task AddRefundHandler_Should_Not_DoubleCount_Current_Refund_For_Order_Status()
+    {
+        await using var db = OrderBillingTestDbContext.Create();
+        var orderId = Guid.NewGuid();
+        var paymentId = Guid.NewGuid();
+
+        db.Set<Order>().Add(new Order
+        {
+            Id = orderId,
+            OrderNumber = "ORD-PARTIAL-REFUND",
+            Currency = "EUR",
+            GrandTotalGrossMinor = 2500,
+            SubtotalNetMinor = 2101,
+            TaxTotalMinor = 399,
+            Status = OrderStatus.Paid
+        });
+        db.Set<Payment>().Add(new Payment
+        {
+            Id = paymentId,
+            OrderId = orderId,
+            AmountMinor = 2500,
+            Currency = "EUR",
+            Status = PaymentStatus.Captured,
+            Provider = "Manual"
+        });
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var handler = new AddRefundHandler(db, new RefundCreateValidator(), new TestStringLocalizer());
+
+        await handler.HandleAsync(new RefundCreateDto
+        {
+            OrderId = orderId,
+            PaymentId = paymentId,
+            AmountMinor = 1300,
+            Currency = "EUR",
+            Reason = "Partial return"
+        }, TestContext.Current.CancellationToken);
+
+        var order = await db.Set<Order>().SingleAsync(x => x.Id == orderId, TestContext.Current.CancellationToken);
+        var payment = await db.Set<Payment>().SingleAsync(x => x.Id == paymentId, TestContext.Current.CancellationToken);
+
+        order.Status.Should().Be(OrderStatus.PartiallyRefunded);
+        payment.Status.Should().Be(PaymentStatus.Captured);
     }
 
     [Fact]
@@ -144,10 +193,162 @@ public sealed class OrderBillingHandlerTests
 
         invoice.Status.Should().Be(InvoiceStatus.Paid);
         invoice.PaymentId.Should().Be(paymentId);
+        invoice.InvoiceNumber.Should().BeNull();
+        invoice.Lines.Should().ContainSingle().Which.TotalTaxMinor.Should().Be(303);
         payment.InvoiceId.Should().Be(invoiceId);
         payment.Status.Should().Be(PaymentStatus.Captured);
         payment.CustomerId.Should().Be(customerId);
         payment.PaidAtUtc.Should().Be(invoice.PaidAtUtc);
+    }
+
+    [Fact]
+    public async Task CreateOrderInvoiceHandler_Should_Record_Sales_Lifecycle_Evidence()
+    {
+        await using var db = OrderBillingTestDbContext.Create();
+        var orderId = Guid.NewGuid();
+        var paymentId = Guid.NewGuid();
+        var now = new DateTime(2026, 6, 11, 9, 0, 0, DateTimeKind.Utc);
+
+        db.Set<Order>().Add(new Order
+        {
+            Id = orderId,
+            OrderNumber = "ORD-EVIDENCE",
+            Currency = "EUR",
+            GrandTotalGrossMinor = 1900,
+            SubtotalNetMinor = 1597,
+            TaxTotalMinor = 303,
+            Status = OrderStatus.Paid,
+            Lines =
+            [
+                new OrderLine
+                {
+                    Id = Guid.NewGuid(),
+                    VariantId = Guid.NewGuid(),
+                    Name = "Notebook",
+                    Sku = "NB-001",
+                    Quantity = 1,
+                    UnitPriceNetMinor = 1597,
+                    VatRate = 0.19m,
+                    UnitPriceGrossMinor = 1900,
+                    LineTaxMinor = 303,
+                    LineGrossMinor = 1900
+                }
+            ]
+        });
+        db.Set<Payment>().Add(new Payment
+        {
+            Id = paymentId,
+            OrderId = orderId,
+            AmountMinor = 1900,
+            Currency = "EUR",
+            Status = PaymentStatus.Authorized,
+            Provider = "PayPal"
+        });
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var localizer = new TestStringLocalizer();
+        var salesEvents = new SalesLifecycleEventService(
+            new BusinessEventService(db, new FixedClock(now)),
+            db);
+        var handler = new CreateOrderInvoiceHandler(
+            db,
+            new OrderInvoiceCreateValidator(localizer),
+            localizer,
+            new FixedClock(now),
+            numberSequenceService: null,
+            salesEvents: salesEvents);
+
+        var invoiceId = await handler.HandleAsync(new OrderInvoiceCreateDto
+        {
+            OrderId = orderId,
+            PaymentId = paymentId
+        }, TestContext.Current.CancellationToken);
+
+        db.Set<BusinessEvent>().Should().Contain(x =>
+            x.EntityType == SalesLifecycleEventService.InvoiceEntityType &&
+            x.EntityId == invoiceId &&
+            x.EventKey == $"sales.invoice.created:{invoiceId:N}");
+        db.Set<BusinessEvent>().Should().Contain(x =>
+            x.EntityType == SalesLifecycleEventService.InvoiceEntityType &&
+            x.EntityId == invoiceId &&
+            x.EventKey == $"sales.invoice.status_changed:{invoiceId:N}:Draft:Paid");
+        db.Set<AuditTrail>().Count(x => x.EntityType == SalesLifecycleEventService.InvoiceEntityType && x.EntityId == invoiceId)
+            .Should().Be(2);
+    }
+
+    [Fact]
+    public async Task CreateOrderInvoiceHandler_Should_UseInvoiceNumberSequence_WhenActiveSequenceExists()
+    {
+        await using var db = OrderBillingTestDbContext.Create();
+        var orderId = Guid.NewGuid();
+        var businessId = Guid.NewGuid();
+        var clock = new FixedClock(new DateTime(2026, 6, 11, 9, 0, 0, DateTimeKind.Utc));
+
+        db.Set<Order>().Add(new Order
+        {
+            Id = orderId,
+            OrderNumber = "ORD-INV-SEQ",
+            Currency = "EUR",
+            GrandTotalGrossMinor = 11900,
+            SubtotalNetMinor = 10000,
+            TaxTotalMinor = 1900,
+            Status = OrderStatus.Paid,
+            Lines =
+            [
+                new OrderLine
+                {
+                    Id = Guid.NewGuid(),
+                    VariantId = Guid.NewGuid(),
+                    Name = "Sequence line",
+                    Sku = "SEQ-001",
+                    Quantity = 1,
+                    UnitPriceNetMinor = 10000,
+                    VatRate = 0.19m,
+                    UnitPriceGrossMinor = 11900,
+                    LineTaxMinor = 1900,
+                    LineGrossMinor = 11900
+                }
+            ]
+        });
+
+        db.Set<NumberSequence>().Add(new NumberSequence
+        {
+            Id = Guid.NewGuid(),
+            BusinessId = businessId,
+            DocumentType = NumberSequenceDocumentType.Invoice,
+            ScopeKey = NumberSequenceService.GlobalScopeKey,
+            PrefixPattern = "INV-{yyyy}-{seq}",
+            NextValue = 7,
+            PaddingLength = 4,
+            ResetPolicy = NumberSequenceResetPolicy.Never,
+            IsActive = true
+        });
+
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var localizer = new TestStringLocalizer();
+        var sequenceService = new NumberSequenceService(db, clock);
+        var handler = new CreateOrderInvoiceHandler(
+            db,
+            new OrderInvoiceCreateValidator(localizer),
+            localizer,
+            clock,
+            sequenceService);
+
+        var invoiceId = await handler.HandleAsync(new OrderInvoiceCreateDto
+        {
+            OrderId = orderId,
+            BusinessId = businessId
+        }, TestContext.Current.CancellationToken);
+
+        var invoice = await db.Set<Invoice>()
+            .Include(x => x.Lines)
+            .SingleAsync(x => x.Id == invoiceId, TestContext.Current.CancellationToken);
+        var sequence = await db.Set<NumberSequence>().SingleAsync(TestContext.Current.CancellationToken);
+
+        invoice.InvoiceNumber.Should().Be("INV-2026-0007");
+        invoice.Lines.Should().ContainSingle().Which.TotalTaxMinor.Should().Be(1900);
+        sequence.NextValue.Should().Be(8);
     }
 
     [Fact]
@@ -799,6 +1000,18 @@ public sealed class OrderBillingHandlerTests
                 builder.HasKey(x => x.Id);
                 builder.Property(x => x.RowVersion).IsRequired();
             });
+
+            modelBuilder.Entity<NumberSequence>(builder =>
+            {
+                builder.HasKey(x => x.Id);
+                builder.Property(x => x.ScopeKey).IsRequired();
+                builder.Property(x => x.PrefixPattern).IsRequired();
+                builder.Property(x => x.MetadataJson).IsRequired();
+                builder.Property(x => x.RowVersion).IsRequired();
+            });
+
+            modelBuilder.Entity<BusinessEvent>();
+            modelBuilder.Entity<AuditTrail>();
         }
     }
 

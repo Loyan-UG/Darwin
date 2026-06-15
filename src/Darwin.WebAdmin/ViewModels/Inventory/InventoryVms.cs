@@ -243,9 +243,16 @@ namespace Darwin.WebAdmin.ViewModels.Inventory
         public Guid Id { get; set; }
         public Guid BusinessId { get; set; }
         public string Name { get; set; } = string.Empty;
+        public string? Code { get; set; }
+        public string Status { get; set; } = "Active";
         public string Email { get; set; } = string.Empty;
         public string Phone { get; set; } = string.Empty;
         public string? Address { get; set; }
+        public string? PreferredCurrency { get; set; }
+        public int? PaymentTermDays { get; set; }
+        public int? LeadTimeDays { get; set; }
+        public string? Website { get; set; }
+        public string? TaxRegistrationNumber { get; set; }
         public int PurchaseOrderCount { get; set; }
         public byte[] RowVersion { get; set; } = Array.Empty<byte>();
     }
@@ -255,6 +262,8 @@ namespace Darwin.WebAdmin.ViewModels.Inventory
         public int TotalCount { get; set; }
         public int MissingAddressCount { get; set; }
         public int HasPurchaseOrdersCount { get; set; }
+        public int InactiveCount { get; set; }
+        public int BlockedCount { get; set; }
     }
 
     public sealed class SupplierEditVm
@@ -268,6 +277,12 @@ namespace Darwin.WebAdmin.ViewModels.Inventory
         [Required]
         [StringLength(200)]
         public string Name { get; set; } = string.Empty;
+
+        [StringLength(64)]
+        public string? Code { get; set; }
+
+        [Required]
+        public string Status { get; set; } = "Active";
 
         [Required]
         [EmailAddress]
@@ -283,6 +298,24 @@ namespace Darwin.WebAdmin.ViewModels.Inventory
 
         [StringLength(2000)]
         public string? Notes { get; set; }
+
+        [StringLength(3, MinimumLength = 3)]
+        public string? PreferredCurrency { get; set; }
+
+        [Range(0, 3650)]
+        public int? PaymentTermDays { get; set; }
+
+        [Range(0, 3650)]
+        public int? LeadTimeDays { get; set; }
+
+        [StringLength(500)]
+        public string? Website { get; set; }
+
+        [StringLength(100)]
+        public string? TaxRegistrationNumber { get; set; }
+
+        [StringLength(2000)]
+        public string? ExternalNotes { get; set; }
 
         public List<SelectListItem> BusinessOptions { get; set; } = new();
     }
@@ -446,8 +479,20 @@ namespace Darwin.WebAdmin.ViewModels.Inventory
         [Required]
         public Guid ProductVariantId { get; set; }
 
+        [StringLength(100)]
+        public string? SupplierSku { get; set; }
+
+        [StringLength(1000)]
+        public string? Description { get; set; }
+
         [Range(1, int.MaxValue)]
         public int Quantity { get; set; } = 1;
+
+        [Range(0, int.MaxValue)]
+        public int ReceivedQuantity { get; set; }
+
+        [Range(0, int.MaxValue)]
+        public int CancelledQuantity { get; set; }
     }
 
     public sealed class StockTransferEditVm
@@ -492,8 +537,15 @@ namespace Darwin.WebAdmin.ViewModels.Inventory
         public string OrderNumber { get; set; } = string.Empty;
         public string SupplierName { get; set; } = string.Empty;
         public string Status { get; set; } = string.Empty;
+        public string Currency { get; set; } = string.Empty;
         public DateTime OrderedAtUtc { get; set; }
+        public DateTime? ExpectedDeliveryDateUtc { get; set; }
+        public DateTime? IssuedAtUtc { get; set; }
+        public DateTime? ReceivedAtUtc { get; set; }
+        public DateTime? CancelledAtUtc { get; set; }
         public int LineCount { get; set; }
+        public int OrderedQuantity { get; set; }
+        public int ReceivedQuantity { get; set; }
         public bool IsStale { get; set; }
         public byte[] RowVersion { get; set; } = Array.Empty<byte>();
     }
@@ -506,6 +558,7 @@ namespace Darwin.WebAdmin.ViewModels.Inventory
         public int ReceivedCount { get; set; }
         public int CancelledCount { get; set; }
         public int StaleIssuedCount { get; set; }
+        public int PartiallyReceivedCount { get; set; }
     }
 
     public sealed class PurchaseOrderLineVm
@@ -513,8 +566,20 @@ namespace Darwin.WebAdmin.ViewModels.Inventory
         [Required]
         public Guid ProductVariantId { get; set; }
 
+        [StringLength(100)]
+        public string? SupplierSku { get; set; }
+
+        [StringLength(1000)]
+        public string? Description { get; set; }
+
         [Range(1, int.MaxValue)]
         public int Quantity { get; set; } = 1;
+
+        [Range(0, int.MaxValue)]
+        public int ReceivedQuantity { get; set; }
+
+        [Range(0, int.MaxValue)]
+        public int CancelledQuantity { get; set; }
 
         [Range(0, long.MaxValue)]
         public long UnitCostMinor { get; set; }
@@ -534,18 +599,120 @@ namespace Darwin.WebAdmin.ViewModels.Inventory
         [Required]
         public Guid BusinessId { get; set; }
 
-        [Required]
         [StringLength(64)]
-        public string OrderNumber { get; set; } = string.Empty;
+        public string? OrderNumber { get; set; }
 
         public DateTime OrderedAtUtc { get; set; }
 
         [Required]
+        [StringLength(3, MinimumLength = 3)]
+        public string Currency { get; set; } = "EUR";
+
+        public DateTime? ExpectedDeliveryDateUtc { get; set; }
+
+        [Required]
         public string Status { get; set; } = "Draft";
+
+        [StringLength(4000)]
+        public string? InternalNotes { get; set; }
 
         public List<PurchaseOrderLineVm> Lines { get; set; } = new();
         public List<SelectListItem> BusinessOptions { get; set; } = new();
         public List<SelectListItem> SupplierOptions { get; set; } = new();
         public List<SelectListItem> VariantOptions { get; set; } = new();
+    }
+
+    public sealed class GoodsReceiptsListVm
+    {
+        public Guid? BusinessId { get; set; }
+        public string Query { get; set; } = string.Empty;
+        public GoodsReceiptQueueFilter Filter { get; set; } = GoodsReceiptQueueFilter.All;
+        public IEnumerable<SelectListItem> FilterItems { get; set; } = new List<SelectListItem>();
+        public GoodsReceiptOpsSummaryVm Summary { get; set; } = new();
+        public List<SelectListItem> BusinessOptions { get; set; } = new();
+        public List<SelectListItem> PurchaseOrderOptions { get; set; } = new();
+        public List<SelectListItem> WarehouseOptions { get; set; } = new();
+        public List<GoodsReceiptListItemVm> Items { get; set; } = new();
+        public Guid PurchaseOrderId { get; set; }
+        public Guid WarehouseId { get; set; }
+        public string? InternalNotes { get; set; }
+        public int Page { get; set; } = 1;
+        public int PageSize { get; set; } = 20;
+        public int Total { get; set; }
+    }
+
+    public sealed class GoodsReceiptListItemVm
+    {
+        public Guid Id { get; set; }
+        public Guid BusinessId { get; set; }
+        public Guid SupplierId { get; set; }
+        public Guid PurchaseOrderId { get; set; }
+        public Guid WarehouseId { get; set; }
+        public string SupplierName { get; set; } = string.Empty;
+        public string PurchaseOrderNumber { get; set; } = string.Empty;
+        public string WarehouseName { get; set; } = string.Empty;
+        public string? GoodsReceiptNumber { get; set; }
+        public string Status { get; set; } = string.Empty;
+        public DateTime CreatedAtUtc { get; set; }
+        public DateTime? ReceivedAtUtc { get; set; }
+        public DateTime? PostedAtUtc { get; set; }
+        public int LineCount { get; set; }
+        public int ReceivedQuantity { get; set; }
+        public int AcceptedQuantity { get; set; }
+        public byte[] RowVersion { get; set; } = Array.Empty<byte>();
+    }
+
+    public sealed class GoodsReceiptOpsSummaryVm
+    {
+        public int TotalCount { get; set; }
+        public int DraftCount { get; set; }
+        public int ReceivedCount { get; set; }
+        public int InspectedCount { get; set; }
+        public int PostedCount { get; set; }
+        public int CancelledCount { get; set; }
+    }
+
+    public sealed class GoodsReceiptDetailVm
+    {
+        public Guid Id { get; set; }
+        public byte[] RowVersion { get; set; } = Array.Empty<byte>();
+        public Guid BusinessId { get; set; }
+        public Guid SupplierId { get; set; }
+        public Guid PurchaseOrderId { get; set; }
+        public Guid WarehouseId { get; set; }
+        public string SupplierName { get; set; } = string.Empty;
+        public string PurchaseOrderNumber { get; set; } = string.Empty;
+        public string WarehouseName { get; set; } = string.Empty;
+        public string? GoodsReceiptNumber { get; set; }
+        public string Status { get; set; } = string.Empty;
+        public DateTime? ReceivedAtUtc { get; set; }
+        public DateTime? InspectedAtUtc { get; set; }
+        public DateTime? PostedAtUtc { get; set; }
+        public DateTime? CancelledAtUtc { get; set; }
+        public string? InternalNotes { get; set; }
+        public List<GoodsReceiptLineVm> Lines { get; set; } = new();
+    }
+
+    public sealed class GoodsReceiptLineVm
+    {
+        public Guid Id { get; set; }
+        public Guid PurchaseOrderLineId { get; set; }
+        public Guid ProductVariantId { get; set; }
+        public string? SupplierSku { get; set; }
+        public string? Description { get; set; }
+        public int OrderedQuantity { get; set; }
+        public int PreviouslyReceivedQuantity { get; set; }
+        public int RemainingQuantity { get; set; }
+        [Range(0, int.MaxValue)]
+        public int ReceivedQuantity { get; set; }
+        [Range(0, int.MaxValue)]
+        public int AcceptedQuantity { get; set; }
+        [Range(0, int.MaxValue)]
+        public int RejectedQuantity { get; set; }
+        [Range(0, int.MaxValue)]
+        public int DamagedQuantity { get; set; }
+        public long UnitCostMinor { get; set; }
+        public long TotalCostMinor { get; set; }
+        public int SortOrder { get; set; }
     }
 }

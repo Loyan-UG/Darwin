@@ -6,6 +6,7 @@ using Darwin.Application.Abstractions.Persistence;
 using Darwin.Application.Orders.DTOs;
 using Darwin.Domain.Entities.Integration;
 using Darwin.Application.Orders.Validators;
+using Darwin.Application.Sales.Services;
 using Darwin.Domain.Entities.Orders;
 using Darwin.Domain.Entities.Settings;
 using FluentValidation;
@@ -22,15 +23,18 @@ namespace Darwin.Application.Orders.Commands
         private readonly IAppDbContext _db;
         private readonly IValidator<ShipmentCreateDto> _validator;
         private readonly IStringLocalizer<ValidationResource> _localizer;
+        private readonly SalesLifecycleEventService? _salesEvents;
 
         public AddShipmentHandler(
             IAppDbContext db,
             IValidator<ShipmentCreateDto> validator,
-            IStringLocalizer<ValidationResource> localizer)
+            IStringLocalizer<ValidationResource> localizer,
+            SalesLifecycleEventService? salesEvents = null)
         {
             _db = db;
             _validator = validator;
             _localizer = localizer;
+            _salesEvents = salesEvents;
         }
 
         public async Task HandleAsync(ShipmentCreateDto dto, CancellationToken ct = default)
@@ -50,6 +54,7 @@ namespace Darwin.Application.Orders.Commands
 
             var shipment = new Shipment
             {
+                Id = Guid.NewGuid(),
                 OrderId = order.Id,
                 Carrier = dto.Carrier.Trim(),
                 Service = dto.Service.Trim(),
@@ -89,6 +94,20 @@ namespace Darwin.Application.Orders.Commands
             }
 
             _db.Set<Shipment>().Add(shipment);
+            if (_salesEvents is not null)
+            {
+                var eventResult = await _salesEvents.RecordShipmentCreatedAsync(
+                    shipment,
+                    order,
+                    DateTime.UtcNow,
+                    ct)
+                    .ConfigureAwait(false);
+                if (!eventResult.Succeeded)
+                {
+                    throw new ValidationException(eventResult.Error);
+                }
+            }
+
             await _db.SaveChangesAsync(ct);
 
             if (DhlShipmentPhaseOneMetadata.IsDhlCarrier(shipment.Carrier) &&

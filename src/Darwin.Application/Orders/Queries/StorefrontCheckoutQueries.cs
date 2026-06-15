@@ -252,7 +252,7 @@ public sealed class GetStorefrontOrderConfirmationHandler
             .Select(line => new StorefrontOrderConfirmationLineDto
             {
                 Id = line.Id,
-                VariantId = line.VariantId,
+                VariantId = line.VariantId ?? Guid.Empty,
                 Name = line.Name,
                 Sku = line.Sku,
                 Quantity = line.Quantity,

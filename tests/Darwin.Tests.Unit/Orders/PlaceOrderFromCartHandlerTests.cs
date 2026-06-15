@@ -162,6 +162,10 @@ public sealed class PlaceOrderFromCartHandlerTests
         order.ShippingMethodName.Should().Be("DHL Paket");
         order.ShippingCarrier.Should().Be("DHL");
         order.ShippingService.Should().Be("Paket");
+        order.SalesChannel.Should().Be(SalesChannel.WebStorefront);
+        order.OrderedAtUtc.Should().NotBe(default);
+        order.BusinessId.Should().BeNull();
+        order.CustomerId.Should().BeNull();
         order.BillingAddressJson.Should().Contain("Max Mustermann");
         order.ShippingAddressJson.Should().Contain("Musterstrasse 1");
         order.Lines.Should().ContainSingle();

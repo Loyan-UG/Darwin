@@ -139,6 +139,8 @@ Use the same provider profile names across the processes that need object storag
 - `InvoiceArchive` for invoice archive and e-invoice artifacts.
 - `ShipmentLabels` for DHL or carrier label artifacts.
 - `MediaAssets` for CMS/media uploads when external object storage is selected.
+- `FinanceExports` for generated canonical finance export package source files.
+- `FinanceExportOutbound` for outbound file-delivery connector targets.
 
 Example local/staging command shape:
 
@@ -175,10 +177,18 @@ foreach ($project in $projects) {
   dotnet user-secrets --project $project set "ObjectStorage:Profiles:MediaAssets:Provider" "S3Compatible"
   dotnet user-secrets --project $project set "ObjectStorage:Profiles:MediaAssets:ContainerName" "darwin-invoice-archive"
   dotnet user-secrets --project $project set "ObjectStorage:Profiles:MediaAssets:Prefix" "media"
+
+  dotnet user-secrets --project $project set "ObjectStorage:Profiles:FinanceExports:Provider" "S3Compatible"
+  dotnet user-secrets --project $project set "ObjectStorage:Profiles:FinanceExports:ContainerName" "darwin-invoice-archive"
+  dotnet user-secrets --project $project set "ObjectStorage:Profiles:FinanceExports:Prefix" "finance-exports/packages"
+
+  dotnet user-secrets --project $project set "ObjectStorage:Profiles:FinanceExportOutbound:Provider" "S3Compatible"
+  dotnet user-secrets --project $project set "ObjectStorage:Profiles:FinanceExportOutbound:ContainerName" "darwin-invoice-archive"
+  dotnet user-secrets --project $project set "ObjectStorage:Profiles:FinanceExportOutbound:Prefix" "finance-exports/outbound"
 }
 ```
 
-Replace placeholder values through the secret store used by the target environment. For production, prefer a deployment vault and least-privilege credentials over developer user-secrets.
+Replace placeholder values through the secret store used by the target environment. For production, prefer a deployment vault and least-privilege credentials over developer user-secrets. `FinanceExports` is the stored package source; `FinanceExportOutbound` is the delivery destination. Do not replace either profile with batch metadata, document metadata, external-reference metadata, or package content.
 
 ## Manual Validation Checklist
 
@@ -206,7 +216,7 @@ The preflight checks only non-secret confirmations. It does not accept MinIO acc
 
 The preflight requires separate confirmation that:
 
-- `InvoiceArchive`, `ShipmentLabels`, and `MediaAssets` profiles are configured or deliberately decided for the deployment.
+- `InvoiceArchive`, `ShipmentLabels`, `MediaAssets`, `FinanceExports`, and `FinanceExportOutbound` profiles are configured or deliberately decided for the deployment.
 - The disposable production smoke prefix is approved before any production-like write is executed.
 - Retention/delete behavior is understood before retained smoke objects are written.
 - The operator runbook, ownership, and escalation path are available outside source control.

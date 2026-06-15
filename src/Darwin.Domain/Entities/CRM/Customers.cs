@@ -84,6 +84,36 @@ namespace Darwin.Domain.Entities.CRM
         public string? Notes { get; set; }
 
         /// <summary>
+        /// Gets or sets the customer lifecycle status used for CRM queues and reporting.
+        /// </summary>
+        public CustomerLifecycleStatus LifecycleStatus { get; set; } = CustomerLifecycleStatus.Active;
+
+        /// <summary>
+        /// Gets or sets the optional owner or responsible user id for CRM follow-up.
+        /// </summary>
+        public Guid? OwnerUserId { get; set; }
+
+        /// <summary>
+        /// Gets or sets the normalized acquisition source used for CRM reporting.
+        /// </summary>
+        public string? AcquisitionSource { get; set; }
+
+        /// <summary>
+        /// Gets or sets the preferred contact channel for CRM follow-up.
+        /// </summary>
+        public PreferredContactChannel? PreferredContactChannel { get; set; }
+
+        /// <summary>
+        /// Gets or sets when the customer was last contacted by CRM staff.
+        /// </summary>
+        public DateTime? LastContactedAtUtc { get; set; }
+
+        /// <summary>
+        /// Gets or sets the next planned follow-up timestamp.
+        /// </summary>
+        public DateTime? NextFollowUpAtUtc { get; set; }
+
+        /// <summary>
         /// Gets or sets segment memberships for CRM segmentation and targeting.
         /// </summary>
         public List<CustomerSegmentMembership> CustomerSegments { get; set; } = new();
@@ -190,6 +220,21 @@ namespace Darwin.Domain.Entities.CRM
         public string? Description { get; set; }
 
         /// <summary>
+        /// Gets or sets the normalized segment code used for reporting and imports.
+        /// </summary>
+        public string Code { get; set; } = string.Empty;
+
+        /// <summary>
+        /// Gets or sets whether this segment is currently active for assignment and targeting.
+        /// </summary>
+        public bool IsActive { get; set; } = true;
+
+        /// <summary>
+        /// Gets or sets optional rule metadata for future rule-driven segment membership.
+        /// </summary>
+        public string? RuleJson { get; set; }
+
+        /// <summary>
         /// Gets or sets memberships that attach customers to this segment.
         /// </summary>
         public List<CustomerSegmentMembership> Memberships { get; set; } = new();
@@ -288,6 +333,21 @@ namespace Darwin.Domain.Entities.CRM
         /// Gets or sets the UTC timestamp when consent was revoked, if applicable.
         /// </summary>
         public DateTime? RevokedAtUtc { get; set; }
+
+        /// <summary>
+        /// Gets or sets the normalized source that recorded or imported this consent decision.
+        /// </summary>
+        public string? Source { get; set; }
+
+        /// <summary>
+        /// Gets or sets the policy version that was accepted or revoked.
+        /// </summary>
+        public string? PolicyVersion { get; set; }
+
+        /// <summary>
+        /// Gets or sets optional evidence metadata for consent review.
+        /// </summary>
+        public string? EvidenceJson { get; set; }
     }
 
     /// <summary>
@@ -336,6 +396,11 @@ namespace Darwin.Domain.Entities.CRM
         public LeadStatus Status { get; set; } = LeadStatus.New;
 
         /// <summary>
+        /// Gets or sets the lead priority used for operator queues.
+        /// </summary>
+        public CrmPriority Priority { get; set; } = CrmPriority.Normal;
+
+        /// <summary>
         /// Gets or sets the optional responsible user id for the lead.
         /// </summary>
         public Guid? AssignedToUserId { get; set; }
@@ -344,6 +409,26 @@ namespace Darwin.Domain.Entities.CRM
         /// Gets or sets the optional customer id once the lead has been converted.
         /// </summary>
         public Guid? CustomerId { get; set; }
+
+        /// <summary>
+        /// Gets or sets when the lead was qualified.
+        /// </summary>
+        public DateTime? QualifiedAtUtc { get; set; }
+
+        /// <summary>
+        /// Gets or sets when the lead was disqualified.
+        /// </summary>
+        public DateTime? DisqualifiedAtUtc { get; set; }
+
+        /// <summary>
+        /// Gets or sets when the lead was converted to a customer relationship.
+        /// </summary>
+        public DateTime? ConvertedAtUtc { get; set; }
+
+        /// <summary>
+        /// Gets or sets the optional reason recorded when the lead is closed or reopened.
+        /// </summary>
+        public string? ClosedReason { get; set; }
 
         /// <summary>
         /// Gets or sets interactions recorded against the lead.
@@ -377,6 +462,21 @@ namespace Darwin.Domain.Entities.CRM
         public OpportunityStage Stage { get; set; } = OpportunityStage.Qualification;
 
         /// <summary>
+        /// Gets or sets the ISO 4217 currency code for opportunity value.
+        /// </summary>
+        public string Currency { get; set; } = DomainDefaults.DefaultCurrency;
+
+        /// <summary>
+        /// Gets or sets the probability percentage used for pipeline forecasting.
+        /// </summary>
+        public int? ProbabilityPercent { get; set; }
+
+        /// <summary>
+        /// Gets or sets the forecast category used for pipeline reporting.
+        /// </summary>
+        public OpportunityForecastCategory ForecastCategory { get; set; } = OpportunityForecastCategory.Pipeline;
+
+        /// <summary>
         /// Gets or sets the expected close date in UTC, if known.
         /// </summary>
         public DateTime? ExpectedCloseDateUtc { get; set; }
@@ -385,6 +485,21 @@ namespace Darwin.Domain.Entities.CRM
         /// Gets or sets the optional owner or responsible user id.
         /// </summary>
         public Guid? AssignedToUserId { get; set; }
+
+        /// <summary>
+        /// Gets or sets when the opportunity was closed.
+        /// </summary>
+        public DateTime? ClosedAtUtc { get; set; }
+
+        /// <summary>
+        /// Gets or sets the optional close reason for closed opportunities.
+        /// </summary>
+        public string? CloseReason { get; set; }
+
+        /// <summary>
+        /// Gets or sets the normalized opportunity source.
+        /// </summary>
+        public string? Source { get; set; }
 
         /// <summary>
         /// Gets or sets line items being discussed or quoted for the opportunity.
@@ -448,6 +563,11 @@ namespace Darwin.Domain.Entities.CRM
         /// Gets or sets the optional payment id that settles the invoice.
         /// </summary>
         public Guid? PaymentId { get; set; }
+
+        /// <summary>
+        /// Gets or sets an optional human-facing invoice number. Existing issued invoices may not have one.
+        /// </summary>
+        public string? InvoiceNumber { get; set; }
 
         /// <summary>
         /// Gets or sets the invoice lifecycle status.
@@ -579,6 +699,11 @@ namespace Darwin.Domain.Entities.CRM
         /// Gets or sets the total net amount in minor units.
         /// </summary>
         public long TotalNetMinor { get; set; }
+
+        /// <summary>
+        /// Gets or sets the total tax amount in minor units.
+        /// </summary>
+        public long TotalTaxMinor { get; set; }
 
         /// <summary>
         /// Gets or sets the total gross amount in minor units.

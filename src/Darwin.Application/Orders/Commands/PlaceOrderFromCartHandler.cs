@@ -6,6 +6,7 @@ using Darwin.Application.CartCheckout.Queries;
 using Darwin.Application.Common.Addresses;
 using Darwin.Application.Foundation;
 using Darwin.Application.Orders.DTOs;
+using Darwin.Application.Orders.Services;
 using Darwin.Domain.Entities.CartCheckout;
 using Darwin.Domain.Entities.Catalog;
 using Darwin.Domain.Entities.Identity;
@@ -188,28 +189,39 @@ public sealed class PlaceOrderFromCartHandler
         var discountTotalMinor = Math.Max(0L, rawGrossMinor - summary.GrandTotalGrossMinor);
         var grandTotalGrossMinor = rawGrossMinor + dto.ShippingTotalMinor - discountTotalMinor;
 
-        var order = new Order
-        {
-            OrderNumber = await NextOrderNumberAsync(ct).ConfigureAwait(false),
-            UserId = dto.UserId ?? cart.UserId,
-            Currency = summary.Currency,
-            PricesIncludeTax = false,
-            SubtotalNetMinor = subtotalNetMinor,
-            TaxTotalMinor = taxTotalMinor,
-            ShippingTotalMinor = dto.ShippingTotalMinor,
-            DiscountTotalMinor = discountTotalMinor,
-            GrandTotalGrossMinor = Math.Max(0L, grandTotalGrossMinor),
-            ShippingMethodId = checkoutIntent.SelectedShippingMethodId,
-            ShippingMethodName = selectedShippingOption?.Name,
-            ShippingCarrier = selectedShippingOption?.Carrier,
-            ShippingService = selectedShippingOption?.Service,
-            Status = OrderStatus.Created,
-            BillingAddressJson = billingAddressJson,
-            ShippingAddressJson = shippingAddressJson,
-            Lines = orderLines
-        };
-
-        _db.Set<Order>().Add(order);
+        var order = await new OrderCreationService(_db, _clock, _numberSequenceService)
+                .CreateAsync(new OrderCreationRequest
+                {
+                    UserId = dto.UserId ?? cart.UserId,
+                    Currency = summary.Currency,
+                    PricesIncludeTax = false,
+                    SalesChannel = SalesChannel.WebStorefront,
+                    FallbackMode = OrderNumberFallbackMode.OpaqueSuffix,
+                    ShippingTotalMinor = dto.ShippingTotalMinor,
+                    DiscountTotalMinor = discountTotalMinor,
+                    ShippingMethodId = checkoutIntent.SelectedShippingMethodId,
+                    ShippingMethodName = selectedShippingOption?.Name,
+                    ShippingCarrier = selectedShippingOption?.Carrier,
+                    ShippingService = selectedShippingOption?.Service,
+                    BillingAddressJson = billingAddressJson,
+                    ShippingAddressJson = shippingAddressJson,
+                    Lines = orderLines.Select(line => new OrderCreationLineRequest
+                    {
+                        VariantId = line.VariantId,
+                        WarehouseId = line.WarehouseId,
+                        Name = line.Name,
+                        Sku = line.Sku,
+                        Quantity = line.Quantity,
+                        UnitPriceNetMinor = line.UnitPriceNetMinor,
+                        VatRate = line.VatRate,
+                        UnitPriceGrossMinor = line.UnitPriceGrossMinor,
+                        LineTaxMinor = line.LineTaxMinor,
+                        LineGrossMinor = line.LineGrossMinor,
+                        AddOnValueIdsJson = line.AddOnValueIdsJson,
+                        AddOnPriceDeltaMinor = line.AddOnPriceDeltaMinor
+                    }).ToList()
+                }, ct)
+                .ConfigureAwait(false);
 
         cart.IsDeleted = true;
         foreach (var cartItem in activeItems)
@@ -284,40 +296,6 @@ public sealed class PlaceOrderFromCartHandler
         {
             throw new InvalidOperationException(_localizer["AddressIncomplete", role]);
         }
-    }
-
-    private async Task<string> NextOrderNumberAsync(CancellationToken ct)
-    {
-        if (_numberSequenceService is not null)
-        {
-            var reserved = await _numberSequenceService.ReserveNextAsync(
-                new NumberSequenceRequest(null, NumberSequenceDocumentType.Order, NumberSequenceService.GlobalScopeKey),
-                ct)
-                .ConfigureAwait(false);
-            if (reserved.Succeeded && !string.IsNullOrWhiteSpace(reserved.Value))
-            {
-                return reserved.Value;
-            }
-        }
-
-        var nowUtc = _clock.UtcNow;
-
-        for (var attempt = 0; attempt < 5; attempt++)
-        {
-            var suffix = Guid.NewGuid().ToString("N", CultureInfo.InvariantCulture)[..6].ToUpperInvariant();
-            var candidate = $"D-{nowUtc:yyyyMMdd}-{suffix}";
-            var exists = await _db.Set<Order>()
-                .AsNoTracking()
-                .AnyAsync(x => !x.IsDeleted && x.OrderNumber == candidate, ct)
-                .ConfigureAwait(false);
-
-            if (!exists)
-            {
-                return candidate;
-            }
-        }
-
-        return $"D-{nowUtc:yyyyMMdd}-{Guid.NewGuid():N}"[..50].ToUpperInvariant();
     }
 
     private static string BuildSummaryKey(Guid variantId, string? selectedAddOnValueIdsJson)

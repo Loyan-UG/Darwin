@@ -1,0 +1,123 @@
+@model Darwin.WebAdmin.ViewModels.Sales.SalesOrdersListVm
+@inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
+@{
+    ViewData["Title"] = T.T("SalesOrders");
+    var culture = System.Globalization.CultureInfo.CurrentCulture;
+    string SalesOverviewUrl() => Url.Action("Index", "Sales") ?? string.Empty;
+    string SalesQuotesUrl() => Url.Action("Quotes", "Sales") ?? string.Empty;
+    string SalesInvoicesUrl() => Url.Action("Invoices", "Sales") ?? string.Empty;
+    string ReturnOrdersUrl() => Url.Action("ReturnOrders", "Sales") ?? string.Empty;
+    string SalesOrdersBaseUrl() => Url.Action("Orders", "Sales") ?? string.Empty;
+    string SalesOrdersUrl(string? q = null, string? filter = null, string? salesChannel = null) => Url.Action("Orders", "Sales", new { q, filter, salesChannel, orderedFromUtc = Model.OrderedFromUtc?.ToString("yyyy-MM-dd"), orderedToUtc = Model.OrderedToUtc?.ToString("yyyy-MM-dd"), businessId = Model.BusinessId, customerId = Model.CustomerId }) ?? string.Empty;
+    string SalesOrderUrl(Guid id) => Url.Action("Order", "Sales", new { id }) ?? string.Empty;
+    string OpsOrderUrl(Guid id) => Url.Action("Details", "Orders", new { id }) ?? string.Empty;
+    string Money(string currency, long minor) => $"{currency} {(minor / 100.0M):0.00}";
+    string DateText(DateTime utc) => utc == default ? "-" : utc.ToString("g", culture);
+    var openOrdersUrl = SalesOrdersUrl(Model.Query, "Open", Model.SalesChannel?.ToString());
+    var paidOrdersUrl = SalesOrdersUrl(Model.Query, "Paid", Model.SalesChannel?.ToString());
+    var fulfillmentOrdersUrl = SalesOrdersUrl(Model.Query, "FulfillmentAttention", Model.SalesChannel?.ToString());
+    var clearOrdersUrl = SalesOrdersUrl();
+}
+
+<div id="sales-orders-workspace-shell">
+<partial name="~/Views/Shared/_Alerts.cshtml" />
+<div class="d-flex justify-content-between align-items-start gap-3 mb-3">
+    <div>
+        <h1 class="mb-0"><i class="fa-solid fa-receipt"></i> @T.T("SalesOrders")</h1>
+        <div class="text-muted small mt-1">@T.T("SalesOrdersSubtitle")</div>
+    </div>
+    <div class="d-flex gap-2 flex-wrap">
+        <a asp-action="Index" hx-get="@SalesOverviewUrl()" hx-target="#sales-orders-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-outline-secondary">@T.T("Overview")</a>
+        <a asp-action="Quotes" hx-get="@SalesQuotesUrl()" hx-target="#sales-orders-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-outline-primary">@T.T("SalesQuotes")</a>
+        <a asp-action="ReturnOrders" hx-get="@ReturnOrdersUrl()" hx-target="#sales-orders-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-outline-primary">@T.T("ReturnOrders")</a>
+        <a asp-action="Invoices" hx-get="@SalesInvoicesUrl()" hx-target="#sales-orders-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-outline-primary">@T.T("SalesInvoices")</a>
+    </div>
+</div>
+
+<form asp-action="Orders" method="get" class="row g-2 align-items-end mb-3"
+      hx-get="@SalesOrdersBaseUrl()"
+      hx-target="#sales-orders-workspace-shell"
+      hx-swap="outerHTML"
+      hx-push-url="true">
+    <div class="col-md-3">
+        <label class="form-label small text-muted">@T.T("Search")</label>
+        <input type="text" name="q" value="@Model.Query" class="form-control" placeholder="@T.T("SearchOrdersPlaceholder")" />
+    </div>
+    <div class="col-md-2">
+        <label class="form-label small text-muted">@T.T("Status")</label>
+        <select name="filter" asp-items="Model.FilterItems" class="form-select"></select>
+    </div>
+    <div class="col-md-2">
+        <label class="form-label small text-muted">@T.T("SalesChannel")</label>
+        <select name="salesChannel" asp-items="Model.SalesChannelItems" class="form-select"></select>
+    </div>
+    <div class="col-md-2">
+        <label class="form-label small text-muted">@T.T("From")</label>
+        <input type="date" name="orderedFromUtc" value="@Model.OrderedFromUtc?.ToString("yyyy-MM-dd")" class="form-control" />
+    </div>
+    <div class="col-md-2">
+        <label class="form-label small text-muted">@T.T("To")</label>
+        <input type="date" name="orderedToUtc" value="@Model.OrderedToUtc?.ToString("yyyy-MM-dd")" class="form-control" />
+    </div>
+    <div class="col-md-1 d-flex gap-2">
+        <button class="btn btn-outline-secondary" type="submit">@T.T("Filter")</button>
+    </div>
+    <input type="hidden" name="businessId" value="@Model.BusinessId" />
+    <input type="hidden" name="customerId" value="@Model.CustomerId" />
+</form>
+
+<div class="d-flex gap-2 flex-wrap mb-3">
+    <a asp-action="Orders" asp-route-filter="Open" hx-get="@openOrdersUrl" hx-target="#sales-orders-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-sm @(Model.Filter == Darwin.Application.Sales.DTOs.SalesOrderDocumentFilter.Open ? "btn-primary" : "btn-outline-primary")">@T.T("Open")</a>
+    <a asp-action="Orders" asp-route-filter="Paid" hx-get="@paidOrdersUrl" hx-target="#sales-orders-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-sm @(Model.Filter == Darwin.Application.Sales.DTOs.SalesOrderDocumentFilter.Paid ? "btn-success" : "btn-outline-success")">@T.T("Paid")</a>
+    <a asp-action="Orders" asp-route-filter="FulfillmentAttention" hx-get="@fulfillmentOrdersUrl" hx-target="#sales-orders-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-sm @(Model.Filter == Darwin.Application.Sales.DTOs.SalesOrderDocumentFilter.FulfillmentAttention ? "btn-warning" : "btn-outline-warning")">@T.T("FulfillmentAttention")</a>
+    <a asp-action="Orders" hx-get="@clearOrdersUrl" hx-target="#sales-orders-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-sm btn-outline-secondary">@T.T("ClearQueueFilters")</a>
+</div>
+
+<div class="table-responsive">
+    <table class="table table-sm table-striped align-middle">
+        <thead>
+        <tr>
+            <th>@T.T("OrderNumber")</th>
+            <th>@T.T("SalesChannel")</th>
+            <th>@T.T("Status")</th>
+            <th class="text-end">@T.T("Total")</th>
+            <th>@T.T("Ordered")</th>
+            <th>@T.T("Ops")</th>
+            <th class="text-end">@T.T("Actions")</th>
+        </tr>
+        </thead>
+        <tbody>
+        @if (Model.Items.Count == 0)
+        {
+            <tr><td colspan="7" class="text-center text-muted">@T.T("NoSalesDocuments")</td></tr>
+        }
+        else
+        {
+            foreach (var item in Model.Items)
+            {
+                <tr>
+                    <td>@item.OrderNumber</td>
+                    <td>@T.T($"SalesChannel{item.SalesChannel}")</td>
+                    <td>@T.T(item.Status.ToString())</td>
+                    <td class="text-end">@Money(item.Currency, item.GrandTotalGrossMinor)</td>
+                    <td>@DateText(item.OrderedAtUtc)</td>
+                    <td>
+                        <div class="small text-muted d-flex flex-column">
+                            <span>@T.T("Lines"): @item.LineCount</span>
+                            <span>@T.T("Payments"): @item.PaymentCount (@T.T("FailedCount"): @item.FailedPaymentCount)</span>
+                            <span>@T.T("Shipments"): @item.ShipmentCount / @T.T("Invoices"): @item.InvoiceCount</span>
+                        </div>
+                    </td>
+                    <td class="text-end">
+                        <a asp-action="Order" asp-route-id="@item.Id" hx-get="@SalesOrderUrl(item.Id)" hx-target="#sales-orders-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-sm btn-outline-primary">@T.T("View")</a>
+                        <a asp-controller="Orders" asp-action="Details" asp-route-id="@item.Id" hx-get="@OpsOrderUrl(item.Id)" hx-target="#sales-orders-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-sm btn-outline-secondary">@T.T("Operations")</a>
+                    </td>
+                </tr>
+            }
+        }
+        </tbody>
+    </table>
+</div>
+
+<pager page="Model.Page" page-size="Model.PageSize" total="Model.Total" asp-controller="Sales" asp-action="Orders" asp-route-q="@Model.Query" asp-route-filter="@Model.Filter" asp-route-salesChannel="@Model.SalesChannel" asp-route-orderedFromUtc="@Model.OrderedFromUtc" asp-route-orderedToUtc="@Model.OrderedToUtc" asp-route-businessId="@Model.BusinessId" asp-route-customerId="@Model.CustomerId" hx-target="#sales-orders-workspace-shell" hx-swap="outerHTML" hx-push-url="true"></pager>
+</div>

@@ -1,0 +1,99 @@
+@model Darwin.WebAdmin.ViewModels.Sales.SalesQuotesListVm
+@inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
+@{
+    ViewData["Title"] = T.T("SalesQuotes");
+    var culture = System.Globalization.CultureInfo.CurrentCulture;
+    string SalesOverviewUrl() => Url.Action("Index", "Sales") ?? string.Empty;
+    string SalesOrdersUrl() => Url.Action("Orders", "Sales") ?? string.Empty;
+    string SalesInvoicesUrl() => Url.Action("Invoices", "Sales") ?? string.Empty;
+    string ReturnOrdersUrl() => Url.Action("ReturnOrders", "Sales") ?? string.Empty;
+    string SalesQuotesBaseUrl() => Url.Action("Quotes", "Sales") ?? string.Empty;
+    string SalesQuoteUrl(Guid id) => Url.Action("Quote", "Sales", new { id }) ?? string.Empty;
+    string CreateQuoteUrl() => Url.Action("CreateQuote", "Sales") ?? string.Empty;
+    string Money(string currency, long minor) => $"{currency} {(minor / 100.0M):0.00}";
+    string DateText(DateTime? utc) => utc.HasValue ? utc.Value.ToString("g", culture) : "-";
+}
+
+<div id="sales-quotes-workspace-shell">
+<partial name="~/Views/Shared/_Alerts.cshtml" />
+<div class="d-flex justify-content-between align-items-start gap-3 mb-3">
+    <div>
+        <h1 class="mb-0"><i class="fa-solid fa-file-signature"></i> @T.T("SalesQuotes")</h1>
+        <div class="text-muted small mt-1">@T.T("SalesQuotesSubtitle")</div>
+    </div>
+    <div class="d-flex gap-2 flex-wrap">
+        <a asp-action="Index" hx-get="@SalesOverviewUrl()" hx-target="#sales-quotes-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-outline-secondary">@T.T("Overview")</a>
+        <a asp-action="Orders" hx-get="@SalesOrdersUrl()" hx-target="#sales-quotes-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-outline-primary">@T.T("SalesOrders")</a>
+        <a asp-action="ReturnOrders" hx-get="@ReturnOrdersUrl()" hx-target="#sales-quotes-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-outline-primary">@T.T("ReturnOrders")</a>
+        <a asp-action="Invoices" hx-get="@SalesInvoicesUrl()" hx-target="#sales-quotes-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-outline-primary">@T.T("SalesInvoices")</a>
+        <a asp-action="CreateQuote" hx-get="@CreateQuoteUrl()" hx-target="#sales-quotes-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-primary">@T.T("NewSalesQuote")</a>
+    </div>
+</div>
+
+<form asp-action="Quotes" method="get" class="row g-2 align-items-end mb-3" hx-get="@SalesQuotesBaseUrl()" hx-target="#sales-quotes-workspace-shell" hx-swap="outerHTML" hx-push-url="true">
+    <div class="col-md-3">
+        <label class="form-label small text-muted">@T.T("Search")</label>
+        <input type="text" name="q" value="@Model.Query" class="form-control" placeholder="@T.T("SearchQuotesPlaceholder")" />
+    </div>
+    <div class="col-md-2">
+        <label class="form-label small text-muted">@T.T("Status")</label>
+        <select name="filter" asp-items="Model.FilterItems" class="form-select"></select>
+    </div>
+    <div class="col-md-2">
+        <label class="form-label small text-muted">@T.T("ValidFrom")</label>
+        <input type="date" name="validUntilFromUtc" value="@Model.ValidUntilFromUtc?.ToString("yyyy-MM-dd")" class="form-control" />
+    </div>
+    <div class="col-md-2">
+        <label class="form-label small text-muted">@T.T("ValidTo")</label>
+        <input type="date" name="validUntilToUtc" value="@Model.ValidUntilToUtc?.ToString("yyyy-MM-dd")" class="form-control" />
+    </div>
+    <div class="col-md-3 d-flex gap-2">
+        <button class="btn btn-outline-secondary" type="submit">@T.T("Filter")</button>
+        <a asp-action="Quotes" hx-get="@SalesQuotesBaseUrl()" hx-target="#sales-quotes-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-outline-secondary">@T.T("ClearQueueFilters")</a>
+    </div>
+    <input type="hidden" name="businessId" value="@Model.BusinessId" />
+    <input type="hidden" name="customerId" value="@Model.CustomerId" />
+    <input type="hidden" name="opportunityId" value="@Model.OpportunityId" />
+</form>
+
+<div class="table-responsive">
+    <table class="table table-sm table-striped align-middle">
+        <thead>
+        <tr>
+            <th>@T.T("QuoteNumber")</th>
+            <th>@T.T("Title")</th>
+            <th>@T.T("Status")</th>
+            <th class="text-end">@T.T("Total")</th>
+            <th>@T.T("ValidUntil")</th>
+            <th>@T.T("Created")</th>
+            <th class="text-end">@T.T("Actions")</th>
+        </tr>
+        </thead>
+        <tbody>
+        @if (Model.Items.Count == 0)
+        {
+            <tr><td colspan="7" class="text-center text-muted">@T.T("NoSalesQuotesFound")</td></tr>
+        }
+        else
+        {
+            foreach (var item in Model.Items)
+            {
+                <tr>
+                    <td>@(item.QuoteNumber ?? "-")</td>
+                    <td>@item.Title</td>
+                    <td>@T.T($"SalesQuoteStatus{item.Status}")</td>
+                    <td class="text-end">@Money(item.Currency, item.TotalGrossMinor)</td>
+                    <td>@DateText(item.ValidUntilUtc)</td>
+                    <td>@item.CreatedAtUtc.ToString("g", culture)</td>
+                    <td class="text-end">
+                        <a asp-action="Quote" asp-route-id="@item.Id" hx-get="@SalesQuoteUrl(item.Id)" hx-target="#sales-quotes-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-sm btn-outline-primary">@T.T("View")</a>
+                    </td>
+                </tr>
+            }
+        }
+        </tbody>
+    </table>
+</div>
+
+<pager page="Model.Page" page-size="Model.PageSize" total="Model.Total" asp-controller="Sales" asp-action="Quotes" asp-route-q="@Model.Query" asp-route-filter="@Model.Filter" asp-route-validUntilFromUtc="@Model.ValidUntilFromUtc" asp-route-validUntilToUtc="@Model.ValidUntilToUtc" asp-route-businessId="@Model.BusinessId" asp-route-customerId="@Model.CustomerId" asp-route-opportunityId="@Model.OpportunityId" hx-target="#sales-quotes-workspace-shell" hx-swap="outerHTML" hx-push-url="true"></pager>
+</div>

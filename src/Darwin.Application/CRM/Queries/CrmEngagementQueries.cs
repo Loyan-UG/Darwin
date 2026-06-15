@@ -77,6 +77,9 @@ namespace Darwin.Application.CRM.Queries
                     Granted = x.Granted,
                     GrantedAtUtc = x.GrantedAtUtc,
                     RevokedAtUtc = x.RevokedAtUtc,
+                    Source = x.Source,
+                    PolicyVersion = x.PolicyVersion,
+                    EvidenceJson = x.EvidenceJson,
                     RowVersion = x.RowVersion
                 })
                 .ToListAsync(ct)
@@ -107,6 +110,7 @@ namespace Darwin.Application.CRM.Queries
                 var term = QueryLikePattern.Contains(query);
                 baseQuery = baseQuery.Where(x =>
                     EF.Functions.Like(x.Name, term, QueryLikePattern.EscapeCharacter) ||
+                    EF.Functions.Like(x.Code, term, QueryLikePattern.EscapeCharacter) ||
                     (x.Description != null && EF.Functions.Like(x.Description, term, QueryLikePattern.EscapeCharacter)));
             }
 
@@ -128,6 +132,9 @@ namespace Darwin.Application.CRM.Queries
                     Id = x.Id,
                     Name = x.Name,
                     Description = x.Description,
+                    Code = x.Code,
+                    IsActive = x.IsActive,
+                    RuleJson = x.RuleJson,
                     MemberCount = x.Memberships.Count(membership => !membership.IsDeleted),
                     HasDescription = x.Description != null && x.Description.Trim() != string.Empty,
                     CreatedAtUtc = x.CreatedAtUtc,
@@ -176,7 +183,10 @@ namespace Darwin.Application.CRM.Queries
                     Id = x.Id,
                     RowVersion = x.RowVersion,
                     Name = x.Name,
-                    Description = x.Description
+                    Description = x.Description,
+                    Code = x.Code,
+                    IsActive = x.IsActive,
+                    RuleJson = x.RuleJson
                 })
                 .FirstOrDefaultAsync(ct);
         }

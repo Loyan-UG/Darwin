@@ -1,0 +1,123 @@
+@model Darwin.WebAdmin.ViewModels.Sales.SalesOrderDetailVm
+@inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
+@{
+    var doc = Model.Document;
+    ViewData["Title"] = T.T("SalesOrder") + " " + doc.OrderNumber;
+    var culture = System.Globalization.CultureInfo.CurrentCulture;
+    string SalesOrdersUrl() => Url.Action("Orders", "Sales") ?? string.Empty;
+    string OpsOrderUrl() => Url.Action("Details", "Orders", new { id = doc.Id }) ?? string.Empty;
+    string CreateInvoiceUrl() => Url.Action("CreateInvoice", "Orders", new { orderId = doc.Id }) ?? string.Empty;
+    string Money(long minor) => $"{doc.Currency} {(minor / 100.0M):0.00}";
+    string DateText(DateTime? utc) => utc.HasValue && utc.Value != default ? utc.Value.ToString("g", culture) : "-";
+}
+
+<div id="sales-order-workspace-shell">
+<partial name="~/Views/Shared/_Alerts.cshtml" />
+<div class="d-flex justify-content-between align-items-start gap-3 mb-3">
+    <div>
+        <h1 class="mb-0"><i class="fa-solid fa-receipt"></i> @T.T("SalesOrder") @doc.OrderNumber</h1>
+        <div class="text-muted small mt-1">@T.T("SalesOrderReadOnly")</div>
+    </div>
+    <div class="d-flex gap-2 flex-wrap">
+        <a asp-action="Orders" hx-get="@SalesOrdersUrl()" hx-target="#sales-order-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-outline-secondary">@T.T("BackToOrders")</a>
+        <a asp-controller="Orders" asp-action="Details" asp-route-id="@doc.Id" hx-get="@OpsOrderUrl()" hx-target="#sales-order-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-outline-primary">@T.T("Operations")</a>
+    </div>
+</div>
+
+<div class="row g-3 mb-3">
+    <div class="col-md-3"><div class="border rounded p-3 h-100"><div class="text-muted small">@T.T("SalesChannel")</div><div class="fw-semibold">@T.T($"SalesChannel{doc.SalesChannel}")</div></div></div>
+    <div class="col-md-3"><div class="border rounded p-3 h-100"><div class="text-muted small">@T.T("Ordered")</div><div class="fw-semibold">@DateText(doc.OrderedAtUtc)</div></div></div>
+    <div class="col-md-3"><div class="border rounded p-3 h-100"><div class="text-muted small">@T.T("Status")</div><div class="fw-semibold">@T.T(doc.Status.ToString())</div></div></div>
+    <div class="col-md-3"><div class="border rounded p-3 h-100"><div class="text-muted small">@T.T("Total")</div><div class="fw-semibold">@Money(doc.GrandTotalGrossMinor)</div></div></div>
+</div>
+
+<div class="row g-3 mb-3">
+    <div class="col-lg-8">
+        <div class="border rounded p-3 h-100">
+            <h2 class="h6 mb-3">@T.T("TaxPriceSnapshot")</h2>
+            <div class="row g-3">
+                <div class="col-md-3"><div class="text-muted small">@T.T("SubtotalNet")</div><div class="fw-semibold">@Money(doc.SubtotalNetMinor)</div></div>
+                <div class="col-md-3"><div class="text-muted small">@T.T("TaxTotal")</div><div class="fw-semibold">@Money(doc.TaxTotalMinor)</div></div>
+                <div class="col-md-3"><div class="text-muted small">@T.T("Shipping")</div><div class="fw-semibold">@Money(doc.ShippingTotalMinor)</div></div>
+                <div class="col-md-3"><div class="text-muted small">@T.T("Discounts")</div><div class="fw-semibold">@Money(doc.DiscountTotalMinor)</div></div>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-4">
+        <div class="border rounded p-3 h-100">
+            <h2 class="h6 mb-3">@T.T("References")</h2>
+            <div class="small"><span class="text-muted">@T.T("Business"):</span> @(doc.BusinessId?.ToString("D") ?? "-")</div>
+            <div class="small"><span class="text-muted">@T.T("Customer"):</span> @(doc.CustomerId?.ToString("D") ?? "-")</div>
+            <div class="small"><span class="text-muted">@T.T("User"):</span> @(doc.UserId?.ToString("D") ?? "-")</div>
+        </div>
+    </div>
+</div>
+
+<h2 class="h6">@T.T("Lines")</h2>
+<div class="table-responsive mb-3">
+    <table class="table table-sm table-striped align-middle">
+        <thead><tr><th>@T.T("Sku")</th><th>@T.T("Name")</th><th class="text-end">@T.T("Qty")</th><th class="text-end">@T.T("Unit")</th><th class="text-end">@T.T("TaxTotal")</th><th class="text-end">@T.T("Line")</th></tr></thead>
+        <tbody>
+        @foreach (var line in doc.Lines)
+        {
+            <tr>
+                <td>@line.Sku</td>
+                <td>@line.Name</td>
+                <td class="text-end">@line.Quantity</td>
+                <td class="text-end">@Money(line.UnitPriceGrossMinor)</td>
+                <td class="text-end">@Money(line.LineTaxMinor)</td>
+                <td class="text-end">@Money(line.LineGrossMinor)</td>
+            </tr>
+        }
+        </tbody>
+    </table>
+</div>
+
+<div class="row g-3">
+    <div class="col-lg-4">
+        <div class="border rounded p-3 h-100">
+            <h2 class="h6">@T.T("Payments")</h2>
+            @foreach (var payment in doc.Settlements)
+            {
+                <div class="border-top py-2 small">
+                    <div class="fw-semibold">@payment.Provider / @T.T(payment.Status.ToString())</div>
+                    <div>@Money(payment.AmountMinor)</div>
+                    <div class="text-muted">@DateText(payment.PaidAtUtc)</div>
+                </div>
+            }
+            @if (doc.Settlements.Count == 0) { <div class="text-muted small">@T.T("NoRecords")</div> }
+        </div>
+    </div>
+    <div class="col-lg-4">
+        <div class="border rounded p-3 h-100">
+            <h2 class="h6">@T.T("Shipments")</h2>
+            @foreach (var shipment in doc.Fulfillments)
+            {
+                <div class="border-top py-2 small">
+                    <div class="fw-semibold">@shipment.Carrier / @shipment.Service</div>
+                    <div>@T.T(shipment.Status.ToString())</div>
+                    <div class="text-muted">@shipment.TrackingNumber</div>
+                </div>
+            }
+            @if (doc.Fulfillments.Count == 0) { <div class="text-muted small">@T.T("NoRecords")</div> }
+        </div>
+    </div>
+    <div class="col-lg-4">
+        <div class="border rounded p-3 h-100">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <h2 class="h6 mb-0">@T.T("Invoices")</h2>
+                <a asp-controller="Orders" asp-action="CreateInvoice" asp-route-orderId="@doc.Id" hx-get="@CreateInvoiceUrl()" hx-target="#sales-order-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-sm btn-outline-secondary">@T.T("CreateInvoice")</a>
+            </div>
+            @foreach (var invoice in doc.Invoices)
+            {
+                <div class="border-top py-2 small">
+                    <div class="fw-semibold">@(string.IsNullOrWhiteSpace(invoice.InvoiceNumber) ? T.T("NotAssigned") : invoice.InvoiceNumber)</div>
+                    <div>@T.T(invoice.Status.ToString()) / @Money(invoice.TotalGrossMinor)</div>
+                    <div class="text-muted">@T.T("Archive"): @(invoice.HasArchiveMetadata ? T.T("Ready") : T.T("Missing"))</div>
+                </div>
+            }
+            @if (doc.Invoices.Count == 0) { <div class="text-muted small">@T.T("NoRecords")</div> }
+        </div>
+    </div>
+</div>
+</div>

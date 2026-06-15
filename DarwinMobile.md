@@ -24,16 +24,17 @@ Consumer app responsibilities:
 - Profile, preferences, phone verification, addresses, and account deletion request flow.
 - Business discovery/detail and member engagement.
 - Loyalty overview, account, rewards, history, join, promotions/timeline where exposed, and QR preparation.
-- Orders and invoices.
-- Invoice archive document and structured source-model downloads where supported.
+- Member commerce history code exists for orders and invoices through `MemberCommercePage`, `MemberCommerceViewModel`, `MemberCommerceService`, and `ApiRoutes.Orders` / `ApiRoutes.Invoices`.
+- Member order and invoice detail, retry-payment, document, archive, and structured source-model routes are compatibility-sensitive when those surfaces are enabled.
 - Push/device registration.
 - Legal links and permission disclosures.
 
 Current first-launch payment policy:
 
 - Consumer mobile does not process payment directly.
-- Customer checkout belongs to the web storefront when enabled.
+- Customer checkout, cart placement, and payment finalization belong to the web storefront and WebApi checkout routes when enabled.
 - Payment finalization remains verified-webhook-authoritative.
+- Sales expansion currently preserves mobile commerce compatibility only; it does not expand consumer mobile checkout or make mobile the primary order/invoice surface.
 
 ## Business App Scope
 

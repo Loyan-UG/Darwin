@@ -40,9 +40,15 @@ namespace Darwin.Application.CRM.Commands
                 CustomerId = dto.CustomerId,
                 Title = dto.Title.Trim(),
                 EstimatedValueMinor = dto.EstimatedValueMinor,
+                Currency = NormalizeCurrency(dto.Currency),
                 Stage = dto.Stage,
+                ProbabilityPercent = dto.ProbabilityPercent,
+                ForecastCategory = dto.ForecastCategory,
                 ExpectedCloseDateUtc = dto.ExpectedCloseDateUtc,
                 AssignedToUserId = dto.AssignedToUserId,
+                ClosedAtUtc = dto.ClosedAtUtc,
+                CloseReason = NormalizeOptional(dto.CloseReason),
+                Source = NormalizeOptional(dto.Source),
                 Items = dto.Items.Select(x => new OpportunityItem
                 {
                     ProductVariantId = x.ProductVariantId,
@@ -55,6 +61,12 @@ namespace Darwin.Application.CRM.Commands
             await _db.SaveChangesAsync(ct).ConfigureAwait(false);
             return opportunity.Id;
         }
+
+        private static string NormalizeCurrency(string value) =>
+            value.Trim().ToUpperInvariant();
+
+        private static string? NormalizeOptional(string? value) =>
+            string.IsNullOrWhiteSpace(value) ? null : value.Trim();
     }
 
     public sealed class UpdateOpportunityHandler
@@ -94,9 +106,15 @@ namespace Darwin.Application.CRM.Commands
             opportunity.CustomerId = dto.CustomerId;
             opportunity.Title = dto.Title.Trim();
             opportunity.EstimatedValueMinor = dto.EstimatedValueMinor;
+            opportunity.Currency = NormalizeCurrency(dto.Currency);
             opportunity.Stage = dto.Stage;
+            opportunity.ProbabilityPercent = dto.ProbabilityPercent;
+            opportunity.ForecastCategory = dto.ForecastCategory;
             opportunity.ExpectedCloseDateUtc = dto.ExpectedCloseDateUtc;
             opportunity.AssignedToUserId = dto.AssignedToUserId;
+            opportunity.ClosedAtUtc = dto.ClosedAtUtc;
+            opportunity.CloseReason = NormalizeOptional(dto.CloseReason);
+            opportunity.Source = NormalizeOptional(dto.Source);
 
             _db.Set<OpportunityItem>().RemoveRange(opportunity.Items);
             opportunity.Items = dto.Items.Select(x => new OpportunityItem
@@ -115,5 +133,11 @@ namespace Darwin.Application.CRM.Commands
                 throw new DbUpdateConcurrencyException(_localizer["ConcurrencyConflictDetected"]);
             }
         }
+
+        private static string NormalizeCurrency(string value) =>
+            value.Trim().ToUpperInvariant();
+
+        private static string? NormalizeOptional(string? value) =>
+            string.IsNullOrWhiteSpace(value) ? null : value.Trim();
     }
 }

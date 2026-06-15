@@ -5,6 +5,7 @@
     var inventoryCulture = System.Globalization.CultureInfo.CurrentCulture;
     string LocalizePurchaseOrderStatus(object? status) => status is null ? "-" : T.T(status.ToString() ?? string.Empty);
     string InventoryDateTimeText(DateTime utc) => utc.ToString("g", inventoryCulture);
+    string InventoryOptionalDateTimeText(DateTime? utc) => utc.HasValue ? utc.Value.ToString("g", inventoryCulture) : "-";
     string PurchaseOrderOpsHealthBadgeClass(bool healthy) => healthy
         ? "badge bg-success-subtle text-success-emphasis"
         : "badge bg-warning-subtle text-warning-emphasis";
@@ -297,11 +298,11 @@
 
 <div class="table-responsive">
     <table class="table table-sm table-striped align-middle">
-        <thead><tr><th>@T.T("OrderNumber")</th><th>@T.T("Supplier")</th><th>@T.T("Status")</th><th>@T.T("Lines")</th><th>@T.T("Ordered")</th><th class="text-end">@T.T("Actions")</th></tr></thead>
+        <thead><tr><th>@T.T("OrderNumber")</th><th>@T.T("Supplier")</th><th>@T.T("Status")</th><th>@T.T("Currency")</th><th>@T.T("Quantities")</th><th>@T.T("Dates")</th><th class="text-end">@T.T("Actions")</th></tr></thead>
         <tbody>
         @if (Model.Items.Count == 0)
         {
-            <tr><td colspan="6" class="text-center text-muted">@T.T("NoPurchaseOrdersFound")</td></tr>
+            <tr><td colspan="7" class="text-center text-muted">@T.T("NoPurchaseOrdersFound")</td></tr>
         }
         else
         {
@@ -333,8 +334,15 @@
                             <span class="@PurchaseOrderStaleBadgeClass(item.IsStale) ms-1">@T.T("StaleIssued")</span>
                         }
                     </td>
-                    <td>@item.LineCount</td>
-                    <td>@InventoryDateTimeText(item.OrderedAtUtc)</td>
+                    <td>@item.Currency</td>
+                    <td>
+                        <div>@T.T("Lines"): @item.LineCount</div>
+                        <div class="small text-muted">@T.T("Received"): @item.ReceivedQuantity / @item.OrderedQuantity</div>
+                    </td>
+                    <td>
+                        <div>@T.T("Ordered"): @InventoryDateTimeText(item.OrderedAtUtc)</div>
+                        <div class="small text-muted">@T.T("ExpectedDeliveryDateUtc"): @InventoryOptionalDateTimeText(item.ExpectedDeliveryDateUtc)</div>
+                    </td>
                     <td class="text-end">
                         <div class="d-inline-flex flex-wrap justify-content-end gap-1">
                             @if (string.Equals(item.Status, "Draft", StringComparison.OrdinalIgnoreCase))

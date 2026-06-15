@@ -166,13 +166,21 @@ Production controls:
 - Object Lock, retention, legal hold, or provider equivalent is validated before claiming immutability.
 - Backup, replication/offsite copy, disk monitoring, failed-write monitoring, and restore tests are complete.
 
+Finance export profiles:
+
+- `FinanceExports` stores generated canonical finance export packages. It is the package source used by Finance WebAdmin download and connector delivery.
+- `FinanceExportOutbound` is the outbound delivery destination used by the file-delivery connector. WebAdmin push remains blocked when this profile is missing, invalid, or database-backed.
+- Both profiles are configured through secure deployment configuration. Access keys, secret keys, connection strings, and provider credentials stay in environment variables, user-secrets, or a deployment vault.
+- Profile names, container names, and prefixes are configuration. They must not be taken from batch metadata, attempt metadata, `DocumentRecord` metadata, `ExternalReference` metadata, or package content.
+- The two profiles may share a provider and container with separate prefixes, or use separate containers when the deployment needs clearer operational ownership.
+
 Run:
 
 ```powershell
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\check-minio-production-readiness.ps1
 ```
 
-The readiness preflight requires explicit confirmation for the archive, shipment-label, and media profile decisions, the disposable smoke prefix, retention/delete behavior, and the operator runbook. It does not accept or print access keys, secret keys, bucket policy JSON, object keys, or provider responses.
+The readiness preflight requires explicit confirmation for the archive, shipment-label, media, finance export source, and finance export outbound profile decisions, the disposable smoke prefix, retention/delete behavior, and the operator runbook. It does not accept or print access keys, secret keys, bucket policy JSON, object keys, or provider responses.
 
 Run the selected-provider object-storage smoke against a production-like endpoint only after an operator approves the disposable smoke prefix and cleanup or retention behavior:
 
@@ -230,7 +238,7 @@ Before store release:
 6. Validate Stripe test-mode or live-mode according to deployment stage.
 7. Validate DHL only after complete account data is available.
 8. Validate VIES policy with controlled valid/invalid/provider-failure cases.
-9. Validate object storage and archive/provider retention behavior.
+9. Validate object storage, archive/provider retention behavior, and finance export outbound delivery readiness when accounting export is in scope.
 10. Validate e-invoice generator only after legal fixtures are approved.
 11. Validate signed mobile artifacts and device/provider flows.
 12. Record final operator sign-off outside source control.

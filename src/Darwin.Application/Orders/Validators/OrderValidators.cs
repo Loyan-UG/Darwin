@@ -11,6 +11,12 @@ namespace Darwin.Application.Orders.Validators
         public OrderCreateValidator(IStringLocalizer<ValidationResource> localizer)
         {
             RuleFor(x => x.Currency).NotEmpty().Length(3);
+            RuleFor(x => x.BusinessId)
+                .Must(x => !x.HasValue || x.Value != Guid.Empty)
+                .WithMessage(localizer["BusinessIdValidWhenProvided"]);
+            RuleFor(x => x.CustomerId)
+                .Must(x => !x.HasValue || x.Value != Guid.Empty)
+                .WithMessage(localizer["CustomerIdValidWhenProvided"]);
             RuleFor(x => x.BillingAddressJson).NotEmpty();
             RuleFor(x => x.ShippingAddressJson).NotEmpty();
             RuleFor(x => x.Lines).NotEmpty();

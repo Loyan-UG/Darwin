@@ -29,6 +29,21 @@
             <field-help title="@T.T("OrderedAtUtc")" content="@T.T("InventoryPurchaseOrderOrderedAtUtcHelp")" placement="right"></field-help>
             <input asp-for="OrderedAtUtc" type="datetime-local" class="form-control" />
         </div>
+        <div class="col-md-3">
+            <label asp-for="Currency" class="form-label"></label>
+            <field-help title="@T.T("Currency")" content="@T.T("InventoryPurchaseOrderCurrencyHelp")" placement="right"></field-help>
+            <input asp-for="Currency" class="form-control" maxlength="3" />
+        </div>
+        <div class="col-md-3">
+            <label asp-for="ExpectedDeliveryDateUtc" class="form-label"></label>
+            <field-help title="@T.T("ExpectedDeliveryDateUtc")" content="@T.T("InventoryPurchaseOrderExpectedDeliveryHelp")" placement="right"></field-help>
+            <input asp-for="ExpectedDeliveryDateUtc" type="datetime-local" class="form-control" />
+        </div>
+        <div class="col-12">
+            <label asp-for="InternalNotes" class="form-label"></label>
+            <field-help title="@T.T("InternalNotes")" content="@T.T("InventoryPurchaseOrderInternalNotesHelp")" placement="right"></field-help>
+            <textarea asp-for="InternalNotes" class="form-control" rows="3"></textarea>
+        </div>
     </div>
 </section>
 
@@ -51,6 +66,16 @@
                     <field-help title="@T.T("ProductVariant")" content="@T.T("InventoryPurchaseOrderLineVariantHelp")" placement="right"></field-help>
                     <select asp-for="Lines[i].ProductVariantId" asp-items="Model.VariantOptions" class="form-select"></select>
                 </div>
+                <div class="col-md-3">
+                    <label asp-for="Lines[i].SupplierSku" class="form-label"></label>
+                    <field-help title="@T.T("SupplierSku")" content="@T.T("InventoryPurchaseOrderLineSupplierSkuHelp")" placement="right"></field-help>
+                    <input asp-for="Lines[i].SupplierSku" class="form-control" />
+                </div>
+                <div class="col-md-3">
+                    <label asp-for="Lines[i].Description" class="form-label"></label>
+                    <field-help title="@T.T("Description")" content="@T.T("InventoryPurchaseOrderLineDescriptionHelp")" placement="right"></field-help>
+                    <input asp-for="Lines[i].Description" class="form-control" />
+                </div>
                 <div class="col-md-2">
                     <label asp-for="Lines[i].Quantity" class="form-label"></label>
                     <field-help title="@T.T("Quantity")" content="@T.T("InventoryPurchaseOrderLineQuantityHelp")" placement="right"></field-help>
@@ -66,6 +91,8 @@
                     <field-help title="@T.T("TotalCost")" content="@T.T("InventoryPurchaseOrderLineTotalCostMinorHelp")" placement="right"></field-help>
                     <input asp-for="Lines[i].TotalCostMinor" class="form-control" />
                 </div>
+                <input asp-for="Lines[i].ReceivedQuantity" type="hidden" />
+                <input asp-for="Lines[i].CancelledQuantity" type="hidden" />
             </div>
             <div class="text-end mt-3"><button type="button" class="btn btn-sm btn-outline-danger remove-line" data-dynamic-lines-remove>@T.T("Remove")</button></div>
         </div></div>
@@ -77,9 +104,13 @@
     <div class="card mb-3 line-row"><div class="card-body">
         <div class="row g-3">
             <div class="col-md-6"><label class="form-label">@T.T("ProductVariant")</label><field-help title="@T.T("ProductVariant")" content="@T.T("InventoryPurchaseOrderLineVariantHelp")" placement="right"></field-help><select class="form-select" name="Lines[__index__].ProductVariantId">@foreach (var option in Model.VariantOptions){<option value="@option.Value">@option.Text</option>}</select></div>
+            <div class="col-md-3"><label class="form-label">@T.T("SupplierSku")</label><field-help title="@T.T("SupplierSku")" content="@T.T("InventoryPurchaseOrderLineSupplierSkuHelp")" placement="right"></field-help><input class="form-control" name="Lines[__index__].SupplierSku" /></div>
+            <div class="col-md-3"><label class="form-label">@T.T("Description")</label><field-help title="@T.T("Description")" content="@T.T("InventoryPurchaseOrderLineDescriptionHelp")" placement="right"></field-help><input class="form-control" name="Lines[__index__].Description" /></div>
             <div class="col-md-2"><label class="form-label">@T.T("Quantity")</label><field-help title="@T.T("Quantity")" content="@T.T("InventoryPurchaseOrderLineQuantityHelp")" placement="right"></field-help><input class="form-control" name="Lines[__index__].Quantity" value="1" /></div>
             <div class="col-md-2"><label class="form-label">@T.T("UnitCost")</label><field-help title="@T.T("UnitCost")" content="@T.T("InventoryPurchaseOrderLineUnitCostMinorHelp")" placement="right"></field-help><input class="form-control" name="Lines[__index__].UnitCostMinor" value="0" /></div>
             <div class="col-md-2"><label class="form-label">@T.T("TotalCost")</label><field-help title="@T.T("TotalCost")" content="@T.T("InventoryPurchaseOrderLineTotalCostMinorHelp")" placement="right"></field-help><input class="form-control" name="Lines[__index__].TotalCostMinor" value="0" /></div>
+            <input type="hidden" name="Lines[__index__].ReceivedQuantity" value="0" />
+            <input type="hidden" name="Lines[__index__].CancelledQuantity" value="0" />
         </div>
         <div class="text-end mt-3"><button type="button" class="btn btn-sm btn-outline-danger remove-line" data-dynamic-lines-remove>@T.T("Remove")</button></div>
     </div></div>

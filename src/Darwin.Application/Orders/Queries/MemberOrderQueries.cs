@@ -115,7 +115,7 @@ public sealed class GetMyOrderForViewHandler
                 Lines = x.Lines.Where(line => !line.IsDeleted).Select(line => new MemberOrderLineDto
                 {
                     Id = line.Id,
-                    VariantId = line.VariantId,
+                    VariantId = line.VariantId ?? Guid.Empty,
                     Name = MemberOrderPresentationResolver.ResolveLineName(line.Name, culture),
                     Sku = line.Sku,
                     Quantity = line.Quantity,

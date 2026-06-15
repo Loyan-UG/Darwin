@@ -116,7 +116,9 @@ Approval:
 ### Object Storage
 
 - Run `scripts\check-minio-production-readiness.ps1` or equivalent selected-provider readiness check.
-- Confirm `InvoiceArchive`, `ShipmentLabels`, and `MediaAssets` profile decisions.
+- Confirm `InvoiceArchive`, `ShipmentLabels`, `MediaAssets`, `FinanceExports`, and `FinanceExportOutbound` profile decisions.
+- Confirm `FinanceExports` is the generated finance export package source and `FinanceExportOutbound` is the outbound delivery destination when accounting export is in scope.
+- Confirm finance export profile configuration comes from secure deployment configuration, not from batch metadata, document metadata, external-reference metadata, or package content.
 - Confirm disposable smoke prefix and retention/delete behavior.
 - Run selected-provider smoke only after explicit production-like smoke confirmation.
 - Run WebAdmin smoke against a disposable object.

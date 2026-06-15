@@ -42,6 +42,10 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
         private readonly CreatePurchaseOrderHandler _createPurchaseOrder;
         private readonly UpdatePurchaseOrderHandler _updatePurchaseOrder;
         private readonly UpdatePurchaseOrderLifecycleHandler _updatePurchaseOrderLifecycle;
+        private readonly GetGoodsReceiptsPageHandler _getGoodsReceiptsPage;
+        private readonly GetGoodsReceiptDetailHandler _getGoodsReceiptDetail;
+        private readonly CreateGoodsReceiptFromPurchaseOrderHandler _createGoodsReceipt;
+        private readonly UpdateGoodsReceiptLifecycleHandler _updateGoodsReceiptLifecycle;
         private readonly GetInventoryLedgerHandler _getLedger;
         private readonly AdminReferenceDataService _referenceData;
         private readonly IClock _clock;
@@ -73,6 +77,10 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
             CreatePurchaseOrderHandler createPurchaseOrder,
             UpdatePurchaseOrderHandler updatePurchaseOrder,
             UpdatePurchaseOrderLifecycleHandler updatePurchaseOrderLifecycle,
+            GetGoodsReceiptsPageHandler getGoodsReceiptsPage,
+            GetGoodsReceiptDetailHandler getGoodsReceiptDetail,
+            CreateGoodsReceiptFromPurchaseOrderHandler createGoodsReceipt,
+            UpdateGoodsReceiptLifecycleHandler updateGoodsReceiptLifecycle,
             GetInventoryLedgerHandler getLedger,
             AdminReferenceDataService referenceData,
             IClock clock)
@@ -103,6 +111,10 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
             _createPurchaseOrder = createPurchaseOrder ?? throw new ArgumentNullException(nameof(createPurchaseOrder));
             _updatePurchaseOrder = updatePurchaseOrder ?? throw new ArgumentNullException(nameof(updatePurchaseOrder));
             _updatePurchaseOrderLifecycle = updatePurchaseOrderLifecycle ?? throw new ArgumentNullException(nameof(updatePurchaseOrderLifecycle));
+            _getGoodsReceiptsPage = getGoodsReceiptsPage ?? throw new ArgumentNullException(nameof(getGoodsReceiptsPage));
+            _getGoodsReceiptDetail = getGoodsReceiptDetail ?? throw new ArgumentNullException(nameof(getGoodsReceiptDetail));
+            _createGoodsReceipt = createGoodsReceipt ?? throw new ArgumentNullException(nameof(createGoodsReceipt));
+            _updateGoodsReceiptLifecycle = updateGoodsReceiptLifecycle ?? throw new ArgumentNullException(nameof(updateGoodsReceiptLifecycle));
             _getLedger = getLedger ?? throw new ArgumentNullException(nameof(getLedger));
             _referenceData = referenceData ?? throw new ArgumentNullException(nameof(referenceData));
             _clock = clock ?? throw new ArgumentNullException(nameof(clock));
@@ -303,6 +315,13 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
                     Email = x.Email,
                     Phone = x.Phone,
                     Address = x.Address,
+                    Code = x.Code,
+                    Status = x.Status,
+                    PreferredCurrency = x.PreferredCurrency,
+                    PaymentTermDays = x.PaymentTermDays,
+                    LeadTimeDays = x.LeadTimeDays,
+                    Website = x.Website,
+                    TaxRegistrationNumber = x.TaxRegistrationNumber,
                     PurchaseOrderCount = x.PurchaseOrderCount,
                     RowVersion = x.RowVersion
                 }).ToList();
@@ -311,7 +330,9 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
                 {
                     TotalCount = summaryDto.TotalCount,
                     MissingAddressCount = summaryDto.MissingAddressCount,
-                    HasPurchaseOrdersCount = summaryDto.HasPurchaseOrdersCount
+                    HasPurchaseOrdersCount = summaryDto.HasPurchaseOrdersCount,
+                    InactiveCount = summaryDto.InactiveCount,
+                    BlockedCount = summaryDto.BlockedCount
                 };
             }
 
@@ -361,10 +382,18 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
             {
                 BusinessId = vm.BusinessId,
                 Name = vm.Name,
+                Code = vm.Code,
+                Status = vm.Status,
                 Email = vm.Email,
                 Phone = vm.Phone,
                 Address = vm.Address,
-                Notes = vm.Notes
+                Notes = vm.Notes,
+                PreferredCurrency = vm.PreferredCurrency,
+                PaymentTermDays = vm.PaymentTermDays,
+                LeadTimeDays = vm.LeadTimeDays,
+                Website = vm.Website,
+                TaxRegistrationNumber = vm.TaxRegistrationNumber,
+                ExternalNotes = vm.ExternalNotes
             };
 
             try
@@ -403,10 +432,18 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
                 RowVersion = dto.RowVersion,
                 BusinessId = dto.BusinessId,
                 Name = dto.Name,
+                Code = dto.Code,
+                Status = dto.Status,
                 Email = dto.Email,
                 Phone = dto.Phone,
                 Address = dto.Address,
-                Notes = dto.Notes
+                Notes = dto.Notes,
+                PreferredCurrency = dto.PreferredCurrency,
+                PaymentTermDays = dto.PaymentTermDays,
+                LeadTimeDays = dto.LeadTimeDays,
+                Website = dto.Website,
+                TaxRegistrationNumber = dto.TaxRegistrationNumber,
+                ExternalNotes = dto.ExternalNotes
             };
             await PopulateSupplierOptionsAsync(vm, ct).ConfigureAwait(false);
             return RenderSupplierEditor(vm, isCreate: false);
@@ -434,10 +471,18 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
                 RowVersion = vm.RowVersion,
                 BusinessId = vm.BusinessId,
                 Name = vm.Name,
+                Code = vm.Code,
+                Status = vm.Status,
                 Email = vm.Email,
                 Phone = vm.Phone,
                 Address = vm.Address,
-                Notes = vm.Notes
+                Notes = vm.Notes,
+                PreferredCurrency = vm.PreferredCurrency,
+                PaymentTermDays = vm.PaymentTermDays,
+                LeadTimeDays = vm.LeadTimeDays,
+                Website = vm.Website,
+                TaxRegistrationNumber = vm.TaxRegistrationNumber,
+                ExternalNotes = vm.ExternalNotes
             };
 
             try
@@ -1137,8 +1182,15 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
                     OrderNumber = x.OrderNumber,
                     SupplierName = x.SupplierName,
                     Status = x.Status,
+                    Currency = x.Currency,
                     OrderedAtUtc = x.OrderedAtUtc,
+                    ExpectedDeliveryDateUtc = x.ExpectedDeliveryDateUtc,
+                    IssuedAtUtc = x.IssuedAtUtc,
+                    ReceivedAtUtc = x.ReceivedAtUtc,
+                    CancelledAtUtc = x.CancelledAtUtc,
                     LineCount = x.LineCount,
+                    OrderedQuantity = x.OrderedQuantity,
+                    ReceivedQuantity = x.ReceivedQuantity,
                     IsStale = x.IsStale,
                     RowVersion = x.RowVersion
                 }).ToList();
@@ -1150,7 +1202,8 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
                     IssuedCount = summaryDto.IssuedCount,
                     ReceivedCount = summaryDto.ReceivedCount,
                     CancelledCount = summaryDto.CancelledCount,
-                    StaleIssuedCount = summaryDto.StaleIssuedCount
+                    StaleIssuedCount = summaryDto.StaleIssuedCount,
+                    PartiallyReceivedCount = summaryDto.PartiallyReceivedCount
                 };
             }
 
@@ -1172,6 +1225,139 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
         }
 
         [HttpGet]
+        public async Task<IActionResult> GoodsReceipts(Guid? businessId = null, int page = 1, int pageSize = 20, string? q = null, GoodsReceiptQueueFilter filter = GoodsReceiptQueueFilter.All, CancellationToken ct = default)
+        {
+            businessId = await _referenceData.ResolveBusinessIdAsync(businessId, ct).ConfigureAwait(false);
+            var items = new List<GoodsReceiptListItemVm>();
+            var total = 0;
+            var summary = new GoodsReceiptOpsSummaryVm();
+            if (businessId.HasValue)
+            {
+                var result = await _getGoodsReceiptsPage.HandleAsync(businessId.Value, page, pageSize, q, filter, ct).ConfigureAwait(false);
+                var summaryDto = await _getGoodsReceiptsPage.GetSummaryAsync(businessId.Value, ct).ConfigureAwait(false);
+                items = result.Items.Select(MapGoodsReceiptListItem).ToList();
+                total = result.Total;
+                summary = new GoodsReceiptOpsSummaryVm
+                {
+                    TotalCount = summaryDto.TotalCount,
+                    DraftCount = summaryDto.DraftCount,
+                    ReceivedCount = summaryDto.ReceivedCount,
+                    InspectedCount = summaryDto.InspectedCount,
+                    PostedCount = summaryDto.PostedCount,
+                    CancelledCount = summaryDto.CancelledCount
+                };
+            }
+
+            var vm = new GoodsReceiptsListVm
+            {
+                BusinessId = businessId,
+                Query = q ?? string.Empty,
+                Filter = filter,
+                FilterItems = BuildGoodsReceiptFilterItems(filter),
+                Summary = summary,
+                BusinessOptions = await _referenceData.GetBusinessOptionsAsync(businessId, ct).ConfigureAwait(false),
+                PurchaseOrderOptions = await BuildGoodsReceiptPurchaseOrderOptionsAsync(businessId, ct).ConfigureAwait(false),
+                WarehouseOptions = await _referenceData.GetWarehouseOptionsAsync(null, businessId, ct).ConfigureAwait(false),
+                Page = page,
+                PageSize = pageSize,
+                Total = total,
+                Items = items
+            };
+            return RenderGoodsReceiptsWorkspace(vm);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> CreateGoodsReceipt(GoodsReceiptsListVm vm, CancellationToken ct = default)
+        {
+            if (vm.PurchaseOrderId == Guid.Empty || vm.WarehouseId == Guid.Empty)
+            {
+                SetErrorMessage("GoodsReceiptCreateFailedMessage");
+                return RedirectOrHtmx(nameof(GoodsReceipts), new { businessId = vm.BusinessId });
+            }
+
+            try
+            {
+                var result = await _createGoodsReceipt.HandleAsync(new GoodsReceiptCreateDto
+                {
+                    PurchaseOrderId = vm.PurchaseOrderId,
+                    WarehouseId = vm.WarehouseId,
+                    InternalNotes = vm.InternalNotes
+                }, ct).ConfigureAwait(false);
+
+                if (result.Succeeded && result.Value != Guid.Empty)
+                {
+                    SetSuccessMessage("GoodsReceiptCreatedMessage");
+                    return RedirectOrHtmx(nameof(EditGoodsReceipt), new { id = result.Value });
+                }
+            }
+            catch (Exception)
+            {
+                // Use the same safe operator-facing failure message as validation failures.
+            }
+
+            SetErrorMessage("GoodsReceiptCreateFailedMessage");
+            return RedirectOrHtmx(nameof(GoodsReceipts), new { businessId = vm.BusinessId });
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> EditGoodsReceipt(Guid id, CancellationToken ct = default)
+        {
+            if (id == Guid.Empty)
+            {
+                SetErrorMessage("GoodsReceiptNotFoundMessage");
+                return RedirectOrHtmx(nameof(GoodsReceipts), new { });
+            }
+
+            var dto = await _getGoodsReceiptDetail.HandleAsync(id, ct).ConfigureAwait(false);
+            if (dto is null)
+            {
+                SetErrorMessage("GoodsReceiptNotFoundMessage");
+                return RedirectOrHtmx(nameof(GoodsReceipts), new { });
+            }
+
+            return RenderGoodsReceiptDetail(MapGoodsReceiptDetail(dto));
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> UpdateGoodsReceiptLifecycle(GoodsReceiptDetailVm vm, string rowVersion, string action, CancellationToken ct = default)
+        {
+            if (vm.Id == Guid.Empty || string.IsNullOrWhiteSpace(action))
+            {
+                SetErrorMessage("GoodsReceiptLifecycleUpdateFailedMessage");
+                return RedirectOrHtmx(nameof(GoodsReceipts), new { businessId = vm.BusinessId == Guid.Empty ? (Guid?)null : vm.BusinessId });
+            }
+
+            var result = await _updateGoodsReceiptLifecycle.HandleAsync(new GoodsReceiptLifecycleActionDto
+            {
+                Id = vm.Id,
+                RowVersion = DecodeBase64RowVersion(rowVersion),
+                Action = action,
+                Lines = vm.Lines.Select(x => new GoodsReceiptLineDto
+                {
+                    Id = x.Id,
+                    PurchaseOrderLineId = x.PurchaseOrderLineId,
+                    ProductVariantId = x.ProductVariantId,
+                    ReceivedQuantity = x.ReceivedQuantity,
+                    AcceptedQuantity = x.AcceptedQuantity,
+                    RejectedQuantity = x.RejectedQuantity,
+                    DamagedQuantity = x.DamagedQuantity
+                }).ToList()
+            }, ct).ConfigureAwait(false);
+
+            if (result.Succeeded)
+            {
+                SetSuccessMessage("GoodsReceiptLifecycleUpdatedMessage");
+            }
+            else
+            {
+                SetErrorMessage("GoodsReceiptLifecycleUpdateFailedMessage");
+            }
+            return RedirectOrHtmx(nameof(EditGoodsReceipt), new { id = vm.Id });
+        }
+
+        [HttpGet]
         public async Task<IActionResult> CreatePurchaseOrder(Guid? businessId = null, CancellationToken ct = default)
         {
             businessId = await _referenceData.ResolveBusinessIdAsync(businessId, ct).ConfigureAwait(false);
@@ -1180,7 +1366,9 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
             {
                 BusinessId = businessId ?? Guid.Empty,
                 OrderedAtUtc = nowUtc,
-                OrderNumber = $"PO-{nowUtc:yyyyMMddHHmm}"
+                OrderNumber = string.Empty,
+                Currency = "EUR",
+                Status = "Draft"
             };
             EnsurePurchaseOrderRows(vm);
             await PopulatePurchaseOrderOptionsAsync(vm, ct).ConfigureAwait(false);
@@ -1208,13 +1396,20 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
             {
                 SupplierId = vm.SupplierId,
                 BusinessId = vm.BusinessId,
-                OrderNumber = vm.OrderNumber,
+                OrderNumber = vm.OrderNumber ?? string.Empty,
                 OrderedAtUtc = vm.OrderedAtUtc,
+                Currency = vm.Currency,
+                ExpectedDeliveryDateUtc = vm.ExpectedDeliveryDateUtc,
                 Status = vm.Status,
+                InternalNotes = vm.InternalNotes,
                 Lines = vm.Lines.Select(x => new PurchaseOrderLineDto
                 {
                     ProductVariantId = x.ProductVariantId,
+                    SupplierSku = x.SupplierSku,
+                    Description = x.Description,
                     Quantity = x.Quantity,
+                    ReceivedQuantity = x.ReceivedQuantity,
+                    CancelledQuantity = x.CancelledQuantity,
                     UnitCostMinor = x.UnitCostMinor,
                     TotalCostMinor = x.TotalCostMinor
                 }).ToList()
@@ -1259,11 +1454,18 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
                 BusinessId = dto.BusinessId,
                 OrderNumber = dto.OrderNumber,
                 OrderedAtUtc = dto.OrderedAtUtc,
+                Currency = dto.Currency,
+                ExpectedDeliveryDateUtc = dto.ExpectedDeliveryDateUtc,
                 Status = dto.Status,
+                InternalNotes = dto.InternalNotes,
                 Lines = dto.Lines.Select(x => new PurchaseOrderLineVm
                 {
                     ProductVariantId = x.ProductVariantId,
+                    SupplierSku = x.SupplierSku,
+                    Description = x.Description,
                     Quantity = x.Quantity,
+                    ReceivedQuantity = x.ReceivedQuantity,
+                    CancelledQuantity = x.CancelledQuantity,
                     UnitCostMinor = x.UnitCostMinor,
                     TotalCostMinor = x.TotalCostMinor
                 }).ToList()
@@ -1351,13 +1553,20 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
                 RowVersion = vm.RowVersion,
                 SupplierId = vm.SupplierId,
                 BusinessId = vm.BusinessId,
-                OrderNumber = vm.OrderNumber,
+                OrderNumber = vm.OrderNumber ?? string.Empty,
                 OrderedAtUtc = vm.OrderedAtUtc,
+                Currency = vm.Currency,
+                ExpectedDeliveryDateUtc = vm.ExpectedDeliveryDateUtc,
                 Status = vm.Status,
+                InternalNotes = vm.InternalNotes,
                 Lines = vm.Lines.Select(x => new PurchaseOrderLineDto
                 {
                     ProductVariantId = x.ProductVariantId,
+                    SupplierSku = x.SupplierSku,
+                    Description = x.Description,
                     Quantity = x.Quantity,
+                    ReceivedQuantity = x.ReceivedQuantity,
+                    CancelledQuantity = x.CancelledQuantity,
                     UnitCostMinor = x.UnitCostMinor,
                     TotalCostMinor = x.TotalCostMinor
                 }).ToList()
@@ -1673,6 +1882,16 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
             yield return new SelectListItem(T("StaleIssued"), PurchaseOrderQueueFilter.StaleIssued.ToString(), selectedFilter == PurchaseOrderQueueFilter.StaleIssued);
         }
 
+        private IEnumerable<SelectListItem> BuildGoodsReceiptFilterItems(GoodsReceiptQueueFilter selectedFilter)
+        {
+            yield return new SelectListItem(T("AllGoodsReceipts"), GoodsReceiptQueueFilter.All.ToString(), selectedFilter == GoodsReceiptQueueFilter.All);
+            yield return new SelectListItem(T("Draft"), GoodsReceiptQueueFilter.Draft.ToString(), selectedFilter == GoodsReceiptQueueFilter.Draft);
+            yield return new SelectListItem(T("Received"), GoodsReceiptQueueFilter.Received.ToString(), selectedFilter == GoodsReceiptQueueFilter.Received);
+            yield return new SelectListItem(T("Inspected"), GoodsReceiptQueueFilter.Inspected.ToString(), selectedFilter == GoodsReceiptQueueFilter.Inspected);
+            yield return new SelectListItem(T("Posted"), GoodsReceiptQueueFilter.Posted.ToString(), selectedFilter == GoodsReceiptQueueFilter.Posted);
+            yield return new SelectListItem(T("Cancelled"), GoodsReceiptQueueFilter.Cancelled.ToString(), selectedFilter == GoodsReceiptQueueFilter.Cancelled);
+        }
+
         private IEnumerable<SelectListItem> BuildStockTransferFilterItems(StockTransferQueueFilter selectedFilter)
         {
             yield return new SelectListItem(T("AllTransfers"), StockTransferQueueFilter.All.ToString(), selectedFilter == StockTransferQueueFilter.All);
@@ -1695,6 +1914,8 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
             yield return new SelectListItem(T("AllSuppliers"), SupplierQueueFilter.All.ToString(), selectedFilter == SupplierQueueFilter.All);
             yield return new SelectListItem(T("MissingAddress"), SupplierQueueFilter.MissingAddress.ToString(), selectedFilter == SupplierQueueFilter.MissingAddress);
             yield return new SelectListItem(T("HasPurchaseOrders"), SupplierQueueFilter.HasPurchaseOrders.ToString(), selectedFilter == SupplierQueueFilter.HasPurchaseOrders);
+            yield return new SelectListItem(T("Inactive"), SupplierQueueFilter.Inactive.ToString(), selectedFilter == SupplierQueueFilter.Inactive);
+            yield return new SelectListItem(T("Blocked"), SupplierQueueFilter.Blocked.ToString(), selectedFilter == SupplierQueueFilter.Blocked);
         }
 
         private async Task PopulateWarehouseOptionsAsync(WarehouseEditVm vm, CancellationToken ct)
@@ -1723,6 +1944,23 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
             }
 
             vm.VariantOptions = await _referenceData.GetVariantOptionsAsync(null, ct).ConfigureAwait(false);
+        }
+
+        private async Task<List<SelectListItem>> BuildGoodsReceiptPurchaseOrderOptionsAsync(Guid? businessId, CancellationToken ct)
+        {
+            if (!businessId.HasValue)
+            {
+                return new List<SelectListItem>();
+            }
+
+            var result = await _getPurchaseOrdersPage
+                .HandleAsync(businessId.Value, page: 1, pageSize: 200, query: null, filter: PurchaseOrderQueueFilter.Issued, ct)
+                .ConfigureAwait(false);
+
+            return result.Items
+                .Where(x => x.OrderedQuantity > x.ReceivedQuantity)
+                .Select(x => new SelectListItem($"{x.OrderNumber} - {x.SupplierName}", x.Id.ToString()))
+                .ToList();
         }
 
         private static void EnsureStockTransferRows(StockTransferEditVm vm)
@@ -1791,6 +2029,26 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
             }
 
             return View("PurchaseOrders", vm);
+        }
+
+        private IActionResult RenderGoodsReceiptsWorkspace(GoodsReceiptsListVm vm)
+        {
+            if (IsHtmxRequest())
+            {
+                return PartialView("~/Views/Inventory/GoodsReceipts.cshtml", vm);
+            }
+
+            return View("GoodsReceipts", vm);
+        }
+
+        private IActionResult RenderGoodsReceiptDetail(GoodsReceiptDetailVm vm)
+        {
+            if (IsHtmxRequest())
+            {
+                return PartialView("~/Views/Inventory/EditGoodsReceipt.cshtml", vm);
+            }
+
+            return View("EditGoodsReceipt", vm);
         }
 
         private IActionResult RenderVariantLedgerWorkspace(InventoryLedgerListVm vm)
@@ -1896,6 +2154,71 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
             }
 
             return isCreate ? View("CreatePurchaseOrder", vm) : View("EditPurchaseOrder", vm);
+        }
+
+        private static GoodsReceiptListItemVm MapGoodsReceiptListItem(GoodsReceiptListItemDto dto)
+        {
+            return new GoodsReceiptListItemVm
+            {
+                Id = dto.Id,
+                BusinessId = dto.BusinessId,
+                SupplierId = dto.SupplierId,
+                PurchaseOrderId = dto.PurchaseOrderId,
+                WarehouseId = dto.WarehouseId,
+                SupplierName = dto.SupplierName,
+                PurchaseOrderNumber = dto.PurchaseOrderNumber,
+                WarehouseName = dto.WarehouseName,
+                GoodsReceiptNumber = dto.GoodsReceiptNumber,
+                Status = dto.Status,
+                CreatedAtUtc = dto.CreatedAtUtc,
+                ReceivedAtUtc = dto.ReceivedAtUtc,
+                PostedAtUtc = dto.PostedAtUtc,
+                LineCount = dto.LineCount,
+                ReceivedQuantity = dto.ReceivedQuantity,
+                AcceptedQuantity = dto.AcceptedQuantity,
+                RowVersion = dto.RowVersion
+            };
+        }
+
+        private static GoodsReceiptDetailVm MapGoodsReceiptDetail(GoodsReceiptDetailDto dto)
+        {
+            return new GoodsReceiptDetailVm
+            {
+                Id = dto.Id,
+                RowVersion = dto.RowVersion,
+                BusinessId = dto.BusinessId,
+                SupplierId = dto.SupplierId,
+                PurchaseOrderId = dto.PurchaseOrderId,
+                WarehouseId = dto.WarehouseId,
+                SupplierName = dto.SupplierName,
+                PurchaseOrderNumber = dto.PurchaseOrderNumber,
+                WarehouseName = dto.WarehouseName,
+                GoodsReceiptNumber = dto.GoodsReceiptNumber,
+                Status = dto.Status,
+                ReceivedAtUtc = dto.ReceivedAtUtc,
+                InspectedAtUtc = dto.InspectedAtUtc,
+                PostedAtUtc = dto.PostedAtUtc,
+                CancelledAtUtc = dto.CancelledAtUtc,
+                InternalNotes = dto.InternalNotes,
+                Lines = dto.Lines.Select(x => new GoodsReceiptLineVm
+                {
+                    Id = x.Id,
+                    PurchaseOrderLineId = x.PurchaseOrderLineId,
+                    ProductVariantId = x.ProductVariantId,
+                    SupplierSku = x.SupplierSku,
+                    Description = x.Description,
+                    OrderedQuantity = x.OrderedQuantity,
+                    PreviouslyReceivedQuantity = x.PreviouslyReceivedQuantity,
+                    RemainingQuantity = x.RemainingQuantity,
+                    ReceivedQuantity = x.ReceivedQuantity,
+                    AcceptedQuantity = x.AcceptedQuantity,
+                    RejectedQuantity = x.RejectedQuantity,
+                    DamagedQuantity = x.DamagedQuantity,
+                    UnitCostMinor = x.UnitCostMinor,
+                    TotalCostMinor = x.TotalCostMinor,
+                    SortOrder = x.SortOrder
+                }).ToList()
+            };
         }
 
         private IActionResult RedirectOrHtmx(string actionName, object routeValues)

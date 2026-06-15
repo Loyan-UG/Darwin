@@ -192,7 +192,9 @@ namespace Darwin.Infrastructure.Persistence.Seed.Sections
             db.CustomerSegments.AddRange(definitions.Select(x => new CustomerSegment
             {
                 Name = x.Item1,
-                Description = x.Item2
+                Description = x.Item2,
+                Code = NormalizeSegmentCode(x.Item1),
+                IsActive = true
             }));
 
             await db.SaveChangesAsync(ct);
@@ -527,6 +529,7 @@ namespace Darwin.Infrastructure.Persistence.Seed.Sections
                             UnitPriceNetMinor = net,
                             TaxRate = 0.19m,
                             TotalNetMinor = net,
+                            TotalTaxMinor = tax,
                             TotalGrossMinor = net + tax
                         }
                     }
@@ -535,6 +538,17 @@ namespace Darwin.Infrastructure.Persistence.Seed.Sections
 
             db.Invoices.AddRange(invoices);
             await db.SaveChangesAsync(ct);
+        }
+
+        private static string NormalizeSegmentCode(string name)
+        {
+            var chars = name
+                .Trim()
+                .ToLowerInvariant()
+                .Select(ch => char.IsLetterOrDigit(ch) ? ch : '-')
+                .ToArray();
+            var normalized = string.Join('-', new string(chars).Split('-', StringSplitOptions.RemoveEmptyEntries));
+            return string.IsNullOrWhiteSpace(normalized) ? "segment" : normalized;
         }
 
         private static GuestCustomerSeed[] GetGuestCustomerSeeds() => new[]

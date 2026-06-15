@@ -1,8 +1,10 @@
 using Darwin.Application.Abstractions.Persistence;
 using Darwin.Application.Abstractions.Services;
 using Darwin.Application;
+using Darwin.Application.CRM.Services;
 using Darwin.Application.CRM.DTOs;
 using Darwin.Domain.Entities.CRM;
+using Darwin.Domain.Enums;
 using FluentValidation;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Localization;
@@ -98,13 +100,20 @@ namespace Darwin.Application.CRM.Commands
         private readonly IValidator<ConsentCreateDto> _validator;
         private readonly IClock _clock;
         private readonly IStringLocalizer<ValidationResource> _localizer;
+        private readonly CrmFoundationPrimitiveService? _foundation;
 
-        public CreateConsentHandler(IAppDbContext db, IValidator<ConsentCreateDto> validator, IStringLocalizer<ValidationResource>? localizer = null, IClock? clock = null)
+        public CreateConsentHandler(
+            IAppDbContext db,
+            IValidator<ConsentCreateDto> validator,
+            IStringLocalizer<ValidationResource>? localizer = null,
+            IClock? clock = null,
+            CrmFoundationPrimitiveService? foundation = null)
         {
             _db = db ?? throw new ArgumentNullException(nameof(db));
             _validator = validator ?? throw new ArgumentNullException(nameof(validator));
             _clock = clock ?? DefaultHandlerDependencies.DefaultClock;
             _localizer = localizer ?? DefaultHandlerDependencies.DefaultLocalizer;
+            _foundation = foundation;
         }
 
         public async Task<Guid> HandleAsync(ConsentCreateDto dto, CancellationToken ct = default)
@@ -133,12 +142,63 @@ namespace Darwin.Application.CRM.Commands
                 Type = dto.Type,
                 Granted = dto.Granted,
                 GrantedAtUtc = dto.GrantedAtUtc,
-                RevokedAtUtc = dto.Granted ? null : dto.RevokedAtUtc ?? dto.GrantedAtUtc
+                RevokedAtUtc = dto.Granted ? null : dto.RevokedAtUtc ?? dto.GrantedAtUtc,
+                Source = CrmEngagementHandlerHelpers.NormalizeOptional(dto.Source),
+                PolicyVersion = CrmEngagementHandlerHelpers.NormalizeOptional(dto.PolicyVersion),
+                EvidenceJson = CrmEngagementHandlerHelpers.NormalizeOptional(dto.EvidenceJson)
             };
 
             _db.Set<Consent>().Add(consent);
             await _db.SaveChangesAsync(ct).ConfigureAwait(false);
+            await RecordConsentAsync(consent, ct).ConfigureAwait(false);
             return consent.Id;
+        }
+
+        private async Task RecordConsentAsync(Consent consent, CancellationToken ct)
+        {
+            if (_foundation is null)
+            {
+                return;
+            }
+
+            var eventType = consent.Granted ? "crm.consent.granted" : "crm.consent.revoked";
+            var occurredAtUtc = consent.Granted ? consent.GrantedAtUtc : consent.RevokedAtUtc ?? consent.GrantedAtUtc;
+            var eventKey = $"{eventType}:{consent.Id:N}";
+            var payloadJson = $$"""{"consentId":"{{consent.Id}}","customerId":"{{consent.CustomerId}}","type":"{{consent.Type}}","granted":{{consent.Granted.ToString().ToLowerInvariant()}}}""";
+            var eventResult = await _foundation.RecordLifecycleEventAsync(
+                CrmFoundationPrimitiveService.EntityTypes.Consent,
+                consent.Id,
+                eventType,
+                eventKey,
+                occurredAtUtc,
+                actorUserId: null,
+                consent.Granted ? "Consent granted" : "Consent revoked",
+                $"Customer id: {consent.CustomerId}",
+                payloadJson,
+                AuditTrailAction.StatusChanged,
+                consent.PolicyVersion,
+                ct)
+                .ConfigureAwait(false);
+            if (!eventResult.Succeeded)
+            {
+                throw new InvalidOperationException(eventResult.Error);
+            }
+
+            var activityResult = await _foundation.AddActivityAsync(
+                CrmFoundationPrimitiveService.EntityTypes.Customer,
+                consent.CustomerId,
+                eventType,
+                occurredAtUtc,
+                actorUserId: null,
+                consent.Granted ? "Consent granted" : "Consent revoked",
+                $"Consent type: {consent.Type}",
+                metadataJson: payloadJson,
+                ct: ct)
+                .ConfigureAwait(false);
+            if (!activityResult.Succeeded)
+            {
+                throw new InvalidOperationException(activityResult.Error);
+            }
         }
     }
 
@@ -165,9 +225,10 @@ namespace Darwin.Application.CRM.Commands
             await _validator.ValidateAndThrowAsync(dto, ct).ConfigureAwait(false);
 
             var normalizedName = dto.Name.Trim();
+            var normalizedCode = CrmEngagementHandlerHelpers.NormalizeCode(dto.Code, normalizedName);
             var exists = await _db.Set<CustomerSegment>()
                 .AsNoTracking()
-                .AnyAsync(x => x.Name == normalizedName, ct)
+                .AnyAsync(x => x.Name == normalizedName || x.Code == normalizedCode, ct)
                 .ConfigureAwait(false);
 
             if (exists)
@@ -178,7 +239,10 @@ namespace Darwin.Application.CRM.Commands
             var segment = new CustomerSegment
             {
                 Name = normalizedName,
-                Description = CrmEngagementHandlerHelpers.NormalizeOptional(dto.Description)
+                Description = CrmEngagementHandlerHelpers.NormalizeOptional(dto.Description),
+                Code = normalizedCode,
+                IsActive = dto.IsActive,
+                RuleJson = CrmEngagementHandlerHelpers.NormalizeOptional(dto.RuleJson)
             };
 
             _db.Set<CustomerSegment>().Add(segment);
@@ -224,9 +288,10 @@ namespace Darwin.Application.CRM.Commands
             }
 
             var normalizedName = dto.Name.Trim();
+            var normalizedCode = CrmEngagementHandlerHelpers.NormalizeCode(dto.Code, normalizedName);
             var exists = await _db.Set<CustomerSegment>()
                 .AsNoTracking()
-                .AnyAsync(x => x.Id != dto.Id && x.Name == normalizedName, ct)
+                .AnyAsync(x => x.Id != dto.Id && (x.Name == normalizedName || x.Code == normalizedCode), ct)
                 .ConfigureAwait(false);
 
             if (exists)
@@ -236,6 +301,9 @@ namespace Darwin.Application.CRM.Commands
 
             segment.Name = normalizedName;
             segment.Description = CrmEngagementHandlerHelpers.NormalizeOptional(dto.Description);
+            segment.Code = normalizedCode;
+            segment.IsActive = dto.IsActive;
+            segment.RuleJson = CrmEngagementHandlerHelpers.NormalizeOptional(dto.RuleJson);
             try
             {
                 await _db.SaveChangesAsync(ct).ConfigureAwait(false);
@@ -343,6 +411,18 @@ namespace Darwin.Application.CRM.Commands
     {
         public static string? NormalizeOptional(string? value) =>
             string.IsNullOrWhiteSpace(value) ? null : value.Trim();
+
+        public static string NormalizeCode(string? code, string name)
+        {
+            var source = string.IsNullOrWhiteSpace(code) ? name : code;
+            var chars = source
+                .Trim()
+                .ToLowerInvariant()
+                .Select(ch => char.IsLetterOrDigit(ch) ? ch : '-')
+                .ToArray();
+            var normalized = string.Join('-', new string(chars).Split('-', StringSplitOptions.RemoveEmptyEntries));
+            return string.IsNullOrWhiteSpace(normalized) ? "segment" : normalized;
+        }
     }
 }
 

@@ -36,6 +36,8 @@ using Darwin.Application.Loyalty.Campaigns;
 using Darwin.Application.Loyalty.Queries;
 using Darwin.Application.Orders.Commands;
 using Darwin.Application.Orders.Queries;
+using Darwin.Application.Sales.Commands;
+using Darwin.Application.Sales.Queries;
 using Darwin.Application.Settings.Commands;
 using Darwin.Application.Settings.DTOs;
 using Darwin.Application.Settings.Queries;
@@ -172,6 +174,7 @@ namespace Darwin.WebAdmin.Extensions
 
             // Transactional email infrastructure; provider selection is configuration-driven.
             services.AddObjectStorageInfrastructure(config);
+            services.AddFinanceExportFileDeliveryAdapterIfConfigured(config);
             services.AddNotificationsInfrastructure(config);
             services.AddPaymentProviderInfrastructure();
             services.AddComplianceInfrastructure(config);
@@ -309,6 +312,11 @@ namespace Darwin.WebAdmin.Extensions
             services.AddScoped<ProvisionBusinessOnboardingHandler>();
             services.AddScoped<UpdateBusinessHandler>();
             services.AddScoped<SoftDeleteBusinessHandler>();
+            services.AddScoped<GetBusinessMediaLibraryHandler>();
+            services.AddScoped<UpdateBusinessProfileImageHandler>();
+            services.AddScoped<CreateBusinessMediaHandler>();
+            services.AddScoped<UpdateBusinessMediaHandler>();
+            services.AddScoped<DeleteBusinessMediaHandler>();
             services.AddScoped<ApproveBusinessHandler>();
             services.AddScoped<SuspendBusinessHandler>();
             services.AddScoped<ReactivateBusinessHandler>();
@@ -416,6 +424,8 @@ namespace Darwin.WebAdmin.Extensions
             services.AddScoped<UpdateOpportunityLifecycleHandler>();
             services.AddScoped<CreateInteractionHandler>();
             services.AddScoped<CreateConsentHandler>();
+            services.AddScoped<GetCrmFoundationPanelHandler>();
+            services.AddScoped<AddCrmFoundationNoteHandler>();
             services.AddScoped<CreateCustomerSegmentHandler>();
             services.AddScoped<UpdateCustomerSegmentHandler>();
             services.AddScoped<AssignCustomerSegmentHandler>();
@@ -468,6 +478,23 @@ namespace Darwin.WebAdmin.Extensions
             services.AddScoped<GetJournalEntryForEditHandler>();
             services.AddScoped<CreateJournalEntryHandler>();
             services.AddScoped<UpdateJournalEntryHandler>();
+            services.AddScoped<GetFinanceOverviewHandler>();
+            services.AddScoped<GetFinanceReceivablesPageHandler>();
+            services.AddScoped<GetFinancePostingsPageHandler>();
+            services.AddScoped<GetFinanceAccountMappingsPageHandler>();
+            services.AddScoped<UpsertFinanceAccountMappingHandler>();
+            services.AddScoped<GetFinanceExportsPageHandler>();
+            services.AddScoped<CreateFinanceExportBatchHandler>();
+            services.AddScoped<GenerateFinanceExportPackageHandler>();
+            services.AddScoped<DownloadFinanceExportPackageHandler>();
+            services.AddScoped<PushFinanceExportPackageHandler>();
+            services.AddScoped<SupplierInvoiceWorkflowPolicy>();
+            services.AddScoped<GetSupplierInvoicesPageHandler>();
+            services.AddScoped<GetSupplierInvoiceDetailHandler>();
+            services.AddScoped<CreateSupplierInvoiceHandler>();
+            services.AddScoped<UpdateSupplierInvoiceHandler>();
+            services.AddScoped<UpdateSupplierInvoiceLifecycleHandler>();
+            services.AddScoped<PostSupplierInvoiceHandler>();
             services.AddScoped<GetWarehousesPageHandler>();
             services.AddScoped<GetWarehouseForEditHandler>();
             services.AddScoped<CreateWarehouseHandler>();
@@ -491,6 +518,32 @@ namespace Darwin.WebAdmin.Extensions
             services.AddScoped<UpdatePurchaseOrderHandler>();
             services.AddScoped<UpdatePurchaseOrderLifecycleHandler>();
             services.AddScoped<GetInventoryLedgerHandler>();
+            services.AddScoped<GetSalesOverviewHandler>();
+            services.AddScoped<GetSalesOrdersPageHandler>();
+            services.AddScoped<GetSalesInvoicesPageHandler>();
+            services.AddScoped<GetSalesOrderDocumentHandler>();
+            services.AddScoped<GetSalesInvoiceDocumentHandler>();
+            services.AddScoped<GetSalesQuotesPageHandler>();
+            services.AddScoped<GetSalesQuoteDetailHandler>();
+            services.AddScoped<CreateSalesQuoteHandler>();
+            services.AddScoped<UpdateSalesQuoteHandler>();
+            services.AddScoped<SendSalesQuoteHandler>();
+            services.AddScoped<UpdateSalesQuoteLifecycleHandler>();
+            services.AddScoped<ConvertSalesQuoteToOrderHandler>();
+            services.AddScoped<GetDeliveryNotesPageHandler>();
+            services.AddScoped<GetDeliveryNoteDetailHandler>();
+            services.AddScoped<CreateDeliveryNoteFromShipmentHandler>();
+            services.AddScoped<UpdateDeliveryNoteLifecycleHandler>();
+            services.AddScoped<GetReturnOrdersPageHandler>();
+            services.AddScoped<GetReturnOrderDetailHandler>();
+            services.AddScoped<CreateReturnOrderHandler>();
+            services.AddScoped<UpdateReturnOrderLifecycleHandler>();
+        services.AddScoped<GetCreditNotesPageHandler>();
+        services.AddScoped<GetCreditNoteDetailHandler>();
+        services.AddScoped<GetInvoiceLinesForCreditNoteHandler>();
+        services.AddScoped<GetCreditNoteSourceExportHandler>();
+        services.AddScoped<CreateCreditNoteHandler>();
+        services.AddScoped<UpdateCreditNoteLifecycleHandler>();
 
             // Inventory – commands
             services.AddScoped<AdjustInventoryHandler>();
@@ -498,6 +551,11 @@ namespace Darwin.WebAdmin.Extensions
             services.AddScoped<ReleaseInventoryReservationHandler>();
             services.AddScoped<ProcessReturnReceiptHandler>();
             services.AddScoped<AllocateInventoryForOrderHandler>();
+            services.AddScoped<GoodsReceiptWorkflowPolicy>();
+            services.AddScoped<GetGoodsReceiptsPageHandler>();
+            services.AddScoped<GetGoodsReceiptDetailHandler>();
+            services.AddScoped<CreateGoodsReceiptFromPurchaseOrderHandler>();
+            services.AddScoped<UpdateGoodsReceiptLifecycleHandler>();
 
 
             // inside AddWebComposition(...) or your DI extension where other handlers are registered

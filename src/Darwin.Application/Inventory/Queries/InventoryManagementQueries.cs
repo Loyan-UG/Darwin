@@ -152,6 +152,7 @@ namespace Darwin.Application.Inventory.Queries
                 var term = QueryLikePattern.ContainsInvariant(query);
                 suppliersQuery = suppliersQuery.Where(x =>
                     EF.Functions.Like(x.Name.ToUpper(), term, QueryLikePattern.EscapeCharacter) ||
+                    (x.Code != null && EF.Functions.Like(x.Code.ToUpper(), term, QueryLikePattern.EscapeCharacter)) ||
                     EF.Functions.Like(x.Email.ToUpper(), term, QueryLikePattern.EscapeCharacter) ||
                     EF.Functions.Like(x.Phone.ToUpper(), term, QueryLikePattern.EscapeCharacter) ||
                     (x.Address != null && EF.Functions.Like(x.Address.ToUpper(), term, QueryLikePattern.EscapeCharacter)));
@@ -161,6 +162,8 @@ namespace Darwin.Application.Inventory.Queries
             {
                 SupplierQueueFilter.MissingAddress => suppliersQuery.Where(x => x.Address == null || x.Address.Trim() == string.Empty),
                 SupplierQueueFilter.HasPurchaseOrders => suppliersQuery.Where(x => x.PurchaseOrders.Any(order => !order.IsDeleted)),
+                SupplierQueueFilter.Inactive => suppliersQuery.Where(x => x.Status == Domain.Enums.SupplierStatus.Inactive),
+                SupplierQueueFilter.Blocked => suppliersQuery.Where(x => x.Status == Domain.Enums.SupplierStatus.Blocked),
                 _ => suppliersQuery
             };
 
@@ -178,6 +181,13 @@ namespace Darwin.Application.Inventory.Queries
                     Email = x.Email,
                     Phone = x.Phone,
                     Address = x.Address,
+                    Code = x.Code,
+                    Status = x.Status.ToString(),
+                    PreferredCurrency = x.PreferredCurrency,
+                    PaymentTermDays = x.PaymentTermDays,
+                    LeadTimeDays = x.LeadTimeDays,
+                    Website = x.Website,
+                    TaxRegistrationNumber = x.TaxRegistrationNumber,
                     PurchaseOrderCount = x.PurchaseOrders.Count(order => !order.IsDeleted),
                     RowVersion = x.RowVersion
                 })
@@ -199,7 +209,9 @@ namespace Darwin.Application.Inventory.Queries
                 {
                     TotalCount = g.Count(),
                     MissingAddressCount = g.Count(x => x.Address == null || x.Address.Trim() == string.Empty),
-                    HasPurchaseOrdersCount = g.Count(x => x.PurchaseOrders.Any(order => !order.IsDeleted))
+                    HasPurchaseOrdersCount = g.Count(x => x.PurchaseOrders.Any(order => !order.IsDeleted)),
+                    InactiveCount = g.Count(x => x.Status == Domain.Enums.SupplierStatus.Inactive),
+                    BlockedCount = g.Count(x => x.Status == Domain.Enums.SupplierStatus.Blocked)
                 })
                 .FirstOrDefaultAsync(ct)
                 .ConfigureAwait(false) ?? new SupplierOpsSummaryDto();
@@ -223,10 +235,18 @@ namespace Darwin.Application.Inventory.Queries
                     RowVersion = x.RowVersion,
                     BusinessId = x.BusinessId,
                     Name = x.Name,
+                    Code = x.Code,
+                    Status = x.Status.ToString(),
                     Email = x.Email,
                     Phone = x.Phone,
                     Address = x.Address,
-                    Notes = x.Notes
+                    Notes = x.Notes,
+                    PreferredCurrency = x.PreferredCurrency,
+                    PaymentTermDays = x.PaymentTermDays,
+                    LeadTimeDays = x.LeadTimeDays,
+                    Website = x.Website,
+                    TaxRegistrationNumber = x.TaxRegistrationNumber,
+                    ExternalNotes = x.ExternalNotes
                 })
                 .FirstOrDefaultAsync(ct);
         }
@@ -514,6 +534,7 @@ namespace Darwin.Application.Inventory.Queries
                 purchaseOrdersQuery = purchaseOrdersQuery.Where(x =>
                     EF.Functions.Like(x.order.OrderNumber.ToUpper(), term, QueryLikePattern.EscapeCharacter) ||
                     EF.Functions.Like(x.supplier.Name.ToUpper(), term, QueryLikePattern.EscapeCharacter) ||
+                    EF.Functions.Like(x.order.Currency.ToUpper(), term, QueryLikePattern.EscapeCharacter) ||
                     statusMatches.Contains(x.order.Status));
             }
 
@@ -541,8 +562,15 @@ namespace Darwin.Application.Inventory.Queries
                     OrderNumber = x.order.OrderNumber,
                     SupplierName = x.supplier.Name,
                     Status = x.order.Status,
+                    Currency = x.order.Currency,
                     OrderedAtUtc = x.order.OrderedAtUtc,
+                    ExpectedDeliveryDateUtc = x.order.ExpectedDeliveryDateUtc,
+                    IssuedAtUtc = x.order.IssuedAtUtc,
+                    ReceivedAtUtc = x.order.ReceivedAtUtc,
+                    CancelledAtUtc = x.order.CancelledAtUtc,
                     LineCount = x.order.Lines.Count(line => !line.IsDeleted),
+                    OrderedQuantity = x.order.Lines.Where(line => !line.IsDeleted).Sum(line => line.Quantity),
+                    ReceivedQuantity = x.order.Lines.Where(line => !line.IsDeleted).Sum(line => line.ReceivedQuantity),
                     IsStale = x.order.Status == Domain.Enums.PurchaseOrderStatus.Issued && x.order.OrderedAtUtc <= staleIssuedCutoffUtc,
                     RowVersion = x.order.RowVersion
                 })
@@ -558,8 +586,15 @@ namespace Darwin.Application.Inventory.Queries
                     OrderNumber = x.OrderNumber,
                     SupplierName = x.SupplierName,
                     Status = x.Status.ToString(),
+                    Currency = x.Currency,
                     OrderedAtUtc = x.OrderedAtUtc,
+                    ExpectedDeliveryDateUtc = x.ExpectedDeliveryDateUtc,
+                    IssuedAtUtc = x.IssuedAtUtc,
+                    ReceivedAtUtc = x.ReceivedAtUtc,
+                    CancelledAtUtc = x.CancelledAtUtc,
                     LineCount = x.LineCount,
+                    OrderedQuantity = x.OrderedQuantity,
+                    ReceivedQuantity = x.ReceivedQuantity,
                     IsStale = x.IsStale,
                     RowVersion = x.RowVersion
                 })
@@ -584,7 +619,8 @@ namespace Darwin.Application.Inventory.Queries
                     IssuedCount = g.Count(x => x.Status == Domain.Enums.PurchaseOrderStatus.Issued),
                     ReceivedCount = g.Count(x => x.Status == Domain.Enums.PurchaseOrderStatus.Received),
                     CancelledCount = g.Count(x => x.Status == Domain.Enums.PurchaseOrderStatus.Cancelled),
-                    StaleIssuedCount = g.Count(x => x.Status == Domain.Enums.PurchaseOrderStatus.Issued && x.OrderedAtUtc <= staleIssuedCutoffUtc)
+                    StaleIssuedCount = g.Count(x => x.Status == Domain.Enums.PurchaseOrderStatus.Issued && x.OrderedAtUtc <= staleIssuedCutoffUtc),
+                    PartiallyReceivedCount = g.Count(x => x.Status == Domain.Enums.PurchaseOrderStatus.Issued && x.Lines.Any(line => !line.IsDeleted && line.ReceivedQuantity > 0 && line.ReceivedQuantity < line.Quantity))
                 })
                 .FirstOrDefaultAsync(ct)
                 .ConfigureAwait(false) ?? new PurchaseOrderOpsSummaryDto();
@@ -619,13 +655,20 @@ namespace Darwin.Application.Inventory.Queries
                 OrderNumber = order.OrderNumber,
                 OrderedAtUtc = order.OrderedAtUtc,
                 Status = order.Status.ToString(),
+                Currency = order.Currency,
+                ExpectedDeliveryDateUtc = order.ExpectedDeliveryDateUtc,
+                InternalNotes = order.InternalNotes,
                 Lines = order.Lines
                     .Where(x => !x.IsDeleted)
                     .OrderBy(x => x.CreatedAtUtc)
                     .Select(x => new PurchaseOrderLineDto
                     {
                         ProductVariantId = x.ProductVariantId,
+                        SupplierSku = x.SupplierSku,
+                        Description = x.Description,
                         Quantity = x.Quantity,
+                        ReceivedQuantity = x.ReceivedQuantity,
+                        CancelledQuantity = x.CancelledQuantity,
                         UnitCostMinor = x.UnitCostMinor,
                         TotalCostMinor = x.TotalCostMinor
                     })

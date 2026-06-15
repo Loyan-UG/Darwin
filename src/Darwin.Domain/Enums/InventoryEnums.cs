@@ -21,4 +21,26 @@ namespace Darwin.Domain.Enums
         Received = 2,
         Cancelled = 3
     }
+
+    /// <summary>
+    /// Represents the lifecycle state of a formal supplier goods receipt.
+    /// </summary>
+    public enum GoodsReceiptStatus : short
+    {
+        Draft = 0,
+        Received = 1,
+        Inspected = 2,
+        Posted = 3,
+        Cancelled = 4
+    }
+
+    /// <summary>
+    /// Represents the operational purchasing status of a supplier.
+    /// </summary>
+    public enum SupplierStatus : short
+    {
+        Active = 0,
+        Inactive = 1,
+        Blocked = 2
+    }
 }

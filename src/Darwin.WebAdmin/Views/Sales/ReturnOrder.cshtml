@@ -1,0 +1,241 @@
+@model Darwin.WebAdmin.ViewModels.Sales.ReturnOrderDetailVm
+@using Darwin.Domain.Enums
+@inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
+@{
+    ViewData["Title"] = T.T("ReturnOrder");
+    var doc = Model.Document;
+    var culture = System.Globalization.CultureInfo.CurrentCulture;
+    string ReturnOrdersUrl() => Url.Action("ReturnOrders", "Sales") ?? string.Empty;
+    string Money(long minor) => $"{doc.Currency} {(minor / 100.0M):0.00}";
+    string RowVersion() => doc.RowVersion is null || doc.RowVersion.Length == 0 ? string.Empty : Convert.ToBase64String(doc.RowVersion);
+}
+
+<div id="sales-return-order-detail-shell">
+<partial name="~/Views/Shared/_Alerts.cshtml" />
+<div class="d-flex justify-content-between align-items-start gap-3 mb-3">
+    <div>
+        <h1 class="mb-0"><i class="fa-solid fa-rotate-left"></i> @(doc.ReturnOrderNumber ?? T.T("ReturnOrder"))</h1>
+        <div class="text-muted small mt-1">@T.T($"ReturnOrderStatus{doc.Status}")</div>
+    </div>
+    <div class="d-flex gap-2 flex-wrap">
+        <a asp-action="ReturnOrders" hx-get="@ReturnOrdersUrl()" hx-target="#sales-return-order-detail-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-outline-secondary">@T.T("BackToList")</a>
+        <a asp-controller="Sales" asp-action="Order" asp-route-id="@doc.OrderId" class="btn btn-outline-primary">@T.T("SalesOrder")</a>
+        <a asp-controller="Orders" asp-action="AddRefund" asp-route-orderId="@doc.OrderId" class="btn btn-outline-primary">@T.T("AddRefund")</a>
+    </div>
+</div>
+
+<div class="row g-3 mb-3">
+    <div class="col-md-3"><div class="border rounded p-3 h-100"><div class="text-muted small">@T.T("Requested")</div><div class="fs-5 fw-semibold">@doc.RequestedQuantity</div></div></div>
+    <div class="col-md-3"><div class="border rounded p-3 h-100"><div class="text-muted small">@T.T("Received")</div><div class="fs-5 fw-semibold">@doc.ReceivedQuantity</div></div></div>
+    <div class="col-md-3"><div class="border rounded p-3 h-100"><div class="text-muted small">@T.T("Accepted")</div><div class="fs-5 fw-semibold">@doc.AcceptedQuantity</div></div></div>
+    <div class="col-md-3"><div class="border rounded p-3 h-100"><div class="text-muted small">@T.T("RefundEligible")</div><div class="fs-5 fw-semibold">@Money(doc.RefundEligibleGrossMinor)</div></div></div>
+    <div class="col-md-3"><div class="border rounded p-3 h-100"><div class="text-muted small">@T.T("LinkedRefund")</div><div class="fs-5 fw-semibold">@Money(doc.LinkedRefundGrossMinor)</div></div></div>
+    <div class="col-md-3"><div class="border rounded p-3 h-100"><div class="text-muted small">@T.T("RemainingRefund")</div><div class="fs-5 fw-semibold">@Money(doc.RemainingRefundGrossMinor)</div></div></div>
+</div>
+
+<div class="row g-3 mb-3">
+    <div class="col-lg-8">
+        <h2 class="h5">@T.T("Lines")</h2>
+        <div class="table-responsive">
+            <table class="table table-sm align-middle">
+                <thead>
+                <tr>
+                    <th>@T.T("Name")</th>
+                    <th>@T.T("Sku")</th>
+                    <th class="text-end">@T.T("Requested")</th>
+                    <th class="text-end">@T.T("Approved")</th>
+                    <th class="text-end">@T.T("Received")</th>
+                    <th class="text-end">@T.T("Accepted")</th>
+                    <th class="text-end">@T.T("Restock")</th>
+                    <th class="text-end">@T.T("Total")</th>
+                </tr>
+                </thead>
+                <tbody>
+                @foreach (var line in doc.Lines)
+                {
+                    <tr>
+                        <td><div class="fw-semibold">@line.Name</div></td>
+                        <td>@(line.Sku ?? "-")</td>
+                        <td class="text-end">@line.RequestedQuantity</td>
+                        <td class="text-end">@line.ApprovedQuantity</td>
+                        <td class="text-end">@line.ReceivedQuantity</td>
+                        <td class="text-end">@line.AcceptedQuantity</td>
+                        <td class="text-end">@line.RestockQuantity</td>
+                        <td class="text-end">@Money(line.AcceptedGrossMinor == 0 ? line.RequestedGrossMinor : line.AcceptedGrossMinor)</td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <div class="col-lg-4">
+        <h2 class="h5">@T.T("Actions")</h2>
+        <div class="d-grid gap-2">
+            @if (doc.Status == ReturnOrderStatus.Requested)
+            {
+                <form asp-action="ApproveReturnOrder" method="post" hx-post="@Url.Action("ApproveReturnOrder", "Sales")" hx-target="#sales-return-order-detail-shell" hx-swap="outerHTML">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="Id" value="@doc.Id" />
+                    <input type="hidden" name="RowVersion" value="@RowVersion()" />
+                    @for (var i = 0; i < doc.Lines.Count; i++)
+                    {
+                        <input type="hidden" name="Lines[@i].LineId" value="@doc.Lines[i].Id" />
+                        <label class="form-label small text-muted">@doc.Lines[i].Name</label>
+                        <input type="number" min="0" max="@doc.Lines[i].RequestedQuantity" name="Lines[@i].Quantity" value="@doc.Lines[i].RequestedQuantity" class="form-control mb-2" />
+                    }
+                    <button type="submit" class="btn btn-success w-100">@T.T("ApproveReturnOrder")</button>
+                </form>
+                <form asp-action="RejectReturnOrder" method="post" hx-post="@Url.Action("RejectReturnOrder", "Sales")" hx-target="#sales-return-order-detail-shell" hx-swap="outerHTML">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="Id" value="@doc.Id" />
+                    <input type="hidden" name="RowVersion" value="@RowVersion()" />
+                    <button type="submit" class="btn btn-outline-danger w-100">@T.T("RejectReturnOrder")</button>
+                </form>
+            }
+            @if (doc.Status == ReturnOrderStatus.Approved)
+            {
+                <form asp-action="QueueReturnShipment" method="post" hx-post="@Url.Action("QueueReturnShipment", "Sales")" hx-target="#sales-return-order-detail-shell" hx-swap="outerHTML">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="Id" value="@doc.Id" />
+                    <input type="hidden" name="RowVersion" value="@RowVersion()" />
+                    <label class="form-label small text-muted">@T.T("ShipmentId")</label>
+                    <input name="ShipmentId" value="@doc.ShipmentId" class="form-control mb-2" />
+                    <button type="submit" class="btn btn-outline-primary w-100">@T.T("QueueReturnShipment")</button>
+                </form>
+                <form asp-action="ReceiveReturnOrder" method="post" hx-post="@Url.Action("ReceiveReturnOrder", "Sales")" hx-target="#sales-return-order-detail-shell" hx-swap="outerHTML">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="Id" value="@doc.Id" />
+                    <input type="hidden" name="RowVersion" value="@RowVersion()" />
+                    @for (var i = 0; i < doc.Lines.Count; i++)
+                    {
+                        <input type="hidden" name="Lines[@i].LineId" value="@doc.Lines[i].Id" />
+                        <label class="form-label small text-muted">@doc.Lines[i].Name</label>
+                        <input type="number" min="0" max="@doc.Lines[i].ApprovedQuantity" name="Lines[@i].Quantity" value="@doc.Lines[i].ApprovedQuantity" class="form-control mb-2" />
+                    }
+                    <button type="submit" class="btn btn-primary w-100">@T.T("ReceiveReturnOrder")</button>
+                </form>
+            }
+            @if (doc.Status == ReturnOrderStatus.ReturnShipmentQueued)
+            {
+                <form asp-action="ReceiveReturnOrder" method="post" hx-post="@Url.Action("ReceiveReturnOrder", "Sales")" hx-target="#sales-return-order-detail-shell" hx-swap="outerHTML">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="Id" value="@doc.Id" />
+                    <input type="hidden" name="RowVersion" value="@RowVersion()" />
+                    @for (var i = 0; i < doc.Lines.Count; i++)
+                    {
+                        <input type="hidden" name="Lines[@i].LineId" value="@doc.Lines[i].Id" />
+                        <label class="form-label small text-muted">@doc.Lines[i].Name</label>
+                        <input type="number" min="0" max="@doc.Lines[i].ApprovedQuantity" name="Lines[@i].Quantity" value="@doc.Lines[i].ApprovedQuantity" class="form-control mb-2" />
+                    }
+                    <button type="submit" class="btn btn-primary w-100">@T.T("ReceiveReturnOrder")</button>
+                </form>
+            }
+            @if (doc.Status == ReturnOrderStatus.Received)
+            {
+                <form asp-action="InspectReturnOrder" method="post" hx-post="@Url.Action("InspectReturnOrder", "Sales")" hx-target="#sales-return-order-detail-shell" hx-swap="outerHTML">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="Id" value="@doc.Id" />
+                    <input type="hidden" name="RowVersion" value="@RowVersion()" />
+                    @for (var i = 0; i < doc.Lines.Count; i++)
+                    {
+                        <input type="hidden" name="Lines[@i].LineId" value="@doc.Lines[i].Id" />
+                        <div class="border rounded p-2 mb-2">
+                            <div class="fw-semibold small mb-1">@doc.Lines[i].Name</div>
+                            <label class="form-label small text-muted">@T.T("Accepted")</label>
+                            <input type="number" min="0" max="@doc.Lines[i].ReceivedQuantity" name="Lines[@i].AcceptedQuantity" value="@doc.Lines[i].ReceivedQuantity" class="form-control mb-1" />
+                            <label class="form-label small text-muted">@T.T("Rejected")</label>
+                            <input type="number" min="0" max="@doc.Lines[i].ReceivedQuantity" name="Lines[@i].RejectedQuantity" value="0" class="form-control mb-1" />
+                            <label class="form-label small text-muted">@T.T("Scrap")</label>
+                            <input type="number" min="0" max="@doc.Lines[i].ReceivedQuantity" name="Lines[@i].ScrappedQuantity" value="0" class="form-control mb-1" />
+                            @if (doc.Lines[i].ProductVariantId.HasValue)
+                            {
+                                <label class="form-label small text-muted">@T.T("Restock")</label>
+                                <input type="number" min="0" max="@doc.Lines[i].ReceivedQuantity" name="Lines[@i].RestockQuantity" value="@doc.Lines[i].ReceivedQuantity" class="form-control mb-1" />
+                                <label class="form-label small text-muted">@T.T("WarehouseId")</label>
+                                <input name="Lines[@i].RestockWarehouseId" value="@doc.Lines[i].RestockWarehouseId" class="form-control" />
+                            }
+                        </div>
+                    }
+                    <button type="submit" class="btn btn-success w-100">@T.T("InspectReturnOrder")</button>
+                </form>
+            }
+            @if (doc.Status == ReturnOrderStatus.Inspected)
+            {
+                <form asp-action="MarkReturnOrderRefundReady" method="post" hx-post="@Url.Action("MarkReturnOrderRefundReady", "Sales")" hx-target="#sales-return-order-detail-shell" hx-swap="outerHTML">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="Id" value="@doc.Id" />
+                    <input type="hidden" name="RowVersion" value="@RowVersion()" />
+                    <button type="submit" class="btn btn-primary w-100">@T.T("MarkRefundReady")</button>
+                </form>
+                <form asp-action="CloseReturnOrder" method="post" hx-post="@Url.Action("CloseReturnOrder", "Sales")" hx-target="#sales-return-order-detail-shell" hx-swap="outerHTML">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="Id" value="@doc.Id" />
+                    <input type="hidden" name="RowVersion" value="@RowVersion()" />
+                    <button type="submit" class="btn btn-outline-secondary w-100">@T.T("CloseReturnOrder")</button>
+                </form>
+            }
+            @if (doc.Status == ReturnOrderStatus.RefundReady)
+            {
+                <form asp-action="LinkReturnOrderRefund" method="post" hx-post="@Url.Action("LinkReturnOrderRefund", "Sales")" hx-target="#sales-return-order-detail-shell" hx-swap="outerHTML">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="Id" value="@doc.Id" />
+                    <input type="hidden" name="RowVersion" value="@RowVersion()" />
+                    <label class="form-label small text-muted">@T.T("RefundId")</label>
+                    <input name="RefundId" class="form-control mb-2" required />
+                    <button type="submit" class="btn btn-success w-100">@T.T("LinkRefund")</button>
+                </form>
+                <form asp-action="CloseReturnOrder" method="post" hx-post="@Url.Action("CloseReturnOrder", "Sales")" hx-target="#sales-return-order-detail-shell" hx-swap="outerHTML">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="Id" value="@doc.Id" />
+                    <input type="hidden" name="RowVersion" value="@RowVersion()" />
+                    <button type="submit" class="btn btn-outline-secondary w-100">@T.T("CloseReturnOrder")</button>
+                </form>
+            }
+            @if (doc.Status == ReturnOrderStatus.Refunded)
+            {
+                <form asp-action="CloseReturnOrder" method="post" hx-post="@Url.Action("CloseReturnOrder", "Sales")" hx-target="#sales-return-order-detail-shell" hx-swap="outerHTML">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="Id" value="@doc.Id" />
+                    <input type="hidden" name="RowVersion" value="@RowVersion()" />
+                    <button type="submit" class="btn btn-outline-secondary w-100">@T.T("CloseReturnOrder")</button>
+                </form>
+            }
+            @if (doc.Status == ReturnOrderStatus.Requested || doc.Status == ReturnOrderStatus.Approved || doc.Status == ReturnOrderStatus.ReturnShipmentQueued)
+            {
+                <form asp-action="CancelReturnOrder" method="post" hx-post="@Url.Action("CancelReturnOrder", "Sales")" hx-target="#sales-return-order-detail-shell" hx-swap="outerHTML">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="Id" value="@doc.Id" />
+                    <input type="hidden" name="RowVersion" value="@RowVersion()" />
+                    <button type="submit" class="btn btn-outline-danger w-100">@T.T("CancelReturnOrder")</button>
+                </form>
+            }
+        </div>
+
+        <h2 class="h5 mt-4">@T.T("RefundLinks")</h2>
+        @if (doc.RefundLinks.Count == 0)
+        {
+            <div class="text-muted small">@T.T("NoRefundLinksFound")</div>
+        }
+        else
+        {
+            <ul class="list-unstyled small">
+                @foreach (var link in doc.RefundLinks)
+                {
+                    <li class="border-bottom py-1">@link.RefundId - @($"{link.Currency} {(link.AmountMinor / 100.0M):0.00}")</li>
+                }
+            </ul>
+        }
+    </div>
+</div>
+
+<div class="row g-3">
+    <div class="col-lg-6">
+        <h2 class="h6">@T.T("ShippingAddressJson")</h2>
+        <pre class="bg-light border rounded p-2 small mb-0">@doc.ShippingAddressJson</pre>
+    </div>
+    <div class="col-lg-6">
+        <h2 class="h6">@T.T("MetadataJson")</h2>
+        <pre class="bg-light border rounded p-2 small mb-0">@doc.MetadataJson</pre>
+    </div>
+</div>
+</div>

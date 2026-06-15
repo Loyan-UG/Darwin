@@ -639,7 +639,7 @@ public sealed class InventoryValidatorTests
     }
 
     [Fact]
-    public void PurchaseOrderCreate_Should_Fail_When_OrderNumber_Empty()
+    public void PurchaseOrderCreate_Should_Allow_EmptyOrderNumber_ForSequenceReservation()
     {
         var dto = new PurchaseOrderCreateDto
         {
@@ -655,8 +655,8 @@ public sealed class InventoryValidatorTests
 
         var result = new PurchaseOrderCreateValidator().Validate(dto);
 
-        result.IsValid.Should().BeFalse("OrderNumber is required");
-        result.Errors.Should().Contain(e => e.PropertyName == nameof(dto.OrderNumber));
+        result.IsValid.Should().BeTrue("empty OrderNumber is resolved by NumberSequence in the handler");
+        result.Errors.Should().NotContain(e => e.PropertyName == nameof(dto.OrderNumber));
     }
 
     [Fact]

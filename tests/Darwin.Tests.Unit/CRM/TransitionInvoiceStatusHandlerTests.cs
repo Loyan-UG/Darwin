@@ -419,14 +419,14 @@ public sealed class TransitionInvoiceStatusHandlerTests
                 builder.Property(x => x.LastName).IsRequired(false);
                 builder.Property(x => x.Email).IsRequired(false);
                 builder.Property(x => x.Phone).IsRequired(false);
-                builder.Property(x => x.RowVersion).IsRequired();
+                builder.Property(x => x.RowVersion).IsRequired(false);
             });
 
             modelBuilder.Entity<Invoice>(builder =>
             {
                 builder.HasKey(x => x.Id);
                 builder.Property(x => x.Currency).IsRequired();
-                builder.Property(x => x.RowVersion).IsRequired();
+                builder.Property(x => x.RowVersion).IsRequired(false);
             });
 
             modelBuilder.Entity<InvoiceLine>(builder =>

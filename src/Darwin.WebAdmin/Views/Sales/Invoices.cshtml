@@ -1,0 +1,122 @@
+@model Darwin.WebAdmin.ViewModels.Sales.SalesInvoicesListVm
+@inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
+@{
+    ViewData["Title"] = T.T("SalesInvoices");
+    var culture = System.Globalization.CultureInfo.CurrentCulture;
+    string SalesOverviewUrl() => Url.Action("Index", "Sales") ?? string.Empty;
+    string SalesQuotesUrl() => Url.Action("Quotes", "Sales") ?? string.Empty;
+    string SalesOrdersUrl() => Url.Action("Orders", "Sales") ?? string.Empty;
+    string ReturnOrdersUrl() => Url.Action("ReturnOrders", "Sales") ?? string.Empty;
+    string CreditNotesUrl() => Url.Action("CreditNotes", "Sales") ?? string.Empty;
+    string SalesInvoicesBaseUrl() => Url.Action("Invoices", "Sales") ?? string.Empty;
+    string SalesInvoicesUrl(string? q = null, string? filter = null) => Url.Action("Invoices", "Sales", new { q, filter, dateFromUtc = Model.DateFromUtc?.ToString("yyyy-MM-dd"), dateToUtc = Model.DateToUtc?.ToString("yyyy-MM-dd"), businessId = Model.BusinessId, customerId = Model.CustomerId }) ?? string.Empty;
+    string SalesInvoiceUrl(Guid id) => Url.Action("Invoice", "Sales", new { id }) ?? string.Empty;
+    string CrmInvoiceUrl(Guid id) => Url.Action("EditInvoice", "Crm", new { id }) ?? string.Empty;
+    string Money(string currency, long minor) => $"{currency} {(minor / 100.0M):0.00}";
+    string DateText(DateTime? utc) => utc.HasValue ? utc.Value.ToString("g", culture) : "-";
+    var openInvoicesUrl = SalesInvoicesUrl(Model.Query, "Open");
+    var dueSoonInvoicesUrl = SalesInvoicesUrl(Model.Query, "DueSoon");
+    var overdueInvoicesUrl = SalesInvoicesUrl(Model.Query, "Overdue");
+    var archivedInvoicesUrl = SalesInvoicesUrl(Model.Query, "Archived");
+    var clearInvoicesUrl = SalesInvoicesUrl();
+}
+
+<div id="sales-invoices-workspace-shell">
+<partial name="~/Views/Shared/_Alerts.cshtml" />
+<div class="d-flex justify-content-between align-items-start gap-3 mb-3">
+    <div>
+        <h1 class="mb-0"><i class="fa-solid fa-file-invoice-dollar"></i> @T.T("SalesInvoices")</h1>
+        <div class="text-muted small mt-1">@T.T("SalesInvoicesSubtitle")</div>
+    </div>
+    <div class="d-flex gap-2 flex-wrap">
+        <a asp-action="Index" hx-get="@SalesOverviewUrl()" hx-target="#sales-invoices-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-outline-secondary">@T.T("Overview")</a>
+        <a asp-action="Quotes" hx-get="@SalesQuotesUrl()" hx-target="#sales-invoices-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-outline-primary">@T.T("SalesQuotes")</a>
+        <a asp-action="Orders" hx-get="@SalesOrdersUrl()" hx-target="#sales-invoices-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-outline-primary">@T.T("SalesOrders")</a>
+        <a asp-action="ReturnOrders" hx-get="@ReturnOrdersUrl()" hx-target="#sales-invoices-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-outline-primary">@T.T("ReturnOrders")</a>
+        <a asp-action="CreditNotes" hx-get="@CreditNotesUrl()" hx-target="#sales-invoices-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-outline-primary">@T.T("CreditNotes")</a>
+    </div>
+</div>
+
+<form asp-action="Invoices" method="get" class="row g-2 align-items-end mb-3"
+      hx-get="@SalesInvoicesBaseUrl()"
+      hx-target="#sales-invoices-workspace-shell"
+      hx-swap="outerHTML"
+      hx-push-url="true">
+    <div class="col-md-4">
+        <label class="form-label small text-muted">@T.T("Search")</label>
+        <input type="text" name="q" value="@Model.Query" class="form-control" placeholder="@T.T("SearchInvoicesPlaceholder")" />
+    </div>
+    <div class="col-md-2">
+        <label class="form-label small text-muted">@T.T("Status")</label>
+        <select name="filter" asp-items="Model.FilterItems" class="form-select"></select>
+    </div>
+    <div class="col-md-2">
+        <label class="form-label small text-muted">@T.T("From")</label>
+        <input type="date" name="dateFromUtc" value="@Model.DateFromUtc?.ToString("yyyy-MM-dd")" class="form-control" />
+    </div>
+    <div class="col-md-2">
+        <label class="form-label small text-muted">@T.T("To")</label>
+        <input type="date" name="dateToUtc" value="@Model.DateToUtc?.ToString("yyyy-MM-dd")" class="form-control" />
+    </div>
+    <div class="col-md-2">
+        <button class="btn btn-outline-secondary" type="submit">@T.T("Filter")</button>
+        <a asp-action="Invoices" hx-get="@SalesInvoicesUrl()" hx-target="#sales-invoices-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-outline-secondary">@T.T("Reset")</a>
+    </div>
+    <input type="hidden" name="businessId" value="@Model.BusinessId" />
+    <input type="hidden" name="customerId" value="@Model.CustomerId" />
+</form>
+
+<div class="d-flex gap-2 flex-wrap mb-3">
+    <a asp-action="Invoices" asp-route-filter="Open" hx-get="@openInvoicesUrl" hx-target="#sales-invoices-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-sm @(Model.Filter == Darwin.Application.Sales.DTOs.SalesInvoiceDocumentFilter.Open ? "btn-primary" : "btn-outline-primary")">@T.T("Open")</a>
+    <a asp-action="Invoices" asp-route-filter="DueSoon" hx-get="@dueSoonInvoicesUrl" hx-target="#sales-invoices-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-sm @(Model.Filter == Darwin.Application.Sales.DTOs.SalesInvoiceDocumentFilter.DueSoon ? "btn-warning" : "btn-outline-warning")">@T.T("DueSoon")</a>
+    <a asp-action="Invoices" asp-route-filter="Overdue" hx-get="@overdueInvoicesUrl" hx-target="#sales-invoices-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-sm @(Model.Filter == Darwin.Application.Sales.DTOs.SalesInvoiceDocumentFilter.Overdue ? "btn-danger" : "btn-outline-danger")">@T.T("Overdue")</a>
+    <a asp-action="Invoices" asp-route-filter="Archived" hx-get="@archivedInvoicesUrl" hx-target="#sales-invoices-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-sm @(Model.Filter == Darwin.Application.Sales.DTOs.SalesInvoiceDocumentFilter.Archived ? "btn-secondary" : "btn-outline-secondary")">@T.T("Archived")</a>
+    <a asp-action="Invoices" hx-get="@clearInvoicesUrl" hx-target="#sales-invoices-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-sm btn-outline-secondary">@T.T("ClearQueueFilters")</a>
+</div>
+
+<div class="table-responsive">
+    <table class="table table-sm table-striped align-middle">
+        <thead>
+        <tr>
+            <th>@T.T("InvoiceNumber")</th>
+            <th>@T.T("OrderNumber")</th>
+            <th>@T.T("Status")</th>
+            <th class="text-end">@T.T("Total")</th>
+            <th class="text-end">@T.T("Balance")</th>
+            <th>@T.T("Due")</th>
+            <th>@T.T("Archive")</th>
+            <th class="text-end">@T.T("Actions")</th>
+        </tr>
+        </thead>
+        <tbody>
+        @if (Model.Items.Count == 0)
+        {
+            <tr><td colspan="8" class="text-center text-muted">@T.T("NoSalesDocuments")</td></tr>
+        }
+        else
+        {
+            foreach (var item in Model.Items)
+            {
+                <tr>
+                    <td>@(string.IsNullOrWhiteSpace(item.InvoiceNumber) ? T.T("NotAssigned") : item.InvoiceNumber)</td>
+                    <td>@(string.IsNullOrWhiteSpace(item.OrderNumber) ? "-" : item.OrderNumber)</td>
+                    <td>@T.T(item.Status.ToString())</td>
+                    <td class="text-end">@Money(item.Currency, item.TotalGrossMinor)</td>
+                    <td class="text-end">@Money(item.Currency, item.BalanceMinor)</td>
+                    <td>@DateText(item.DueDateUtc)</td>
+                    <td>
+                        <span class="badge @(item.HasArchiveMetadata ? "text-bg-success" : "text-bg-secondary")">@T.T(item.HasArchiveMetadata ? "Ready" : "Missing")</span>
+                    </td>
+                    <td class="text-end">
+                        <a asp-action="Invoice" asp-route-id="@item.Id" hx-get="@SalesInvoiceUrl(item.Id)" hx-target="#sales-invoices-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-sm btn-outline-primary">@T.T("View")</a>
+                        <a asp-controller="Crm" asp-action="EditInvoice" asp-route-id="@item.Id" hx-get="@CrmInvoiceUrl(item.Id)" hx-target="#sales-invoices-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-sm btn-outline-secondary">@T.T("Operations")</a>
+                    </td>
+                </tr>
+            }
+        }
+        </tbody>
+    </table>
+</div>
+
+<pager page="Model.Page" page-size="Model.PageSize" total="Model.Total" asp-controller="Sales" asp-action="Invoices" asp-route-q="@Model.Query" asp-route-filter="@Model.Filter" asp-route-dateFromUtc="@Model.DateFromUtc" asp-route-dateToUtc="@Model.DateToUtc" asp-route-businessId="@Model.BusinessId" asp-route-customerId="@Model.CustomerId" hx-target="#sales-invoices-workspace-shell" hx-swap="outerHTML" hx-push-url="true"></pager>
+</div>

@@ -146,6 +146,16 @@ namespace Darwin.Domain.Entities.Inventory
         public string Name { get; set; } = string.Empty;
 
         /// <summary>
+        /// Gets or sets the optional business-scoped supplier code.
+        /// </summary>
+        public string? Code { get; set; }
+
+        /// <summary>
+        /// Gets or sets the supplier status.
+        /// </summary>
+        public SupplierStatus Status { get; set; } = SupplierStatus.Active;
+
+        /// <summary>
         /// Gets or sets the supplier email address.
         /// </summary>
         public string Email { get; set; } = string.Empty;
@@ -164,6 +174,36 @@ namespace Darwin.Domain.Entities.Inventory
         /// Gets or sets optional internal notes.
         /// </summary>
         public string? Notes { get; set; }
+
+        /// <summary>
+        /// Gets or sets the preferred purchase currency code.
+        /// </summary>
+        public string? PreferredCurrency { get; set; }
+
+        /// <summary>
+        /// Gets or sets the default payment term in days.
+        /// </summary>
+        public int? PaymentTermDays { get; set; }
+
+        /// <summary>
+        /// Gets or sets the default lead time in days.
+        /// </summary>
+        public int? LeadTimeDays { get; set; }
+
+        /// <summary>
+        /// Gets or sets the supplier website.
+        /// </summary>
+        public string? Website { get; set; }
+
+        /// <summary>
+        /// Gets or sets the supplier tax registration number.
+        /// </summary>
+        public string? TaxRegistrationNumber { get; set; }
+
+        /// <summary>
+        /// Gets or sets optional external-facing supplier notes.
+        /// </summary>
+        public string? ExternalNotes { get; set; }
 
         /// <summary>
         /// Gets or sets purchase orders issued to this supplier.
@@ -197,9 +237,39 @@ namespace Darwin.Domain.Entities.Inventory
         public DateTime OrderedAtUtc { get; set; }
 
         /// <summary>
+        /// Gets or sets the purchase order currency code.
+        /// </summary>
+        public string Currency { get; set; } = "EUR";
+
+        /// <summary>
+        /// Gets or sets the expected delivery date in UTC.
+        /// </summary>
+        public DateTime? ExpectedDeliveryDateUtc { get; set; }
+
+        /// <summary>
+        /// Gets or sets the issued timestamp in UTC.
+        /// </summary>
+        public DateTime? IssuedAtUtc { get; set; }
+
+        /// <summary>
+        /// Gets or sets the received timestamp in UTC.
+        /// </summary>
+        public DateTime? ReceivedAtUtc { get; set; }
+
+        /// <summary>
+        /// Gets or sets the cancelled timestamp in UTC.
+        /// </summary>
+        public DateTime? CancelledAtUtc { get; set; }
+
+        /// <summary>
         /// Gets or sets the purchase order status.
         /// </summary>
         public PurchaseOrderStatus Status { get; set; } = PurchaseOrderStatus.Draft;
+
+        /// <summary>
+        /// Gets or sets optional internal notes.
+        /// </summary>
+        public string? InternalNotes { get; set; }
 
         /// <summary>
         /// Gets or sets the purchase order lines.
@@ -223,9 +293,29 @@ namespace Darwin.Domain.Entities.Inventory
         public Guid ProductVariantId { get; set; }
 
         /// <summary>
+        /// Gets or sets the supplier-facing SKU snapshot.
+        /// </summary>
+        public string? SupplierSku { get; set; }
+
+        /// <summary>
+        /// Gets or sets the purchase line description snapshot.
+        /// </summary>
+        public string? Description { get; set; }
+
+        /// <summary>
         /// Gets or sets the ordered quantity.
         /// </summary>
         public int Quantity { get; set; }
+
+        /// <summary>
+        /// Gets or sets the quantity received against this purchase order line.
+        /// </summary>
+        public int ReceivedQuantity { get; set; }
+
+        /// <summary>
+        /// Gets or sets the quantity cancelled against this purchase order line.
+        /// </summary>
+        public int CancelledQuantity { get; set; }
 
         /// <summary>
         /// Gets or sets the unit cost in minor units.
@@ -236,6 +326,47 @@ namespace Darwin.Domain.Entities.Inventory
         /// Gets or sets the total line cost in minor units.
         /// </summary>
         public long TotalCostMinor { get; set; }
+    }
+
+    /// <summary>
+    /// Represents a formal receipt of supplier goods against a purchase order.
+    /// </summary>
+    public sealed class GoodsReceipt : BaseEntity
+    {
+        public Guid BusinessId { get; set; }
+        public Guid SupplierId { get; set; }
+        public Guid PurchaseOrderId { get; set; }
+        public Guid WarehouseId { get; set; }
+        public string? GoodsReceiptNumber { get; set; }
+        public GoodsReceiptStatus Status { get; set; } = GoodsReceiptStatus.Draft;
+        public DateTime? ReceivedAtUtc { get; set; }
+        public DateTime? InspectedAtUtc { get; set; }
+        public DateTime? PostedAtUtc { get; set; }
+        public DateTime? CancelledAtUtc { get; set; }
+        public string? InternalNotes { get; set; }
+        public string? MetadataJson { get; set; }
+        public List<GoodsReceiptLine> Lines { get; set; } = new();
+    }
+
+    /// <summary>
+    /// Represents a received purchase order line snapshot and inspection outcome.
+    /// </summary>
+    public sealed class GoodsReceiptLine : BaseEntity
+    {
+        public Guid GoodsReceiptId { get; set; }
+        public Guid PurchaseOrderLineId { get; set; }
+        public Guid ProductVariantId { get; set; }
+        public string? SupplierSku { get; set; }
+        public string? Description { get; set; }
+        public int OrderedQuantity { get; set; }
+        public int PreviouslyReceivedQuantity { get; set; }
+        public int ReceivedQuantity { get; set; }
+        public int AcceptedQuantity { get; set; }
+        public int RejectedQuantity { get; set; }
+        public int DamagedQuantity { get; set; }
+        public long UnitCostMinor { get; set; }
+        public long TotalCostMinor { get; set; }
+        public int SortOrder { get; set; }
     }
 
     /// <summary>

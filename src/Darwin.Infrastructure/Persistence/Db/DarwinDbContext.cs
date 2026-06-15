@@ -5,12 +5,15 @@ using Darwin.Domain.Entities.Businesses;
 using Darwin.Domain.Entities.CartCheckout;
 using Darwin.Domain.Entities.Catalog;
 using Darwin.Domain.Entities.CMS;
+using Darwin.Domain.Entities.CRM;
 using Darwin.Domain.Entities.Foundation;
 using Darwin.Domain.Entities.Identity;
+using Darwin.Domain.Entities.Inventory;
 using Darwin.Domain.Entities.Integration;
 using Darwin.Domain.Entities.Marketing;
 using Darwin.Domain.Entities.Orders;
 using Darwin.Domain.Entities.Pricing;
+using Darwin.Domain.Entities.Sales;
 using Darwin.Domain.Entities.SEO;
 using Darwin.Domain.Entities.Settings;
 using Darwin.Domain.Entities.Shipping;
@@ -105,6 +108,17 @@ namespace Darwin.Infrastructure.Persistence.Db
         public DbSet<ShipmentLine> ShipmentLines => Set<ShipmentLine>();
         public DbSet<Refund> Refunds => Set<Refund>();
 
+        // Sales
+        public DbSet<SalesQuote> SalesQuotes => Set<SalesQuote>();
+        public DbSet<SalesQuoteLine> SalesQuoteLines => Set<SalesQuoteLine>();
+        public DbSet<DeliveryNote> DeliveryNotes => Set<DeliveryNote>();
+        public DbSet<DeliveryNoteLine> DeliveryNoteLines => Set<DeliveryNoteLine>();
+        public DbSet<ReturnOrder> ReturnOrders => Set<ReturnOrder>();
+        public DbSet<ReturnOrderLine> ReturnOrderLines => Set<ReturnOrderLine>();
+        public DbSet<ReturnOrderRefundLink> ReturnOrderRefundLinks => Set<ReturnOrderRefundLink>();
+        public DbSet<CreditNote> CreditNotes => Set<CreditNote>();
+        public DbSet<CreditNoteLine> CreditNoteLines => Set<CreditNoteLine>();
+
         // Shipping
         public DbSet<ShippingMethod> ShippingMethods => Set<ShippingMethod>();
         public DbSet<ShippingRate> ShippingRates => Set<ShippingRate>();
@@ -162,6 +176,21 @@ namespace Darwin.Infrastructure.Persistence.Db
 
             // 1) Apply all IEntityTypeConfiguration<T> from Infrastructure assembly
             modelBuilder.ApplyConfigurationsFromAssembly(typeof(DarwinDbContext).Assembly);
+
+            if (Database.ProviderName?.Contains("Npgsql", StringComparison.OrdinalIgnoreCase) == true)
+            {
+                modelBuilder.Entity<GoodsReceipt>().Property(x => x.MetadataJson).HasColumnType("jsonb");
+                modelBuilder.Entity<DeliveryNote>().Property(x => x.MetadataJson).HasColumnType("jsonb");
+                modelBuilder.Entity<ReturnOrder>().Property(x => x.MetadataJson).HasColumnType("jsonb");
+                modelBuilder.Entity<CreditNote>().Property(x => x.SourceModelJson).HasColumnType("jsonb");
+                modelBuilder.Entity<CreditNote>().Property(x => x.MetadataJson).HasColumnType("jsonb");
+                modelBuilder.Entity<CreditNoteLine>().Property(x => x.SourceLineJson).HasColumnType("jsonb");
+                modelBuilder.Entity<FinancePostingAccountMapping>().Property(x => x.MetadataJson).HasColumnType("jsonb");
+                modelBuilder.Entity<FinanceExportBatch>().Property(x => x.MetadataJson).HasColumnType("jsonb");
+                modelBuilder.Entity<FinanceExportAttempt>().Property(x => x.MetadataJson).HasColumnType("jsonb");
+                modelBuilder.Entity<SupplierInvoice>().Property(x => x.MetadataJson).HasColumnType("jsonb");
+                modelBuilder.Entity<JournalEntry>().Property(x => x.MetadataJson).HasColumnType("jsonb");
+            }
 
             // 2) Keep decimal storage explicit across providers; entity-specific configurations can still override this.
             ApplyDecimalPrecisionFallback(modelBuilder);
@@ -474,6 +503,12 @@ namespace Darwin.Infrastructure.Persistence.Db
 
             modelBuilder.Entity<BusinessFeatureOverride>(b =>
                 b.Property(x => x.MetadataJson).HasColumnType("jsonb"));
+
+            modelBuilder.Entity<Consent>(b =>
+                b.Property(x => x.EvidenceJson).HasColumnType("jsonb"));
+
+            modelBuilder.Entity<CustomerSegment>(b =>
+                b.Property(x => x.RuleJson).HasColumnType("jsonb"));
         }
     }
 }

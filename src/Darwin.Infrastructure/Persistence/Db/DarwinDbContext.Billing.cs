@@ -34,6 +34,31 @@ namespace Darwin.Infrastructure.Persistence.Db
         public DbSet<FinancialAccount> FinancialAccounts => Set<FinancialAccount>();
 
         /// <summary>
+        /// Business-specific mappings from finance posting roles to financial accounts.
+        /// </summary>
+        public DbSet<FinancePostingAccountMapping> FinancePostingAccountMappings => Set<FinancePostingAccountMapping>();
+
+        /// <summary>
+        /// Finance export batches.
+        /// </summary>
+        public DbSet<FinanceExportBatch> FinanceExportBatches => Set<FinanceExportBatch>();
+
+        /// <summary>
+        /// Finance export attempts.
+        /// </summary>
+        public DbSet<FinanceExportAttempt> FinanceExportAttempts => Set<FinanceExportAttempt>();
+
+        /// <summary>
+        /// Supplier invoices used as formal payables source documents before posting.
+        /// </summary>
+        public DbSet<SupplierInvoice> SupplierInvoices => Set<SupplierInvoice>();
+
+        /// <summary>
+        /// Supplier invoice line snapshots and matching state.
+        /// </summary>
+        public DbSet<SupplierInvoiceLine> SupplierInvoiceLines => Set<SupplierInvoiceLine>();
+
+        /// <summary>
         /// Journal entries.
         /// </summary>
         public DbSet<JournalEntry> JournalEntries => Set<JournalEntry>();

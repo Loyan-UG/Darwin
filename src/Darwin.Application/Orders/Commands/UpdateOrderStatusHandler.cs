@@ -7,6 +7,7 @@ using Darwin.Application.Abstractions.Persistence;
 using Darwin.Application.Inventory.Commands;
 using Darwin.Application.Inventory.DTOs;
 using Darwin.Application.Orders.DTOs;
+using Darwin.Application.Sales.Services;
 using Darwin.Application.Orders.StateMachine;
 using Darwin.Application.Orders.Validators;
 using Darwin.Domain.Entities.Inventory;
@@ -38,6 +39,7 @@ namespace Darwin.Application.Orders.Commands
         private readonly ReserveInventoryHandler _reserveInventory;
         private readonly ReleaseInventoryReservationHandler _releaseReservation;
         private readonly AllocateInventoryForOrderHandler _allocateForOrder;
+        private readonly SalesLifecycleEventService? _salesEvents;
 
         public UpdateOrderStatusHandler(
             IAppDbContext db,
@@ -45,7 +47,8 @@ namespace Darwin.Application.Orders.Commands
             IStringLocalizer<ValidationResource> localizer,
             ReserveInventoryHandler reserveInventory,
             ReleaseInventoryReservationHandler releaseReservation,
-            AllocateInventoryForOrderHandler allocateForOrder)
+            AllocateInventoryForOrderHandler allocateForOrder,
+            SalesLifecycleEventService? salesEvents = null)
         {
             _db = db ?? throw new ArgumentNullException(nameof(db));
             _validator = validator ?? throw new ArgumentNullException(nameof(validator));
@@ -53,6 +56,7 @@ namespace Darwin.Application.Orders.Commands
             _reserveInventory = reserveInventory ?? throw new ArgumentNullException(nameof(reserveInventory));
             _releaseReservation = releaseReservation ?? throw new ArgumentNullException(nameof(releaseReservation));
             _allocateForOrder = allocateForOrder ?? throw new ArgumentNullException(nameof(allocateForOrder));
+            _salesEvents = salesEvents;
         }
 
         /// <summary>
@@ -97,6 +101,8 @@ namespace Darwin.Application.Orders.Commands
                 }
             }
 
+            var previousStatus = order.Status;
+
             // Execute inventory side-effects depending on the target status.
             switch (dto.NewStatus)
             {
@@ -110,10 +116,15 @@ namespace Darwin.Application.Orders.Commands
                         {
                             foreach (var line in order.Lines.Where(l => !l.IsDeleted))
                             {
+                                if (line.VariantId is not Guid variantId)
+                                {
+                                    continue;
+                                }
+
                                 var reserveDto = new InventoryReserveDto
                                 {
                                     WarehouseId = line.WarehouseId ?? dto.WarehouseId,
-                                    VariantId = line.VariantId,
+                                    VariantId = variantId,
                                     Quantity = line.Quantity,
                                     Reason = "OrderPaid-Reserve",
                                     ReferenceId = order.Id
@@ -134,10 +145,15 @@ namespace Darwin.Application.Orders.Commands
                         {
                             foreach (var line in order.Lines.Where(l => !l.IsDeleted))
                             {
+                                if (line.VariantId is not Guid variantId)
+                                {
+                                    continue;
+                                }
+
                                 var releaseDto = new InventoryReleaseReservationDto
                                 {
                                     WarehouseId = line.WarehouseId ?? dto.WarehouseId,
-                                    VariantId = line.VariantId,
+                                    VariantId = variantId,
                                     Quantity = line.Quantity,
                                     Reason = "OrderCancelled-Release",
                                     ReferenceId = order.Id
@@ -156,12 +172,16 @@ namespace Darwin.Application.Orders.Commands
                             OrderId = order.Id,
                             Lines = order.Lines
                                 .Where(l => !l.IsDeleted)
-                                .Select(l => new InventoryAllocateForOrderLineDto
-                                {
-                                    WarehouseId = l.WarehouseId ?? dto.WarehouseId,
-                                    VariantId = l.VariantId,
-                                    Quantity = l.Quantity
-                                })
+                                .Select(l => l.VariantId is Guid variantId
+                                    ? new InventoryAllocateForOrderLineDto
+                                    {
+                                        WarehouseId = l.WarehouseId ?? dto.WarehouseId,
+                                        VariantId = variantId,
+                                        Quantity = l.Quantity
+                                    }
+                                    : null)
+                                .Where(l => l is not null)
+                                .Select(l => l!)
                                 .ToList()
                         };
                         await _allocateForOrder.HandleAsync(allocDto, ct);
@@ -170,6 +190,21 @@ namespace Darwin.Application.Orders.Commands
             }
 
             order.Status = dto.NewStatus;
+            if (_salesEvents is not null)
+            {
+                var eventResult = await _salesEvents.RecordOrderStatusChangedAsync(
+                    order,
+                    previousStatus,
+                    dto.NewStatus,
+                    DateTime.UtcNow,
+                    ct)
+                    .ConfigureAwait(false);
+                if (!eventResult.Succeeded)
+                {
+                    throw new ValidationException(eventResult.Error);
+                }
+            }
+
             try
             {
                 await _db.SaveChangesAsync(ct).ConfigureAwait(false);

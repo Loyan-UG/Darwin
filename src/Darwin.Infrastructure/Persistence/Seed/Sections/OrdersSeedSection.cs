@@ -371,6 +371,7 @@ namespace Darwin.Infrastructure.Persistence.Seed.Sections
             line.UnitPriceNetMinor = invoice.TotalNetMinor;
             line.TaxRate = 0.19m;
             line.TotalNetMinor = invoice.TotalNetMinor;
+            line.TotalTaxMinor = invoice.TotalTaxMinor;
             line.TotalGrossMinor = invoice.TotalGrossMinor;
 
             await db.SaveChangesAsync(ct);

@@ -1,0 +1,173 @@
+@model Darwin.WebAdmin.ViewModels.Sales.SalesQuoteDetailVm
+@using Darwin.Domain.Enums
+@inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
+@{
+    ViewData["Title"] = T.T("SalesQuote");
+    var quote = Model.Document;
+    var culture = System.Globalization.CultureInfo.CurrentCulture;
+    string QuotesUrl() => Url.Action("Quotes", "Sales") ?? string.Empty;
+    string EditUrl() => Url.Action("EditQuote", "Sales", new { id = quote.Id }) ?? string.Empty;
+    string Money(long minor) => $"{quote.Currency} {(minor / 100.0M):0.00}";
+    string DateText(DateTime? utc) => utc.HasValue ? utc.Value.ToString("g", culture) : "-";
+    string RowVersion() => quote.RowVersion is null || quote.RowVersion.Length == 0 ? string.Empty : Convert.ToBase64String(quote.RowVersion);
+}
+
+<div id="sales-quote-detail-shell">
+<partial name="~/Views/Shared/_Alerts.cshtml" />
+<div class="d-flex justify-content-between align-items-start gap-3 mb-3">
+    <div>
+        <h1 class="mb-0"><i class="fa-solid fa-file-signature"></i> @(quote.QuoteNumber ?? quote.Title)</h1>
+        <div class="text-muted small mt-1">@T.T($"SalesQuoteStatus{quote.Status}")</div>
+    </div>
+    <div class="d-flex gap-2 flex-wrap">
+        <a asp-action="Quotes" hx-get="@QuotesUrl()" hx-target="#sales-quote-detail-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-outline-secondary">@T.T("BackToList")</a>
+        @if (quote.Status == SalesQuoteStatus.Draft)
+        {
+            <a asp-action="EditQuote" asp-route-id="@quote.Id" hx-get="@EditUrl()" hx-target="#sales-quote-detail-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-outline-primary">@T.T("Edit")</a>
+        }
+    </div>
+</div>
+
+<div class="row g-3 mb-3">
+    <div class="col-md-3">
+        <div class="border rounded p-3 h-100">
+            <div class="text-muted small">@T.T("QuoteNumber")</div>
+            <div class="fs-5 fw-semibold">@(quote.QuoteNumber ?? "-")</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="border rounded p-3 h-100">
+            <div class="text-muted small">@T.T("Total")</div>
+            <div class="fs-5 fw-semibold">@Money(quote.TotalGrossMinor)</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="border rounded p-3 h-100">
+            <div class="text-muted small">@T.T("Tax")</div>
+            <div class="fs-5 fw-semibold">@Money(quote.TotalTaxMinor)</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="border rounded p-3 h-100">
+            <div class="text-muted small">@T.T("ValidUntil")</div>
+            <div class="fs-5 fw-semibold">@DateText(quote.ValidUntilUtc)</div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-3 mb-3">
+    <div class="col-lg-8">
+        <h2 class="h5">@T.T("Lines")</h2>
+        <div class="table-responsive">
+            <table class="table table-sm align-middle">
+                <thead>
+                <tr>
+                    <th>@T.T("Name")</th>
+                    <th>@T.T("Sku")</th>
+                    <th class="text-end">@T.T("Quantity")</th>
+                    <th class="text-end">@T.T("UnitNet")</th>
+                    <th class="text-end">@T.T("UnitGross")</th>
+                    <th class="text-end">@T.T("Tax")</th>
+                    <th class="text-end">@T.T("Total")</th>
+                </tr>
+                </thead>
+                <tbody>
+                @foreach (var line in quote.Lines)
+                {
+                    <tr>
+                        <td>
+                            <div class="fw-semibold">@line.Name</div>
+                            @if (!string.IsNullOrWhiteSpace(line.Description))
+                            {
+                                <div class="small text-muted">@line.Description</div>
+                            }
+                        </td>
+                        <td>@(line.Sku ?? "-")</td>
+                        <td class="text-end">@line.Quantity</td>
+                        <td class="text-end">@Money(line.UnitPriceNetMinor)</td>
+                        <td class="text-end">@Money(line.UnitPriceGrossMinor)</td>
+                        <td class="text-end">@Money(line.TotalTaxMinor)</td>
+                        <td class="text-end">@Money(line.TotalGrossMinor)</td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <div class="col-lg-4">
+        <h2 class="h5">@T.T("Actions")</h2>
+        <div class="d-grid gap-2">
+            @if (quote.Status == SalesQuoteStatus.Draft)
+            {
+                <form asp-action="SendQuote" method="post" hx-post="@Url.Action("SendQuote", "Sales")" hx-target="#sales-quote-detail-shell" hx-swap="outerHTML">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="Id" value="@quote.Id" />
+                    <input type="hidden" name="RowVersion" value="@RowVersion()" />
+                    <button type="submit" class="btn btn-primary w-100">@T.T("SendQuote")</button>
+                </form>
+            }
+            @if (quote.Status == SalesQuoteStatus.Sent)
+            {
+                <form asp-action="AcceptQuote" method="post" hx-post="@Url.Action("AcceptQuote", "Sales")" hx-target="#sales-quote-detail-shell" hx-swap="outerHTML">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="Id" value="@quote.Id" />
+                    <input type="hidden" name="RowVersion" value="@RowVersion()" />
+                    <button type="submit" class="btn btn-success w-100">@T.T("AcceptQuote")</button>
+                </form>
+                <form asp-action="RejectQuote" method="post" hx-post="@Url.Action("RejectQuote", "Sales")" hx-target="#sales-quote-detail-shell" hx-swap="outerHTML">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="Id" value="@quote.Id" />
+                    <input type="hidden" name="RowVersion" value="@RowVersion()" />
+                    <button type="submit" class="btn btn-outline-danger w-100">@T.T("RejectQuote")</button>
+                </form>
+                <form asp-action="ExpireQuote" method="post" hx-post="@Url.Action("ExpireQuote", "Sales")" hx-target="#sales-quote-detail-shell" hx-swap="outerHTML">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="Id" value="@quote.Id" />
+                    <input type="hidden" name="RowVersion" value="@RowVersion()" />
+                    <button type="submit" class="btn btn-outline-secondary w-100">@T.T("ExpireQuote")</button>
+                </form>
+            }
+            @if (quote.Status == SalesQuoteStatus.Accepted)
+            {
+                <form asp-action="CreateOrderFromQuote" method="post" hx-post="@Url.Action("CreateOrderFromQuote", "Sales")" hx-target="#sales-quote-detail-shell" hx-swap="outerHTML">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="Id" value="@quote.Id" />
+                    <input type="hidden" name="RowVersion" value="@RowVersion()" />
+                    <button type="submit" class="btn btn-primary w-100">@T.T("CreateOrderFromQuote")</button>
+                </form>
+                <form asp-action="ConvertQuote" method="post" hx-post="@Url.Action("ConvertQuote", "Sales")" hx-target="#sales-quote-detail-shell" hx-swap="outerHTML">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="Id" value="@quote.Id" />
+                    <input type="hidden" name="RowVersion" value="@RowVersion()" />
+                    <label class="form-label small text-muted">@T.T("ConvertedOrderId")</label>
+                    <input name="ConvertedOrderId" value="@Model.Convert.ConvertedOrderId" class="form-control mb-2" required />
+                    <button type="submit" class="btn btn-outline-primary w-100">@T.T("LinkConvertedOrder")</button>
+                </form>
+            }
+        </div>
+
+        <h2 class="h5 mt-4">@T.T("DocumentLinks")</h2>
+        <dl class="row small mb-0">
+            <dt class="col-5">@T.T("BusinessId")</dt><dd class="col-7">@(quote.BusinessId?.ToString() ?? "-")</dd>
+            <dt class="col-5">@T.T("CustomerId")</dt><dd class="col-7">@(quote.CustomerId?.ToString() ?? "-")</dd>
+            <dt class="col-5">@T.T("OpportunityId")</dt><dd class="col-7">@(quote.OpportunityId?.ToString() ?? "-")</dd>
+            <dt class="col-5">@T.T("ConvertedOrder")</dt><dd class="col-7">@(quote.ConvertedOrderNumber ?? quote.ConvertedOrderId?.ToString() ?? "-")</dd>
+        </dl>
+    </div>
+</div>
+
+<div class="row g-3">
+    <div class="col-lg-4">
+        <h2 class="h6">@T.T("CustomerSnapshotJson")</h2>
+        <pre class="bg-light border rounded p-2 small mb-0">@quote.CustomerSnapshotJson</pre>
+    </div>
+    <div class="col-lg-4">
+        <h2 class="h6">@T.T("BillingAddressJson")</h2>
+        <pre class="bg-light border rounded p-2 small mb-0">@quote.BillingAddressJson</pre>
+    </div>
+    <div class="col-lg-4">
+        <h2 class="h6">@T.T("ShippingAddressJson")</h2>
+        <pre class="bg-light border rounded p-2 small mb-0">@quote.ShippingAddressJson</pre>
+    </div>
+</div>
+</div>

@@ -34,6 +34,12 @@ namespace Darwin.Application.CRM.DTOs
         public string? VatId { get; set; }
         public string? Locale { get; set; }
         public bool UsesPlatformLocaleFallback { get; set; }
+        public CustomerLifecycleStatus LifecycleStatus { get; set; }
+        public Guid? OwnerUserId { get; set; }
+        public string? AcquisitionSource { get; set; }
+        public PreferredContactChannel? PreferredContactChannel { get; set; }
+        public DateTime? LastContactedAtUtc { get; set; }
+        public DateTime? NextFollowUpAtUtc { get; set; }
         public int SegmentCount { get; set; }
         public int OpportunityCount { get; set; }
         public DateTime CreatedAtUtc { get; set; }
@@ -81,6 +87,12 @@ namespace Darwin.Application.CRM.DTOs
         public CustomerTaxProfileType TaxProfileType { get; set; } = CustomerTaxProfileType.Consumer;
         public string? VatId { get; set; }
         public string? Notes { get; set; }
+        public CustomerLifecycleStatus LifecycleStatus { get; set; } = CustomerLifecycleStatus.Active;
+        public Guid? OwnerUserId { get; set; }
+        public string? AcquisitionSource { get; set; }
+        public PreferredContactChannel? PreferredContactChannel { get; set; }
+        public DateTime? LastContactedAtUtc { get; set; }
+        public DateTime? NextFollowUpAtUtc { get; set; }
         public List<CustomerAddressDto> Addresses { get; set; } = new();
     }
 
@@ -135,9 +147,14 @@ namespace Darwin.Application.CRM.DTOs
         public string Email { get; set; } = string.Empty;
         public string Phone { get; set; } = string.Empty;
         public LeadStatus Status { get; set; }
+        public CrmPriority Priority { get; set; }
         public Guid? AssignedToUserId { get; set; }
         public string? AssignedToUserDisplayName { get; set; }
         public Guid? CustomerId { get; set; }
+        public DateTime? QualifiedAtUtc { get; set; }
+        public DateTime? DisqualifiedAtUtc { get; set; }
+        public DateTime? ConvertedAtUtc { get; set; }
+        public string? ClosedReason { get; set; }
         public int InteractionCount { get; set; }
         public DateTime CreatedAtUtc { get; set; }
         public DateTime? ModifiedAtUtc { get; set; }
@@ -154,8 +171,13 @@ namespace Darwin.Application.CRM.DTOs
         public string? Source { get; set; }
         public string? Notes { get; set; }
         public LeadStatus Status { get; set; } = LeadStatus.New;
+        public CrmPriority Priority { get; set; } = CrmPriority.Normal;
         public Guid? AssignedToUserId { get; set; }
         public Guid? CustomerId { get; set; }
+        public DateTime? QualifiedAtUtc { get; set; }
+        public DateTime? DisqualifiedAtUtc { get; set; }
+        public DateTime? ConvertedAtUtc { get; set; }
+        public string? ClosedReason { get; set; }
     }
 
     public sealed class LeadEditDto : LeadCreateDto
@@ -180,6 +202,7 @@ namespace Darwin.Application.CRM.DTOs
         public Guid Id { get; set; }
         public byte[] RowVersion { get; set; } = Array.Empty<byte>();
         public string Action { get; set; } = string.Empty;
+        public string? ClosedReason { get; set; }
     }
 
     public sealed class CrmSummaryDto

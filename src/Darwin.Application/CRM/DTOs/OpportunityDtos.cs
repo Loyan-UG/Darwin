@@ -35,10 +35,16 @@ namespace Darwin.Application.CRM.DTOs
         public string CustomerDisplayName { get; set; } = string.Empty;
         public string Title { get; set; } = string.Empty;
         public long EstimatedValueMinor { get; set; }
+        public string Currency { get; set; } = Darwin.Domain.Common.DomainDefaults.DefaultCurrency;
         public OpportunityStage Stage { get; set; }
+        public int? ProbabilityPercent { get; set; }
+        public OpportunityForecastCategory ForecastCategory { get; set; }
         public DateTime? ExpectedCloseDateUtc { get; set; }
         public Guid? AssignedToUserId { get; set; }
         public string? AssignedToUserDisplayName { get; set; }
+        public DateTime? ClosedAtUtc { get; set; }
+        public string? CloseReason { get; set; }
+        public string? Source { get; set; }
         public int ItemCount { get; set; }
         public int InteractionCount { get; set; }
         public DateTime CreatedAtUtc { get; set; }
@@ -51,9 +57,15 @@ namespace Darwin.Application.CRM.DTOs
         public Guid CustomerId { get; set; }
         public string Title { get; set; } = string.Empty;
         public long EstimatedValueMinor { get; set; }
+        public string Currency { get; set; } = Darwin.Domain.Common.DomainDefaults.DefaultCurrency;
         public OpportunityStage Stage { get; set; } = OpportunityStage.Qualification;
+        public int? ProbabilityPercent { get; set; }
+        public OpportunityForecastCategory ForecastCategory { get; set; } = OpportunityForecastCategory.Pipeline;
         public DateTime? ExpectedCloseDateUtc { get; set; }
         public Guid? AssignedToUserId { get; set; }
+        public DateTime? ClosedAtUtc { get; set; }
+        public string? CloseReason { get; set; }
+        public string? Source { get; set; }
         public List<OpportunityItemDto> Items { get; set; } = new();
     }
 
@@ -71,5 +83,6 @@ namespace Darwin.Application.CRM.DTOs
         public Guid Id { get; set; }
         public byte[] RowVersion { get; set; } = Array.Empty<byte>();
         public string Action { get; set; } = string.Empty;
+        public string? CloseReason { get; set; }
     }
 }

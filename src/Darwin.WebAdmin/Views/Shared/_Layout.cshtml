@@ -131,6 +131,49 @@
                         </active-nav>
                     }
 
+                    <div class="px-3 pt-4 pb-2 text-uppercase small text-muted">@T.T("Sales")</div>
+                    <active-nav class="list-group-item list-group-item-action" asp-controller="Sales" asp-action="Index">
+                        <i class="fa-solid fa-chart-line me-2"></i> @T.T("Overview")
+                    </active-nav>
+                    <active-nav class="list-group-item list-group-item-action" asp-controller="Sales" asp-action="Orders">
+                        <i class="fa-solid fa-receipt me-2"></i> @T.T("SalesOrders")
+                    </active-nav>
+                    <active-nav class="list-group-item list-group-item-action" asp-controller="Sales" asp-action="Quotes">
+                        <i class="fa-solid fa-file-signature me-2"></i> @T.T("SalesQuotes")
+                    </active-nav>
+                    <active-nav class="list-group-item list-group-item-action" asp-controller="Sales" asp-action="DeliveryNotes">
+                        <i class="fa-solid fa-truck-ramp-box me-2"></i> @T.T("DeliveryNotes")
+                    </active-nav>
+                    <active-nav class="list-group-item list-group-item-action" asp-controller="Sales" asp-action="ReturnOrders">
+                        <i class="fa-solid fa-rotate-left me-2"></i> @T.T("ReturnOrders")
+                    </active-nav>
+                    <active-nav class="list-group-item list-group-item-action" asp-controller="Sales" asp-action="CreditNotes">
+                        <i class="fa-solid fa-file-circle-minus me-2"></i> @T.T("CreditNotes")
+                    </active-nav>
+                    <active-nav class="list-group-item list-group-item-action" asp-controller="Sales" asp-action="Invoices">
+                        <i class="fa-solid fa-file-invoice-dollar me-2"></i> @T.T("SalesInvoices")
+                    </active-nav>
+
+                    <div class="px-3 pt-4 pb-2 text-uppercase small text-muted">@T.T("Finance")</div>
+                    <active-nav class="list-group-item list-group-item-action" asp-controller="Finance" asp-action="Index">
+                        <i class="fa-solid fa-scale-balanced me-2"></i> @T.T("Overview")
+                    </active-nav>
+                    <active-nav class="list-group-item list-group-item-action" asp-controller="Finance" asp-action="Receivables">
+                        <i class="fa-solid fa-file-invoice-dollar me-2"></i> @T.T("FinanceReceivables")
+                    </active-nav>
+                    <active-nav class="list-group-item list-group-item-action" asp-controller="Finance" asp-action="Postings">
+                        <i class="fa-solid fa-book me-2"></i> @T.T("FinancePostings")
+                    </active-nav>
+                    <active-nav class="list-group-item list-group-item-action" asp-controller="Finance" asp-action="AccountMappings">
+                        <i class="fa-solid fa-diagram-project me-2"></i> @T.T("FinanceAccountMappings")
+                    </active-nav>
+                    <active-nav class="list-group-item list-group-item-action" asp-controller="Finance" asp-action="Exports">
+                        <i class="fa-solid fa-file-export me-2"></i> @T.T("FinanceExports")
+                    </active-nav>
+                    <active-nav class="list-group-item list-group-item-action" asp-controller="Finance" asp-action="SupplierInvoices">
+                        <i class="fa-solid fa-file-invoice me-2"></i> @T.T("SupplierInvoices")
+                    </active-nav>
+
                     <div class="px-3 pt-4 pb-2 text-uppercase small text-muted">@T.T("Crm")</div>
                     <active-nav class="list-group-item list-group-item-action" asp-controller="Crm" asp-action="Index">
                         <i class="fa-solid fa-chart-pie me-2"></i> @T.T("Overview")
@@ -183,6 +226,9 @@
                     </active-nav>
                     <active-nav class="list-group-item list-group-item-action" asp-controller="Inventory" asp-action="PurchaseOrders">
                         <i class="fa-solid fa-file-invoice me-2"></i> @T.T("PurchaseOrders")
+                    </active-nav>
+                    <active-nav class="list-group-item list-group-item-action" asp-controller="Inventory" asp-action="GoodsReceipts">
+                        <i class="fa-solid fa-clipboard-check me-2"></i> @T.T("GoodsReceipts")
                     </active-nav>
 
                     <div class="px-3 pt-4 pb-2 text-uppercase small text-muted">@T.T("Billing")</div>

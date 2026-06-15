@@ -39,8 +39,14 @@ namespace Darwin.Infrastructure.Persistence.Configurations.CRM
             builder.Property(x => x.VatValidationSource).HasMaxLength(80);
             builder.Property(x => x.VatValidationMessage).HasMaxLength(512);
             builder.Property(x => x.Notes).HasMaxLength(4000);
+            builder.Property(x => x.LifecycleStatus).IsRequired().HasDefaultValue(Darwin.Domain.Enums.CustomerLifecycleStatus.Active);
+            builder.Property(x => x.AcquisitionSource).HasMaxLength(200);
+            builder.Property(x => x.PreferredContactChannel);
 
             builder.HasIndex(x => x.Email);
+            builder.HasIndex(x => x.LifecycleStatus);
+            builder.HasIndex(x => x.OwnerUserId);
+            builder.HasIndex(x => x.NextFollowUpAtUtc);
             builder.HasIndex(x => x.VatValidationStatus);
             builder.HasIndex(x => x.UserId)
                 .IsUnique()
@@ -49,6 +55,11 @@ namespace Darwin.Infrastructure.Persistence.Configurations.CRM
             builder.HasOne<User>()
                 .WithMany()
                 .HasForeignKey(x => x.UserId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            builder.HasOne<User>()
+                .WithMany()
+                .HasForeignKey(x => x.OwnerUserId)
                 .OnDelete(DeleteBehavior.Restrict);
 
             builder.HasMany(x => x.Addresses)
@@ -102,10 +113,17 @@ namespace Darwin.Infrastructure.Persistence.Configurations.CRM
 
             builder.Property(x => x.Name).IsRequired().HasMaxLength(200);
             builder.Property(x => x.Description).HasMaxLength(2000);
+            builder.Property(x => x.Code).IsRequired().HasMaxLength(128);
+            builder.Property(x => x.IsActive).IsRequired().HasDefaultValue(true);
+            builder.Property(x => x.RuleJson).HasMaxLength(4000);
 
             builder.HasIndex(x => x.Name)
                 .IsUnique()
                 .HasFilter("[IsDeleted] = 0");
+            builder.HasIndex(x => x.Code)
+                .IsUnique()
+                .HasFilter("[IsDeleted] = 0");
+            builder.HasIndex(x => x.IsActive);
         }
 
         /// <inheritdoc />
@@ -175,8 +193,12 @@ namespace Darwin.Infrastructure.Persistence.Configurations.CRM
             builder.Property(x => x.Type).IsRequired();
             builder.Property(x => x.Granted).IsRequired();
             builder.Property(x => x.GrantedAtUtc).IsRequired();
+            builder.Property(x => x.Source).HasMaxLength(200);
+            builder.Property(x => x.PolicyVersion).HasMaxLength(80);
+            builder.Property(x => x.EvidenceJson).HasMaxLength(4000);
 
             builder.HasIndex(x => new { x.CustomerId, x.Type });
+            builder.HasIndex(x => x.PolicyVersion);
         }
 
         /// <inheritdoc />
@@ -193,11 +215,16 @@ namespace Darwin.Infrastructure.Persistence.Configurations.CRM
             builder.Property(x => x.Source).HasMaxLength(200);
             builder.Property(x => x.Notes).HasMaxLength(4000);
             builder.Property(x => x.Status).IsRequired();
+            builder.Property(x => x.Priority).IsRequired();
+            builder.Property(x => x.ClosedReason).HasMaxLength(512);
 
             builder.HasIndex(x => x.Email);
             builder.HasIndex(x => x.Status);
+            builder.HasIndex(x => x.Priority);
             builder.HasIndex(x => x.AssignedToUserId);
             builder.HasIndex(x => x.CustomerId);
+            builder.HasIndex(x => x.QualifiedAtUtc);
+            builder.HasIndex(x => x.ConvertedAtUtc);
 
             builder.HasOne<User>()
                 .WithMany()
@@ -219,10 +246,17 @@ namespace Darwin.Infrastructure.Persistence.Configurations.CRM
             builder.Property(x => x.Title).IsRequired().HasMaxLength(250);
             builder.Property(x => x.Stage).IsRequired();
             builder.Property(x => x.EstimatedValueMinor).IsRequired();
+            builder.Property(x => x.Currency).IsRequired().HasMaxLength(3).HasDefaultValue(Darwin.Domain.Common.DomainDefaults.DefaultCurrency);
+            builder.Property(x => x.ForecastCategory).IsRequired().HasDefaultValue(Darwin.Domain.Enums.OpportunityForecastCategory.Pipeline);
+            builder.Property(x => x.CloseReason).HasMaxLength(512);
+            builder.Property(x => x.Source).HasMaxLength(200);
 
             builder.HasIndex(x => x.CustomerId);
             builder.HasIndex(x => x.Stage);
+            builder.HasIndex(x => x.ForecastCategory);
             builder.HasIndex(x => x.AssignedToUserId);
+            builder.HasIndex(x => x.ExpectedCloseDateUtc);
+            builder.HasIndex(x => x.ClosedAtUtc);
 
             builder.HasOne<User>()
                 .WithMany()
@@ -255,6 +289,7 @@ namespace Darwin.Infrastructure.Persistence.Configurations.CRM
             builder.HasKey(x => x.Id);
 
             builder.Property(x => x.Currency).IsRequired().HasMaxLength(3);
+            builder.Property(x => x.InvoiceNumber).HasMaxLength(50);
             builder.Property(x => x.Status).IsRequired();
             builder.Property(x => x.IssuedSnapshotJson).HasMaxLength(16000);
             builder.Property(x => x.IssuedSnapshotHashSha256).HasMaxLength(64);
@@ -264,6 +299,9 @@ namespace Darwin.Infrastructure.Persistence.Configurations.CRM
 
             builder.HasIndex(x => x.BusinessId);
             builder.HasIndex(x => x.CustomerId);
+            builder.HasIndex(x => x.InvoiceNumber)
+                .IsUnique()
+                .HasFilter("[InvoiceNumber] IS NOT NULL AND [IsDeleted] = 0");
             builder.HasIndex(x => x.OrderId);
             builder.HasIndex(x => x.PaymentId);
             builder.HasIndex(x => x.IssuedAtUtc);
@@ -292,6 +330,7 @@ namespace Darwin.Infrastructure.Persistence.Configurations.CRM
             builder.Property(x => x.Quantity).IsRequired();
             builder.Property(x => x.UnitPriceNetMinor).IsRequired();
             builder.Property(x => x.TaxRate).HasPrecision(18, 4);
+            builder.Property(x => x.TotalTaxMinor).IsRequired().HasDefaultValue(0L);
         }
     }
 }

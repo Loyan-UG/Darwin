@@ -50,6 +50,11 @@
        hx-target="#inventory-suppliers-workspace-shell"
        hx-swap="outerHTML"
        hx-push-url="true">@T.T("HasPurchaseOrders")</a>
+    <a asp-action="Suppliers" asp-route-businessId="@Model.BusinessId" asp-route-filter="Blocked" class="btn btn-sm @(Model.Filter == Darwin.Application.Inventory.DTOs.SupplierQueueFilter.Blocked ? "btn-danger" : "btn-outline-danger")"
+       hx-get="@SuppliersUrl(Model.BusinessId, Model.Query, "Blocked")"
+       hx-target="#inventory-suppliers-workspace-shell"
+       hx-swap="outerHTML"
+       hx-push-url="true">@T.T("Blocked")</a>
     <a asp-action="Suppliers" asp-route-businessId="@Model.BusinessId" class="btn btn-sm btn-outline-secondary"
        hx-get="@SuppliersUrl(Model.BusinessId, Model.Query)"
        hx-target="#inventory-suppliers-workspace-shell"
@@ -221,29 +226,38 @@
 
 <div class="table-responsive">
     <table class="table table-sm table-striped align-middle">
-        <thead><tr><th>@T.T("Name")</th><th>@T.T("Email")</th><th>@T.T("Phone")</th><th>@T.T("Address")</th><th>@T.T("PurchaseOrders")</th><th class="text-end">@T.T("Actions")</th></tr></thead>
+        <thead><tr><th>@T.T("Code")</th><th>@T.T("Name")</th><th>@T.T("Status")</th><th>@T.T("Contact")</th><th>@T.T("Terms")</th><th>@T.T("PurchaseOrders")</th><th class="text-end">@T.T("Actions")</th></tr></thead>
         <tbody>
         @if (Model.Items.Count == 0)
         {
-            <tr><td colspan="6" class="text-center text-muted">@T.T("NoSuppliersFound")</td></tr>
+            <tr><td colspan="7" class="text-center text-muted">@T.T("NoSuppliersFound")</td></tr>
         }
         else
         {
             foreach (var item in Model.Items)
             {
                 <tr>
-                    <td>@item.Name</td>
-                    <td>@item.Email</td>
-                    <td>@item.Phone</td>
+                    <td>@(string.IsNullOrWhiteSpace(item.Code) ? "-" : item.Code)</td>
                     <td>
+                        <div class="fw-semibold">@item.Name</div>
                         @if (string.IsNullOrWhiteSpace(item.Address))
                         {
                             <span class="badge text-bg-warning">@T.T("MissingAddressBadge")</span>
                         }
                         else
                         {
-                            @item.Address
+                            <div class="small text-muted">@item.Address</div>
                         }
+                    </td>
+                    <td><span class="badge @(string.Equals(item.Status, "Blocked", StringComparison.OrdinalIgnoreCase) ? "text-bg-danger" : string.Equals(item.Status, "Inactive", StringComparison.OrdinalIgnoreCase) ? "text-bg-secondary" : "text-bg-success")">@T.T(item.Status)</span></td>
+                    <td>
+                        <div>@item.Email</div>
+                        <div class="small text-muted">@item.Phone</div>
+                    </td>
+                    <td>
+                        <div>@(string.IsNullOrWhiteSpace(item.PreferredCurrency) ? "-" : item.PreferredCurrency)</div>
+                        <div class="small text-muted">@T.T("PaymentTermDays"): @(item.PaymentTermDays?.ToString() ?? "-")</div>
+                        <div class="small text-muted">@T.T("LeadTimeDays"): @(item.LeadTimeDays?.ToString() ?? "-")</div>
                     </td>
                     <td>
                         @item.PurchaseOrderCount

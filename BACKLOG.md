@@ -1,6 +1,6 @@
 # Darwin Backlog
 
-Reviewed: 2026-06-11
+Reviewed: 2026-06-15
 
 This is the active roadmap. Historical implementation notes belong in [docs/implementation-ledger.md](docs/implementation-ledger.md). Code-backed readiness belongs in [docs/go-live-status.md](docs/go-live-status.md) and [docs/module-audit.md](docs/module-audit.md).
 
@@ -45,23 +45,36 @@ These items require external credentials, deployment configuration, provider acc
 
 ## ERP Domain Expansion Roadmap
 
-This roadmap captures the first planning track for making Darwin a complete independent ERP while keeping it integration-ready for customers that already use an external ERP, CRM, accounting, warehouse, payroll, or time-tracking system. Darwin must keep English names, its current architecture, and its own canonical model. Do not import legacy framework concepts, customer-specific names, vendor-specific naming, or non-English entity names into Darwin.
+This roadmap makes Darwin a complete independent ERP while keeping it integration-ready for customers that already use external business systems. Darwin must keep English names, its current architecture, and its own canonical model. Do not import legacy framework concepts, customer-specific names, vendor-specific naming, or non-English entity names into Darwin.
 
-The first implementation step is documentation-only: maintain the capability decisions in [docs/domain-expansion/domain-capability-catalog.md](docs/domain-expansion/domain-capability-catalog.md) before changing entities, migrations, API contracts, mobile contracts, or tests.
+Status detail for the redesign track lives in [docs/domain-expansion/erp-expansion-master-status.md](docs/domain-expansion/erp-expansion-master-status.md). Capability decisions remain in [docs/domain-expansion/domain-capability-catalog.md](docs/domain-expansion/domain-capability-catalog.md). Purchasing decisions are now tracked in [docs/domain-expansion/purchasing-supplier-lifecycle-design.md](docs/domain-expansion/purchasing-supplier-lifecycle-design.md) and [docs/domain-expansion/supplier-invoice-payables-boundary-design.md](docs/domain-expansion/supplier-invoice-payables-boundary-design.md).
 
-Execution order:
+Completed in the ERP expansion track:
 
-1. `Mobile and loyalty-safe foundation review`: identify all future domain changes that touch loyalty/mobile launch dependencies first, including `User`, `Business`, `BusinessMember`, `Customer`, `Address`, order/invoice snapshots, WebApi contracts, and mobile contracts. Make required foundation changes before mobile release rather than shipping a contract that will need disruptive redesign.
-2. `Domain capability catalog from product requirements, external-system readiness, and Darwin current model`: classify candidate capabilities as canonical, optional, extension/custom, industry-specific, customer-specific, legacy technical, or deferred.
-3. `Canonical English domain design`: translate accepted capabilities into Darwin-owned English concepts and lifecycle rules. CMS and loyalty core stay outside the general ERP redesign unless a shared foundation or mobile-release change is required; required loyalty/mobile changes must be completed before release, not deferred until after launch.
-4. `Foundation primitives`: add shared primitives such as external-system references, source-of-truth markers, activity/note, attachment, custom-field metadata, number sequences, and feature-area visibility only after catalog decisions are approved.
-5. `CRM expansion`: strengthen account, contact, customer, lead, opportunity, activity, consent, segmentation, and support lifecycle modeling without reintroducing a CRM-owned loyalty ledger.
-6. `Sales and order document model`: define quote, order, delivery, invoice, credit, return, pricing, discount, tax, and status-history concepts with immutable snapshots where required.
-7. `Purchasing and supplier lifecycle`: define supplier, supplier contact, purchase request, purchase order, goods receipt, supplier invoice, supplier pricing, and purchase terms.
-8. `Inventory ledger, warehouse tasks, and mobile/PWA planning`: define warehouse locations, bins, stock items, stock balances, stock ledger entries, reservations, transfers, adjustments, stock counts, lots, serials, handling units, and mobile-first warehouse task workflows. Treat a mobile-first PWA as the default warehouse surface unless device/offline requirements prove a native app is necessary.
-9. `Finance and accounting`: define chart of accounts, accounts, journal entries, tax codes, payment terms, receivables, payables, bank transactions, reconciliation, cost centers, and audit-safe financial state transitions.
-10. `HR and time tracking`: define employee, department, position, employment contract, personnel file, work schedule, attendance event, time entry, absence, leave request, timesheet, and payroll-period concepts. Payroll implementation remains later-phase unless a deployment requires it.
-11. `AI-readiness and automation governance`: prepare audit trails, business events, scoped data access, sensitive-field classification, recommendation records, action drafts, and approval-required AI execution paths. AI must propose or draft operational actions before normal application commands execute them.
+- `Mobile and loyalty-safe foundation review`: release-sensitive identity, business access, loyalty, mobile API, and member commerce boundaries were reviewed and guarded before broad domain expansion.
+- `Foundation primitives`: external systems and references, source-of-truth markers, custom fields, activity/note/document metadata, number sequences, business events/audit trails, and feature-area visibility foundations are implemented.
+- `CRM expansion`: CRM core fields, customer bridge behavior, foundation primitive integration, and WebAdmin CRM exposure are implemented without creating a CRM-owned loyalty ledger.
+- `Sales and order document model`: Sales projections, additive order/invoice fields, Sales WebAdmin workspace, lifecycle evidence, quotes, quote-to-order conversion, delivery notes, return orders, and credit notes are implemented over the current `Order` and `Invoice` foundations without parallel Sales invoice or Finance invoice models.
+- `Finance and accounting foundation`: finance posting, account mappings, receivables projection, Finance reporting workspace, finance export batches, package generation, durable package storage, WebAdmin export workflow, connector delivery foundation, file-delivery target adapter, and operational file-delivery hardening are implemented.
+
+In progress:
+
+- `Finance/accounting integration`: file-delivery is production-safe when configured. Accounting API target adapters remain blocked until a real target, credential owner, payload mapping, and error contract are selected.
+- `Inventory and procurement baseline`: `Warehouse`, `StockLevel`, `StockTransfer`, `Supplier`, `PurchaseOrder`, formal `GoodsReceipt`, and formal `SupplierInvoice` core/admin/posting exist with WebAdmin operational coverage. Supplier master, purchase order core hardening, goods receipt inventory reconciliation, supplier invoice/payables boundary design, supplier invoice core/admin, and supplier invoice posting are complete; supplier contacts/documents, supplier payment settlement, and warehouse task depth still need the ERP expansion sequence below.
+
+Next gate:
+
+1. `Supplier Payment Boundary Design Slice`: define supplier payment settlement, partial payments, payable aging, payment posting, export impact, and reversal policy before any payment implementation, without reusing customer payment/refund flows.
+
+Remaining ERP expansion order:
+
+1. `Purchasing Documents And Supplier Contacts`: add structured supplier contacts and purchasing document metadata exposure after supplier payment ownership and visibility are stable.
+2. `Inventory Ledger, Warehouse Tasks, And Mobile-First Warehouse PWA`: extend warehouse structure, bins, stock ledger, reservations, counts, lots, serials, handling units, receiving tasks, picking tasks, and mobile-first warehouse workflows. Use a PWA as the default warehouse surface unless device/offline requirements require native mobile.
+3. `Supplier Invoice And Payables`: supplier invoice core/admin/posting is implemented; next design supplier payment settlement before implementation.
+4. `HR And Time Tracking`: define employee, department, position, employment contract, personnel file, work schedule, attendance event, time entry, absence, leave request, timesheet, and payroll-period concepts. Payroll implementation remains later-phase unless a deployment requires it.
+5. `AI-Readiness And Automation Governance`: prepare sensitive-field classification, scoped data access, recommendation records, action drafts, and approval-required AI execution paths. AI must propose or draft operational actions before normal application commands execute them.
+6. `SyncState And SyncConflict`: design and implement two-way sync only after concrete inbound reconciliation needs exist. Outbound export and external references are already available; they are not a full sync engine.
+7. `Accounting API Target Adapter`: implement only after a real target, credential owner, payload mapping, retry policy, and error contract are selected. Until then, finance export file-delivery remains the production-safe outbound path.
 
 Storage rules:
 

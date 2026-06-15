@@ -1,0 +1,195 @@
+@model Darwin.WebAdmin.ViewModels.CRM.CrmFoundationPanelVm
+@inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
+
+<div id="@Model.AddNoteTargetId" class="card mt-4">
+    <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+        <div>
+            <div class="fw-semibold">@T.T("CrmFoundationPanel")</div>
+            <div class="small text-muted">@Model.EntityType</div>
+        </div>
+        <span class="badge bg-secondary">@T.T("Internal")</span>
+    </div>
+    <div class="card-body">
+        <partial name="~/Views/Shared/_Alerts.cshtml" />
+
+        <form asp-action="AddCrmFoundationNote"
+              method="post"
+              class="mb-4"
+              hx-post="@Url.Action("AddCrmFoundationNote", "Crm")"
+              hx-target="#@Model.AddNoteTargetId"
+              hx-swap="outerHTML">
+            @Html.AntiForgeryToken()
+            <input type="hidden" asp-for="NewNote.EntityType" />
+            <input type="hidden" asp-for="NewNote.EntityId" />
+            <label asp-for="NewNote.Body" class="form-label">@T.T("AddInternalNote")</label>
+            <textarea asp-for="NewNote.Body" class="form-control" rows="3" maxlength="4000"></textarea>
+            <span asp-validation-for="NewNote.Body" class="text-danger small"></span>
+            <div class="mt-2">
+                <button type="submit" class="btn btn-sm btn-outline-primary">
+                    <i class="fa fa-plus"></i> @T.T("AddNote")
+                </button>
+            </div>
+        </form>
+
+        <div class="row g-3">
+            <div class="col-lg-6">
+                <h6 class="mb-2">@T.T("ExternalReferences")</h6>
+                @if (Model.ExternalReferences.Count == 0)
+                {
+                    <div class="text-muted small">@T.T("NoRecords")</div>
+                }
+                else
+                {
+                    <div class="table-responsive">
+                        <table class="table table-sm align-middle">
+                            <thead>
+                                <tr>
+                                    <th>@T.T("Kind")</th>
+                                    <th>@T.T("ExternalId")</th>
+                                    <th>@T.T("SourceOfTruth")</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                            @foreach (var item in Model.ExternalReferences)
+                            {
+                                <tr>
+                                    <td>@item.ReferenceKind @(item.IsPrimary ? $"({T.T("Primary")})" : string.Empty)</td>
+                                    <td>@(string.IsNullOrWhiteSpace(item.ExternalDisplayId) ? item.ExternalId : item.ExternalDisplayId)</td>
+                                    <td>@item.SourceOfTruth</td>
+                                </tr>
+                            }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+            </div>
+
+            <div class="col-lg-6">
+                <h6 class="mb-2">@T.T("Documents")</h6>
+                @if (Model.Documents.Count == 0)
+                {
+                    <div class="text-muted small">@T.T("NoRecords")</div>
+                }
+                else
+                {
+                    <div class="list-group list-group-flush">
+                    @foreach (var item in Model.Documents)
+                    {
+                        <div class="list-group-item px-0">
+                            <div class="fw-semibold">@item.Title</div>
+                            <div class="small text-muted">@item.DocumentKind · @item.FileName · @item.ContentType</div>
+                        </div>
+                    }
+                    </div>
+                }
+            </div>
+
+            <div class="col-lg-6">
+                <h6 class="mb-2">@T.T("Activities")</h6>
+                @if (Model.Activities.Count == 0)
+                {
+                    <div class="text-muted small">@T.T("NoRecords")</div>
+                }
+                else
+                {
+                    <div class="list-group list-group-flush">
+                    @foreach (var item in Model.Activities)
+                    {
+                        <div class="list-group-item px-0">
+                            <div class="d-flex justify-content-between gap-2">
+                                <span class="fw-semibold">@item.Title</span>
+                                <span class="small text-muted">@item.OccurredAtUtc.ToString("u")</span>
+                            </div>
+                            <div class="small text-muted">@item.ActivityType</div>
+                            @if (!string.IsNullOrWhiteSpace(item.Summary))
+                            {
+                                <div class="small">@item.Summary</div>
+                            }
+                        </div>
+                    }
+                    </div>
+                }
+            </div>
+
+            <div class="col-lg-6">
+                <h6 class="mb-2">@T.T("Notes")</h6>
+                @if (Model.Notes.Count == 0)
+                {
+                    <div class="text-muted small">@T.T("NoRecords")</div>
+                }
+                else
+                {
+                    <div class="list-group list-group-flush">
+                    @foreach (var item in Model.Notes)
+                    {
+                        <div class="list-group-item px-0">
+                            <div class="d-flex justify-content-between gap-2">
+                                <span class="fw-semibold">@(item.IsPinned ? T.T("Pinned") : T.T("Note"))</span>
+                                <span class="small text-muted">@item.CreatedAtUtc.ToString("u")</span>
+                            </div>
+                            <div class="small">@item.Body</div>
+                        </div>
+                    }
+                    </div>
+                }
+            </div>
+
+            <div class="col-lg-6">
+                <h6 class="mb-2">@T.T("BusinessEvents")</h6>
+                @if (Model.Events.Count == 0)
+                {
+                    <div class="text-muted small">@T.T("NoRecords")</div>
+                }
+                else
+                {
+                    <div class="list-group list-group-flush">
+                    @foreach (var item in Model.Events)
+                    {
+                        <div class="list-group-item px-0">
+                            <div class="d-flex justify-content-between gap-2">
+                                <span class="fw-semibold">@item.Title</span>
+                                <span class="small text-muted">@item.OccurredAtUtc.ToString("u")</span>
+                            </div>
+                            <div class="small text-muted">@item.EventType · @item.Source · @item.Severity</div>
+                            @if (!string.IsNullOrWhiteSpace(item.Summary))
+                            {
+                                <div class="small">@item.Summary</div>
+                            }
+                        </div>
+                    }
+                    </div>
+                }
+            </div>
+
+            <div class="col-lg-6">
+                <h6 class="mb-2">@T.T("AuditTrail")</h6>
+                @if (Model.AuditTrail.Count == 0)
+                {
+                    <div class="text-muted small">@T.T("NoRecords")</div>
+                }
+                else
+                {
+                    <div class="list-group list-group-flush">
+                    @foreach (var item in Model.AuditTrail)
+                    {
+                        <div class="list-group-item px-0">
+                            <div class="d-flex justify-content-between gap-2">
+                                <span class="fw-semibold">@item.Action</span>
+                                <span class="small text-muted">@item.OccurredAtUtc.ToString("u")</span>
+                            </div>
+                            @if (!string.IsNullOrWhiteSpace(item.Reason))
+                            {
+                                <div class="small">@item.Reason</div>
+                            }
+                            @if (!string.IsNullOrWhiteSpace(item.CorrelationId))
+                            {
+                                <div class="small text-muted">@item.CorrelationId</div>
+                            }
+                        </div>
+                    }
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>

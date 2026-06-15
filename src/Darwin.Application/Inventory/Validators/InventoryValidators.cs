@@ -104,10 +104,20 @@ namespace Darwin.Application.Inventory.Validators
         {
             RuleFor(x => x.BusinessId).NotEmpty();
             RuleFor(x => x.Name).NotEmpty().MaximumLength(200);
+            RuleFor(x => x.Code).MaximumLength(64);
+            RuleFor(x => x.Status)
+                .NotEmpty()
+                .Must(value => Enum.TryParse<Darwin.Domain.Enums.SupplierStatus>(value, true, out _));
             RuleFor(x => x.Email).NotEmpty().EmailAddress().MaximumLength(256);
             RuleFor(x => x.Phone).NotEmpty().MaximumLength(50);
             RuleFor(x => x.Address).MaximumLength(500);
             RuleFor(x => x.Notes).MaximumLength(2000);
+            RuleFor(x => x.PreferredCurrency).Length(3).When(x => !string.IsNullOrWhiteSpace(x.PreferredCurrency));
+            RuleFor(x => x.PaymentTermDays).InclusiveBetween(0, 3650).When(x => x.PaymentTermDays.HasValue);
+            RuleFor(x => x.LeadTimeDays).InclusiveBetween(0, 3650).When(x => x.LeadTimeDays.HasValue);
+            RuleFor(x => x.Website).MaximumLength(500);
+            RuleFor(x => x.TaxRegistrationNumber).MaximumLength(100);
+            RuleFor(x => x.ExternalNotes).MaximumLength(2000);
         }
     }
 
@@ -181,7 +191,13 @@ namespace Darwin.Application.Inventory.Validators
         public PurchaseOrderLineValidator()
         {
             RuleFor(x => x.ProductVariantId).NotEmpty();
+            RuleFor(x => x.SupplierSku).MaximumLength(100);
+            RuleFor(x => x.Description).MaximumLength(1000);
             RuleFor(x => x.Quantity).GreaterThan(0);
+            RuleFor(x => x.ReceivedQuantity).GreaterThanOrEqualTo(0);
+            RuleFor(x => x.CancelledQuantity).GreaterThanOrEqualTo(0);
+            RuleFor(x => x).Must(x => x.ReceivedQuantity <= x.Quantity);
+            RuleFor(x => x).Must(x => x.CancelledQuantity <= x.Quantity);
             RuleFor(x => x.UnitCostMinor).GreaterThanOrEqualTo(0);
             RuleFor(x => x.TotalCostMinor).GreaterThanOrEqualTo(0);
         }
@@ -193,8 +209,10 @@ namespace Darwin.Application.Inventory.Validators
         {
             RuleFor(x => x.SupplierId).NotEmpty();
             RuleFor(x => x.BusinessId).NotEmpty();
-            RuleFor(x => x.OrderNumber).NotEmpty().MaximumLength(64);
+            RuleFor(x => x.OrderNumber).MaximumLength(64);
+            RuleFor(x => x.Currency).NotEmpty().Length(3);
             RuleFor(x => x.Status).NotEmpty().MaximumLength(50);
+            RuleFor(x => x.InternalNotes).MaximumLength(4000);
             RuleFor(x => x.Lines).NotEmpty();
             RuleForEach(x => x.Lines).SetValidator(new PurchaseOrderLineValidator());
         }
@@ -207,6 +225,16 @@ namespace Darwin.Application.Inventory.Validators
             Include(new PurchaseOrderCreateValidator());
             RuleFor(x => x.Id).NotEmpty();
             RuleFor(x => x.RowVersion).NotEmpty();
+        }
+    }
+
+    public sealed class GoodsReceiptCreateValidator : AbstractValidator<GoodsReceiptCreateDto>
+    {
+        public GoodsReceiptCreateValidator()
+        {
+            RuleFor(x => x.PurchaseOrderId).NotEmpty();
+            RuleFor(x => x.WarehouseId).NotEmpty();
+            RuleFor(x => x.InternalNotes).MaximumLength(4000);
         }
     }
 }

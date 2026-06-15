@@ -20,6 +20,16 @@ namespace Darwin.Application.Inventory.DTOs
         StaleIssued = 5
     }
 
+    public enum GoodsReceiptQueueFilter
+    {
+        All = 0,
+        Draft = 1,
+        Received = 2,
+        Inspected = 3,
+        Posted = 4,
+        Cancelled = 5
+    }
+
     public enum StockTransferQueueFilter
     {
         All = 0,
@@ -41,7 +51,9 @@ namespace Darwin.Application.Inventory.DTOs
     {
         All = 0,
         MissingAddress = 1,
-        HasPurchaseOrders = 2
+        HasPurchaseOrders = 2,
+        Inactive = 3,
+        Blocked = 4
     }
 
     public enum InventoryLedgerQueueFilter
@@ -222,6 +234,13 @@ namespace Darwin.Application.Inventory.DTOs
         public string Email { get; set; } = string.Empty;
         public string Phone { get; set; } = string.Empty;
         public string? Address { get; set; }
+        public string? Code { get; set; }
+        public string Status { get; set; } = "Active";
+        public string? PreferredCurrency { get; set; }
+        public int? PaymentTermDays { get; set; }
+        public int? LeadTimeDays { get; set; }
+        public string? Website { get; set; }
+        public string? TaxRegistrationNumber { get; set; }
         public int PurchaseOrderCount { get; set; }
         public byte[] RowVersion { get; set; } = Array.Empty<byte>();
     }
@@ -231,6 +250,8 @@ namespace Darwin.Application.Inventory.DTOs
         public int TotalCount { get; set; }
         public int MissingAddressCount { get; set; }
         public int HasPurchaseOrdersCount { get; set; }
+        public int InactiveCount { get; set; }
+        public int BlockedCount { get; set; }
     }
 
     /// <summary>
@@ -240,10 +261,18 @@ namespace Darwin.Application.Inventory.DTOs
     {
         public Guid BusinessId { get; set; }
         public string Name { get; set; } = string.Empty;
+        public string? Code { get; set; }
+        public string Status { get; set; } = "Active";
         public string Email { get; set; } = string.Empty;
         public string Phone { get; set; } = string.Empty;
         public string? Address { get; set; }
         public string? Notes { get; set; }
+        public string? PreferredCurrency { get; set; }
+        public int? PaymentTermDays { get; set; }
+        public int? LeadTimeDays { get; set; }
+        public string? Website { get; set; }
+        public string? TaxRegistrationNumber { get; set; }
+        public string? ExternalNotes { get; set; }
     }
 
     /// <summary>
@@ -365,7 +394,11 @@ namespace Darwin.Application.Inventory.DTOs
     public sealed class PurchaseOrderLineDto
     {
         public Guid ProductVariantId { get; set; }
+        public string? SupplierSku { get; set; }
+        public string? Description { get; set; }
         public int Quantity { get; set; }
+        public int ReceivedQuantity { get; set; }
+        public int CancelledQuantity { get; set; }
         public long UnitCostMinor { get; set; }
         public long TotalCostMinor { get; set; }
     }
@@ -381,8 +414,15 @@ namespace Darwin.Application.Inventory.DTOs
         public string OrderNumber { get; set; } = string.Empty;
         public string SupplierName { get; set; } = string.Empty;
         public string Status { get; set; } = string.Empty;
+        public string Currency { get; set; } = string.Empty;
         public DateTime OrderedAtUtc { get; set; }
+        public DateTime? ExpectedDeliveryDateUtc { get; set; }
+        public DateTime? IssuedAtUtc { get; set; }
+        public DateTime? ReceivedAtUtc { get; set; }
+        public DateTime? CancelledAtUtc { get; set; }
         public int LineCount { get; set; }
+        public int OrderedQuantity { get; set; }
+        public int ReceivedQuantity { get; set; }
         public bool IsStale { get; set; }
         public byte[] RowVersion { get; set; } = Array.Empty<byte>();
     }
@@ -395,6 +435,7 @@ namespace Darwin.Application.Inventory.DTOs
         public int ReceivedCount { get; set; }
         public int CancelledCount { get; set; }
         public int StaleIssuedCount { get; set; }
+        public int PartiallyReceivedCount { get; set; }
     }
 
     /// <summary>
@@ -406,7 +447,10 @@ namespace Darwin.Application.Inventory.DTOs
         public Guid BusinessId { get; set; }
         public string OrderNumber { get; set; } = string.Empty;
         public DateTime OrderedAtUtc { get; set; }
+        public string Currency { get; set; } = "EUR";
+        public DateTime? ExpectedDeliveryDateUtc { get; set; }
         public string Status { get; set; } = "Draft";
+        public string? InternalNotes { get; set; }
         public List<PurchaseOrderLineDto> Lines { get; set; } = new();
     }
 
@@ -424,5 +468,91 @@ namespace Darwin.Application.Inventory.DTOs
         public Guid Id { get; set; }
         public byte[] RowVersion { get; set; } = Array.Empty<byte>();
         public string Action { get; set; } = string.Empty;
+    }
+
+    public sealed class GoodsReceiptLineDto
+    {
+        public Guid Id { get; set; }
+        public Guid PurchaseOrderLineId { get; set; }
+        public Guid ProductVariantId { get; set; }
+        public string? SupplierSku { get; set; }
+        public string? Description { get; set; }
+        public int OrderedQuantity { get; set; }
+        public int PreviouslyReceivedQuantity { get; set; }
+        public int RemainingQuantity => Math.Max(0, OrderedQuantity - PreviouslyReceivedQuantity);
+        public int ReceivedQuantity { get; set; }
+        public int AcceptedQuantity { get; set; }
+        public int RejectedQuantity { get; set; }
+        public int DamagedQuantity { get; set; }
+        public long UnitCostMinor { get; set; }
+        public long TotalCostMinor { get; set; }
+        public int SortOrder { get; set; }
+    }
+
+    public sealed class GoodsReceiptListItemDto
+    {
+        public Guid Id { get; set; }
+        public Guid BusinessId { get; set; }
+        public Guid SupplierId { get; set; }
+        public Guid PurchaseOrderId { get; set; }
+        public Guid WarehouseId { get; set; }
+        public string SupplierName { get; set; } = string.Empty;
+        public string PurchaseOrderNumber { get; set; } = string.Empty;
+        public string WarehouseName { get; set; } = string.Empty;
+        public string? GoodsReceiptNumber { get; set; }
+        public string Status { get; set; } = string.Empty;
+        public DateTime CreatedAtUtc { get; set; }
+        public DateTime? ReceivedAtUtc { get; set; }
+        public DateTime? PostedAtUtc { get; set; }
+        public int LineCount { get; set; }
+        public int ReceivedQuantity { get; set; }
+        public int AcceptedQuantity { get; set; }
+        public byte[] RowVersion { get; set; } = Array.Empty<byte>();
+    }
+
+    public sealed class GoodsReceiptOpsSummaryDto
+    {
+        public int TotalCount { get; set; }
+        public int DraftCount { get; set; }
+        public int ReceivedCount { get; set; }
+        public int InspectedCount { get; set; }
+        public int PostedCount { get; set; }
+        public int CancelledCount { get; set; }
+    }
+
+    public sealed class GoodsReceiptCreateDto
+    {
+        public Guid PurchaseOrderId { get; set; }
+        public Guid WarehouseId { get; set; }
+        public string? InternalNotes { get; set; }
+    }
+
+    public sealed class GoodsReceiptDetailDto
+    {
+        public Guid Id { get; set; }
+        public byte[] RowVersion { get; set; } = Array.Empty<byte>();
+        public Guid BusinessId { get; set; }
+        public Guid SupplierId { get; set; }
+        public Guid PurchaseOrderId { get; set; }
+        public Guid WarehouseId { get; set; }
+        public string SupplierName { get; set; } = string.Empty;
+        public string PurchaseOrderNumber { get; set; } = string.Empty;
+        public string WarehouseName { get; set; } = string.Empty;
+        public string? GoodsReceiptNumber { get; set; }
+        public string Status { get; set; } = string.Empty;
+        public DateTime? ReceivedAtUtc { get; set; }
+        public DateTime? InspectedAtUtc { get; set; }
+        public DateTime? PostedAtUtc { get; set; }
+        public DateTime? CancelledAtUtc { get; set; }
+        public string? InternalNotes { get; set; }
+        public List<GoodsReceiptLineDto> Lines { get; set; } = new();
+    }
+
+    public sealed class GoodsReceiptLifecycleActionDto
+    {
+        public Guid Id { get; set; }
+        public byte[] RowVersion { get; set; } = Array.Empty<byte>();
+        public string Action { get; set; } = string.Empty;
+        public List<GoodsReceiptLineDto> Lines { get; set; } = new();
     }
 }

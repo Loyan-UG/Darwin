@@ -7,6 +7,7 @@ using Darwin.Application.Inventory.Commands;
 using Darwin.Application.Inventory.DTOs;
 using Darwin.Application.Inventory.Validators;
 using Darwin.Domain.Entities.Catalog;
+using Darwin.Domain.Entities.Foundation;
 using Darwin.Domain.Entities.Inventory;
 using Darwin.Domain.Enums;
 using Darwin.Shared.Results;
@@ -883,21 +884,46 @@ public sealed class InventoryManagementHandlerTests
     // ─────────────────────────────────────────────────────────────────────────
 
     [Fact]
-    public async Task CreatePurchaseOrder_Should_ThrowValidation_WhenOrderNumberIsEmpty()
+    public async Task CreatePurchaseOrder_Should_ReserveSequence_WhenOrderNumberIsEmpty()
     {
         await using var db = InventoryTestDbContext.Create();
+        var supplierId = Guid.NewGuid();
+        var businessId = Guid.NewGuid();
+        db.Set<Supplier>().Add(new Supplier
+        {
+            Id = supplierId,
+            BusinessId = businessId,
+            Name = "Supplier",
+            Email = "supplier@example.test",
+            Phone = "123",
+            Status = SupplierStatus.Active
+        });
+        db.Set<NumberSequence>().Add(new NumberSequence
+        {
+            BusinessId = businessId,
+            DocumentType = NumberSequenceDocumentType.PurchaseOrder,
+            ScopeKey = "GLOBAL",
+            PrefixPattern = "PO-{seq}",
+            NextValue = 7,
+            PaddingLength = 4,
+            ResetPolicy = NumberSequenceResetPolicy.Never,
+            IsActive = true
+        });
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
         var handler = new CreatePurchaseOrderHandler(db, new PurchaseOrderCreateValidator(), CreateLocalizer());
 
-        var act = async () => await handler.HandleAsync(new PurchaseOrderCreateDto
+        var newId = await handler.HandleAsync(new PurchaseOrderCreateDto
         {
-            SupplierId = Guid.NewGuid(),
-            BusinessId = Guid.NewGuid(),
+            SupplierId = supplierId,
+            BusinessId = businessId,
             OrderNumber = "",
             Status = "Draft",
             Lines = [new PurchaseOrderLineDto { ProductVariantId = Guid.NewGuid(), Quantity = 1 }]
         }, TestContext.Current.CancellationToken);
 
-        await act.Should().ThrowAsync<ValidationException>();
+        var saved = await db.Set<PurchaseOrder>().SingleAsync(x => x.Id == newId, TestContext.Current.CancellationToken);
+        saved.OrderNumber.Should().Be("PO-0007");
     }
 
     [Fact]
@@ -907,6 +933,17 @@ public sealed class InventoryManagementHandlerTests
         var supplierId = Guid.NewGuid();
         var businessId = Guid.NewGuid();
         var variantId = Guid.NewGuid();
+        db.Set<Supplier>().Add(new Supplier
+        {
+            Id = supplierId,
+            BusinessId = businessId,
+            Name = "Supplier",
+            Email = "supplier@example.test",
+            Phone = "123",
+            Status = SupplierStatus.Active
+        });
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
         var handler = new CreatePurchaseOrderHandler(db, new PurchaseOrderCreateValidator(), CreateLocalizer());
 
         var newId = await handler.HandleAsync(new PurchaseOrderCreateDto
@@ -961,6 +998,15 @@ public sealed class InventoryManagementHandlerTests
         var id = Guid.NewGuid();
         var supplierId = Guid.NewGuid();
         var businessId = Guid.NewGuid();
+        db.Set<Supplier>().Add(new Supplier
+        {
+            Id = supplierId,
+            BusinessId = businessId,
+            Name = "Supplier",
+            Email = "supplier@example.test",
+            Phone = "123",
+            Status = SupplierStatus.Active
+        });
         db.Set<PurchaseOrder>().Add(new PurchaseOrder
         {
             Id = id, SupplierId = supplierId, BusinessId = businessId,
@@ -1192,8 +1238,257 @@ public sealed class InventoryManagementHandlerTests
         var stockLevel = db.Set<StockLevel>().Single(s => s.ProductVariantId == variantId);
         stockLevel.AvailableQuantity.Should().Be(30, "30 units received from purchase order");
         var transaction = db.Set<InventoryTransaction>().Single(t => t.ProductVariantId == variantId);
-        transaction.Reason.Should().Be("PurchaseOrderReceived");
         transaction.QuantityDelta.Should().Be(30);
+        var receipt = await db.Set<GoodsReceipt>()
+            .Include(x => x.Lines)
+            .SingleAsync(x => x.PurchaseOrderId == id, TestContext.Current.CancellationToken);
+        receipt.Status.Should().Be(GoodsReceiptStatus.Posted);
+        receipt.WarehouseId.Should().Be(warehouseId);
+        receipt.Lines.Should().ContainSingle(x => x.AcceptedQuantity == 30);
+        transaction.Reason.Should().Be(UpdateGoodsReceiptLifecycleHandler.PostedReason);
+        transaction.ReferenceId.Should().Be(receipt.Id);
+    }
+
+    [Fact]
+    public async Task GoodsReceiptCreate_Should_UseRemainingPurchaseOrderQuantities()
+    {
+        await using var db = InventoryTestDbContext.Create();
+        var businessId = Guid.NewGuid();
+        var warehouseId = Guid.NewGuid();
+        var purchaseOrderId = Guid.NewGuid();
+        var lineId = Guid.NewGuid();
+        var variantId = Guid.NewGuid();
+
+        db.Set<Warehouse>().Add(new Warehouse { Id = warehouseId, BusinessId = businessId, Name = "Receiving WH" });
+        db.Set<PurchaseOrder>().Add(new PurchaseOrder
+        {
+            Id = purchaseOrderId,
+            BusinessId = businessId,
+            SupplierId = Guid.NewGuid(),
+            OrderNumber = "PO-GR-1",
+            Status = PurchaseOrderStatus.Issued,
+            RowVersion = [1],
+            Lines =
+            [
+                new PurchaseOrderLine
+                {
+                    Id = lineId,
+                    ProductVariantId = variantId,
+                    SupplierSku = " SUP-1 ",
+                    Description = "  Test item  ",
+                    Quantity = 10,
+                    ReceivedQuantity = 4,
+                    CancelledQuantity = 1,
+                    UnitCostMinor = 250,
+                    TotalCostMinor = 2500
+                }
+            ]
+        });
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var handler = new CreateGoodsReceiptFromPurchaseOrderHandler(
+            db,
+            new GoodsReceiptCreateValidator(),
+            CreateLocalizer());
+
+        var result = await handler.HandleAsync(new GoodsReceiptCreateDto
+        {
+            PurchaseOrderId = purchaseOrderId,
+            WarehouseId = warehouseId,
+            InternalNotes = "  Dock A  "
+        }, TestContext.Current.CancellationToken);
+
+        result.Succeeded.Should().BeTrue();
+        var receipt = await db.Set<GoodsReceipt>()
+            .Include(x => x.Lines)
+            .SingleAsync(x => x.Id == result.Value, TestContext.Current.CancellationToken);
+        receipt.Status.Should().Be(GoodsReceiptStatus.Draft);
+        receipt.BusinessId.Should().Be(businessId);
+        receipt.InternalNotes.Should().Be("Dock A");
+        receipt.Lines.Should().ContainSingle();
+        var line = receipt.Lines.Single();
+        line.PurchaseOrderLineId.Should().Be(lineId);
+        line.ProductVariantId.Should().Be(variantId);
+        line.SupplierSku.Should().Be("SUP-1");
+        line.Description.Should().Be("Test item");
+        line.OrderedQuantity.Should().Be(10);
+        line.PreviouslyReceivedQuantity.Should().Be(4);
+        line.ReceivedQuantity.Should().Be(5);
+        line.UnitCostMinor.Should().Be(250);
+        line.TotalCostMinor.Should().Be(2500);
+    }
+
+    [Fact]
+    public async Task GoodsReceiptLifecycle_Should_PostAcceptedQuantityOnly_AndRemainIdempotent()
+    {
+        await using var db = InventoryTestDbContext.Create();
+        var businessId = Guid.NewGuid();
+        var warehouseId = Guid.NewGuid();
+        var purchaseOrderId = Guid.NewGuid();
+        var purchaseOrderLineId = Guid.NewGuid();
+        var variantId = Guid.NewGuid();
+        var receiptId = Guid.NewGuid();
+        var receiptLineId = Guid.NewGuid();
+
+        db.Set<Warehouse>().Add(new Warehouse { Id = warehouseId, BusinessId = businessId, Name = "Main WH" });
+        db.Set<ProductVariant>().Add(new ProductVariant { Id = variantId, Sku = "GR-POST" });
+        db.Set<PurchaseOrder>().Add(new PurchaseOrder
+        {
+            Id = purchaseOrderId,
+            BusinessId = businessId,
+            SupplierId = Guid.NewGuid(),
+            OrderNumber = "PO-GR-POST",
+            Status = PurchaseOrderStatus.Issued,
+            RowVersion = [2],
+            Lines =
+            [
+                new PurchaseOrderLine
+                {
+                    Id = purchaseOrderLineId,
+                    ProductVariantId = variantId,
+                    Quantity = 10,
+                    UnitCostMinor = 100,
+                    TotalCostMinor = 1000
+                }
+            ]
+        });
+        db.Set<GoodsReceipt>().Add(new GoodsReceipt
+        {
+            Id = receiptId,
+            BusinessId = businessId,
+            SupplierId = Guid.NewGuid(),
+            PurchaseOrderId = purchaseOrderId,
+            WarehouseId = warehouseId,
+            Status = GoodsReceiptStatus.Draft,
+            RowVersion = [7],
+            Lines =
+            [
+                new GoodsReceiptLine
+                {
+                    Id = receiptLineId,
+                    PurchaseOrderLineId = purchaseOrderLineId,
+                    ProductVariantId = variantId,
+                    OrderedQuantity = 10,
+                    PreviouslyReceivedQuantity = 0,
+                    ReceivedQuantity = 10,
+                    UnitCostMinor = 100,
+                    TotalCostMinor = 1000
+                }
+            ]
+        });
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var handler = new UpdateGoodsReceiptLifecycleHandler(db, CreateLocalizer());
+
+        var receive = await handler.HandleAsync(new GoodsReceiptLifecycleActionDto
+        {
+            Id = receiptId,
+            RowVersion = [7],
+            Action = UpdateGoodsReceiptLifecycleHandler.ReceiveAction,
+            Lines = [new GoodsReceiptLineDto { Id = receiptLineId, PurchaseOrderLineId = purchaseOrderLineId, ProductVariantId = variantId, ReceivedQuantity = 10 }]
+        }, TestContext.Current.CancellationToken);
+        receive.Succeeded.Should().BeTrue();
+
+        var inspect = await handler.HandleAsync(new GoodsReceiptLifecycleActionDto
+        {
+            Id = receiptId,
+            RowVersion = [7],
+            Action = UpdateGoodsReceiptLifecycleHandler.InspectAction,
+            Lines =
+            [
+                new GoodsReceiptLineDto
+                {
+                    Id = receiptLineId,
+                    PurchaseOrderLineId = purchaseOrderLineId,
+                    ProductVariantId = variantId,
+                    AcceptedQuantity = 7,
+                    RejectedQuantity = 2,
+                    DamagedQuantity = 1
+                }
+            ]
+        }, TestContext.Current.CancellationToken);
+        inspect.Succeeded.Should().BeTrue();
+
+        var post = await handler.HandleAsync(new GoodsReceiptLifecycleActionDto
+        {
+            Id = receiptId,
+            RowVersion = [7],
+            Action = UpdateGoodsReceiptLifecycleHandler.PostAction
+        }, TestContext.Current.CancellationToken);
+        post.Succeeded.Should().BeTrue();
+
+        var retry = await handler.HandleAsync(new GoodsReceiptLifecycleActionDto
+        {
+            Id = receiptId,
+            RowVersion = [7],
+            Action = UpdateGoodsReceiptLifecycleHandler.PostAction
+        }, TestContext.Current.CancellationToken);
+        retry.Succeeded.Should().BeTrue();
+
+        var stock = await db.Set<StockLevel>().SingleAsync(x => x.WarehouseId == warehouseId && x.ProductVariantId == variantId, TestContext.Current.CancellationToken);
+        stock.AvailableQuantity.Should().Be(7);
+        db.Set<InventoryTransaction>()
+            .Where(x => x.ReferenceId == receiptId && x.Reason == UpdateGoodsReceiptLifecycleHandler.PostedReason)
+            .Should()
+            .ContainSingle(x => x.QuantityDelta == 7);
+        var poLine = await db.Set<PurchaseOrderLine>().SingleAsync(x => x.Id == purchaseOrderLineId, TestContext.Current.CancellationToken);
+        poLine.ReceivedQuantity.Should().Be(7);
+        var receipt = await db.Set<GoodsReceipt>().SingleAsync(x => x.Id == receiptId, TestContext.Current.CancellationToken);
+        receipt.Status.Should().Be(GoodsReceiptStatus.Posted);
+    }
+
+    [Fact]
+    public async Task GoodsReceiptLifecycle_Should_RejectInspectionQuantityMismatch()
+    {
+        await using var db = InventoryTestDbContext.Create();
+        var receiptId = Guid.NewGuid();
+        var receiptLineId = Guid.NewGuid();
+        var purchaseOrderLineId = Guid.NewGuid();
+        var variantId = Guid.NewGuid();
+
+        db.Set<GoodsReceipt>().Add(new GoodsReceipt
+        {
+            Id = receiptId,
+            BusinessId = Guid.NewGuid(),
+            SupplierId = Guid.NewGuid(),
+            PurchaseOrderId = Guid.NewGuid(),
+            WarehouseId = Guid.NewGuid(),
+            Status = GoodsReceiptStatus.Received,
+            RowVersion = [5],
+            Lines =
+            [
+                new GoodsReceiptLine
+                {
+                    Id = receiptLineId,
+                    PurchaseOrderLineId = purchaseOrderLineId,
+                    ProductVariantId = variantId,
+                    OrderedQuantity = 5,
+                    ReceivedQuantity = 5
+                }
+            ]
+        });
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var handler = new UpdateGoodsReceiptLifecycleHandler(db, CreateLocalizer());
+        var result = await handler.HandleAsync(new GoodsReceiptLifecycleActionDto
+        {
+            Id = receiptId,
+            RowVersion = [5],
+            Action = UpdateGoodsReceiptLifecycleHandler.InspectAction,
+            Lines =
+            [
+                new GoodsReceiptLineDto
+                {
+                    Id = receiptLineId,
+                    PurchaseOrderLineId = purchaseOrderLineId,
+                    ProductVariantId = variantId,
+                    AcceptedQuantity = 6
+                }
+            ]
+        }, TestContext.Current.CancellationToken);
+
+        result.Succeeded.Should().BeFalse();
+        result.Error.Should().Contain("GoodsReceiptInvalidQuantity");
     }
 
     [Fact]
@@ -1373,6 +1668,15 @@ public sealed class InventoryManagementHandlerTests
         var id = Guid.NewGuid();
         var supplierId = Guid.NewGuid();
         var businessId = Guid.NewGuid();
+        db.Set<Supplier>().Add(new Supplier
+        {
+            Id = supplierId,
+            BusinessId = businessId,
+            Name = "Supplier",
+            Email = "supplier@example.test",
+            Phone = "123",
+            Status = SupplierStatus.Active
+        });
         db.Set<PurchaseOrder>().Add(new PurchaseOrder
         {
             Id = id,
@@ -1678,10 +1982,18 @@ public sealed class InventoryManagementHandlerTests
                 b.HasKey(x => x.Id);
                 b.Property(x => x.BusinessId).IsRequired();
                 b.Property(x => x.Name).HasMaxLength(200).IsRequired();
+                b.Property(x => x.Code).HasMaxLength(64);
+                b.Property(x => x.Status);
                 b.Property(x => x.Email).HasMaxLength(256).IsRequired();
                 b.Property(x => x.Phone).HasMaxLength(50).IsRequired();
                 b.Property(x => x.Address).HasMaxLength(500);
                 b.Property(x => x.Notes);
+                b.Property(x => x.PreferredCurrency).HasMaxLength(3);
+                b.Property(x => x.PaymentTermDays);
+                b.Property(x => x.LeadTimeDays);
+                b.Property(x => x.Website).HasMaxLength(500);
+                b.Property(x => x.TaxRegistrationNumber).HasMaxLength(100);
+                b.Property(x => x.ExternalNotes).HasMaxLength(2000);
                 b.Property(x => x.IsDeleted);
                 b.Ignore(x => x.RowVersion);
                 b.Ignore(x => x.PurchaseOrders);
@@ -1715,6 +2027,12 @@ public sealed class InventoryManagementHandlerTests
                 b.Property(x => x.OrderNumber).HasMaxLength(64).IsRequired();
                 b.Property(x => x.Status);
                 b.Property(x => x.OrderedAtUtc).IsRequired();
+                b.Property(x => x.Currency).HasMaxLength(3).IsRequired();
+                b.Property(x => x.ExpectedDeliveryDateUtc);
+                b.Property(x => x.IssuedAtUtc);
+                b.Property(x => x.ReceivedAtUtc);
+                b.Property(x => x.CancelledAtUtc);
+                b.Property(x => x.InternalNotes).HasMaxLength(4000);
                 b.Property(x => x.IsDeleted);
                 b.Ignore(x => x.RowVersion);
                 b.HasMany(x => x.Lines).WithOne().HasForeignKey(l => l.PurchaseOrderId).OnDelete(DeleteBehavior.Cascade);
@@ -1725,9 +2043,53 @@ public sealed class InventoryManagementHandlerTests
                 b.HasKey(x => x.Id);
                 b.Property(x => x.PurchaseOrderId).IsRequired();
                 b.Property(x => x.ProductVariantId).IsRequired();
+                b.Property(x => x.SupplierSku).HasMaxLength(100);
+                b.Property(x => x.Description).HasMaxLength(1000);
                 b.Property(x => x.Quantity);
+                b.Property(x => x.ReceivedQuantity);
+                b.Property(x => x.CancelledQuantity);
                 b.Property(x => x.UnitCostMinor);
                 b.Property(x => x.TotalCostMinor);
+                b.Property(x => x.IsDeleted);
+            });
+
+            modelBuilder.Entity<GoodsReceipt>(b =>
+            {
+                b.HasKey(x => x.Id);
+                b.Property(x => x.BusinessId).IsRequired();
+                b.Property(x => x.SupplierId).IsRequired();
+                b.Property(x => x.PurchaseOrderId).IsRequired();
+                b.Property(x => x.WarehouseId).IsRequired();
+                b.Property(x => x.GoodsReceiptNumber).HasMaxLength(100);
+                b.Property(x => x.Status);
+                b.Property(x => x.ReceivedAtUtc);
+                b.Property(x => x.InspectedAtUtc);
+                b.Property(x => x.PostedAtUtc);
+                b.Property(x => x.CancelledAtUtc);
+                b.Property(x => x.InternalNotes).HasMaxLength(4000);
+                b.Property(x => x.MetadataJson);
+                b.Property(x => x.IsDeleted);
+                b.Ignore(x => x.RowVersion);
+                b.HasMany(x => x.Lines).WithOne().HasForeignKey(x => x.GoodsReceiptId).OnDelete(DeleteBehavior.Cascade);
+            });
+
+            modelBuilder.Entity<GoodsReceiptLine>(b =>
+            {
+                b.HasKey(x => x.Id);
+                b.Property(x => x.GoodsReceiptId).IsRequired();
+                b.Property(x => x.PurchaseOrderLineId).IsRequired();
+                b.Property(x => x.ProductVariantId).IsRequired();
+                b.Property(x => x.SupplierSku).HasMaxLength(100);
+                b.Property(x => x.Description).HasMaxLength(1000);
+                b.Property(x => x.OrderedQuantity);
+                b.Property(x => x.PreviouslyReceivedQuantity);
+                b.Property(x => x.ReceivedQuantity);
+                b.Property(x => x.AcceptedQuantity);
+                b.Property(x => x.RejectedQuantity);
+                b.Property(x => x.DamagedQuantity);
+                b.Property(x => x.UnitCostMinor);
+                b.Property(x => x.TotalCostMinor);
+                b.Property(x => x.SortOrder);
                 b.Property(x => x.IsDeleted);
             });
 
@@ -1748,6 +2110,24 @@ public sealed class InventoryManagementHandlerTests
                 b.Property(x => x.QuantityDelta);
                 b.Property(x => x.Reason).HasMaxLength(64).IsRequired();
                 b.Property(x => x.ReferenceId);
+            });
+
+            modelBuilder.Entity<NumberSequence>(b =>
+            {
+                b.HasKey(x => x.Id);
+                b.Property(x => x.BusinessId);
+                b.Property(x => x.DocumentType);
+                b.Property(x => x.ScopeKey).HasMaxLength(128).IsRequired();
+                b.Property(x => x.PrefixPattern).HasMaxLength(128).IsRequired();
+                b.Property(x => x.NextValue);
+                b.Property(x => x.PaddingLength);
+                b.Property(x => x.ResetPolicy);
+                b.Property(x => x.CurrentPeriodKey).HasMaxLength(32);
+                b.Property(x => x.IsActive);
+                b.Property(x => x.Description);
+                b.Property(x => x.MetadataJson);
+                b.Property(x => x.IsDeleted);
+                b.Ignore(x => x.RowVersion);
             });
         }
     }

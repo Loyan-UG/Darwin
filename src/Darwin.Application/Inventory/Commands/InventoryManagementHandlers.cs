@@ -1,4 +1,6 @@
 using Darwin.Application.Abstractions.Persistence;
+using Darwin.Application.Abstractions.Services;
+using Darwin.Application.Foundation;
 using Darwin.Application.Inventory.DTOs;
 using Darwin.Application.Inventory;
 using Darwin.Domain.Entities.Inventory;
@@ -133,10 +135,18 @@ namespace Darwin.Application.Inventory.Commands
             {
                 BusinessId = dto.BusinessId,
                 Name = dto.Name.Trim(),
+                Code = InventoryManagementHandlerSupport.NormalizeCode(dto.Code),
+                Status = InventoryManagementHandlerSupport.ParseSupplierStatus(dto.Status),
                 Email = dto.Email.Trim(),
                 Phone = dto.Phone.Trim(),
                 Address = InventoryManagementHandlerSupport.NormalizeOptional(dto.Address),
-                Notes = InventoryManagementHandlerSupport.NormalizeOptional(dto.Notes)
+                Notes = InventoryManagementHandlerSupport.NormalizeOptional(dto.Notes),
+                PreferredCurrency = InventoryManagementHandlerSupport.NormalizeCurrency(dto.PreferredCurrency),
+                PaymentTermDays = dto.PaymentTermDays,
+                LeadTimeDays = dto.LeadTimeDays,
+                Website = InventoryManagementHandlerSupport.NormalizeOptional(dto.Website),
+                TaxRegistrationNumber = InventoryManagementHandlerSupport.NormalizeOptional(dto.TaxRegistrationNumber),
+                ExternalNotes = InventoryManagementHandlerSupport.NormalizeOptional(dto.ExternalNotes)
             };
 
             _db.Set<Supplier>().Add(supplier);
@@ -184,10 +194,18 @@ namespace Darwin.Application.Inventory.Commands
 
             supplier.BusinessId = dto.BusinessId;
             supplier.Name = dto.Name.Trim();
+            supplier.Code = InventoryManagementHandlerSupport.NormalizeCode(dto.Code);
+            supplier.Status = InventoryManagementHandlerSupport.ParseSupplierStatus(dto.Status);
             supplier.Email = dto.Email.Trim();
             supplier.Phone = dto.Phone.Trim();
             supplier.Address = InventoryManagementHandlerSupport.NormalizeOptional(dto.Address);
             supplier.Notes = InventoryManagementHandlerSupport.NormalizeOptional(dto.Notes);
+            supplier.PreferredCurrency = InventoryManagementHandlerSupport.NormalizeCurrency(dto.PreferredCurrency);
+            supplier.PaymentTermDays = dto.PaymentTermDays;
+            supplier.LeadTimeDays = dto.LeadTimeDays;
+            supplier.Website = InventoryManagementHandlerSupport.NormalizeOptional(dto.Website);
+            supplier.TaxRegistrationNumber = InventoryManagementHandlerSupport.NormalizeOptional(dto.TaxRegistrationNumber);
+            supplier.ExternalNotes = InventoryManagementHandlerSupport.NormalizeOptional(dto.ExternalNotes);
 
             await InventoryManagementHandlerSupport.SaveChangesOrThrowConcurrencyAsync(_db, _localizer, ct).ConfigureAwait(false);
         }
@@ -574,39 +592,83 @@ namespace Darwin.Application.Inventory.Commands
         private readonly IAppDbContext _db;
         private readonly IValidator<PurchaseOrderCreateDto> _validator;
         private readonly IStringLocalizer<ValidationResource> _localizer;
+        private readonly NumberSequenceService _numberSequenceService;
+        private readonly IClock _clock;
+        private readonly BusinessEventService? _businessEventService;
+
+        public CreatePurchaseOrderHandler(
+            IAppDbContext db,
+            IValidator<PurchaseOrderCreateDto> validator,
+            IStringLocalizer<ValidationResource> localizer,
+            NumberSequenceService numberSequenceService,
+            IClock clock,
+            BusinessEventService? businessEventService = null)
+        {
+            _db = db ?? throw new ArgumentNullException(nameof(db));
+            _validator = validator ?? throw new ArgumentNullException(nameof(validator));
+            _localizer = localizer ?? throw new ArgumentNullException(nameof(localizer));
+            _numberSequenceService = numberSequenceService ?? throw new ArgumentNullException(nameof(numberSequenceService));
+            _clock = clock ?? throw new ArgumentNullException(nameof(clock));
+            _businessEventService = businessEventService;
+        }
 
         public CreatePurchaseOrderHandler(
             IAppDbContext db,
             IValidator<PurchaseOrderCreateDto> validator,
             IStringLocalizer<ValidationResource> localizer)
+            : this(db, validator, localizer, new NumberSequenceService(db, InventoryManagementHandlerSupport.DefaultClock), InventoryManagementHandlerSupport.DefaultClock)
         {
-            _db = db ?? throw new ArgumentNullException(nameof(db));
-            _validator = validator ?? throw new ArgumentNullException(nameof(validator));
-            _localizer = localizer ?? throw new ArgumentNullException(nameof(localizer));
         }
 
         public async Task<Guid> HandleAsync(PurchaseOrderCreateDto dto, CancellationToken ct = default)
         {
             await _validator.ValidateAndThrowAsync(dto, ct);
 
+            await InventoryManagementHandlerSupport.EnsureSupplierReadyForPurchaseOrderAsync(_db, dto.SupplierId, dto.BusinessId, _localizer, ct)
+                .ConfigureAwait(false);
+
+            var orderNumber = await InventoryManagementHandlerSupport.ResolvePurchaseOrderNumberAsync(
+                    _numberSequenceService,
+                    dto.BusinessId,
+                    dto.OrderNumber,
+                    _localizer,
+                    ct)
+                .ConfigureAwait(false);
+
             var order = new PurchaseOrder
             {
                 SupplierId = dto.SupplierId,
                 BusinessId = dto.BusinessId,
-                OrderNumber = dto.OrderNumber.Trim(),
-                OrderedAtUtc = dto.OrderedAtUtc,
+                OrderNumber = orderNumber,
+                OrderedAtUtc = dto.OrderedAtUtc == default ? _clock.UtcNow : dto.OrderedAtUtc,
                 Status = InventoryManagementHandlerSupport.ParsePurchaseOrderStatus(dto.Status, _localizer),
+                Currency = InventoryManagementHandlerSupport.NormalizeCurrency(dto.Currency) ?? "EUR",
+                ExpectedDeliveryDateUtc = dto.ExpectedDeliveryDateUtc,
+                InternalNotes = InventoryManagementHandlerSupport.NormalizeOptional(dto.InternalNotes),
                 Lines = dto.Lines.Select(x => new PurchaseOrderLine
                 {
                     ProductVariantId = x.ProductVariantId,
+                    SupplierSku = InventoryManagementHandlerSupport.NormalizeOptional(x.SupplierSku),
+                    Description = InventoryManagementHandlerSupport.NormalizeOptional(x.Description),
                     Quantity = x.Quantity,
+                    ReceivedQuantity = 0,
+                    CancelledQuantity = 0,
                     UnitCostMinor = x.UnitCostMinor,
                     TotalCostMinor = x.TotalCostMinor
                 }).ToList()
             };
 
             _db.Set<PurchaseOrder>().Add(order);
-            await _db.SaveChangesAsync(ct).ConfigureAwait(false);
+            await InventoryManagementHandlerSupport.RecordPurchaseOrderEvidenceOrSaveAsync(
+                    _db,
+                    _businessEventService,
+                    order,
+                    "purchasing.purchase_order.created",
+                    $"purchasing.purchase_order.created:{order.Id}",
+                    AuditTrailAction.Created,
+                    "Purchase order created",
+                    ct)
+                .ConfigureAwait(false);
             return order.Id;
         }
     }
@@ -616,15 +678,29 @@ namespace Darwin.Application.Inventory.Commands
         private readonly IAppDbContext _db;
         private readonly IValidator<PurchaseOrderEditDto> _validator;
         private readonly IStringLocalizer<ValidationResource> _localizer;
+        private readonly NumberSequenceService _numberSequenceService;
+        private readonly BusinessEventService? _businessEventService;
+
+        public UpdatePurchaseOrderHandler(
+            IAppDbContext db,
+            IValidator<PurchaseOrderEditDto> validator,
+            IStringLocalizer<ValidationResource> localizer,
+            NumberSequenceService numberSequenceService,
+            BusinessEventService? businessEventService = null)
+        {
+            _db = db ?? throw new ArgumentNullException(nameof(db));
+            _validator = validator ?? throw new ArgumentNullException(nameof(validator));
+            _localizer = localizer ?? throw new ArgumentNullException(nameof(localizer));
+            _numberSequenceService = numberSequenceService ?? throw new ArgumentNullException(nameof(numberSequenceService));
+            _businessEventService = businessEventService;
+        }
 
         public UpdatePurchaseOrderHandler(
             IAppDbContext db,
             IValidator<PurchaseOrderEditDto> validator,
             IStringLocalizer<ValidationResource> localizer)
+            : this(db, validator, localizer, new NumberSequenceService(db, InventoryManagementHandlerSupport.DefaultClock))
         {
-            _db = db ?? throw new ArgumentNullException(nameof(db));
-            _validator = validator ?? throw new ArgumentNullException(nameof(validator));
-            _localizer = localizer ?? throw new ArgumentNullException(nameof(localizer));
         }
 
         public async Task HandleAsync(PurchaseOrderEditDto dto, CancellationToken ct = default)
@@ -648,22 +724,52 @@ namespace Darwin.Application.Inventory.Commands
                 throw new DbUpdateConcurrencyException(_localizer["ConcurrencyConflictDetected"]);
             }
 
+            if (order.Status != PurchaseOrderStatus.Draft)
+            {
+                throw new InvalidOperationException(_localizer["PurchaseOrderCannotEditAfterDraft"]);
+            }
+
+            await InventoryManagementHandlerSupport.EnsureSupplierReadyForPurchaseOrderAsync(_db, dto.SupplierId, dto.BusinessId, _localizer, ct)
+                .ConfigureAwait(false);
+
             order.SupplierId = dto.SupplierId;
             order.BusinessId = dto.BusinessId;
-            order.OrderNumber = dto.OrderNumber.Trim();
+            order.OrderNumber = await InventoryManagementHandlerSupport.ResolvePurchaseOrderNumberAsync(
+                    _numberSequenceService,
+                    dto.BusinessId,
+                    dto.OrderNumber,
+                    _localizer,
+                    ct)
+                .ConfigureAwait(false);
             order.OrderedAtUtc = dto.OrderedAtUtc;
             order.Status = InventoryManagementHandlerSupport.ParsePurchaseOrderStatus(dto.Status, _localizer);
+            order.Currency = InventoryManagementHandlerSupport.NormalizeCurrency(dto.Currency) ?? "EUR";
+            order.ExpectedDeliveryDateUtc = dto.ExpectedDeliveryDateUtc;
+            order.InternalNotes = InventoryManagementHandlerSupport.NormalizeOptional(dto.InternalNotes);
 
             _db.Set<PurchaseOrderLine>().RemoveRange(order.Lines);
             order.Lines = dto.Lines.Select(x => new PurchaseOrderLine
             {
                 ProductVariantId = x.ProductVariantId,
+                SupplierSku = InventoryManagementHandlerSupport.NormalizeOptional(x.SupplierSku),
+                Description = InventoryManagementHandlerSupport.NormalizeOptional(x.Description),
                 Quantity = x.Quantity,
+                ReceivedQuantity = 0,
+                CancelledQuantity = 0,
                 UnitCostMinor = x.UnitCostMinor,
                 TotalCostMinor = x.TotalCostMinor
             }).ToList();
 
-            await InventoryManagementHandlerSupport.SaveChangesOrThrowConcurrencyAsync(_db, _localizer, ct).ConfigureAwait(false);
+            await InventoryManagementHandlerSupport.RecordPurchaseOrderEvidenceOrSaveAsync(
+                    _db,
+                    _businessEventService,
+                    order,
+                    "purchasing.purchase_order.updated",
+                    $"purchasing.purchase_order.updated:{order.Id}:{Convert.ToBase64String(rowVersion)}",
+                    AuditTrailAction.Updated,
+                    "Purchase order updated",
+                    ct)
+                .ConfigureAwait(false);
         }
     }
 
@@ -675,11 +781,24 @@ namespace Darwin.Application.Inventory.Commands
 
         private readonly IAppDbContext _db;
         private readonly IStringLocalizer<ValidationResource> _localizer;
+        private readonly IClock _clock;
+        private readonly BusinessEventService? _businessEventService;
 
-        public UpdatePurchaseOrderLifecycleHandler(IAppDbContext db, IStringLocalizer<ValidationResource> localizer)
+        public UpdatePurchaseOrderLifecycleHandler(
+            IAppDbContext db,
+            IStringLocalizer<ValidationResource> localizer,
+            IClock clock,
+            BusinessEventService? businessEventService = null)
         {
             _db = db ?? throw new ArgumentNullException(nameof(db));
             _localizer = localizer ?? throw new ArgumentNullException(nameof(localizer));
+            _clock = clock ?? throw new ArgumentNullException(nameof(clock));
+            _businessEventService = businessEventService;
+        }
+
+        public UpdatePurchaseOrderLifecycleHandler(IAppDbContext db, IStringLocalizer<ValidationResource> localizer)
+            : this(db, localizer, InventoryManagementHandlerSupport.DefaultClock)
+        {
         }
 
         public async Task<Result> HandleAsync(PurchaseOrderLifecycleActionDto dto, CancellationToken ct = default)
@@ -720,6 +839,7 @@ namespace Darwin.Application.Inventory.Commands
                 }
 
                 order.Status = PurchaseOrderStatus.Issued;
+                order.IssuedAtUtc ??= _clock.UtcNow;
             }
             else if (string.Equals(action, ReceiveAction, StringComparison.OrdinalIgnoreCase))
             {
@@ -737,6 +857,11 @@ namespace Darwin.Application.Inventory.Commands
                 }
 
                 order.Status = PurchaseOrderStatus.Cancelled;
+                order.CancelledAtUtc ??= _clock.UtcNow;
+                foreach (var line in order.Lines.Where(x => !x.IsDeleted))
+                {
+                    line.CancelledQuantity = Math.Max(line.CancelledQuantity, line.Quantity - line.ReceivedQuantity);
+                }
             }
             else
             {
@@ -745,7 +870,16 @@ namespace Darwin.Application.Inventory.Commands
 
             try
             {
-                await _db.SaveChangesAsync(ct).ConfigureAwait(false);
+                await InventoryManagementHandlerSupport.RecordPurchaseOrderEvidenceOrSaveAsync(
+                        _db,
+                        _businessEventService,
+                        order,
+                        $"purchasing.purchase_order.{order.Status.ToString().ToLowerInvariant()}",
+                        $"purchasing.purchase_order.{order.Status.ToString().ToLowerInvariant()}:{order.Id}",
+                        AuditTrailAction.StatusChanged,
+                        $"Purchase order {order.Status}",
+                        ct)
+                    .ConfigureAwait(false);
             }
             catch (DbUpdateConcurrencyException)
             {
@@ -776,23 +910,76 @@ namespace Darwin.Application.Inventory.Commands
                 return Result.Fail(_localizer["NoWarehouseIsConfigured"]);
             }
 
-            var variantIdsToRefresh = new HashSet<Guid>();
-            foreach (var line in order.Lines)
+            var receipt = new GoodsReceipt
             {
+                BusinessId = order.BusinessId,
+                SupplierId = order.SupplierId,
+                PurchaseOrderId = order.Id,
+                WarehouseId = warehouseId,
+                Status = GoodsReceiptStatus.Posted,
+                ReceivedAtUtc = _clock.UtcNow,
+                InspectedAtUtc = _clock.UtcNow,
+                PostedAtUtc = _clock.UtcNow,
+                Lines = order.Lines
+                    .Where(x => !x.IsDeleted && x.Quantity > x.ReceivedQuantity + x.CancelledQuantity)
+                    .OrderBy(x => x.CreatedAtUtc)
+                    .Select((line, index) =>
+                    {
+                        var remaining = line.Quantity - line.ReceivedQuantity - line.CancelledQuantity;
+                        return new GoodsReceiptLine
+                        {
+                            PurchaseOrderLineId = line.Id,
+                            ProductVariantId = line.ProductVariantId,
+                            SupplierSku = InventoryManagementHandlerSupport.NormalizeOptional(line.SupplierSku),
+                            Description = InventoryManagementHandlerSupport.NormalizeOptional(line.Description),
+                            OrderedQuantity = line.Quantity,
+                            PreviouslyReceivedQuantity = line.ReceivedQuantity,
+                            ReceivedQuantity = remaining,
+                            AcceptedQuantity = remaining,
+                            RejectedQuantity = 0,
+                            DamagedQuantity = 0,
+                            UnitCostMinor = line.UnitCostMinor,
+                            TotalCostMinor = line.TotalCostMinor,
+                            SortOrder = index
+                        };
+                    })
+                    .ToList()
+            };
+
+            var receiptNumber = await new NumberSequenceService(_db, _clock)
+                .ReserveNextAsync(new NumberSequenceRequest(order.BusinessId, NumberSequenceDocumentType.GoodsReceipt, NumberSequenceService.GlobalScopeKey), ct)
+                .ConfigureAwait(false);
+            if (receiptNumber.Succeeded && !string.IsNullOrWhiteSpace(receiptNumber.Value))
+            {
+                receipt.GoodsReceiptNumber = receiptNumber.Value;
+            }
+
+            if (receipt.Lines.Count == 0)
+            {
+                return Result.Fail(_localizer["PurchaseOrderLifecycleUnsupportedAction"]);
+            }
+
+            _db.Set<GoodsReceipt>().Add(receipt);
+            var variantIdsToRefresh = new HashSet<Guid>();
+            foreach (var line in order.Lines.Where(x => !x.IsDeleted && x.Quantity > x.ReceivedQuantity + x.CancelledQuantity))
+            {
+                var remaining = line.Quantity - line.ReceivedQuantity - line.CancelledQuantity;
                 var stockLevel = await InventoryStockHelper.GetOrCreateStockLevelAsync(_db, warehouseId, line.ProductVariantId, ct).ConfigureAwait(false);
-                stockLevel.AvailableQuantity += line.Quantity;
+                stockLevel.AvailableQuantity += remaining;
+                line.ReceivedQuantity += remaining;
                 _db.Set<InventoryTransaction>().Add(new InventoryTransaction
                 {
                     WarehouseId = warehouseId,
                     ProductVariantId = line.ProductVariantId,
-                    QuantityDelta = line.Quantity,
-                    Reason = "PurchaseOrderReceived",
-                    ReferenceId = order.Id
+                    QuantityDelta = remaining,
+                    Reason = UpdateGoodsReceiptLifecycleHandler.PostedReason,
+                    ReferenceId = receipt.Id
                 });
                 variantIdsToRefresh.Add(line.ProductVariantId);
             }
 
             order.Status = PurchaseOrderStatus.Received;
+            order.ReceivedAtUtc ??= _clock.UtcNow;
 
             foreach (var variantId in variantIdsToRefresh)
             {
@@ -805,6 +992,8 @@ namespace Darwin.Application.Inventory.Commands
 
     internal static class InventoryManagementHandlerSupport
     {
+        public static IClock DefaultClock { get; } = new InventorySystemClock();
+
         public static TransferStatus ParseTransferStatus(string value, IStringLocalizer<ValidationResource> localizer)
         {
             if (!Enum.TryParse<TransferStatus>(value, true, out var status))
@@ -825,8 +1014,145 @@ namespace Darwin.Application.Inventory.Commands
             return status;
         }
 
+        public static SupplierStatus ParseSupplierStatus(string value)
+        {
+            if (!Enum.TryParse<SupplierStatus>(value, true, out var status))
+            {
+                throw new ValidationException("Invalid supplier status.");
+            }
+
+            return status;
+        }
+
         public static string? NormalizeOptional(string? value) =>
             string.IsNullOrWhiteSpace(value) ? null : value.Trim();
+
+        public static string? NormalizeCode(string? value) =>
+            string.IsNullOrWhiteSpace(value) ? null : value.Trim().ToUpperInvariant();
+
+        public static string? NormalizeCurrency(string? value) =>
+            string.IsNullOrWhiteSpace(value) ? null : value.Trim().ToUpperInvariant();
+
+        public static async Task EnsureSupplierReadyForPurchaseOrderAsync(
+            IAppDbContext db,
+            Guid supplierId,
+            Guid businessId,
+            IStringLocalizer<ValidationResource> localizer,
+            CancellationToken ct)
+        {
+            var supplier = await db.Set<Supplier>()
+                .AsNoTracking()
+                .FirstOrDefaultAsync(x => x.Id == supplierId && !x.IsDeleted, ct)
+                .ConfigureAwait(false);
+
+            if (supplier is null)
+            {
+                throw new InvalidOperationException(localizer["SupplierNotFound"]);
+            }
+
+            if (supplier.BusinessId != businessId)
+            {
+                throw new InvalidOperationException(localizer["SupplierBusinessMismatch"]);
+            }
+
+            if (supplier.Status != SupplierStatus.Active)
+            {
+                throw new InvalidOperationException(localizer["SupplierNotActive"]);
+            }
+        }
+
+        public static async Task<string> ResolvePurchaseOrderNumberAsync(
+            NumberSequenceService numberSequenceService,
+            Guid businessId,
+            string? requestedNumber,
+            IStringLocalizer<ValidationResource> localizer,
+            CancellationToken ct)
+        {
+            var normalized = NormalizeOptional(requestedNumber);
+            if (normalized is not null)
+            {
+                return normalized;
+            }
+
+            var result = await numberSequenceService.ReserveNextAsync(
+                    new NumberSequenceRequest(businessId, NumberSequenceDocumentType.PurchaseOrder, NumberSequenceService.GlobalScopeKey),
+                    ct)
+                .ConfigureAwait(false);
+
+            if (!result.Succeeded || string.IsNullOrWhiteSpace(result.Value))
+            {
+                throw new InvalidOperationException(localizer["PurchaseOrderNumberRequired"]);
+            }
+
+            return result.Value;
+        }
+
+        public static async Task RecordPurchaseOrderEvidenceOrSaveAsync(
+            IAppDbContext db,
+            BusinessEventService? businessEventService,
+            PurchaseOrder order,
+            string eventType,
+            string eventKey,
+            AuditTrailAction action,
+            string title,
+            CancellationToken ct)
+        {
+            if (businessEventService is null)
+            {
+                await db.SaveChangesAsync(ct).ConfigureAwait(false);
+                return;
+            }
+
+            var now = DateTime.UtcNow;
+            var payload = $$"""
+                {"purchaseOrderId":"{{order.Id}}","businessId":"{{order.BusinessId}}","supplierId":"{{order.SupplierId}}","status":"{{order.Status}}","currency":"{{order.Currency}}","lineCount":{{order.Lines.Count(x => !x.IsDeleted)}}}
+                """;
+
+            var eventResult = await businessEventService.AddEventAsync(
+                    new AddBusinessEventCommand(
+                        order.BusinessId,
+                        "PurchaseOrder",
+                        order.Id,
+                        eventType,
+                        eventKey,
+                        now,
+                        null,
+                        BusinessEventSource.User,
+                        BusinessEventSeverity.Info,
+                        FoundationVisibility.Internal,
+                        title,
+                        null,
+                        null,
+                        null,
+                        payload),
+                    ct)
+                .ConfigureAwait(false);
+
+            if (!eventResult.Succeeded)
+            {
+                throw new InvalidOperationException(eventResult.Error);
+            }
+
+            var auditResult = await businessEventService.AddAuditTrailAsync(
+                    new AddAuditTrailCommand(
+                        order.BusinessId,
+                        "PurchaseOrder",
+                        order.Id,
+                        action,
+                        now,
+                        null,
+                        eventResult.Value,
+                        title,
+                        null,
+                        payload),
+                    ct)
+                .ConfigureAwait(false);
+
+            if (!auditResult.Succeeded)
+            {
+                throw new InvalidOperationException(auditResult.Error);
+            }
+        }
 
         public static async Task SaveChangesOrThrowConcurrencyAsync(
             IAppDbContext db,
@@ -841,6 +1167,11 @@ namespace Darwin.Application.Inventory.Commands
             {
                 throw new DbUpdateConcurrencyException(localizer["ConcurrencyConflictDetected"]);
             }
+        }
+
+        private sealed class InventorySystemClock : IClock
+        {
+            public DateTime UtcNow => DateTime.UtcNow;
         }
     }
 }

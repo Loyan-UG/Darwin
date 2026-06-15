@@ -4,6 +4,7 @@ using Darwin.Application.Abstractions.Compliance;
 using Darwin.Application;
 using Darwin.Application.Common.Addresses;
 using Darwin.Application.CRM.DTOs;
+using Darwin.Application.CRM.Services;
 using Darwin.Domain.Entities.CRM;
 using Darwin.Domain.Entities.Identity;
 using Darwin.Domain.Enums;
@@ -43,6 +44,19 @@ namespace Darwin.Application.CRM.Commands
                 }
             }
 
+            if (dto.OwnerUserId.HasValue)
+            {
+                var ownerExists = await _db.Set<User>()
+                    .AsNoTracking()
+                    .AnyAsync(x => x.Id == dto.OwnerUserId.Value && !x.IsDeleted, ct)
+                    .ConfigureAwait(false);
+
+                if (!ownerExists)
+                {
+                    throw new InvalidOperationException(_localizer["LinkedUserNotFound"]);
+                }
+            }
+
             var customer = new Customer
             {
                 UserId = dto.UserId,
@@ -54,6 +68,12 @@ namespace Darwin.Application.CRM.Commands
                 TaxProfileType = dto.TaxProfileType,
                 VatId = NormalizeOptional(dto.VatId),
                 Notes = NormalizeOptional(dto.Notes),
+                LifecycleStatus = dto.LifecycleStatus,
+                OwnerUserId = dto.OwnerUserId,
+                AcquisitionSource = NormalizeOptional(dto.AcquisitionSource),
+                PreferredContactChannel = dto.PreferredContactChannel,
+                LastContactedAtUtc = dto.LastContactedAtUtc,
+                NextFollowUpAtUtc = dto.NextFollowUpAtUtc,
                 Addresses = dto.Addresses.Select(CanonicalAddressMapper.ToCustomerAddress).ToList()
             };
 
@@ -113,6 +133,19 @@ namespace Darwin.Application.CRM.Commands
                 }
             }
 
+            if (dto.OwnerUserId.HasValue)
+            {
+                var ownerExists = await _db.Set<User>()
+                    .AsNoTracking()
+                    .AnyAsync(x => x.Id == dto.OwnerUserId.Value && !x.IsDeleted, ct)
+                    .ConfigureAwait(false);
+
+                if (!ownerExists)
+                {
+                    throw new InvalidOperationException(_localizer["LinkedUserNotFound"]);
+                }
+            }
+
             customer.UserId = dto.UserId;
             customer.FirstName = dto.FirstName.Trim();
             customer.LastName = dto.LastName.Trim();
@@ -131,6 +164,12 @@ namespace Darwin.Application.CRM.Commands
                 customer.VatValidationMessage = null;
             }
             customer.Notes = NormalizeOptional(dto.Notes);
+            customer.LifecycleStatus = dto.LifecycleStatus;
+            customer.OwnerUserId = dto.OwnerUserId;
+            customer.AcquisitionSource = NormalizeOptional(dto.AcquisitionSource);
+            customer.PreferredContactChannel = dto.PreferredContactChannel;
+            customer.LastContactedAtUtc = dto.LastContactedAtUtc;
+            customer.NextFollowUpAtUtc = dto.NextFollowUpAtUtc;
 
             var requestedAddressIds = dto.Addresses
                 .Where(x => x.Id.HasValue)
@@ -572,8 +611,13 @@ namespace Darwin.Application.CRM.Commands
                 Source = NormalizeOptional(dto.Source),
                 Notes = NormalizeOptional(dto.Notes),
                 Status = dto.Status,
+                Priority = dto.Priority,
                 AssignedToUserId = dto.AssignedToUserId,
-                CustomerId = dto.CustomerId
+                CustomerId = dto.CustomerId,
+                QualifiedAtUtc = dto.QualifiedAtUtc,
+                DisqualifiedAtUtc = dto.DisqualifiedAtUtc,
+                ConvertedAtUtc = dto.ConvertedAtUtc,
+                ClosedReason = NormalizeOptional(dto.ClosedReason)
             };
 
             _db.Set<Lead>().Add(lead);
@@ -626,8 +670,13 @@ namespace Darwin.Application.CRM.Commands
             lead.Source = NormalizeOptional(dto.Source);
             lead.Notes = NormalizeOptional(dto.Notes);
             lead.Status = dto.Status;
+            lead.Priority = dto.Priority;
             lead.AssignedToUserId = dto.AssignedToUserId;
             lead.CustomerId = dto.CustomerId;
+            lead.QualifiedAtUtc = dto.QualifiedAtUtc;
+            lead.DisqualifiedAtUtc = dto.DisqualifiedAtUtc;
+            lead.ConvertedAtUtc = dto.ConvertedAtUtc;
+            lead.ClosedReason = NormalizeOptional(dto.ClosedReason);
 
             try
             {
@@ -648,12 +697,18 @@ namespace Darwin.Application.CRM.Commands
         private readonly IAppDbContext _db;
         private readonly IValidator<ConvertLeadToCustomerDto> _validator;
         private readonly IStringLocalizer<ValidationResource> _localizer;
+        private readonly CrmFoundationPrimitiveService? _foundation;
 
-        public ConvertLeadToCustomerHandler(IAppDbContext db, IValidator<ConvertLeadToCustomerDto> validator, IStringLocalizer<ValidationResource> localizer)
+        public ConvertLeadToCustomerHandler(
+            IAppDbContext db,
+            IValidator<ConvertLeadToCustomerDto> validator,
+            IStringLocalizer<ValidationResource> localizer,
+            CrmFoundationPrimitiveService? foundation = null)
         {
             _db = db ?? throw new ArgumentNullException(nameof(db));
             _validator = validator ?? throw new ArgumentNullException(nameof(validator));
             _localizer = localizer ?? throw new ArgumentNullException(nameof(localizer));
+            _foundation = foundation;
         }
 
         public async Task<Guid> HandleAsync(ConvertLeadToCustomerDto dto, CancellationToken ct = default)
@@ -679,6 +734,8 @@ namespace Darwin.Application.CRM.Commands
             if (lead.CustomerId.HasValue)
             {
                 lead.Status = LeadStatus.Converted;
+                lead.ConvertedAtUtc ??= DateTime.UtcNow;
+                lead.ClosedReason = null;
                 try
                 {
                     await _db.SaveChangesAsync(ct).ConfigureAwait(false);
@@ -688,6 +745,7 @@ namespace Darwin.Application.CRM.Commands
                     throw new DbUpdateConcurrencyException(_localizer["ConcurrencyConflictDetected"]);
                 }
 
+                await RecordLeadConvertedAsync(lead, lead.CustomerId.Value, ct).ConfigureAwait(false);
                 return lead.CustomerId.Value;
             }
 
@@ -725,7 +783,9 @@ namespace Darwin.Application.CRM.Commands
                     TaxProfileType = string.IsNullOrWhiteSpace(lead.CompanyName)
                         ? Darwin.Domain.Enums.CustomerTaxProfileType.Consumer
                         : Darwin.Domain.Enums.CustomerTaxProfileType.Business,
-                    Notes = dto.CopyNotesToCustomer ? NormalizeOptional(lead.Notes) : null
+                    Notes = dto.CopyNotesToCustomer ? NormalizeOptional(lead.Notes) : null,
+                    AcquisitionSource = NormalizeOptional(lead.Source),
+                    OwnerUserId = lead.AssignedToUserId
                 };
 
                 _db.Set<Customer>().Add(existingCustomer);
@@ -742,6 +802,8 @@ namespace Darwin.Application.CRM.Commands
 
             lead.CustomerId = existingCustomer.Id;
             lead.Status = LeadStatus.Converted;
+            lead.ConvertedAtUtc ??= DateTime.UtcNow;
+            lead.ClosedReason = null;
 
             try
             {
@@ -752,7 +814,71 @@ namespace Darwin.Application.CRM.Commands
                 throw new DbUpdateConcurrencyException(_localizer["ConcurrencyConflictDetected"]);
             }
 
+            await RecordLeadConvertedAsync(lead, existingCustomer.Id, ct).ConfigureAwait(false);
             return existingCustomer.Id;
+        }
+
+        private async Task RecordLeadConvertedAsync(Lead lead, Guid customerId, CancellationToken ct)
+        {
+            if (_foundation is null)
+            {
+                return;
+            }
+
+            var occurredAtUtc = lead.ConvertedAtUtc ?? DateTime.UtcNow;
+            var eventKey = $"crm.lead.converted:{lead.Id:N}:{customerId:N}";
+            var payloadJson = $$"""{"leadId":"{{lead.Id}}","customerId":"{{customerId}}"}""";
+            var result = await _foundation.RecordLifecycleEventAsync(
+                CrmFoundationPrimitiveService.EntityTypes.Lead,
+                lead.Id,
+                "crm.lead.converted",
+                eventKey,
+                occurredAtUtc,
+                lead.AssignedToUserId,
+                "Lead converted",
+                $"Lead converted to customer {customerId}.",
+                payloadJson,
+                AuditTrailAction.Linked,
+                "Lead converted to customer.",
+                ct)
+                .ConfigureAwait(false);
+
+            if (!result.Succeeded)
+            {
+                throw new InvalidOperationException(result.Error);
+            }
+
+            var leadActivity = await _foundation.AddActivityAsync(
+                CrmFoundationPrimitiveService.EntityTypes.Lead,
+                lead.Id,
+                "crm.lead.converted",
+                occurredAtUtc,
+                lead.AssignedToUserId,
+                "Lead converted",
+                $"Customer id: {customerId}",
+                metadataJson: payloadJson,
+                ct: ct)
+                .ConfigureAwait(false);
+            if (!leadActivity.Succeeded)
+            {
+                throw new InvalidOperationException(leadActivity.Error);
+            }
+
+            var customerActivity = await _foundation.AddActivityAsync(
+                CrmFoundationPrimitiveService.EntityTypes.Customer,
+                customerId,
+                "crm.customer.created-from-lead",
+                occurredAtUtc,
+                lead.AssignedToUserId,
+                "Customer linked from lead",
+                $"Lead id: {lead.Id}",
+                metadataJson: payloadJson,
+                ct: ct)
+                .ConfigureAwait(false);
+            if (!customerActivity.Succeeded)
+            {
+                throw new InvalidOperationException(customerActivity.Error);
+            }
         }
 
         private static string? NormalizeOptional(string? value) =>

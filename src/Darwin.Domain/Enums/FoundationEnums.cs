@@ -38,6 +38,12 @@ public enum NumberSequenceDocumentType
     InventoryDocument = 3,
     FinanceDocument = 4,
     HrDocument = 5,
+    SalesQuote = 6,
+    DeliveryNote = 7,
+    ReturnOrder = 8,
+    CreditNote = 9,
+    GoodsReceipt = 10,
+    SupplierInvoice = 11,
     Custom = 99
 }
 

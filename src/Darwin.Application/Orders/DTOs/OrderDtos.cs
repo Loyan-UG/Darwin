@@ -54,6 +54,8 @@ namespace Darwin.Application.Orders.DTOs
     public sealed class OrderCreateDto
     {
         public Guid? UserId { get; set; }
+        public Guid? BusinessId { get; set; }
+        public Guid? CustomerId { get; set; }
         public string Currency { get; set; } = Darwin.Application.Settings.DTOs.SiteSettingDto.DefaultCurrencyDefault;
         public bool PricesIncludeTax { get; set; } = false;
 
@@ -150,7 +152,7 @@ namespace Darwin.Application.Orders.DTOs
     public sealed class OrderLineDetailDto
     {
         public Guid Id { get; set; }
-        public Guid VariantId { get; set; }
+        public Guid? VariantId { get; set; }
         public Guid? WarehouseId { get; set; }
         public string Name { get; set; } = string.Empty;
         public string Sku { get; set; } = string.Empty;

@@ -30,6 +30,9 @@ namespace Darwin.Application.CRM.Validators
             RuleFor(x => x.TaxProfileType).IsInEnum();
             RuleFor(x => x.VatId).MaximumLength(64);
             RuleFor(x => x.Notes).MaximumLength(2000);
+            RuleFor(x => x.LifecycleStatus).IsInEnum();
+            RuleFor(x => x.AcquisitionSource).MaximumLength(200);
+            RuleFor(x => x.PreferredContactChannel).IsInEnum().When(x => x.PreferredContactChannel.HasValue);
             RuleForEach(x => x.Addresses).SetValidator(new CustomerAddressValidator());
 
             When(x => x.TaxProfileType == Darwin.Domain.Enums.CustomerTaxProfileType.Business, () =>
@@ -92,6 +95,8 @@ namespace Darwin.Application.CRM.Validators
             RuleFor(x => x.Source).MaximumLength(120);
             RuleFor(x => x.Notes).MaximumLength(2000);
             RuleFor(x => x.Status).IsInEnum();
+            RuleFor(x => x.Priority).IsInEnum();
+            RuleFor(x => x.ClosedReason).MaximumLength(512);
         }
     }
 
@@ -131,7 +136,14 @@ namespace Darwin.Application.CRM.Validators
             RuleFor(x => x.CustomerId).NotEmpty();
             RuleFor(x => x.Title).NotEmpty().MaximumLength(200);
             RuleFor(x => x.EstimatedValueMinor).GreaterThanOrEqualTo(0);
+            RuleFor(x => x.Currency).NotEmpty().Length(3);
             RuleFor(x => x.Stage).IsInEnum();
+            RuleFor(x => x.ProbabilityPercent)
+                .InclusiveBetween(0, 100)
+                .When(x => x.ProbabilityPercent.HasValue);
+            RuleFor(x => x.ForecastCategory).IsInEnum();
+            RuleFor(x => x.CloseReason).MaximumLength(512);
+            RuleFor(x => x.Source).MaximumLength(200);
             RuleForEach(x => x.Items).SetValidator(new OpportunityItemValidator());
         }
     }
@@ -167,6 +179,9 @@ namespace Darwin.Application.CRM.Validators
             RuleFor(x => x.CustomerId).NotEmpty();
             RuleFor(x => x.Type).IsInEnum();
             RuleFor(x => x.GrantedAtUtc).NotEmpty();
+            RuleFor(x => x.Source).MaximumLength(200);
+            RuleFor(x => x.PolicyVersion).MaximumLength(80);
+            RuleFor(x => x.EvidenceJson).MaximumLength(4000);
             RuleFor(x => x)
                 .Must(x => x.Granted || x.RevokedAtUtc.HasValue)
                 .WithMessage(localizer["ConsentRevocationTimestampRequired"]);
@@ -179,6 +194,8 @@ namespace Darwin.Application.CRM.Validators
         {
             RuleFor(x => x.Name).NotEmpty().MaximumLength(200);
             RuleFor(x => x.Description).MaximumLength(2000);
+            RuleFor(x => x.Code).MaximumLength(128);
+            RuleFor(x => x.RuleJson).MaximumLength(4000);
         }
     }
 
