@@ -7,6 +7,8 @@
     string Money(long minor) => $"{Model.Currency} {(minor / 100.0M):0.00}";
     var postingQuery = $"supplier-payment-posted:{Model.Id}";
     var reversalQuery = $"supplier-payment-reversed:{Model.Id}";
+    var bankSettlementQuery = $"supplier-payment-bank-settled:{Model.Id}";
+    string CorrectionQuery(Guid id) => $"supplier-payment-bank-correction:{id}";
 }
 
 <div id="finance-supplier-payment-detail-shell">
@@ -57,6 +59,158 @@
     </div>
 </div>
 
+<div class="border rounded p-3 mb-3">
+    <div class="row g-3 align-items-start">
+        <div class="col-md-5">
+            <div class="text-muted small">@T.T("BankSettlement")</div>
+            <div class="fw-semibold">@(Model.BankSettledAtUtc?.ToString("yyyy-MM-dd HH:mm") ?? T.T("NotBankSettled"))</div>
+            @if (!string.IsNullOrWhiteSpace(Model.BankSettlementNotes))
+            {
+                <div class="small text-muted">@Model.BankSettlementNotes</div>
+            }
+            @if (Model.BankSettlementJournalEntryId.HasValue)
+            {
+                <a asp-action="Postings" asp-route-businessId="@Model.BusinessId" asp-route-q="@bankSettlementQuery" class="btn btn-sm btn-outline-secondary mt-2">@T.T("ViewBankSettlementPosting")</a>
+            }
+        </div>
+        <div class="col-md-7">
+            @if (Model.BankSettlementReconciliationMatchId.HasValue)
+            {
+                <div class="text-muted small">@T.T("ReconciliationEvidence")</div>
+                <a asp-action="BankReconciliationMatch" asp-route-id="@Model.BankSettlementReconciliationMatchId" class="btn btn-sm btn-outline-secondary mt-2">@T.T("ViewReconciliation")</a>
+            }
+            else if (Model.Status == SupplierPaymentStatus.Posted && Model.BankSettlementCandidates.Count > 0)
+            {
+                <form method="post" asp-action="SettleSupplierPaymentFromBankReconciliation" class="row g-2 align-items-end">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="Id" value="@Model.Id" />
+                    <input type="hidden" name="RowVersion" value="@rowVersion" />
+                    <div class="col-md-5">
+                        <label class="form-label">@T.T("ReconciliationEvidence")</label>
+                        <select name="BankReconciliationMatchId" class="form-select" required>
+                            @foreach (var candidate in Model.BankSettlementCandidates)
+                            {
+                                <option value="@candidate.BankReconciliationMatchId">@((string.IsNullOrWhiteSpace(candidate.MatchNumber) ? candidate.BankReconciliationMatchId.ToString() : candidate.MatchNumber)) / @candidate.BankAccountDisplayName / @Money(candidate.BankTotalMinor)</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="col-md-5">
+                        <label class="form-label">@T.T("Notes")</label>
+                        <input name="Notes" class="form-control" maxlength="1000" />
+                    </div>
+                    <div class="col-md-2">
+                        <button type="submit" class="btn btn-success w-100">@T.T("SettleFromBankReconciliation")</button>
+                    </div>
+                </form>
+            }
+            else
+            {
+                <div class="text-muted small">@T.T("BankSettlementNotReady")</div>
+            }
+        </div>
+    </div>
+</div>
+
+<div class="border rounded p-3 mb-3">
+    <div class="d-flex justify-content-between align-items-start gap-3 mb-3">
+        <div>
+            <div class="fw-semibold">@T.T("BankSettlementCorrections")</div>
+            <div class="text-muted small">@T.T("ReturnedTransferAndDuplicatePaymentEvidence")</div>
+        </div>
+        @if (Model.Status == SupplierPaymentStatus.Posted && Model.BankSettledAtUtc.HasValue && !Model.ReversedAtUtc.HasValue && Model.BankCorrectionCandidates.Count > 0)
+        {
+            <form method="post" asp-action="CreateSupplierPaymentBankCorrection" class="row g-2 align-items-end">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="SupplierPaymentId" value="@Model.Id" />
+                <input type="hidden" name="SupplierPaymentRowVersion" value="@rowVersion" />
+                <div class="col-auto">
+                    <label class="form-label">@T.T("CorrectionType")</label>
+                    <select name="CorrectionType" class="form-select form-select-sm">
+                        <option value="@SupplierPaymentBankCorrectionType.ReturnedTransfer">@T.T("ReturnedTransfer")</option>
+                        <option value="@SupplierPaymentBankCorrectionType.DuplicatePayment">@T.T("DuplicatePayment")</option>
+                    </select>
+                </div>
+                <div class="col-auto">
+                    <label class="form-label">@T.T("CorrectionEvidence")</label>
+                    <select name="BankReconciliationMatchId" class="form-select form-select-sm" required>
+                        @foreach (var candidate in Model.BankCorrectionCandidates)
+                        {
+                            <option value="@candidate.BankReconciliationMatchId">@((string.IsNullOrWhiteSpace(candidate.MatchNumber) ? candidate.BankReconciliationMatchId.ToString() : candidate.MatchNumber)) / @candidate.BankAccountDisplayName / @Money(candidate.BankTotalMinor)</option>
+                        }
+                    </select>
+                </div>
+                <div class="col-auto">
+                    <label class="form-label">@T.T("Reason")</label>
+                    <input name="Reason" class="form-control form-control-sm" maxlength="1000" required />
+                </div>
+                <div class="col-auto">
+                    <label class="form-label">@T.T("Notes")</label>
+                    <input name="InternalNotes" class="form-control form-control-sm" maxlength="4000" />
+                </div>
+                <div class="col-auto">
+                    <button type="submit" class="btn btn-sm btn-outline-primary">@T.T("CreateBankCorrection")</button>
+                </div>
+            </form>
+        }
+    </div>
+    @if (Model.BankCorrections.Count == 0)
+    {
+        <div class="text-muted small">@T.T("NoBankSettlementCorrections")</div>
+    }
+    else
+    {
+        <div class="table-responsive">
+            <table class="table table-sm align-middle mb-0">
+                <thead><tr><th>@T.T("Type")</th><th>@T.T("Status")</th><th>@T.T("Date")</th><th class="text-end">@T.T("Amount")</th><th>@T.T("Reason")</th><th>@T.T("Evidence")</th><th></th></tr></thead>
+                <tbody>
+                @foreach (var correction in Model.BankCorrections)
+                {
+                    var correctionRowVersion = Convert.ToBase64String(correction.RowVersion);
+                    <tr>
+                        <td>@T.T(correction.CorrectionType.ToString())</td>
+                        <td>@T.T(correction.Status.ToString())</td>
+                        <td>@correction.CorrectionDateUtc.ToString("yyyy-MM-dd HH:mm")</td>
+                        <td class="text-end">@Money(correction.AmountMinor)</td>
+                        <td>@correction.Reason</td>
+                        <td class="d-flex gap-2 flex-wrap">
+                            <a asp-action="BankReconciliationMatch" asp-route-id="@correction.BankReconciliationMatchId" class="btn btn-sm btn-outline-secondary">@T.T("Reconciliation")</a>
+                            @if (correction.CorrectionJournalEntryId.HasValue)
+                            {
+                                <a asp-action="Postings" asp-route-businessId="@Model.BusinessId" asp-route-q="@CorrectionQuery(correction.Id)" class="btn btn-sm btn-outline-secondary">@T.T("CorrectionPosting")</a>
+                            }
+                        </td>
+                        <td class="text-end">
+                            @if (correction.Status == SupplierPaymentBankCorrectionStatus.Draft)
+                            {
+                                <div class="d-flex gap-2 justify-content-end">
+                                    @if (correction.CorrectionType == SupplierPaymentBankCorrectionType.ReturnedTransfer)
+                                    {
+                                        <form method="post" asp-action="PostSupplierPaymentBankCorrection">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="supplierPaymentId" value="@Model.Id" />
+                                            <input type="hidden" name="Id" value="@correction.Id" />
+                                            <input type="hidden" name="RowVersion" value="@correctionRowVersion" />
+                                            <button type="submit" class="btn btn-sm btn-warning">@T.T("PostCorrection")</button>
+                                        </form>
+                                    }
+                                    <form method="post" asp-action="CancelSupplierPaymentBankCorrection">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="supplierPaymentId" value="@Model.Id" />
+                                        <input type="hidden" name="Id" value="@correction.Id" />
+                                        <input type="hidden" name="RowVersion" value="@correctionRowVersion" />
+                                        <button type="submit" class="btn btn-sm btn-outline-danger">@T.T("Cancel")</button>
+                                    </form>
+                                </div>
+                            }
+                        </td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>
+
 <div class="table-responsive mb-3">
     <table class="table table-sm align-middle">
         <thead><tr><th>@T.T("SupplierInvoice")</th><th>@T.T("DueDate")</th><th class="text-end">@T.T("InvoiceTotal")</th><th class="text-end">@T.T("AlreadyPaid")</th><th class="text-end">@T.T("Amount")</th><th>@T.T("Memo")</th></tr></thead>
@@ -89,7 +243,7 @@
         <input type="hidden" name="RowVersion" value="@rowVersion" />
         <button type="submit" name="Action" value="Cancel" class="btn btn-outline-danger" disabled="@(Model.Status != SupplierPaymentStatus.Draft)">@T.T("Cancel")</button>
     </form>
-    @if (Model.Status == SupplierPaymentStatus.Posted)
+    @if (Model.Status == SupplierPaymentStatus.Posted && !Model.BankSettledAtUtc.HasValue)
     {
         <form method="post" asp-action="ReverseSupplierPayment" class="d-flex gap-2">
             @Html.AntiForgeryToken()

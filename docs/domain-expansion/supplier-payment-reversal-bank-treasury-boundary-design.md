@@ -2,19 +2,20 @@
 
 ## Summary
 
-This document locks the boundary for supplier payment reversal, bank account ownership, treasury clearing, reconciliation, overpayment or advance handling, remittance evidence, and finance export impact. It began as documentation-only and now records that the focused supplier payment reversal core has been implemented. The implemented reversal adds no bank integration, direct bank settlement, public WebApi route, mobile/member contract, storefront behavior, customer payment/refund flow change, finance export package format change, or journal editor shortcut.
+This document locks the boundary for supplier payment reversal, bank account ownership, treasury clearing, reconciliation, overpayment or advance handling, remittance evidence, bank settlement, and finance export impact. It began as documentation-only and now records that the focused supplier payment reversal core, bank/treasury foundation, bank reconciliation core, and supplier payment bank settlement boundary design have been completed. These steps add no bank API integration, direct bank settlement implementation, public WebApi route, mobile/member contract, storefront behavior, customer payment/refund flow change, finance export package format change, or journal editor shortcut.
 
-The core decision is that a posted `SupplierPayment` cannot be corrected by status edit, delete, or cosmetic void. Any correction after posting must be a formal finance reversal that references the original payment and posts balanced accounting entries. Direct bank settlement, bank-return handling, and reconciliation require a separate bank/treasury foundation before implementation.
+The core decision is that a posted `SupplierPayment` cannot be corrected by status edit, delete, or cosmetic void. Any correction after posting must be a formal finance reversal that references the original payment and posts balanced accounting entries. Direct bank settlement must follow [supplier-payment-bank-settlement-boundary-design.md](supplier-payment-bank-settlement-boundary-design.md): it can only be future internal, evidence-backed, limited to posted supplier payments, and linked to bank reconciliation evidence.
 
 ## Current Darwin Supplier Payment And Treasury Findings
 
 - `SupplierPayment` and `SupplierPaymentAllocation` exist in Billing. Draft payments can be cancelled; posted payments can be corrected only by full-payment accounting reversal.
 - Posted supplier payments become authoritative through `JournalEntryPostingKind.SupplierPaymentPosted`, debiting `AccountsPayable` and crediting `CashClearing`.
-- `CashClearing` is the v1 clearing account. Darwin does not yet have a canonical bank account, treasury ledger, bank statement, or bank reconciliation model.
+- `CashClearing` is the v1 clearing account. Darwin now has canonical `BankAccount`, `BankStatementImport`, `BankStatementLine`, `BankReconciliationMatch`, and `BankReconciliationMatchLine` models for bank identity, statement evidence, and reconciliation evidence.
 - Customer `Payment` and customer `Refund` remain customer/order settlement records and are not reused for supplier settlement, reversal, or bank reconciliation.
 - `JournalEntry`, `JournalEntryLine`, `FinancePostingService`, `FinancePostingAccountMapping`, `AccountsPayable`, `CashClearing`, and `JournalEntryPostingKind.Reversal` exist.
 - `DocumentRecord`, `ExternalReference`, `BusinessEvent`, and `AuditTrail` exist for remittance evidence, external bank/accounting ids, lifecycle history, and audit evidence.
 - Finance export reads posted journal entries and stored export packages. It must not export supplier payment UI state, remittance documents, or bank metadata directly.
+- Supplier payment bank settlement boundary design is complete. Reconciliation evidence can support future settlement, but it cannot rewrite supplier payments, customer payments, refunds, journal entries, or finance export history.
 - Public WebApi, mobile/member, storefront checkout, customer invoice archive/download, issued invoice snapshots, customer payment/refund flows, and finance export package format remain unchanged.
 
 ## Decision Matrix
@@ -59,10 +60,16 @@ The core decision is that a posted `SupplierPayment` cannot be corrected by stat
    - Outcome: completed. Reversal is full-payment only, uses balanced finance posting, stores original and reversal journal links, records deterministic event/audit evidence, and keeps open payable calculations from counting reversed payments as paid.
    - Bank transfer failure, returned payment, direct bank settlement, overpayment/advance, partial reversal, customer payment/refund reuse, public/mobile exposure, and finance export format changes remain outside this slice.
 3. `Bank/Treasury Foundation Design Slice`
-   - Design bank account ownership, treasury ledger or bank statement model, reconciliation workflow, and bank/external reference evidence before direct bank settlement integration.
+   - Outcome: completed in [bank-treasury-foundation-design.md](bank-treasury-foundation-design.md). Bank account ownership, cash clearing, bank statement import, bank transaction identity, reconciliation matching, returned transfer handling, duplicate payment handling, external identity, remittance evidence, supplier advance/overpayment, and compatibility boundaries are locked.
+4. `Bank/Treasury Foundation Core Model And Admin Slice`
+   - Outcome: completed. Internal bank account master, bank statement imports, and statement lines exist without direct bank settlement, returned-transfer automation, supplier advance/overpayment, public/mobile exposure, or finance export format changes.
+5. `Bank Reconciliation Core Slice`
+   - Outcome: completed. Reconciliation matches link bank evidence to posted or reversed finance facts and remain evidence-only.
+6. `Supplier Payment Bank Settlement Boundary Design`
+   - Outcome: completed in [supplier-payment-bank-settlement-boundary-design.md](supplier-payment-bank-settlement-boundary-design.md). Future settlement is limited to posted supplier payments, must link to reconciliation evidence, and cannot mutate payment, journal, refund, or export history by status-only edits.
 
 ## Next Implementation Slice
 
-`Bank/Treasury Foundation Design Slice`
+`Supplier Payment Bank Settlement Core Slice`
 
-The next implementation gate is a design step for bank account ownership, treasury clearing, bank statement import, reconciliation, returned transfer handling, and direct bank settlement. Supplier payment reversal is complete at the accounting boundary, but it does not claim external bank movement.
+The next implementation gate is the internal evidence-backed supplier payment bank settlement core. Supplier payment reversal is complete at the accounting boundary, bank statement and reconciliation evidence exist, and direct settlement remains blocked unless it is implemented through the locked settlement boundary without bank API integration, returned-transfer automation, supplier advance/overpayment, public/mobile exposure, or finance export format changes.

@@ -1,0 +1,44 @@
+@model Darwin.Application.Billing.DTOs.BankStatementImportDetailDto
+@using Darwin.Domain.Enums
+@inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
+
+<section id="finance-bank-statement-editor-shell" class="container-fluid py-3">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h1 class="mb-0">@T.T("ImportBankStatement")</h1>
+        <a asp-action="BankStatements" asp-route-businessId="@Model.BusinessId" asp-route-bankAccountId="@Model.BankAccountId" class="btn btn-outline-secondary">@T.T("Back")</a>
+    </div>
+
+    <form method="post" asp-action="CreateBankStatement">
+        @Html.AntiForgeryToken()
+        <div class="row g-3 mb-3">
+            <div class="col-md-3"><label class="form-label">@T.T("BusinessId")</label><input asp-for="BusinessId" class="form-control" /></div>
+            <div class="col-md-3"><label class="form-label">@T.T("BankAccountId")</label><input asp-for="BankAccountId" class="form-control" /></div>
+            <div class="col-md-3"><label class="form-label">@T.T("StatementReference")</label><input asp-for="StatementReference" class="form-control" /></div>
+            <div class="col-md-3"><label class="form-label">@T.T("Metadata")</label><input asp-for="MetadataJson" class="form-control" /></div>
+            <div class="col-md-3"><label class="form-label">@T.T("PeriodStart")</label><input asp-for="PeriodStartUtc" class="form-control" type="datetime-local" /></div>
+            <div class="col-md-3"><label class="form-label">@T.T("PeriodEnd")</label><input asp-for="PeriodEndUtc" class="form-control" type="datetime-local" /></div>
+        </div>
+
+        <div class="table-responsive mb-3">
+            <table class="table table-sm align-middle">
+                <thead><tr><th>@T.T("Date")</th><th>@T.T("Direction")</th><th>@T.T("Amount")</th><th>@T.T("Currency")</th><th>@T.T("Counterparty")</th><th>@T.T("Reference")</th><th>@T.T("Remittance")</th></tr></thead>
+                <tbody>
+                @for (var i = 0; i < Model.Lines.Count; i++)
+                {
+                    <tr>
+                        <td><input asp-for="Lines[i].TransactionDateUtc" class="form-control form-control-sm" type="datetime-local" /></td>
+                        <td><select asp-for="Lines[i].Direction" class="form-select form-select-sm"><option value="@BankStatementLineDirection.Debit">@T.T("Debit")</option><option value="@BankStatementLineDirection.Credit">@T.T("Credit")</option></select></td>
+                        <td><input asp-for="Lines[i].AmountMinor" class="form-control form-control-sm" /></td>
+                        <td><input asp-for="Lines[i].Currency" class="form-control form-control-sm" maxlength="3" /></td>
+                        <td><input asp-for="Lines[i].CounterpartyName" class="form-control form-control-sm" /></td>
+                        <td><input asp-for="Lines[i].CounterpartyReference" class="form-control form-control-sm" /></td>
+                        <td><input asp-for="Lines[i].RemittanceInformation" class="form-control form-control-sm" /></td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        </div>
+
+        <button type="submit" class="btn btn-primary">@T.T("ImportBankStatement")</button>
+    </form>
+</section>

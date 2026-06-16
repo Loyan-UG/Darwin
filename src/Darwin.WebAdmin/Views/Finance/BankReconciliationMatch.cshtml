@@ -1,0 +1,76 @@
+@model Darwin.Application.Billing.DTOs.BankReconciliationEditDto
+@using Darwin.Domain.Enums
+@inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
+
+<section id="finance-bank-reconciliation-detail-shell" class="container-fluid py-3">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <div>
+            <h1 class="mb-1">@(string.IsNullOrWhiteSpace(Model.MatchNumber) ? Model.Id.ToString("N")[..8] : Model.MatchNumber)</h1>
+            <div class="text-muted">@Model.Currency</div>
+        </div>
+        <div class="d-flex gap-2">
+            @if (Model.Status == BankReconciliationMatchStatus.Draft)
+            {
+                <a asp-action="EditBankReconciliation" asp-route-id="@Model.Id" class="btn btn-outline-primary">@T.T("Edit")</a>
+            }
+            <a asp-action="BankReconciliation" asp-route-businessId="@Model.BusinessId" asp-route-bankAccountId="@Model.BankAccountId" class="btn btn-outline-secondary">@T.T("Back")</a>
+        </div>
+    </div>
+
+    <div class="row g-3 mb-3">
+        <div class="col-md-3"><div class="border rounded p-3"><div class="text-muted small">@T.T("Status")</div><strong>@T.T(Model.Status.ToString())</strong></div></div>
+        <div class="col-md-3"><div class="border rounded p-3"><div class="text-muted small">@T.T("BankTotal")</div><strong>@Model.BankTotalMinor</strong></div></div>
+        <div class="col-md-3"><div class="border rounded p-3"><div class="text-muted small">@T.T("FinanceTotal")</div><strong>@Model.FinanceTotalMinor</strong></div></div>
+        <div class="col-md-3"><div class="border rounded p-3"><div class="text-muted small">@T.T("Difference")</div><strong>@Model.DifferenceMinor</strong></div></div>
+    </div>
+
+    @if (Model.Status == BankReconciliationMatchStatus.Draft)
+    {
+        <div class="d-flex gap-2 mb-3">
+            <form method="post" asp-action="MarkBankReconciliationMatched">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="Id" value="@Model.Id" />
+                <input type="hidden" name="RowVersion" value="@Convert.ToBase64String(Model.RowVersion)" />
+                <button type="submit" class="btn btn-success">@T.T("MarkMatched")</button>
+            </form>
+            <form method="post" asp-action="CancelBankReconciliation">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="Id" value="@Model.Id" />
+                <input type="hidden" name="RowVersion" value="@Convert.ToBase64String(Model.RowVersion)" />
+                <button type="submit" class="btn btn-outline-danger">@T.T("Cancel")</button>
+            </form>
+        </div>
+    }
+
+    @if (!string.IsNullOrWhiteSpace(Model.ReviewNotes))
+    {
+        <div class="border rounded p-3 mb-3">
+            <div class="text-muted small">@T.T("ReviewNotes")</div>
+            <div>@Model.ReviewNotes</div>
+        </div>
+    }
+
+    <div class="table-responsive">
+        <table class="table table-sm align-middle">
+            <thead><tr><th>@T.T("BankStatementLine")</th><th>@T.T("FinancePosting")</th><th>@T.T("Direction")</th><th>@T.T("Amount")</th><th>@T.T("Memo")</th></tr></thead>
+            <tbody>
+            @foreach (var line in Model.Lines)
+            {
+                <tr>
+                    <td>@line.StatementLineLabel</td>
+                    <td>
+                        @line.PostingLabel
+                        @if (line.JournalEntryId.HasValue)
+                        {
+                            <div class="text-muted small">@T.T("JournalEntry") @line.JournalEntryId</div>
+                        }
+                    </td>
+                    <td>@T.T(line.Direction.ToString())</td>
+                    <td>@line.AmountMinor @Model.Currency</td>
+                    <td>@line.Memo</td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    </div>
+</section>

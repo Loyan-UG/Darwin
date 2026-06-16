@@ -48,6 +48,16 @@ namespace Darwin.Infrastructure.Persistence.Db
         /// </summary>
         public DbSet<FinanceExportAttempt> FinanceExportAttempts => Set<FinanceExportAttempt>();
 
+        public DbSet<BankAccount> BankAccounts => Set<BankAccount>();
+
+        public DbSet<BankStatementImport> BankStatementImports => Set<BankStatementImport>();
+
+        public DbSet<BankStatementLine> BankStatementLines => Set<BankStatementLine>();
+
+        public DbSet<BankReconciliationMatch> BankReconciliationMatches => Set<BankReconciliationMatch>();
+
+        public DbSet<BankReconciliationMatchLine> BankReconciliationMatchLines => Set<BankReconciliationMatchLine>();
+
         /// <summary>
         /// Supplier invoices used as formal payables source documents before posting.
         /// </summary>
@@ -67,6 +77,11 @@ namespace Darwin.Infrastructure.Persistence.Db
         /// Supplier payment allocations to posted supplier invoices.
         /// </summary>
         public DbSet<SupplierPaymentAllocation> SupplierPaymentAllocations => Set<SupplierPaymentAllocation>();
+
+        /// <summary>
+        /// Evidence-backed bank corrections for bank-settled supplier payments.
+        /// </summary>
+        public DbSet<SupplierPaymentBankCorrection> SupplierPaymentBankCorrections => Set<SupplierPaymentBankCorrection>();
 
         /// <summary>
         /// Journal entries.

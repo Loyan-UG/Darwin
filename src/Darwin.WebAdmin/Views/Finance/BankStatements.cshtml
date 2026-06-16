@@ -1,0 +1,101 @@
+@model Darwin.Application.Billing.DTOs.BankStatementsPageDto
+@using Darwin.Domain.Enums
+@inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
+@{
+    ViewData["Title"] = T.T("BankStatements");
+    string BankStatementsUrl() => Url.Action("BankStatements", "Finance") ?? string.Empty;
+}
+
+<section id="finance-bank-statements-workspace-shell" class="container-fluid py-3">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h1 class="mb-0"><i class="fa-solid fa-receipt"></i> @T.T("BankStatements")</h1>
+        <a asp-action="CreateBankStatement" asp-route-businessId="@Model.BusinessId" asp-route-bankAccountId="@Model.BankAccountId" class="btn btn-primary">@T.T("ImportBankStatement")</a>
+    </div>
+
+    <form method="get" asp-action="BankStatements" class="row g-2 align-items-end mb-3" hx-get="@BankStatementsUrl()" hx-target="#finance-bank-statements-workspace-shell" hx-swap="outerHTML" hx-push-url="true">
+        <div class="col-md-3">
+            <label class="form-label small text-muted">@T.T("Business")</label>
+            <select name="businessId" class="form-select">
+                <option value="">@T.T("AllBusinesses")</option>
+                @foreach (var business in Model.BusinessOptions)
+                {
+                    <option value="@business.Id" selected="@(Model.BusinessId == business.Id)">@business.Name</option>
+                }
+            </select>
+        </div>
+        <div class="col-md-3">
+            <label class="form-label small text-muted">@T.T("BankAccount")</label>
+            <select name="bankAccountId" class="form-select">
+                <option value="">@T.T("All")</option>
+                @foreach (var account in Model.BankAccountOptions)
+                {
+                    <option value="@account.Id" selected="@(Model.BankAccountId == account.Id)">@account.Label</option>
+                }
+            </select>
+        </div>
+        <div class="col-md-3">
+            <label class="form-label small text-muted">@T.T("Search")</label>
+            <input name="q" value="@Model.Query" class="form-control" />
+        </div>
+        <div class="col-md-2">
+            <label class="form-label small text-muted">@T.T("Status")</label>
+            <select name="status" class="form-select">
+                <option value="">@T.T("All")</option>
+                @foreach (var status in Enum.GetValues<BankStatementImportStatus>())
+                {
+                    <option value="@status" selected="@(Model.Status == status)">@T.T(status.ToString())</option>
+                }
+            </select>
+        </div>
+        <div class="col-md-1">
+            <button class="btn btn-outline-primary w-100" type="submit">@T.T("Filter")</button>
+        </div>
+    </form>
+
+    <div class="table-responsive">
+        <table class="table table-sm align-middle">
+            <thead>
+            <tr>
+                <th>@T.T("StatementReference")</th>
+                <th>@T.T("BankAccount")</th>
+                <th>@T.T("Period")</th>
+                <th>@T.T("Lines")</th>
+                <th>@T.T("Totals")</th>
+                <th>@T.T("Status")</th>
+                <th class="text-end">@T.T("Actions")</th>
+            </tr>
+            </thead>
+            <tbody>
+            @if (Model.Items.Count == 0)
+            {
+                <tr><td colspan="7" class="text-center text-muted">@T.T("NoBankStatements")</td></tr>
+            }
+            @foreach (var item in Model.Items)
+            {
+                <tr>
+                    <td class="fw-semibold">@item.StatementReference</td>
+                    <td>@item.BankAccountLabel</td>
+                    <td>@item.PeriodStartUtc.ToString("yyyy-MM-dd") - @item.PeriodEndUtc.ToString("yyyy-MM-dd")</td>
+                    <td>@item.LineCount</td>
+                    <td>@item.DebitTotalMinor / @item.CreditTotalMinor</td>
+                    <td><span class="badge text-bg-light border">@T.T(item.Status.ToString())</span></td>
+                    <td class="text-end">
+                        <a asp-action="BankStatement" asp-route-id="@item.Id" class="btn btn-sm btn-outline-secondary">@T.T("Details")</a>
+                        @if (item.Status == BankStatementImportStatus.Imported)
+                        {
+                            <form method="post" asp-action="CancelBankStatement" class="d-inline">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="Id" value="@item.Id" />
+                                <input type="hidden" name="businessId" value="@item.BusinessId" />
+                                <input type="hidden" name="bankAccountId" value="@item.BankAccountId" />
+                                <input type="hidden" name="RowVersion" value="@Convert.ToBase64String(item.RowVersion)" />
+                                <button type="submit" class="btn btn-sm btn-outline-danger">@T.T("Cancel")</button>
+                            </form>
+                        }
+                    </td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    </div>
+</section>

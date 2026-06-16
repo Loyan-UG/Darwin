@@ -1,0 +1,73 @@
+@model Darwin.Application.Billing.DTOs.BankReconciliationEditDto
+@using Darwin.Domain.Enums
+@inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
+@{
+    var actionName = Model.Id == Guid.Empty ? "CreateBankReconciliation" : "EditBankReconciliation";
+}
+
+<section id="finance-bank-reconciliation-editor-shell" class="container-fluid py-3">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h1 class="mb-0">@T.T(Model.Id == Guid.Empty ? "CreateBankReconciliation" : "EditBankReconciliation")</h1>
+        <a asp-action="BankReconciliation" asp-route-businessId="@Model.BusinessId" asp-route-bankAccountId="@Model.BankAccountId" class="btn btn-outline-secondary">@T.T("Back")</a>
+    </div>
+
+    <form method="post" asp-action="@actionName">
+        @Html.AntiForgeryToken()
+        <input asp-for="Id" type="hidden" />
+        <input type="hidden" name="RowVersion" value="@Convert.ToBase64String(Model.RowVersion)" />
+        <div class="row g-3 mb-3">
+            <div class="col-md-3"><label class="form-label">@T.T("BusinessId")</label><input asp-for="BusinessId" class="form-control" /></div>
+            <div class="col-md-3">
+                <label class="form-label">@T.T("BankAccount")</label>
+                <select asp-for="BankAccountId" class="form-select">
+                    <option value="">@T.T("Select")</option>
+                    @foreach (var account in Model.BankAccountOptions)
+                    {
+                        <option value="@account.Id" selected="@(Model.BankAccountId == account.Id)">@account.Label</option>
+                    }
+                </select>
+            </div>
+            <div class="col-md-2"><label class="form-label">@T.T("MatchNumber")</label><input asp-for="MatchNumber" class="form-control" /></div>
+            <div class="col-md-2"><label class="form-label">@T.T("Date")</label><input asp-for="MatchDateUtc" class="form-control" type="datetime-local" /></div>
+            <div class="col-md-2"><label class="form-label">@T.T("Currency")</label><input asp-for="Currency" class="form-control" maxlength="3" /></div>
+            <div class="col-md-8"><label class="form-label">@T.T("ReviewNotes")</label><input asp-for="ReviewNotes" class="form-control" /></div>
+            <div class="col-md-4"><label class="form-label">@T.T("Metadata")</label><input asp-for="MetadataJson" class="form-control" /></div>
+        </div>
+
+        <div class="table-responsive mb-3">
+            <table class="table table-sm align-middle">
+                <thead><tr><th>@T.T("BankStatementLine")</th><th>@T.T("FinancePosting")</th><th>@T.T("Amount")</th><th>@T.T("Memo")</th></tr></thead>
+                <tbody>
+                @for (var i = 0; i < Model.Lines.Count; i++)
+                {
+                    <tr>
+                        <td>
+                            <input asp-for="Lines[i].Id" type="hidden" />
+                            <select asp-for="Lines[i].BankStatementLineId" class="form-select form-select-sm">
+                                <option value="">@T.T("Select")</option>
+                                @foreach (var line in Model.StatementLineCandidates)
+                                {
+                                    <option value="@line.Id" selected="@(Model.Lines[i].BankStatementLineId == line.Id)">@line.Label</option>
+                                }
+                            </select>
+                        </td>
+                        <td>
+                            <select asp-for="Lines[i].JournalEntryId" class="form-select form-select-sm">
+                                <option value="">@T.T("Select")</option>
+                                @foreach (var posting in Model.PostingCandidates)
+                                {
+                                    <option value="@posting.Id" selected="@(Model.Lines[i].JournalEntryId == posting.Id)">@posting.Label</option>
+                                }
+                            </select>
+                        </td>
+                        <td><input asp-for="Lines[i].AmountMinor" class="form-control form-control-sm" /></td>
+                        <td><input asp-for="Lines[i].Memo" class="form-control form-control-sm" /></td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        </div>
+
+        <button type="submit" class="btn btn-primary">@T.T("Save")</button>
+    </form>
+</section>

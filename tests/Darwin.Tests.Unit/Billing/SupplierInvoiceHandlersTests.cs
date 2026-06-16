@@ -576,6 +576,277 @@ public sealed class SupplierInvoiceHandlersTests
         afterReverse.Should().NotContainKey(invoiceId);
     }
 
+    [Fact]
+    public async Task SupplierPayment_BankSettlement_Should_CreateBalancedClearingPosting()
+    {
+        await using var db = SupplierInvoiceTestDbContext.Create();
+        var ids = await SeedPurchasingAsync(db, postedReceipt: true);
+        SeedPostingAccounts(db, ids.BusinessId);
+        SeedMappedAccount(db, ids.BusinessId, FinancePostingAccountRole.CashClearing, AccountType.Asset);
+        var invoiceId = await CreatePostedSupplierInvoiceAsync(db, ids, [160]);
+        var paymentId = await CreatePostedSupplierPaymentAsync(db, ids, invoiceId, 2380, [161]);
+        var payment = await db.Set<SupplierPayment>().SingleAsync(x => x.Id == paymentId, TestContext.Current.CancellationToken);
+        var settlement = await SeedBankSettlementReconciliationAsync(db, ids.BusinessId, payment, 2380);
+        payment.RowVersion = [162];
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        await CreateSettleSupplierPaymentHandler(db).HandleAsync(new SupplierPaymentBankSettlementActionDto
+        {
+            Id = paymentId,
+            RowVersion = [162],
+            BankReconciliationMatchId = settlement.MatchId,
+            Notes = "Statement line confirmed"
+        }, TestContext.Current.CancellationToken);
+
+        var settled = await db.Set<SupplierPayment>().SingleAsync(x => x.Id == paymentId, TestContext.Current.CancellationToken);
+        settled.BankSettledAtUtc.Should().Be(Now);
+        settled.BankSettlementReconciliationMatchId.Should().Be(settlement.MatchId);
+        settled.BankSettlementJournalEntryId.Should().NotBeNull();
+        settled.BankSettlementNotes.Should().Be("Statement line confirmed");
+        var entry = await db.Set<JournalEntry>().Include(x => x.Lines).SingleAsync(x => x.PostingKind == JournalEntryPostingKind.SupplierPaymentBankSettled, TestContext.Current.CancellationToken);
+        entry.PostingKey.Should().Be($"{SettleSupplierPaymentFromBankReconciliationHandler.PostingKeyPrefix}:{paymentId}");
+        entry.SourceEntityType.Should().Be("SupplierPayment");
+        entry.Lines.Sum(x => x.DebitMinor).Should().Be(2380);
+        entry.Lines.Sum(x => x.CreditMinor).Should().Be(2380);
+        entry.Lines.Should().Contain(x => x.DebitMinor == 2380 && x.Memo == "Cash clearing release");
+        entry.Lines.Should().Contain(x => x.CreditMinor == 2380 && x.AccountId == settlement.BankFinancialAccountId && x.Memo == "Bank account settlement");
+    }
+
+    [Theory]
+    [InlineData(SupplierPaymentStatus.Draft)]
+    [InlineData(SupplierPaymentStatus.Cancelled)]
+    [InlineData(SupplierPaymentStatus.Reversed)]
+    public async Task SupplierPayment_BankSettlement_Should_RejectInvalidPaymentStatus(SupplierPaymentStatus status)
+    {
+        await using var db = SupplierInvoiceTestDbContext.Create();
+        var ids = await SeedPurchasingAsync(db, postedReceipt: true);
+        var invoiceId = await CreatePostedSupplierInvoiceAsync(db, ids, [170]);
+        db.Set<SupplierPayment>().Add(new SupplierPayment
+        {
+            Id = Guid.NewGuid(),
+            BusinessId = ids.BusinessId,
+            SupplierId = ids.SupplierId,
+            Status = status,
+            PaymentDateUtc = Now,
+            Currency = "EUR",
+            TotalAmountMinor = 1000,
+            PostingJournalEntryId = status == SupplierPaymentStatus.Draft ? null : Guid.NewGuid(),
+            RowVersion = [171],
+            MetadataJson = "{}",
+            Allocations = [new SupplierPaymentAllocation { SupplierInvoiceId = invoiceId, AmountMinor = 1000 }]
+        });
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+        var payment = await db.Set<SupplierPayment>().SingleAsync(TestContext.Current.CancellationToken);
+
+        var act = async () => await CreateSettleSupplierPaymentHandler(db).HandleAsync(new SupplierPaymentBankSettlementActionDto
+        {
+            Id = payment.Id,
+            RowVersion = [171],
+            BankReconciliationMatchId = Guid.NewGuid()
+        }, TestContext.Current.CancellationToken);
+
+        await act.Should().ThrowAsync<InvalidOperationException>().WithMessage("*SupplierPaymentLifecycleUnsupportedAction*");
+    }
+
+    [Fact]
+    public async Task SupplierPayment_BankSettlement_Should_RejectInvalidReconciliationAndBankMapping()
+    {
+        await using var db = SupplierInvoiceTestDbContext.Create();
+        var ids = await SeedPurchasingAsync(db, postedReceipt: true);
+        SeedPostingAccounts(db, ids.BusinessId);
+        SeedMappedAccount(db, ids.BusinessId, FinancePostingAccountRole.CashClearing, AccountType.Asset);
+        var invoiceId = await CreatePostedSupplierInvoiceAsync(db, ids, [180]);
+        var paymentId = await CreatePostedSupplierPaymentAsync(db, ids, invoiceId, 2380, [181]);
+        var payment = await db.Set<SupplierPayment>().SingleAsync(x => x.Id == paymentId, TestContext.Current.CancellationToken);
+        var partial = await SeedBankSettlementReconciliationAsync(db, ids.BusinessId, payment, 1000);
+        payment.RowVersion = [182];
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var partialAct = async () => await CreateSettleSupplierPaymentHandler(db).HandleAsync(new SupplierPaymentBankSettlementActionDto
+        {
+            Id = paymentId,
+            RowVersion = [182],
+            BankReconciliationMatchId = partial.MatchId
+        }, TestContext.Current.CancellationToken);
+
+        await partialAct.Should().ThrowAsync<InvalidOperationException>().WithMessage("*RequiresFullAmount*");
+
+        var unmapped = await SeedBankSettlementReconciliationAsync(db, ids.BusinessId, payment, 2380, mapBankAccount: false, identitySuffix: "unmapped");
+        payment.RowVersion = [183];
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+        var unmappedAct = async () => await CreateSettleSupplierPaymentHandler(db).HandleAsync(new SupplierPaymentBankSettlementActionDto
+        {
+            Id = paymentId,
+            RowVersion = [183],
+            BankReconciliationMatchId = unmapped.MatchId
+        }, TestContext.Current.CancellationToken);
+
+        await unmappedAct.Should().ThrowAsync<InvalidOperationException>().WithMessage("*RequiresMappedBankAccount*");
+        db.Set<JournalEntry>().Count(x => x.PostingKind == JournalEntryPostingKind.SupplierPaymentBankSettled).Should().Be(0);
+    }
+
+    [Fact]
+    public async Task SupplierPayment_BankSettlement_Should_BlockRetryAndReversalAfterSuccess()
+    {
+        await using var db = SupplierInvoiceTestDbContext.Create();
+        var ids = await SeedPurchasingAsync(db, postedReceipt: true);
+        SeedPostingAccounts(db, ids.BusinessId);
+        SeedMappedAccount(db, ids.BusinessId, FinancePostingAccountRole.CashClearing, AccountType.Asset);
+        var invoiceId = await CreatePostedSupplierInvoiceAsync(db, ids, [190]);
+        var paymentId = await CreatePostedSupplierPaymentAsync(db, ids, invoiceId, 2380, [191]);
+        var payment = await db.Set<SupplierPayment>().SingleAsync(x => x.Id == paymentId, TestContext.Current.CancellationToken);
+        var settlement = await SeedBankSettlementReconciliationAsync(db, ids.BusinessId, payment, 2380);
+        payment.RowVersion = [192];
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        await CreateSettleSupplierPaymentHandler(db).HandleAsync(new SupplierPaymentBankSettlementActionDto { Id = paymentId, RowVersion = [192], BankReconciliationMatchId = settlement.MatchId }, TestContext.Current.CancellationToken);
+        var settled = await db.Set<SupplierPayment>().SingleAsync(x => x.Id == paymentId, TestContext.Current.CancellationToken);
+        settled.RowVersion = [193];
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var retry = async () => await CreateSettleSupplierPaymentHandler(db).HandleAsync(new SupplierPaymentBankSettlementActionDto { Id = paymentId, RowVersion = [193], BankReconciliationMatchId = settlement.MatchId }, TestContext.Current.CancellationToken);
+        await retry.Should().ThrowAsync<InvalidOperationException>().WithMessage("*SupplierPaymentLifecycleUnsupportedAction*");
+        db.Set<JournalEntry>().Count(x => x.PostingKind == JournalEntryPostingKind.SupplierPaymentBankSettled && x.SourceEntityId == paymentId).Should().Be(1);
+
+        var reverse = async () => await CreateReverseSupplierPaymentHandler(db).HandleAsync(new SupplierPaymentLifecycleActionDto { Id = paymentId, RowVersion = [193], Action = "Reverse", Reason = "Returned after bank settlement" }, TestContext.Current.CancellationToken);
+        await reverse.Should().ThrowAsync<InvalidOperationException>().WithMessage("*BankSettledReversalBlocked*");
+    }
+
+    [Fact]
+    public async Task SupplierPaymentBankCorrection_ReturnedTransfer_Should_CreateDraftAndPostBalancedCorrection()
+    {
+        await using var db = SupplierInvoiceTestDbContext.Create();
+        var ids = await SeedPurchasingAsync(db, postedReceipt: true);
+        SeedPostingAccounts(db, ids.BusinessId);
+        SeedMappedAccount(db, ids.BusinessId, FinancePostingAccountRole.CashClearing, AccountType.Asset);
+        var invoiceId = await CreatePostedSupplierInvoiceAsync(db, ids, [210]);
+        var paymentId = await CreatePostedSupplierPaymentAsync(db, ids, invoiceId, 2380, [211]);
+        var payment = await db.Set<SupplierPayment>().SingleAsync(x => x.Id == paymentId, TestContext.Current.CancellationToken);
+        var settlement = await SeedBankSettlementReconciliationAsync(db, ids.BusinessId, payment, 2380, identitySuffix: "correction");
+        payment.RowVersion = [212];
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+        await CreateSettleSupplierPaymentHandler(db).HandleAsync(new SupplierPaymentBankSettlementActionDto { Id = paymentId, RowVersion = [212], BankReconciliationMatchId = settlement.MatchId }, TestContext.Current.CancellationToken);
+        payment = await db.Set<SupplierPayment>().SingleAsync(x => x.Id == paymentId, TestContext.Current.CancellationToken);
+        var correctionEvidence = await SeedBankSettlementReconciliationAsync(db, ids.BusinessId, payment, 2380, identitySuffix: "returned-correction", journalEntryId: payment.BankSettlementJournalEntryId);
+        payment.RowVersion = [213];
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var correctionId = await CreateSupplierPaymentBankCorrectionHandler(db).HandleAsync(new SupplierPaymentBankCorrectionCreateDto
+        {
+            SupplierPaymentId = paymentId,
+            SupplierPaymentRowVersion = [213],
+            CorrectionType = SupplierPaymentBankCorrectionType.ReturnedTransfer,
+            BankReconciliationMatchId = correctionEvidence.MatchId,
+            Reason = "Bank returned the full transfer"
+        }, TestContext.Current.CancellationToken);
+        var correction = await db.Set<SupplierPaymentBankCorrection>().SingleAsync(x => x.Id == correctionId, TestContext.Current.CancellationToken);
+        correction.Status.Should().Be(SupplierPaymentBankCorrectionStatus.Draft);
+        correction.AmountMinor.Should().Be(2380);
+        correction.OriginalBankSettlementJournalEntryId.Should().Be(payment.BankSettlementJournalEntryId);
+        correction.RowVersion = [214];
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        await CreatePostSupplierPaymentBankCorrectionHandler(db).HandleAsync(new SupplierPaymentBankCorrectionActionDto
+        {
+            Id = correctionId,
+            RowVersion = [214]
+        }, TestContext.Current.CancellationToken);
+
+        var posted = await db.Set<SupplierPaymentBankCorrection>().SingleAsync(x => x.Id == correctionId, TestContext.Current.CancellationToken);
+        posted.Status.Should().Be(SupplierPaymentBankCorrectionStatus.Posted);
+        posted.PostedAtUtc.Should().Be(Now);
+        posted.CorrectionJournalEntryId.Should().NotBeNull();
+        var entry = await db.Set<JournalEntry>().Include(x => x.Lines).SingleAsync(x => x.PostingKind == JournalEntryPostingKind.SupplierPaymentBankCorrection, TestContext.Current.CancellationToken);
+        entry.PostingKey.Should().Be($"{PostSupplierPaymentBankCorrectionHandler.PostingKeyPrefix}:{correctionId}");
+        entry.SourceEntityType.Should().Be("SupplierPaymentBankCorrection");
+        entry.Lines.Sum(x => x.DebitMinor).Should().Be(2380);
+        entry.Lines.Sum(x => x.CreditMinor).Should().Be(2380);
+        entry.Lines.Should().Contain(x => x.DebitMinor == 2380 && x.AccountId == correctionEvidence.BankFinancialAccountId);
+        entry.Lines.Should().Contain(x => x.CreditMinor == 2380 && x.Memo == "Cash clearing reinstatement");
+    }
+
+    [Fact]
+    public async Task SupplierPaymentBankCorrection_DuplicatePayment_Should_BeAttentionOnlyAndNotPost()
+    {
+        await using var db = SupplierInvoiceTestDbContext.Create();
+        var ids = await SeedPurchasingAsync(db, postedReceipt: true);
+        SeedPostingAccounts(db, ids.BusinessId);
+        SeedMappedAccount(db, ids.BusinessId, FinancePostingAccountRole.CashClearing, AccountType.Asset);
+        var invoiceId = await CreatePostedSupplierInvoiceAsync(db, ids, [220]);
+        var paymentId = await CreatePostedSupplierPaymentAsync(db, ids, invoiceId, 2380, [221]);
+        var payment = await db.Set<SupplierPayment>().SingleAsync(x => x.Id == paymentId, TestContext.Current.CancellationToken);
+        var settlement = await SeedBankSettlementReconciliationAsync(db, ids.BusinessId, payment, 2380, identitySuffix: "duplicate");
+        payment.RowVersion = [222];
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+        await CreateSettleSupplierPaymentHandler(db).HandleAsync(new SupplierPaymentBankSettlementActionDto { Id = paymentId, RowVersion = [222], BankReconciliationMatchId = settlement.MatchId }, TestContext.Current.CancellationToken);
+        payment = await db.Set<SupplierPayment>().SingleAsync(x => x.Id == paymentId, TestContext.Current.CancellationToken);
+        var duplicateEvidence = await SeedBankSettlementReconciliationAsync(db, ids.BusinessId, payment, 2380, identitySuffix: "duplicate-evidence", journalEntryId: payment.BankSettlementJournalEntryId);
+        payment.RowVersion = [223];
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var correctionId = await CreateSupplierPaymentBankCorrectionHandler(db).HandleAsync(new SupplierPaymentBankCorrectionCreateDto
+        {
+            SupplierPaymentId = paymentId,
+            SupplierPaymentRowVersion = [223],
+            CorrectionType = SupplierPaymentBankCorrectionType.DuplicatePayment,
+            BankReconciliationMatchId = duplicateEvidence.MatchId,
+            Reason = "Duplicate outgoing bank movement needs review"
+        }, TestContext.Current.CancellationToken);
+        var correction = await db.Set<SupplierPaymentBankCorrection>().SingleAsync(x => x.Id == correctionId, TestContext.Current.CancellationToken);
+        correction.RowVersion = [224];
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var post = async () => await CreatePostSupplierPaymentBankCorrectionHandler(db).HandleAsync(new SupplierPaymentBankCorrectionActionDto
+        {
+            Id = correctionId,
+            RowVersion = [224]
+        }, TestContext.Current.CancellationToken);
+
+        await post.Should().ThrowAsync<InvalidOperationException>().WithMessage("*DuplicatePaymentIsAttentionOnly*");
+        db.Set<JournalEntry>().Count(x => x.PostingKind == JournalEntryPostingKind.SupplierPaymentBankCorrection).Should().Be(0);
+    }
+
+    [Fact]
+    public async Task SupplierPaymentBankCorrection_Should_RejectSensitiveReasonAndPartialEvidence()
+    {
+        await using var db = SupplierInvoiceTestDbContext.Create();
+        var ids = await SeedPurchasingAsync(db, postedReceipt: true);
+        SeedPostingAccounts(db, ids.BusinessId);
+        SeedMappedAccount(db, ids.BusinessId, FinancePostingAccountRole.CashClearing, AccountType.Asset);
+        var invoiceId = await CreatePostedSupplierInvoiceAsync(db, ids, [230]);
+        var paymentId = await CreatePostedSupplierPaymentAsync(db, ids, invoiceId, 2380, [231]);
+        var payment = await db.Set<SupplierPayment>().SingleAsync(x => x.Id == paymentId, TestContext.Current.CancellationToken);
+        var full = await SeedBankSettlementReconciliationAsync(db, ids.BusinessId, payment, 2380, identitySuffix: "full-correction");
+        var partial = await SeedBankSettlementReconciliationAsync(db, ids.BusinessId, payment, 1000, identitySuffix: "partial-correction");
+        payment.RowVersion = [232];
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+        await CreateSettleSupplierPaymentHandler(db).HandleAsync(new SupplierPaymentBankSettlementActionDto { Id = paymentId, RowVersion = [232], BankReconciliationMatchId = full.MatchId }, TestContext.Current.CancellationToken);
+        payment = await db.Set<SupplierPayment>().SingleAsync(x => x.Id == paymentId, TestContext.Current.CancellationToken);
+        partial = await SeedBankSettlementReconciliationAsync(db, ids.BusinessId, payment, 1000, identitySuffix: "partial-after-settlement", journalEntryId: payment.BankSettlementJournalEntryId);
+        payment.RowVersion = [233];
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var sensitive = async () => await CreateSupplierPaymentBankCorrectionHandler(db).HandleAsync(new SupplierPaymentBankCorrectionCreateDto
+        {
+            SupplierPaymentId = paymentId,
+            SupplierPaymentRowVersion = [233],
+            CorrectionType = SupplierPaymentBankCorrectionType.ReturnedTransfer,
+            BankReconciliationMatchId = full.MatchId,
+            Reason = "secret token"
+        }, TestContext.Current.CancellationToken);
+        var partialEvidence = async () => await CreateSupplierPaymentBankCorrectionHandler(db).HandleAsync(new SupplierPaymentBankCorrectionCreateDto
+        {
+            SupplierPaymentId = paymentId,
+            SupplierPaymentRowVersion = [233],
+            CorrectionType = SupplierPaymentBankCorrectionType.ReturnedTransfer,
+            BankReconciliationMatchId = partial.MatchId,
+            Reason = "Returned only part of settlement"
+        }, TestContext.Current.CancellationToken);
+
+        await sensitive.Should().ThrowAsync<ArgumentException>().WithMessage("*SensitiveMetadataRejected*");
+        await partialEvidence.Should().ThrowAsync<InvalidOperationException>().WithMessage("*RequiresFullSettlementEvidence*");
+    }
+
     private static UpdateSupplierInvoiceLifecycleHandler CreateLifecycleHandler(SupplierInvoiceTestDbContext db)
         => new(db, new FixedClock(Now), new NumberSequenceService(db, new FixedClock(Now)), new SupplierInvoiceWorkflowPolicy());
 
@@ -587,6 +858,15 @@ public sealed class SupplierInvoiceHandlersTests
 
     private static ReverseSupplierPaymentHandler CreateReverseSupplierPaymentHandler(SupplierInvoiceTestDbContext db)
         => new(db, new FixedClock(Now), new SupplierPaymentWorkflowPolicy(), new FinanceAccountMappingService(db), new FinancePostingService(db, new FixedClock(Now)));
+
+    private static SettleSupplierPaymentFromBankReconciliationHandler CreateSettleSupplierPaymentHandler(SupplierInvoiceTestDbContext db)
+        => new(db, new FixedClock(Now), new SupplierPaymentWorkflowPolicy(), new FinanceAccountMappingService(db), new FinancePostingService(db, new FixedClock(Now)));
+
+    private static CreateSupplierPaymentBankCorrectionHandler CreateSupplierPaymentBankCorrectionHandler(SupplierInvoiceTestDbContext db)
+        => new(db, new FixedClock(Now));
+
+    private static PostSupplierPaymentBankCorrectionHandler CreatePostSupplierPaymentBankCorrectionHandler(SupplierInvoiceTestDbContext db)
+        => new(db, new FixedClock(Now), new FinanceAccountMappingService(db), new FinancePostingService(db, new FixedClock(Now)));
 
     private static async Task<Guid> CreatePostedSupplierPaymentAsync(SupplierInvoiceTestDbContext db, SeedIds ids, Guid invoiceId, long amountMinor, byte[] rowVersion)
     {
@@ -667,6 +947,67 @@ public sealed class SupplierInvoiceHandlersTests
         SeedMappedAccount(db, businessId, role, type);
     }
 
+    private static async Task<BankSettlementSeed> SeedBankSettlementReconciliationAsync(
+        SupplierInvoiceTestDbContext db,
+        Guid businessId,
+        SupplierPayment payment,
+        long linkedAmountMinor,
+        bool mapBankAccount = true,
+        string identitySuffix = "main",
+        Guid? journalEntryId = null)
+    {
+        var bankFinancialAccountId = mapBankAccount ? Guid.NewGuid() : (Guid?)null;
+        if (bankFinancialAccountId.HasValue)
+        {
+            db.Set<FinancialAccount>().Add(new FinancialAccount
+            {
+                Id = bankFinancialAccountId.Value,
+                BusinessId = businessId,
+                Name = $"Bank {identitySuffix}",
+                Type = AccountType.Asset
+            });
+        }
+
+        var bankAccountId = Guid.NewGuid();
+        var importId = Guid.NewGuid();
+        var statementLineId = Guid.NewGuid();
+        var matchId = Guid.NewGuid();
+        db.Set<BankAccount>().Add(new BankAccount { Id = bankAccountId, BusinessId = businessId, FinancialAccountId = bankFinancialAccountId, Code = $"BANK-{identitySuffix}", DisplayName = $"Bank {identitySuffix}", Currency = payment.Currency, Status = BankAccountStatus.Active });
+        db.Set<BankStatementImport>().Add(new BankStatementImport { Id = importId, BusinessId = businessId, BankAccountId = bankAccountId, StatementReference = $"ST-{identitySuffix}", PeriodStartUtc = Now.Date, PeriodEndUtc = Now.Date.AddDays(1), ImportedAtUtc = Now, Status = BankStatementImportStatus.Imported, MetadataJson = "{}" });
+        db.Set<BankStatementLine>().Add(new BankStatementLine { Id = statementLineId, BusinessId = businessId, BankAccountId = bankAccountId, BankStatementImportId = importId, TransactionDateUtc = Now, Direction = BankStatementLineDirection.Debit, AmountMinor = linkedAmountMinor, Currency = payment.Currency, NormalizedIdentityKey = $"BANK-SETTLEMENT-{identitySuffix}", ReviewStatus = BankStatementLineReviewStatus.Unreviewed, MetadataJson = "{}" });
+        db.Set<BankReconciliationMatch>().Add(new BankReconciliationMatch
+        {
+            Id = matchId,
+            BusinessId = businessId,
+            BankAccountId = bankAccountId,
+            MatchNumber = $"BR-{identitySuffix}",
+            Status = BankReconciliationMatchStatus.Matched,
+            MatchDateUtc = Now,
+            MatchedAtUtc = Now,
+            Currency = payment.Currency,
+            BankTotalMinor = linkedAmountMinor,
+            FinanceTotalMinor = linkedAmountMinor,
+            DifferenceMinor = 0,
+            MetadataJson = "{}",
+            Lines =
+            [
+                new BankReconciliationMatchLine
+                {
+                    BankStatementLineId = statementLineId,
+                    JournalEntryId = journalEntryId ?? payment.PostingJournalEntryId,
+                    SourceType = BankReconciliationSourceType.SupplierPayment,
+                    SourceEntityType = "SupplierPayment",
+                    SourceEntityId = payment.Id,
+                    Direction = BankStatementLineDirection.Debit,
+                    AmountMinor = linkedAmountMinor,
+                    IsActive = true
+                }
+            ]
+        });
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+        return new BankSettlementSeed(matchId, bankFinancialAccountId);
+    }
+
     private static SupplierInvoiceCreateDto BuildCreate(SeedIds ids)
         => new()
         {
@@ -725,6 +1066,7 @@ public sealed class SupplierInvoiceHandlersTests
     }
 
     private sealed record SeedIds(Guid BusinessId, Guid SupplierId, Guid PurchaseOrderId, Guid PurchaseOrderLineId, Guid GoodsReceiptId, Guid GoodsReceiptLineId);
+    private sealed record BankSettlementSeed(Guid MatchId, Guid? BankFinancialAccountId);
 
     private sealed class FixedClock(DateTime utcNow) : IClock
     {
@@ -755,6 +1097,12 @@ public sealed class SupplierInvoiceHandlersTests
             modelBuilder.Entity<SupplierInvoiceLine>().HasKey(x => x.Id);
             modelBuilder.Entity<SupplierPayment>(b => { b.HasKey(x => x.Id); b.HasMany(x => x.Allocations).WithOne().HasForeignKey(x => x.SupplierPaymentId); });
             modelBuilder.Entity<SupplierPaymentAllocation>().HasKey(x => x.Id);
+            modelBuilder.Entity<BankAccount>().HasKey(x => x.Id);
+            modelBuilder.Entity<BankStatementImport>().HasKey(x => x.Id);
+            modelBuilder.Entity<BankStatementLine>().HasKey(x => x.Id);
+            modelBuilder.Entity<BankReconciliationMatch>(b => { b.HasKey(x => x.Id); b.HasMany(x => x.Lines).WithOne().HasForeignKey(x => x.BankReconciliationMatchId); });
+            modelBuilder.Entity<BankReconciliationMatchLine>().HasKey(x => x.Id);
+            modelBuilder.Entity<SupplierPaymentBankCorrection>().HasKey(x => x.Id);
             modelBuilder.Entity<JournalEntry>(b => { b.HasKey(x => x.Id); b.HasMany(x => x.Lines).WithOne().HasForeignKey(x => x.JournalEntryId); });
             modelBuilder.Entity<JournalEntryLine>().HasKey(x => x.Id);
             modelBuilder.Entity<FinancialAccount>().HasKey(x => x.Id);

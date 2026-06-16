@@ -24,6 +24,452 @@ namespace Darwin.Infrastructure.PostgreSql.Migrations
             NpgsqlModelBuilderExtensions.HasPostgresExtension(modelBuilder, "citext");
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
+            modelBuilder.Entity("Darwin.Domain.Entities.Billing.BankAccount", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("BankName")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<Guid>("BusinessId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("CreatedByUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Currency")
+                        .IsRequired()
+                        .HasMaxLength(3)
+                        .HasColumnType("character varying(3)");
+
+                    b.Property<string>("DisplayName")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<Guid?>("FinancialAccountId")
+                        .HasColumnType("uuid");
+
+                    b.Property<bool>("IsDefault")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("MaskedAccountIdentifier")
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)");
+
+                    b.Property<string>("MetadataJson")
+                        .IsRequired()
+                        .HasMaxLength(4000)
+                        .HasColumnType("jsonb");
+
+                    b.Property<DateTime?>("ModifiedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("ModifiedByUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .HasColumnType("bytea");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BusinessId");
+
+                    b.HasIndex("FinancialAccountId");
+
+                    b.HasIndex("IsDefault");
+
+                    b.HasIndex("Status");
+
+                    b.HasIndex("BusinessId", "Code")
+                        .IsUnique()
+                        .HasDatabaseName("UX_BankAccounts_Business_Code_Active")
+                        .HasFilter("\"IsDeleted\" = FALSE");
+
+                    b.ToTable("BankAccounts", "Billing");
+                });
+
+            modelBuilder.Entity("Darwin.Domain.Entities.Billing.BankReconciliationMatch", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("BankAccountId")
+                        .HasColumnType("uuid");
+
+                    b.Property<long>("BankTotalMinor")
+                        .HasColumnType("bigint");
+
+                    b.Property<Guid>("BusinessId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime?>("CancelledAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("CreatedByUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Currency")
+                        .IsRequired()
+                        .HasMaxLength(3)
+                        .HasColumnType("character varying(3)");
+
+                    b.Property<long>("DifferenceMinor")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("FinanceTotalMinor")
+                        .HasColumnType("bigint");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<DateTime>("MatchDateUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("MatchNumber")
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)");
+
+                    b.Property<DateTime?>("MatchedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("MetadataJson")
+                        .IsRequired()
+                        .HasMaxLength(4000)
+                        .HasColumnType("jsonb");
+
+                    b.Property<DateTime?>("ModifiedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("ModifiedByUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("ReviewNotes")
+                        .HasMaxLength(4000)
+                        .HasColumnType("character varying(4000)");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .HasColumnType("bytea");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BankAccountId");
+
+                    b.HasIndex("BusinessId");
+
+                    b.HasIndex("MatchDateUtc");
+
+                    b.HasIndex("MatchedAtUtc");
+
+                    b.HasIndex("Status");
+
+                    b.HasIndex("BusinessId", "MatchNumber")
+                        .IsUnique()
+                        .HasDatabaseName("UX_BankReconciliationMatches_Business_Number_Active")
+                        .HasFilter("\"MatchNumber\" IS NOT NULL AND \"IsDeleted\" = FALSE");
+
+                    b.ToTable("BankReconciliationMatches", "Billing");
+                });
+
+            modelBuilder.Entity("Darwin.Domain.Entities.Billing.BankReconciliationMatchLine", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<long>("AmountMinor")
+                        .HasColumnType("bigint");
+
+                    b.Property<Guid>("BankReconciliationMatchId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("BankStatementLineId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("CreatedByUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Direction")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<Guid?>("JournalEntryId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Memo")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
+                    b.Property<DateTime?>("ModifiedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("ModifiedByUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .HasColumnType("bytea");
+
+                    b.Property<int>("SortOrder")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid?>("SourceEntityId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("SourceEntityType")
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)");
+
+                    b.Property<string>("SourceType")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BankReconciliationMatchId");
+
+                    b.HasIndex("BankStatementLineId")
+                        .IsUnique()
+                        .HasDatabaseName("UX_BankReconciliationMatchLines_StatementLine_Active")
+                        .HasFilter("\"IsActive\" = TRUE AND \"IsDeleted\" = FALSE");
+
+                    b.HasIndex("JournalEntryId");
+
+                    b.HasIndex("SourceEntityType", "SourceEntityId")
+                        .HasDatabaseName("IX_BankReconciliationMatchLines_SourceEntity");
+
+                    b.ToTable("BankReconciliationMatchLines", "Billing");
+                });
+
+            modelBuilder.Entity("Darwin.Domain.Entities.Billing.BankStatementImport", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("BankAccountId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("BusinessId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("CreatedByUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<long>("CreditTotalMinor")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("DebitTotalMinor")
+                        .HasColumnType("bigint");
+
+                    b.Property<DateTime>("ImportedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<int>("LineCount")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("MetadataJson")
+                        .IsRequired()
+                        .HasMaxLength(4000)
+                        .HasColumnType("jsonb");
+
+                    b.Property<DateTime?>("ModifiedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("ModifiedByUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("PeriodEndUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime>("PeriodStartUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .HasColumnType("bytea");
+
+                    b.Property<string>("StatementReference")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BankAccountId");
+
+                    b.HasIndex("BusinessId");
+
+                    b.HasIndex("ImportedAtUtc");
+
+                    b.HasIndex("Status");
+
+                    b.HasIndex("BankAccountId", "StatementReference")
+                        .IsUnique()
+                        .HasDatabaseName("UX_BankStatementImports_Account_Reference_Active")
+                        .HasFilter("\"IsDeleted\" = FALSE");
+
+                    b.HasIndex("BusinessId", "PeriodStartUtc", "PeriodEndUtc");
+
+                    b.ToTable("BankStatementImports", "Billing");
+                });
+
+            modelBuilder.Entity("Darwin.Domain.Entities.Billing.BankStatementLine", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<long>("AmountMinor")
+                        .HasColumnType("bigint");
+
+                    b.Property<Guid>("BankAccountId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("BankStatementImportId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("BusinessId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("CounterpartyName")
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
+                    b.Property<string>("CounterpartyReference")
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("CreatedByUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Currency")
+                        .IsRequired()
+                        .HasMaxLength(3)
+                        .HasColumnType("character varying(3)");
+
+                    b.Property<string>("Direction")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("MetadataJson")
+                        .IsRequired()
+                        .HasMaxLength(4000)
+                        .HasColumnType("jsonb");
+
+                    b.Property<DateTime?>("ModifiedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("ModifiedByUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("NormalizedIdentityKey")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
+                    b.Property<string>("RemittanceInformation")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
+                    b.Property<string>("ReviewStatus")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .HasColumnType("bytea");
+
+                    b.Property<DateTime>("TransactionDateUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("ValueDateUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BankAccountId");
+
+                    b.HasIndex("BankStatementImportId");
+
+                    b.HasIndex("BusinessId");
+
+                    b.HasIndex("ReviewStatus");
+
+                    b.HasIndex("TransactionDateUtc");
+
+                    b.HasIndex("BankAccountId", "NormalizedIdentityKey")
+                        .IsUnique()
+                        .HasDatabaseName("UX_BankStatementLines_Account_Identity_Active")
+                        .HasFilter("\"IsDeleted\" = FALSE");
+
+                    b.ToTable("BankStatementLines", "Billing");
+                });
+
             modelBuilder.Entity("Darwin.Domain.Entities.Billing.BillingPlan", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1134,6 +1580,19 @@ namespace Darwin.Infrastructure.PostgreSql.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
+                    b.Property<DateTime?>("BankSettledAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("BankSettlementJournalEntryId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("BankSettlementNotes")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
+                    b.Property<Guid?>("BankSettlementReconciliationMatchId")
+                        .HasColumnType("uuid");
+
                     b.Property<Guid>("BusinessId")
                         .HasColumnType("uuid");
 
@@ -1219,6 +1678,12 @@ namespace Darwin.Infrastructure.PostgreSql.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("BankSettledAtUtc");
+
+                    b.HasIndex("BankSettlementJournalEntryId");
+
+                    b.HasIndex("BankSettlementReconciliationMatchId");
+
                     b.HasIndex("BusinessId");
 
                     b.HasIndex("PaymentDateUtc");
@@ -1292,6 +1757,121 @@ namespace Darwin.Infrastructure.PostgreSql.Migrations
                         .HasFilter("\"IsDeleted\" = FALSE");
 
                     b.ToTable("SupplierPaymentAllocations", "Billing");
+                });
+
+            modelBuilder.Entity("Darwin.Domain.Entities.Billing.SupplierPaymentBankCorrection", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<long>("AmountMinor")
+                        .HasColumnType("bigint");
+
+                    b.Property<Guid>("BankReconciliationMatchId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("BankStatementLineId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("BusinessId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime?>("CancelledAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime>("CorrectionDateUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("CorrectionJournalEntryId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("CorrectionType")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("CreatedByUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Currency")
+                        .IsRequired()
+                        .HasMaxLength(3)
+                        .HasColumnType("character varying(3)");
+
+                    b.Property<string>("InternalNotes")
+                        .HasMaxLength(4000)
+                        .HasColumnType("character varying(4000)");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("MetadataJson")
+                        .IsRequired()
+                        .HasMaxLength(4000)
+                        .HasColumnType("jsonb");
+
+                    b.Property<DateTime?>("ModifiedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("ModifiedByUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("OriginalBankSettlementJournalEntryId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime?>("PostedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Reason")
+                        .IsRequired()
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .HasColumnType("bytea");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<Guid>("SupplierPaymentId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BankReconciliationMatchId");
+
+                    b.HasIndex("BankStatementLineId");
+
+                    b.HasIndex("BusinessId");
+
+                    b.HasIndex("CorrectionDateUtc");
+
+                    b.HasIndex("CorrectionJournalEntryId");
+
+                    b.HasIndex("CorrectionType");
+
+                    b.HasIndex("OriginalBankSettlementJournalEntryId");
+
+                    b.HasIndex("PostedAtUtc");
+
+                    b.HasIndex("Status");
+
+                    b.HasIndex("SupplierPaymentId");
+
+                    b.HasIndex("SupplierPaymentId", "CorrectionType", "BankReconciliationMatchId")
+                        .IsUnique()
+                        .HasDatabaseName("UX_SupplierPaymentBankCorrections_Payment_Type_Reconciliation_Active")
+                        .HasFilter("\"IsDeleted\" = FALSE");
+
+                    b.ToTable("SupplierPaymentBankCorrections", "Billing");
                 });
 
             modelBuilder.Entity("Darwin.Domain.Entities.Businesses.Business", b =>
@@ -11186,6 +11766,61 @@ namespace Darwin.Infrastructure.PostgreSql.Migrations
                     b.ToTable("ShippingRates", "Shipping");
                 });
 
+            modelBuilder.Entity("Darwin.Domain.Entities.Billing.BankAccount", b =>
+                {
+                    b.HasOne("Darwin.Domain.Entities.Billing.FinancialAccount", null)
+                        .WithMany()
+                        .HasForeignKey("FinancialAccountId")
+                        .OnDelete(DeleteBehavior.Restrict);
+                });
+
+            modelBuilder.Entity("Darwin.Domain.Entities.Billing.BankReconciliationMatch", b =>
+                {
+                    b.HasOne("Darwin.Domain.Entities.Billing.BankAccount", null)
+                        .WithMany()
+                        .HasForeignKey("BankAccountId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Darwin.Domain.Entities.Billing.BankReconciliationMatchLine", b =>
+                {
+                    b.HasOne("Darwin.Domain.Entities.Billing.BankReconciliationMatch", null)
+                        .WithMany("Lines")
+                        .HasForeignKey("BankReconciliationMatchId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Darwin.Domain.Entities.Billing.BankStatementLine", null)
+                        .WithMany()
+                        .HasForeignKey("BankStatementLineId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Darwin.Domain.Entities.Billing.JournalEntry", null)
+                        .WithMany()
+                        .HasForeignKey("JournalEntryId")
+                        .OnDelete(DeleteBehavior.Restrict);
+                });
+
+            modelBuilder.Entity("Darwin.Domain.Entities.Billing.BankStatementImport", b =>
+                {
+                    b.HasOne("Darwin.Domain.Entities.Billing.BankAccount", null)
+                        .WithMany()
+                        .HasForeignKey("BankAccountId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Darwin.Domain.Entities.Billing.BankStatementLine", b =>
+                {
+                    b.HasOne("Darwin.Domain.Entities.Billing.BankStatementImport", null)
+                        .WithMany("Lines")
+                        .HasForeignKey("BankStatementImportId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("Darwin.Domain.Entities.Billing.BusinessSubscription", b =>
                 {
                     b.HasOne("Darwin.Domain.Entities.Businesses.Business", null)
@@ -11254,6 +11889,26 @@ namespace Darwin.Infrastructure.PostgreSql.Migrations
                         .WithMany("Allocations")
                         .HasForeignKey("SupplierPaymentId")
                         .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Darwin.Domain.Entities.Billing.SupplierPaymentBankCorrection", b =>
+                {
+                    b.HasOne("Darwin.Domain.Entities.Billing.BankReconciliationMatch", null)
+                        .WithMany()
+                        .HasForeignKey("BankReconciliationMatchId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Darwin.Domain.Entities.Billing.BankStatementLine", null)
+                        .WithMany()
+                        .HasForeignKey("BankStatementLineId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Darwin.Domain.Entities.Billing.SupplierPayment", null)
+                        .WithMany()
+                        .HasForeignKey("SupplierPaymentId")
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
                 });
 
@@ -12282,6 +12937,16 @@ namespace Darwin.Infrastructure.PostgreSql.Migrations
                         .HasForeignKey("ShippingMethodId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+                });
+
+            modelBuilder.Entity("Darwin.Domain.Entities.Billing.BankReconciliationMatch", b =>
+                {
+                    b.Navigation("Lines");
+                });
+
+            modelBuilder.Entity("Darwin.Domain.Entities.Billing.BankStatementImport", b =>
+                {
+                    b.Navigation("Lines");
                 });
 
             modelBuilder.Entity("Darwin.Domain.Entities.Billing.FinanceExportBatch", b =>

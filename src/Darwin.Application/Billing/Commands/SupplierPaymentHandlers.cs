@@ -30,6 +30,11 @@ public sealed class SupplierPaymentWorkflowPolicy
     public Result CanReverse(SupplierPayment payment) => payment.Status == SupplierPaymentStatus.Posted
         ? Result.Ok()
         : Result.Fail("SupplierPaymentLifecycleUnsupportedAction");
+
+    public Result CanBankSettle(SupplierPayment payment)
+        => payment.Status == SupplierPaymentStatus.Posted && !payment.BankSettledAtUtc.HasValue && !payment.BankSettlementJournalEntryId.HasValue
+            ? Result.Ok()
+            : Result.Fail("SupplierPaymentLifecycleUnsupportedAction");
 }
 
 public sealed class CreateSupplierPaymentHandler
@@ -271,6 +276,7 @@ public sealed class ReverseSupplierPaymentHandler
 
         var payment = await SupplierPaymentSupport.LoadForUpdateAsync(_db, dto.Id, dto.RowVersion, ct).ConfigureAwait(false);
         SupplierInvoiceSupport.ThrowIfFailed(_workflow.CanReverse(payment));
+        if (payment.BankSettledAtUtc.HasValue || payment.BankSettlementJournalEntryId.HasValue) throw new InvalidOperationException("SupplierPaymentBankSettledReversalBlocked");
         if (!payment.PostingJournalEntryId.HasValue) throw new InvalidOperationException("SupplierPaymentPostingRequired");
         SupplierPaymentSupport.RecalculateTotals(payment);
         if (payment.TotalAmountMinor <= 0) throw new InvalidOperationException("SupplierPaymentAmountRequired");
@@ -310,6 +316,352 @@ public sealed class ReverseSupplierPaymentHandler
         payment.Status = SupplierPaymentStatus.Reversed;
         await _db.SaveChangesAsync(ct).ConfigureAwait(false);
         await SupplierPaymentSupport.RecordEvidenceAsync(_events, payment, "reversed", AuditTrailAction.StatusChanged, _clock.UtcNow, ct).ConfigureAwait(false);
+    }
+}
+
+public sealed class SettleSupplierPaymentFromBankReconciliationHandler
+{
+    public const string PostingKeyPrefix = "supplier-payment-bank-settled";
+
+    private static readonly FinancePostingAccountRole[] RequiredRoles =
+    [
+        FinancePostingAccountRole.CashClearing
+    ];
+
+    private readonly IAppDbContext _db;
+    private readonly IClock _clock;
+    private readonly SupplierPaymentWorkflowPolicy _workflow;
+    private readonly FinanceAccountMappingService _accounts;
+    private readonly FinancePostingService _posting;
+    private readonly BusinessEventService? _events;
+
+    public SettleSupplierPaymentFromBankReconciliationHandler(
+        IAppDbContext db,
+        IClock clock,
+        SupplierPaymentWorkflowPolicy workflow,
+        FinanceAccountMappingService accounts,
+        FinancePostingService posting,
+        BusinessEventService? events = null)
+    {
+        _db = db ?? throw new ArgumentNullException(nameof(db));
+        _clock = clock ?? throw new ArgumentNullException(nameof(clock));
+        _workflow = workflow ?? throw new ArgumentNullException(nameof(workflow));
+        _accounts = accounts ?? throw new ArgumentNullException(nameof(accounts));
+        _posting = posting ?? throw new ArgumentNullException(nameof(posting));
+        _events = events;
+    }
+
+    public async Task HandleAsync(SupplierPaymentBankSettlementActionDto dto, CancellationToken ct = default)
+    {
+        ArgumentNullException.ThrowIfNull(dto);
+        if (dto.Id == Guid.Empty || dto.RowVersion.Length == 0 || dto.BankReconciliationMatchId == Guid.Empty) throw new ArgumentException("SupplierPaymentBankSettlementInvalidRequest");
+        var notes = SupplierInvoiceSupport.Optional(dto.Notes, 1000);
+        if (!string.IsNullOrWhiteSpace(notes)) _ = SupplierInvoiceSupport.NormalizeMetadata(notes);
+
+        var payment = await SupplierPaymentSupport.LoadForUpdateAsync(_db, dto.Id, dto.RowVersion, ct).ConfigureAwait(false);
+        SupplierInvoiceSupport.ThrowIfFailed(_workflow.CanBankSettle(payment));
+        if (!payment.PostingJournalEntryId.HasValue) throw new InvalidOperationException("SupplierPaymentPostingRequired");
+        if (payment.ReversalJournalEntryId.HasValue || payment.ReversedAtUtc.HasValue) throw new InvalidOperationException("SupplierPaymentReversed");
+        SupplierPaymentSupport.RecalculateTotals(payment);
+        if (payment.TotalAmountMinor <= 0) throw new InvalidOperationException("SupplierPaymentAmountRequired");
+        if (payment.Allocations.Count == 0 || payment.Allocations.All(x => x.IsDeleted)) throw new InvalidOperationException("SupplierPaymentAllocationsRequired");
+
+        var reconciliation = await _db.Set<BankReconciliationMatch>()
+            .Include(x => x.Lines)
+            .FirstOrDefaultAsync(x => x.Id == dto.BankReconciliationMatchId && !x.IsDeleted, ct)
+            .ConfigureAwait(false);
+        if (reconciliation is null) throw new InvalidOperationException("BankReconciliationNotFound");
+        if (reconciliation.Status != BankReconciliationMatchStatus.Matched) throw new InvalidOperationException("SupplierPaymentBankSettlementRequiresMatchedReconciliation");
+        if (reconciliation.BusinessId != payment.BusinessId || !string.Equals(reconciliation.Currency, payment.Currency, StringComparison.OrdinalIgnoreCase)) throw new InvalidOperationException("SupplierPaymentBankSettlementReconciliationMismatch");
+        if (reconciliation.DifferenceMinor != 0) throw new InvalidOperationException("SupplierPaymentBankSettlementRequiresZeroDifference");
+
+        var paymentLines = reconciliation.Lines
+            .Where(x =>
+                !x.IsDeleted &&
+                x.IsActive &&
+                x.JournalEntryId == payment.PostingJournalEntryId &&
+                string.Equals(x.SourceEntityType, "SupplierPayment", StringComparison.OrdinalIgnoreCase) &&
+                x.SourceEntityId == payment.Id)
+            .ToList();
+        if (paymentLines.Count == 0) throw new InvalidOperationException("SupplierPaymentBankSettlementReconciliationPaymentLinkRequired");
+        if (paymentLines.Sum(x => x.AmountMinor) != payment.TotalAmountMinor) throw new InvalidOperationException("SupplierPaymentBankSettlementRequiresFullAmount");
+
+        var bankAccount = await _db.Set<BankAccount>()
+            .AsNoTracking()
+            .FirstOrDefaultAsync(x => x.Id == reconciliation.BankAccountId && x.BusinessId == payment.BusinessId && !x.IsDeleted && x.Status == BankAccountStatus.Active, ct)
+            .ConfigureAwait(false);
+        if (bankAccount is null) throw new InvalidOperationException("BankAccountNotFound");
+        if (!bankAccount.FinancialAccountId.HasValue) throw new InvalidOperationException("SupplierPaymentBankSettlementRequiresMappedBankAccount");
+
+        var financialAccount = await _db.Set<FinancialAccount>()
+            .AsNoTracking()
+            .FirstOrDefaultAsync(x => x.Id == bankAccount.FinancialAccountId.Value && x.BusinessId == payment.BusinessId && !x.IsDeleted, ct)
+            .ConfigureAwait(false);
+        if (financialAccount is null || financialAccount.Type != AccountType.Asset) throw new InvalidOperationException("SupplierPaymentBankSettlementRequiresAssetBankAccount");
+
+        var accountResult = await _accounts.ResolveRequiredAccountsAsync(payment.BusinessId, RequiredRoles, ct).ConfigureAwait(false);
+        if (!accountResult.Succeeded)
+        {
+            throw new InvalidOperationException(accountResult.Error);
+        }
+
+        var accounts = accountResult.Value!;
+        var postingResult = await _posting.PostAsync(new FinancePostingCommand(
+            payment.BusinessId,
+            _clock.UtcNow,
+            JournalEntryPostingKind.SupplierPaymentBankSettled,
+            $"{PostingKeyPrefix}:{payment.Id}",
+            "SupplierPayment",
+            payment.Id,
+            "Supplier payment bank settled",
+            [
+                new FinancePostingLineCommand(accounts[FinancePostingAccountRole.CashClearing], payment.TotalAmountMinor, 0, "Cash clearing release"),
+                new FinancePostingLineCommand(financialAccount.Id, 0, payment.TotalAmountMinor, "Bank account settlement")
+            ],
+            SourceDocumentNumber: payment.PaymentNumber ?? payment.Reference,
+            PostingReason: "Supplier payment bank settlement",
+            MetadataJson: $$"""{"supplierPaymentId":"{{payment.Id}}","bankReconciliationMatchId":"{{reconciliation.Id}}","bankAccountId":"{{bankAccount.Id}}","bankFinancialAccountId":"{{financialAccount.Id}}","supplierId":"{{payment.SupplierId}}","currency":"{{payment.Currency}}","totalAmountMinor":{{payment.TotalAmountMinor}}}"""), ct).ConfigureAwait(false);
+        if (!postingResult.Succeeded)
+        {
+            throw new InvalidOperationException(postingResult.Error);
+        }
+
+        payment.BankSettlementJournalEntryId = postingResult.Value!.JournalEntryId;
+        payment.BankSettlementReconciliationMatchId = reconciliation.Id;
+        payment.BankSettledAtUtc ??= _clock.UtcNow;
+        payment.BankSettlementNotes = notes;
+        await _db.SaveChangesAsync(ct).ConfigureAwait(false);
+        await SupplierPaymentSupport.RecordEvidenceAsync(_events, payment, "bank_settled", AuditTrailAction.StatusChanged, _clock.UtcNow, ct).ConfigureAwait(false);
+    }
+}
+
+public sealed class CreateSupplierPaymentBankCorrectionHandler
+{
+    private readonly IAppDbContext _db;
+    private readonly IClock _clock;
+    private readonly BusinessEventService? _events;
+
+    public CreateSupplierPaymentBankCorrectionHandler(IAppDbContext db, IClock clock, BusinessEventService? events = null)
+    {
+        _db = db ?? throw new ArgumentNullException(nameof(db));
+        _clock = clock ?? throw new ArgumentNullException(nameof(clock));
+        _events = events;
+    }
+
+    public async Task<Guid> HandleAsync(SupplierPaymentBankCorrectionCreateDto dto, CancellationToken ct = default)
+    {
+        ArgumentNullException.ThrowIfNull(dto);
+        if (dto.SupplierPaymentId == Guid.Empty || dto.SupplierPaymentRowVersion.Length == 0 || dto.BankReconciliationMatchId == Guid.Empty) throw new ArgumentException("SupplierPaymentBankCorrectionInvalidRequest");
+        if (!Enum.IsDefined(typeof(SupplierPaymentBankCorrectionType), dto.CorrectionType)) throw new ArgumentException("SupplierPaymentBankCorrectionInvalidType");
+        var reason = SupplierInvoiceSupport.Optional(dto.Reason, 1000);
+        if (string.IsNullOrWhiteSpace(reason)) throw new ArgumentException("SupplierPaymentBankCorrectionReasonRequired");
+        _ = SupplierInvoiceSupport.NormalizeMetadata(reason);
+        var notes = SupplierInvoiceSupport.Optional(dto.InternalNotes, 4000);
+        if (!string.IsNullOrWhiteSpace(notes)) _ = SupplierInvoiceSupport.NormalizeMetadata(notes);
+
+        var payment = await SupplierPaymentSupport.LoadForUpdateAsync(_db, dto.SupplierPaymentId, dto.SupplierPaymentRowVersion, ct).ConfigureAwait(false);
+        SupplierPaymentBankCorrectionSupport.ValidateBankSettledPayment(payment);
+        var reconciliation = await SupplierPaymentBankCorrectionSupport.LoadAndValidateEvidenceAsync(_db, payment, dto.BankReconciliationMatchId, dto.BankStatementLineId, ct).ConfigureAwait(false);
+        var activeExists = await _db.Set<SupplierPaymentBankCorrection>()
+            .AnyAsync(x =>
+                x.SupplierPaymentId == payment.Id &&
+                x.BankReconciliationMatchId == reconciliation.Id &&
+                x.CorrectionType == dto.CorrectionType &&
+                x.Status != SupplierPaymentBankCorrectionStatus.Cancelled &&
+                !x.IsDeleted, ct)
+            .ConfigureAwait(false);
+        if (activeExists) throw new InvalidOperationException("SupplierPaymentBankCorrectionDuplicate");
+
+        var statementLineId = dto.BankStatementLineId ?? reconciliation.Lines.Where(x => !x.IsDeleted && x.IsActive).OrderBy(x => x.SortOrder).Select(x => (Guid?)x.BankStatementLineId).FirstOrDefault();
+        var correction = new SupplierPaymentBankCorrection
+        {
+            BusinessId = payment.BusinessId,
+            SupplierPaymentId = payment.Id,
+            BankReconciliationMatchId = reconciliation.Id,
+            BankStatementLineId = statementLineId,
+            OriginalBankSettlementJournalEntryId = payment.BankSettlementJournalEntryId,
+            CorrectionType = dto.CorrectionType,
+            Status = SupplierPaymentBankCorrectionStatus.Draft,
+            CorrectionDateUtc = _clock.UtcNow,
+            Currency = payment.Currency,
+            AmountMinor = payment.TotalAmountMinor,
+            Reason = reason!,
+            InternalNotes = notes,
+            MetadataJson = "{}"
+        };
+
+        _db.Set<SupplierPaymentBankCorrection>().Add(correction);
+        await _db.SaveChangesAsync(ct).ConfigureAwait(false);
+        await SupplierPaymentBankCorrectionSupport.RecordEvidenceAsync(_events, correction, "created", AuditTrailAction.Created, _clock.UtcNow, ct).ConfigureAwait(false);
+        return correction.Id;
+    }
+}
+
+public sealed class PostSupplierPaymentBankCorrectionHandler
+{
+    public const string PostingKeyPrefix = "supplier-payment-bank-correction";
+
+    private static readonly FinancePostingAccountRole[] RequiredRoles =
+    [
+        FinancePostingAccountRole.CashClearing
+    ];
+
+    private readonly IAppDbContext _db;
+    private readonly IClock _clock;
+    private readonly FinanceAccountMappingService _accounts;
+    private readonly FinancePostingService _posting;
+    private readonly BusinessEventService? _events;
+
+    public PostSupplierPaymentBankCorrectionHandler(
+        IAppDbContext db,
+        IClock clock,
+        FinanceAccountMappingService accounts,
+        FinancePostingService posting,
+        BusinessEventService? events = null)
+    {
+        _db = db ?? throw new ArgumentNullException(nameof(db));
+        _clock = clock ?? throw new ArgumentNullException(nameof(clock));
+        _accounts = accounts ?? throw new ArgumentNullException(nameof(accounts));
+        _posting = posting ?? throw new ArgumentNullException(nameof(posting));
+        _events = events;
+    }
+
+    public async Task HandleAsync(SupplierPaymentBankCorrectionActionDto dto, CancellationToken ct = default)
+    {
+        ArgumentNullException.ThrowIfNull(dto);
+        var correction = await SupplierPaymentBankCorrectionSupport.LoadForUpdateAsync(_db, dto.Id, dto.RowVersion, ct).ConfigureAwait(false);
+        if (correction.Status != SupplierPaymentBankCorrectionStatus.Draft) throw new InvalidOperationException("SupplierPaymentBankCorrectionNotPostable");
+        if (correction.CorrectionType != SupplierPaymentBankCorrectionType.ReturnedTransfer) throw new InvalidOperationException("SupplierPaymentBankCorrectionDuplicatePaymentIsAttentionOnly");
+
+        var payment = await _db.Set<SupplierPayment>()
+            .Include(x => x.Allocations)
+            .FirstOrDefaultAsync(x => x.Id == correction.SupplierPaymentId && !x.IsDeleted, ct)
+            .ConfigureAwait(false);
+        if (payment is null) throw new InvalidOperationException("SupplierPaymentNotFound");
+        SupplierPaymentBankCorrectionSupport.ValidateBankSettledPayment(payment);
+        if (payment.BankSettlementJournalEntryId != correction.OriginalBankSettlementJournalEntryId) throw new InvalidOperationException("SupplierPaymentBankCorrectionSettlementMismatch");
+        SupplierPaymentSupport.RecalculateTotals(payment);
+        if (payment.TotalAmountMinor != correction.AmountMinor) throw new InvalidOperationException("SupplierPaymentBankCorrectionAmountMismatch");
+
+        var reconciliation = await SupplierPaymentBankCorrectionSupport.LoadAndValidateEvidenceAsync(_db, payment, correction.BankReconciliationMatchId, correction.BankStatementLineId, ct).ConfigureAwait(false);
+        var bankAccount = await _db.Set<BankAccount>()
+            .AsNoTracking()
+            .FirstOrDefaultAsync(x => x.Id == reconciliation.BankAccountId && x.BusinessId == payment.BusinessId && !x.IsDeleted && x.Status == BankAccountStatus.Active, ct)
+            .ConfigureAwait(false);
+        if (bankAccount is null || !bankAccount.FinancialAccountId.HasValue) throw new InvalidOperationException("SupplierPaymentBankCorrectionRequiresMappedBankAccount");
+        var bankFinancialAccount = await _db.Set<FinancialAccount>()
+            .AsNoTracking()
+            .FirstOrDefaultAsync(x => x.Id == bankAccount.FinancialAccountId.Value && x.BusinessId == payment.BusinessId && !x.IsDeleted, ct)
+            .ConfigureAwait(false);
+        if (bankFinancialAccount is null || bankFinancialAccount.Type != AccountType.Asset) throw new InvalidOperationException("SupplierPaymentBankCorrectionRequiresAssetBankAccount");
+
+        var accountResult = await _accounts.ResolveRequiredAccountsAsync(payment.BusinessId, RequiredRoles, ct).ConfigureAwait(false);
+        if (!accountResult.Succeeded) throw new InvalidOperationException(accountResult.Error);
+        var accounts = accountResult.Value!;
+        var postingResult = await _posting.PostAsync(new FinancePostingCommand(
+            payment.BusinessId,
+            _clock.UtcNow,
+            JournalEntryPostingKind.SupplierPaymentBankCorrection,
+            $"{PostingKeyPrefix}:{correction.Id}",
+            "SupplierPaymentBankCorrection",
+            correction.Id,
+            "Supplier payment bank correction",
+            [
+                new FinancePostingLineCommand(bankFinancialAccount.Id, correction.AmountMinor, 0, "Bank settlement correction"),
+                new FinancePostingLineCommand(accounts[FinancePostingAccountRole.CashClearing], 0, correction.AmountMinor, "Cash clearing reinstatement")
+            ],
+            SourceDocumentNumber: payment.PaymentNumber ?? payment.Reference,
+            PostingReason: correction.Reason,
+            MetadataJson: $$"""{"supplierPaymentBankCorrectionId":"{{correction.Id}}","supplierPaymentId":"{{payment.Id}}","bankReconciliationMatchId":"{{reconciliation.Id}}","originalBankSettlementJournalEntryId":"{{correction.OriginalBankSettlementJournalEntryId}}","supplierId":"{{payment.SupplierId}}","currency":"{{correction.Currency}}","amountMinor":{{correction.AmountMinor}},"correctionType":"{{correction.CorrectionType}}"}"""), ct).ConfigureAwait(false);
+        if (!postingResult.Succeeded) throw new InvalidOperationException(postingResult.Error);
+
+        correction.CorrectionJournalEntryId = postingResult.Value!.JournalEntryId;
+        correction.PostedAtUtc ??= _clock.UtcNow;
+        correction.Status = SupplierPaymentBankCorrectionStatus.Posted;
+        await _db.SaveChangesAsync(ct).ConfigureAwait(false);
+        await SupplierPaymentBankCorrectionSupport.RecordEvidenceAsync(_events, correction, "posted", AuditTrailAction.StatusChanged, _clock.UtcNow, ct).ConfigureAwait(false);
+    }
+}
+
+public sealed class CancelSupplierPaymentBankCorrectionHandler
+{
+    private readonly IAppDbContext _db;
+    private readonly IClock _clock;
+    private readonly BusinessEventService? _events;
+
+    public CancelSupplierPaymentBankCorrectionHandler(IAppDbContext db, IClock clock, BusinessEventService? events = null)
+    {
+        _db = db ?? throw new ArgumentNullException(nameof(db));
+        _clock = clock ?? throw new ArgumentNullException(nameof(clock));
+        _events = events;
+    }
+
+    public async Task HandleAsync(SupplierPaymentBankCorrectionActionDto dto, CancellationToken ct = default)
+    {
+        ArgumentNullException.ThrowIfNull(dto);
+        var correction = await SupplierPaymentBankCorrectionSupport.LoadForUpdateAsync(_db, dto.Id, dto.RowVersion, ct).ConfigureAwait(false);
+        if (correction.Status != SupplierPaymentBankCorrectionStatus.Draft) throw new InvalidOperationException("SupplierPaymentBankCorrectionNotCancellable");
+        correction.Status = SupplierPaymentBankCorrectionStatus.Cancelled;
+        correction.CancelledAtUtc = _clock.UtcNow;
+        await _db.SaveChangesAsync(ct).ConfigureAwait(false);
+        await SupplierPaymentBankCorrectionSupport.RecordEvidenceAsync(_events, correction, "cancelled", AuditTrailAction.StatusChanged, _clock.UtcNow, ct).ConfigureAwait(false);
+    }
+}
+
+internal static class SupplierPaymentBankCorrectionSupport
+{
+    public static void ValidateBankSettledPayment(SupplierPayment payment)
+    {
+        if (payment.Status != SupplierPaymentStatus.Posted) throw new InvalidOperationException("SupplierPaymentBankCorrectionRequiresPostedPayment");
+        if (!payment.PostingJournalEntryId.HasValue) throw new InvalidOperationException("SupplierPaymentPostingRequired");
+        if (!payment.BankSettledAtUtc.HasValue || !payment.BankSettlementJournalEntryId.HasValue || !payment.BankSettlementReconciliationMatchId.HasValue) throw new InvalidOperationException("SupplierPaymentBankCorrectionRequiresBankSettlement");
+        if (payment.ReversalJournalEntryId.HasValue || payment.ReversedAtUtc.HasValue) throw new InvalidOperationException("SupplierPaymentReversed");
+        SupplierPaymentSupport.RecalculateTotals(payment);
+        if (payment.TotalAmountMinor <= 0) throw new InvalidOperationException("SupplierPaymentAmountRequired");
+        if (payment.Allocations.Count == 0 || payment.Allocations.All(x => x.IsDeleted)) throw new InvalidOperationException("SupplierPaymentAllocationsRequired");
+    }
+
+    public static async Task<SupplierPaymentBankCorrection> LoadForUpdateAsync(IAppDbContext db, Guid id, byte[] rowVersion, CancellationToken ct)
+    {
+        if (id == Guid.Empty || rowVersion.Length == 0) throw new ArgumentException("SupplierPaymentBankCorrectionInvalidUpdate");
+        var correction = await db.Set<SupplierPaymentBankCorrection>().FirstOrDefaultAsync(x => x.Id == id && !x.IsDeleted, ct).ConfigureAwait(false);
+        if (correction is null) throw new InvalidOperationException("SupplierPaymentBankCorrectionNotFound");
+        if (!(correction.RowVersion ?? Array.Empty<byte>()).SequenceEqual(rowVersion)) throw new InvalidOperationException("ItemConcurrencyConflict");
+        return correction;
+    }
+
+    public static async Task<BankReconciliationMatch> LoadAndValidateEvidenceAsync(IAppDbContext db, SupplierPayment payment, Guid reconciliationId, Guid? bankStatementLineId, CancellationToken ct)
+    {
+        var reconciliation = await db.Set<BankReconciliationMatch>()
+            .Include(x => x.Lines)
+            .FirstOrDefaultAsync(x => x.Id == reconciliationId && !x.IsDeleted, ct)
+            .ConfigureAwait(false);
+        if (reconciliation is null) throw new InvalidOperationException("BankReconciliationNotFound");
+        if (reconciliation.Status != BankReconciliationMatchStatus.Matched) throw new InvalidOperationException("SupplierPaymentBankCorrectionRequiresMatchedReconciliation");
+        if (payment.BankSettlementReconciliationMatchId.HasValue && reconciliation.Id == payment.BankSettlementReconciliationMatchId.Value) throw new InvalidOperationException("SupplierPaymentBankCorrectionRequiresSeparateEvidence");
+        if (reconciliation.BusinessId != payment.BusinessId || !string.Equals(reconciliation.Currency, payment.Currency, StringComparison.OrdinalIgnoreCase)) throw new InvalidOperationException("SupplierPaymentBankCorrectionReconciliationMismatch");
+        if (reconciliation.DifferenceMinor != 0) throw new InvalidOperationException("SupplierPaymentBankCorrectionRequiresZeroDifference");
+        if (bankStatementLineId.HasValue && !reconciliation.Lines.Any(x => !x.IsDeleted && x.IsActive && x.BankStatementLineId == bankStatementLineId.Value)) throw new InvalidOperationException("SupplierPaymentBankCorrectionStatementLineMismatch");
+
+        var linkedAmount = reconciliation.Lines
+            .Where(x =>
+                !x.IsDeleted &&
+                x.IsActive &&
+                (x.JournalEntryId == payment.BankSettlementJournalEntryId ||
+                 (string.Equals(x.SourceEntityType, "SupplierPayment", StringComparison.OrdinalIgnoreCase) && x.SourceEntityId == payment.Id)))
+            .Sum(x => x.AmountMinor);
+        if (linkedAmount != payment.TotalAmountMinor) throw new InvalidOperationException("SupplierPaymentBankCorrectionRequiresFullSettlementEvidence");
+        return reconciliation;
+    }
+
+    public static async Task RecordEvidenceAsync(BusinessEventService? events, SupplierPaymentBankCorrection correction, string action, AuditTrailAction auditAction, DateTime now, CancellationToken ct)
+    {
+        if (events is null) return;
+        var payload = $$"""{"supplierPaymentBankCorrectionId":"{{correction.Id}}","supplierPaymentId":"{{correction.SupplierPaymentId}}","businessId":"{{correction.BusinessId}}","bankReconciliationMatchId":"{{correction.BankReconciliationMatchId}}","status":"{{correction.Status}}","correctionType":"{{correction.CorrectionType}}","currency":"{{correction.Currency}}","amountMinor":{{correction.AmountMinor}},"correctionJournalEntryId":"{{correction.CorrectionJournalEntryId}}"}""";
+        var eventResult = await events.AddEventAsync(new AddBusinessEventCommand(correction.BusinessId, "SupplierPaymentBankCorrection", correction.Id, $"payables.supplier_payment_bank_correction.{action}", $"payables.supplier_payment_bank_correction.{action}:{correction.Id}:{correction.Status}", now, null, BusinessEventSource.User, BusinessEventSeverity.Info, FoundationVisibility.Internal, $"Supplier payment bank correction {action}", null, null, null, payload), ct).ConfigureAwait(false);
+        if (!eventResult.Succeeded) throw new InvalidOperationException(eventResult.Error);
+        var auditResult = await events.AddAuditTrailAsync(new AddAuditTrailCommand(correction.BusinessId, "SupplierPaymentBankCorrection", correction.Id, auditAction, now, null, eventResult.Value, $"Supplier payment bank correction {action}", null, payload), ct).ConfigureAwait(false);
+        if (!auditResult.Succeeded) throw new InvalidOperationException(auditResult.Error);
     }
 }
 
@@ -418,7 +770,7 @@ internal static class SupplierPaymentSupport
     public static async Task RecordEvidenceAsync(BusinessEventService? events, SupplierPayment payment, string action, AuditTrailAction auditAction, DateTime now, CancellationToken ct)
     {
         if (events is null) return;
-        var payload = $$"""{"supplierPaymentId":"{{payment.Id}}","businessId":"{{payment.BusinessId}}","supplierId":"{{payment.SupplierId}}","status":"{{payment.Status}}","currency":"{{payment.Currency}}","totalAmountMinor":{{payment.TotalAmountMinor}},"allocationCount":{{payment.Allocations.Count(x => !x.IsDeleted)}}}""";
+        var payload = $$"""{"supplierPaymentId":"{{payment.Id}}","businessId":"{{payment.BusinessId}}","supplierId":"{{payment.SupplierId}}","status":"{{payment.Status}}","currency":"{{payment.Currency}}","totalAmountMinor":{{payment.TotalAmountMinor}},"allocationCount":{{payment.Allocations.Count(x => !x.IsDeleted)}},"bankSettlementReconciliationMatchId":"{{payment.BankSettlementReconciliationMatchId}}","bankSettlementJournalEntryId":"{{payment.BankSettlementJournalEntryId}}"}""";
         var eventResult = await events.AddEventAsync(new AddBusinessEventCommand(
             payment.BusinessId,
             "SupplierPayment",

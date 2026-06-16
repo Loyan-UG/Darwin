@@ -37,7 +37,9 @@ namespace Darwin.Domain.Enums
         Adjustment = 6,
         Import = 7,
         SupplierInvoicePosted = 8,
-        SupplierPaymentPosted = 9
+        SupplierPaymentPosted = 9,
+        SupplierPaymentBankSettled = 10,
+        SupplierPaymentBankCorrection = 11
     }
 
     /// <summary>
@@ -131,5 +133,58 @@ namespace Darwin.Domain.Enums
         Card = 2,
         DirectDebit = 3,
         Other = 4
+    }
+
+    public enum BankAccountStatus : short
+    {
+        Active = 0,
+        Archived = 1
+    }
+
+    public enum BankStatementImportStatus : short
+    {
+        Imported = 0,
+        Cancelled = 1
+    }
+
+    public enum BankStatementLineDirection : short
+    {
+        Debit = 0,
+        Credit = 1
+    }
+
+    public enum BankStatementLineReviewStatus : short
+    {
+        Unreviewed = 0,
+        Reviewed = 1,
+        Ignored = 2
+    }
+
+    public enum BankReconciliationMatchStatus : short
+    {
+        Draft = 0,
+        Matched = 1,
+        Cancelled = 2
+    }
+
+    public enum BankReconciliationSourceType : short
+    {
+        JournalEntry = 0,
+        SupplierPayment = 1,
+        CustomerPayment = 2,
+        Refund = 3
+    }
+
+    public enum SupplierPaymentBankCorrectionType : short
+    {
+        ReturnedTransfer = 0,
+        DuplicatePayment = 1
+    }
+
+    public enum SupplierPaymentBankCorrectionStatus : short
+    {
+        Draft = 0,
+        Posted = 1,
+        Cancelled = 2
     }
 }

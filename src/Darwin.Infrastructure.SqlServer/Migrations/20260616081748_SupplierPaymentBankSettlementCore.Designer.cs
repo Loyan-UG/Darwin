@@ -4,6 +4,7 @@ using Darwin.Infrastructure.Persistence.Db;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Darwin.Infrastructure.SqlServer.Migrations
 {
     [DbContext(typeof(DarwinDbContext))]
-    partial class DarwinDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260616081748_SupplierPaymentBankSettlementCore")]
+    partial class SupplierPaymentBankSettlementCore
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -1775,122 +1778,6 @@ namespace Darwin.Infrastructure.SqlServer.Migrations
                         .HasFilter("[IsDeleted] = 0");
 
                     b.ToTable("SupplierPaymentAllocations", "Billing");
-                });
-
-            modelBuilder.Entity("Darwin.Domain.Entities.Billing.SupplierPaymentBankCorrection", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<long>("AmountMinor")
-                        .HasColumnType("bigint");
-
-                    b.Property<Guid>("BankReconciliationMatchId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<Guid?>("BankStatementLineId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<Guid>("BusinessId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<DateTime?>("CancelledAtUtc")
-                        .HasColumnType("datetime2");
-
-                    b.Property<DateTime>("CorrectionDateUtc")
-                        .HasColumnType("datetime2");
-
-                    b.Property<Guid?>("CorrectionJournalEntryId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<string>("CorrectionType")
-                        .IsRequired()
-                        .HasMaxLength(64)
-                        .HasColumnType("nvarchar(64)");
-
-                    b.Property<DateTime>("CreatedAtUtc")
-                        .HasColumnType("datetime2");
-
-                    b.Property<Guid>("CreatedByUserId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<string>("Currency")
-                        .IsRequired()
-                        .HasMaxLength(3)
-                        .HasColumnType("nvarchar(3)");
-
-                    b.Property<string>("InternalNotes")
-                        .HasMaxLength(4000)
-                        .HasColumnType("nvarchar(4000)");
-
-                    b.Property<bool>("IsDeleted")
-                        .HasColumnType("bit");
-
-                    b.Property<string>("MetadataJson")
-                        .IsRequired()
-                        .HasMaxLength(4000)
-                        .HasColumnType("nvarchar(4000)");
-
-                    b.Property<DateTime?>("ModifiedAtUtc")
-                        .HasColumnType("datetime2");
-
-                    b.Property<Guid>("ModifiedByUserId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<Guid?>("OriginalBankSettlementJournalEntryId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<DateTime?>("PostedAtUtc")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("Reason")
-                        .IsRequired()
-                        .HasMaxLength(1000)
-                        .HasColumnType("nvarchar(1000)");
-
-                    b.Property<byte[]>("RowVersion")
-                        .IsConcurrencyToken()
-                        .IsRequired()
-                        .ValueGeneratedOnAddOrUpdate()
-                        .HasColumnType("rowversion");
-
-                    b.Property<string>("Status")
-                        .IsRequired()
-                        .HasMaxLength(64)
-                        .HasColumnType("nvarchar(64)");
-
-                    b.Property<Guid>("SupplierPaymentId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("BankReconciliationMatchId");
-
-                    b.HasIndex("BankStatementLineId");
-
-                    b.HasIndex("BusinessId");
-
-                    b.HasIndex("CorrectionDateUtc");
-
-                    b.HasIndex("CorrectionJournalEntryId");
-
-                    b.HasIndex("CorrectionType");
-
-                    b.HasIndex("OriginalBankSettlementJournalEntryId");
-
-                    b.HasIndex("PostedAtUtc");
-
-                    b.HasIndex("Status");
-
-                    b.HasIndex("SupplierPaymentId");
-
-                    b.HasIndex("SupplierPaymentId", "CorrectionType", "BankReconciliationMatchId")
-                        .IsUnique()
-                        .HasDatabaseName("UX_SupplierPaymentBankCorrections_Payment_Type_Reconciliation_Active")
-                        .HasFilter("[IsDeleted] = 0");
-
-                    b.ToTable("SupplierPaymentBankCorrections", "Billing");
                 });
 
             modelBuilder.Entity("Darwin.Domain.Entities.Businesses.Business", b =>
@@ -12036,26 +11923,6 @@ namespace Darwin.Infrastructure.SqlServer.Migrations
                         .WithMany("Allocations")
                         .HasForeignKey("SupplierPaymentId")
                         .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-                });
-
-            modelBuilder.Entity("Darwin.Domain.Entities.Billing.SupplierPaymentBankCorrection", b =>
-                {
-                    b.HasOne("Darwin.Domain.Entities.Billing.BankReconciliationMatch", null)
-                        .WithMany()
-                        .HasForeignKey("BankReconciliationMatchId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("Darwin.Domain.Entities.Billing.BankStatementLine", null)
-                        .WithMany()
-                        .HasForeignKey("BankStatementLineId")
-                        .OnDelete(DeleteBehavior.Restrict);
-
-                    b.HasOne("Darwin.Domain.Entities.Billing.SupplierPayment", null)
-                        .WithMany()
-                        .HasForeignKey("SupplierPaymentId")
-                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
                 });
 

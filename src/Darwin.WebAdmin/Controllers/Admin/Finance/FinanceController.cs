@@ -35,6 +35,26 @@ public sealed class FinanceController : AdminBaseController
     private readonly PostSupplierPaymentHandler _postSupplierPayment;
     private readonly CancelSupplierPaymentHandler _cancelSupplierPayment;
     private readonly ReverseSupplierPaymentHandler _reverseSupplierPayment;
+    private readonly SettleSupplierPaymentFromBankReconciliationHandler _settleSupplierPaymentFromBankReconciliation;
+    private readonly CreateSupplierPaymentBankCorrectionHandler _createSupplierPaymentBankCorrection;
+    private readonly PostSupplierPaymentBankCorrectionHandler _postSupplierPaymentBankCorrection;
+    private readonly CancelSupplierPaymentBankCorrectionHandler _cancelSupplierPaymentBankCorrection;
+    private readonly GetBankAccountsPageHandler _getBankAccounts;
+    private readonly GetBankAccountForEditHandler _getBankAccount;
+    private readonly CreateBankAccountHandler _createBankAccount;
+    private readonly UpdateBankAccountHandler _updateBankAccount;
+    private readonly ArchiveBankAccountHandler _archiveBankAccount;
+    private readonly GetBankStatementsPageHandler _getBankStatements;
+    private readonly GetBankStatementImportDetailHandler _getBankStatement;
+    private readonly CreateBankStatementImportHandler _createBankStatementImport;
+    private readonly CancelBankStatementImportHandler _cancelBankStatementImport;
+    private readonly GetBankReconciliationPageHandler _getBankReconciliation;
+    private readonly GetBankReconciliationDetailHandler _getBankReconciliationDetail;
+    private readonly GetBankReconciliationDraftHandler _getBankReconciliationDraft;
+    private readonly CreateBankReconciliationMatchHandler _createBankReconciliation;
+    private readonly UpdateBankReconciliationMatchHandler _updateBankReconciliation;
+    private readonly MarkBankReconciliationMatchedHandler _markBankReconciliationMatched;
+    private readonly CancelBankReconciliationMatchHandler _cancelBankReconciliation;
 
     public FinanceController(
         GetFinanceOverviewHandler getOverview,
@@ -60,7 +80,27 @@ public sealed class FinanceController : AdminBaseController
         UpdateSupplierPaymentHandler updateSupplierPayment,
         PostSupplierPaymentHandler postSupplierPayment,
         CancelSupplierPaymentHandler cancelSupplierPayment,
-        ReverseSupplierPaymentHandler reverseSupplierPayment)
+        ReverseSupplierPaymentHandler reverseSupplierPayment,
+        SettleSupplierPaymentFromBankReconciliationHandler settleSupplierPaymentFromBankReconciliation,
+        CreateSupplierPaymentBankCorrectionHandler createSupplierPaymentBankCorrection,
+        PostSupplierPaymentBankCorrectionHandler postSupplierPaymentBankCorrection,
+        CancelSupplierPaymentBankCorrectionHandler cancelSupplierPaymentBankCorrection,
+        GetBankAccountsPageHandler getBankAccounts,
+        GetBankAccountForEditHandler getBankAccount,
+        CreateBankAccountHandler createBankAccount,
+        UpdateBankAccountHandler updateBankAccount,
+        ArchiveBankAccountHandler archiveBankAccount,
+        GetBankStatementsPageHandler getBankStatements,
+        GetBankStatementImportDetailHandler getBankStatement,
+        CreateBankStatementImportHandler createBankStatementImport,
+        CancelBankStatementImportHandler cancelBankStatementImport,
+        GetBankReconciliationPageHandler getBankReconciliation,
+        GetBankReconciliationDetailHandler getBankReconciliationDetail,
+        GetBankReconciliationDraftHandler getBankReconciliationDraft,
+        CreateBankReconciliationMatchHandler createBankReconciliation,
+        UpdateBankReconciliationMatchHandler updateBankReconciliation,
+        MarkBankReconciliationMatchedHandler markBankReconciliationMatched,
+        CancelBankReconciliationMatchHandler cancelBankReconciliation)
     {
         _getOverview = getOverview ?? throw new ArgumentNullException(nameof(getOverview));
         _getReceivables = getReceivables ?? throw new ArgumentNullException(nameof(getReceivables));
@@ -86,6 +126,26 @@ public sealed class FinanceController : AdminBaseController
         _postSupplierPayment = postSupplierPayment ?? throw new ArgumentNullException(nameof(postSupplierPayment));
         _cancelSupplierPayment = cancelSupplierPayment ?? throw new ArgumentNullException(nameof(cancelSupplierPayment));
         _reverseSupplierPayment = reverseSupplierPayment ?? throw new ArgumentNullException(nameof(reverseSupplierPayment));
+        _settleSupplierPaymentFromBankReconciliation = settleSupplierPaymentFromBankReconciliation ?? throw new ArgumentNullException(nameof(settleSupplierPaymentFromBankReconciliation));
+        _createSupplierPaymentBankCorrection = createSupplierPaymentBankCorrection ?? throw new ArgumentNullException(nameof(createSupplierPaymentBankCorrection));
+        _postSupplierPaymentBankCorrection = postSupplierPaymentBankCorrection ?? throw new ArgumentNullException(nameof(postSupplierPaymentBankCorrection));
+        _cancelSupplierPaymentBankCorrection = cancelSupplierPaymentBankCorrection ?? throw new ArgumentNullException(nameof(cancelSupplierPaymentBankCorrection));
+        _getBankAccounts = getBankAccounts ?? throw new ArgumentNullException(nameof(getBankAccounts));
+        _getBankAccount = getBankAccount ?? throw new ArgumentNullException(nameof(getBankAccount));
+        _createBankAccount = createBankAccount ?? throw new ArgumentNullException(nameof(createBankAccount));
+        _updateBankAccount = updateBankAccount ?? throw new ArgumentNullException(nameof(updateBankAccount));
+        _archiveBankAccount = archiveBankAccount ?? throw new ArgumentNullException(nameof(archiveBankAccount));
+        _getBankStatements = getBankStatements ?? throw new ArgumentNullException(nameof(getBankStatements));
+        _getBankStatement = getBankStatement ?? throw new ArgumentNullException(nameof(getBankStatement));
+        _createBankStatementImport = createBankStatementImport ?? throw new ArgumentNullException(nameof(createBankStatementImport));
+        _cancelBankStatementImport = cancelBankStatementImport ?? throw new ArgumentNullException(nameof(cancelBankStatementImport));
+        _getBankReconciliation = getBankReconciliation ?? throw new ArgumentNullException(nameof(getBankReconciliation));
+        _getBankReconciliationDetail = getBankReconciliationDetail ?? throw new ArgumentNullException(nameof(getBankReconciliationDetail));
+        _getBankReconciliationDraft = getBankReconciliationDraft ?? throw new ArgumentNullException(nameof(getBankReconciliationDraft));
+        _createBankReconciliation = createBankReconciliation ?? throw new ArgumentNullException(nameof(createBankReconciliation));
+        _updateBankReconciliation = updateBankReconciliation ?? throw new ArgumentNullException(nameof(updateBankReconciliation));
+        _markBankReconciliationMatched = markBankReconciliationMatched ?? throw new ArgumentNullException(nameof(markBankReconciliationMatched));
+        _cancelBankReconciliation = cancelBankReconciliation ?? throw new ArgumentNullException(nameof(cancelBankReconciliation));
     }
 
     [HttpGet]
@@ -165,6 +225,136 @@ public sealed class FinanceController : AdminBaseController
     {
         var vm = await _getSupplierPayments.HandleAsync(businessId, q, status, page, pageSize, ct).ConfigureAwait(false);
         return RenderSupplierPayments(vm);
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> BankAccounts(
+        Guid? businessId = null,
+        string? q = null,
+        BankAccountStatus? status = null,
+        int page = 1,
+        int pageSize = 20,
+        CancellationToken ct = default)
+    {
+        var vm = await _getBankAccounts.HandleAsync(businessId, q, status, page, pageSize, ct).ConfigureAwait(false);
+        return RenderBankAccounts(vm);
+    }
+
+    [HttpGet]
+    public IActionResult CreateBankAccount(Guid? businessId = null)
+    {
+        var vm = new BankAccountEditDto
+        {
+            BusinessId = businessId ?? Guid.Empty,
+            Currency = "EUR",
+            MetadataJson = "{}"
+        };
+        return RenderBankAccountEditor(vm);
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> EditBankAccount(Guid id, CancellationToken ct = default)
+    {
+        var vm = await _getBankAccount.HandleAsync(id, ct).ConfigureAwait(false);
+        if (vm is null)
+        {
+            SetErrorMessage("BankAccountNotFound");
+            return RedirectOrHtmx(nameof(BankAccounts), new { });
+        }
+
+        return RenderBankAccountEditor(vm);
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> BankStatements(
+        Guid? businessId = null,
+        Guid? bankAccountId = null,
+        string? q = null,
+        BankStatementImportStatus? status = null,
+        int page = 1,
+        int pageSize = 20,
+        CancellationToken ct = default)
+    {
+        var vm = await _getBankStatements.HandleAsync(businessId, bankAccountId, q, status, page, pageSize, ct).ConfigureAwait(false);
+        return RenderBankStatements(vm);
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> BankReconciliation(
+        Guid? businessId = null,
+        Guid? bankAccountId = null,
+        string? q = null,
+        BankReconciliationMatchStatus? status = null,
+        int page = 1,
+        int pageSize = 20,
+        CancellationToken ct = default)
+    {
+        var vm = await _getBankReconciliation.HandleAsync(businessId, bankAccountId, q, status, page, pageSize, ct).ConfigureAwait(false);
+        return RenderBankReconciliation(vm);
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> BankReconciliationMatch(Guid id, CancellationToken ct = default)
+    {
+        var vm = await _getBankReconciliationDetail.HandleAsync(id, ct).ConfigureAwait(false);
+        if (vm is null)
+        {
+            SetErrorMessage("BankReconciliationNotFound");
+            return RedirectOrHtmx(nameof(BankReconciliation), new { });
+        }
+
+        return RenderBankReconciliationDetail(vm);
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> BankStatement(Guid id, CancellationToken ct = default)
+    {
+        var vm = await _getBankStatement.HandleAsync(id, ct).ConfigureAwait(false);
+        if (vm is null)
+        {
+            SetErrorMessage("BankStatementImportNotFound");
+            return RedirectOrHtmx(nameof(BankStatements), new { });
+        }
+
+        return RenderBankStatementDetail(vm);
+    }
+
+    [HttpGet]
+    public IActionResult CreateBankStatement(Guid? businessId = null, Guid? bankAccountId = null)
+    {
+        var vm = new BankStatementImportDetailDto
+        {
+            BusinessId = businessId ?? Guid.Empty,
+            BankAccountId = bankAccountId ?? Guid.Empty,
+            PeriodStartUtc = DateTime.UtcNow.Date,
+            PeriodEndUtc = DateTime.UtcNow.Date.AddDays(1),
+            MetadataJson = "{}",
+            Lines =
+            [
+                new BankStatementLineDto { TransactionDateUtc = DateTime.UtcNow.Date, Currency = "EUR", AmountMinor = 1 }
+            ]
+        };
+        return RenderBankStatementEditor(vm);
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> CreateBankReconciliation(Guid? businessId = null, Guid? bankAccountId = null, CancellationToken ct = default)
+    {
+        var vm = await _getBankReconciliationDraft.HandleAsync(businessId, bankAccountId, ct).ConfigureAwait(false);
+        return RenderBankReconciliationEditor(vm);
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> EditBankReconciliation(Guid id, CancellationToken ct = default)
+    {
+        var vm = await _getBankReconciliationDetail.HandleAsync(id, ct).ConfigureAwait(false);
+        if (vm is null)
+        {
+            SetErrorMessage("BankReconciliationNotFound");
+            return RedirectOrHtmx(nameof(BankReconciliation), new { });
+        }
+
+        return RenderBankReconciliationEditor(vm);
     }
 
     [HttpGet]
@@ -331,6 +521,159 @@ public sealed class FinanceController : AdminBaseController
 
     [HttpPost]
     [ValidateAntiForgeryToken]
+    public async Task<IActionResult> CreateBankAccount(BankAccountEditDto dto, CancellationToken ct = default)
+    {
+        try
+        {
+            var id = await _createBankAccount.HandleAsync(dto, ct).ConfigureAwait(false);
+            SetSuccessMessage("BankAccountCreated");
+            return RedirectOrHtmx(nameof(EditBankAccount), new { id });
+        }
+        catch (Exception ex) when (ex is InvalidOperationException or ArgumentException)
+        {
+            SetErrorMessage("BankAccountCreateFailed");
+            return RenderBankAccountEditor(dto);
+        }
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> EditBankAccount(BankAccountEditDto dto, CancellationToken ct = default)
+    {
+        try
+        {
+            await _updateBankAccount.HandleAsync(dto, ct).ConfigureAwait(false);
+            SetSuccessMessage("BankAccountUpdated");
+            return RedirectOrHtmx(nameof(BankAccounts), new { businessId = dto.BusinessId });
+        }
+        catch (Exception ex) when (ex is InvalidOperationException or ArgumentException)
+        {
+            SetErrorMessage("BankAccountUpdateFailed");
+            return RenderBankAccountEditor(dto);
+        }
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> ArchiveBankAccount(BankStatementImportLifecycleActionDto dto, Guid? businessId = null, CancellationToken ct = default)
+    {
+        try
+        {
+            await _archiveBankAccount.HandleAsync(dto, ct).ConfigureAwait(false);
+            SetSuccessMessage("BankAccountArchived");
+        }
+        catch (Exception ex) when (ex is InvalidOperationException or ArgumentException)
+        {
+            SetErrorMessage("BankAccountArchiveFailed");
+        }
+
+        return RedirectOrHtmx(nameof(BankAccounts), new { businessId });
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> CreateBankStatement(BankStatementImportDetailDto dto, CancellationToken ct = default)
+    {
+        try
+        {
+            var id = await _createBankStatementImport.HandleAsync(dto, ct).ConfigureAwait(false);
+            SetSuccessMessage("BankStatementImported");
+            return RedirectOrHtmx(nameof(BankStatement), new { id });
+        }
+        catch (Exception ex) when (ex is InvalidOperationException or ArgumentException)
+        {
+            SetErrorMessage("BankStatementImportFailed");
+            return RenderBankStatementEditor(dto);
+        }
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> CancelBankStatement(BankStatementImportLifecycleActionDto dto, Guid? businessId = null, Guid? bankAccountId = null, CancellationToken ct = default)
+    {
+        try
+        {
+            await _cancelBankStatementImport.HandleAsync(dto, ct).ConfigureAwait(false);
+            SetSuccessMessage("BankStatementCancelled");
+        }
+        catch (Exception ex) when (ex is InvalidOperationException or ArgumentException)
+        {
+            SetErrorMessage("BankStatementCancelFailed");
+        }
+
+        return RedirectOrHtmx(nameof(BankStatements), new { businessId, bankAccountId });
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> CreateBankReconciliation(BankReconciliationEditDto dto, CancellationToken ct = default)
+    {
+        try
+        {
+            var id = await _createBankReconciliation.HandleAsync(dto, ct).ConfigureAwait(false);
+            SetSuccessMessage("BankReconciliationCreated");
+            return RedirectOrHtmx(nameof(BankReconciliationMatch), new { id });
+        }
+        catch (Exception ex) when (ex is InvalidOperationException or ArgumentException)
+        {
+            SetErrorMessage("BankReconciliationCreateFailed");
+            return RenderBankReconciliationEditor(dto);
+        }
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> EditBankReconciliation(BankReconciliationEditDto dto, CancellationToken ct = default)
+    {
+        try
+        {
+            await _updateBankReconciliation.HandleAsync(dto, ct).ConfigureAwait(false);
+            SetSuccessMessage("BankReconciliationUpdated");
+            return RedirectOrHtmx(nameof(BankReconciliationMatch), new { id = dto.Id });
+        }
+        catch (Exception ex) when (ex is InvalidOperationException or ArgumentException)
+        {
+            SetErrorMessage("BankReconciliationUpdateFailed");
+            return RenderBankReconciliationEditor(dto);
+        }
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> MarkBankReconciliationMatched(BankReconciliationLifecycleActionDto dto, CancellationToken ct = default)
+    {
+        try
+        {
+            await _markBankReconciliationMatched.HandleAsync(dto, ct).ConfigureAwait(false);
+            SetSuccessMessage("BankReconciliationMatched");
+        }
+        catch (Exception ex) when (ex is InvalidOperationException or ArgumentException)
+        {
+            SetErrorMessage("BankReconciliationMatchFailed");
+        }
+
+        return RedirectOrHtmx(nameof(BankReconciliationMatch), new { id = dto.Id });
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> CancelBankReconciliation(BankReconciliationLifecycleActionDto dto, CancellationToken ct = default)
+    {
+        try
+        {
+            await _cancelBankReconciliation.HandleAsync(dto, ct).ConfigureAwait(false);
+            SetSuccessMessage("BankReconciliationCancelled");
+        }
+        catch (Exception ex) when (ex is InvalidOperationException or ArgumentException)
+        {
+            SetErrorMessage("BankReconciliationCancelFailed");
+        }
+
+        return RedirectOrHtmx(nameof(BankReconciliationMatch), new { id = dto.Id });
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
     public async Task<IActionResult> UpdateSupplierInvoiceLifecycle(SupplierInvoiceLifecycleActionDto dto, CancellationToken ct = default)
     {
         try
@@ -412,6 +755,74 @@ public sealed class FinanceController : AdminBaseController
         }
 
         return RedirectOrHtmx(nameof(SupplierPayment), new { id = dto.Id });
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> SettleSupplierPaymentFromBankReconciliation(SupplierPaymentBankSettlementActionDto dto, CancellationToken ct = default)
+    {
+        try
+        {
+            await _settleSupplierPaymentFromBankReconciliation.HandleAsync(dto, ct).ConfigureAwait(false);
+            SetSuccessMessage("SupplierPaymentBankSettled");
+        }
+        catch (Exception ex) when (ex is InvalidOperationException or ArgumentException)
+        {
+            SetErrorMessage("SupplierPaymentBankSettlementFailed");
+        }
+
+        return RedirectOrHtmx(nameof(SupplierPayment), new { id = dto.Id });
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> CreateSupplierPaymentBankCorrection(SupplierPaymentBankCorrectionCreateDto dto, CancellationToken ct = default)
+    {
+        try
+        {
+            await _createSupplierPaymentBankCorrection.HandleAsync(dto, ct).ConfigureAwait(false);
+            SetSuccessMessage("SupplierPaymentBankCorrectionCreated");
+        }
+        catch (Exception ex) when (ex is InvalidOperationException or ArgumentException)
+        {
+            SetErrorMessage("SupplierPaymentBankCorrectionCreateFailed");
+        }
+
+        return RedirectOrHtmx(nameof(SupplierPayment), new { id = dto.SupplierPaymentId });
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> PostSupplierPaymentBankCorrection(SupplierPaymentBankCorrectionActionDto dto, Guid supplierPaymentId, CancellationToken ct = default)
+    {
+        try
+        {
+            await _postSupplierPaymentBankCorrection.HandleAsync(dto, ct).ConfigureAwait(false);
+            SetSuccessMessage("SupplierPaymentBankCorrectionPosted");
+        }
+        catch (Exception ex) when (ex is InvalidOperationException or ArgumentException)
+        {
+            SetErrorMessage("SupplierPaymentBankCorrectionPostFailed");
+        }
+
+        return RedirectOrHtmx(nameof(SupplierPayment), new { id = supplierPaymentId });
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> CancelSupplierPaymentBankCorrection(SupplierPaymentBankCorrectionActionDto dto, Guid supplierPaymentId, CancellationToken ct = default)
+    {
+        try
+        {
+            await _cancelSupplierPaymentBankCorrection.HandleAsync(dto, ct).ConfigureAwait(false);
+            SetSuccessMessage("SupplierPaymentBankCorrectionCancelled");
+        }
+        catch (Exception ex) when (ex is InvalidOperationException or ArgumentException)
+        {
+            SetErrorMessage("SupplierPaymentBankCorrectionCancelFailed");
+        }
+
+        return RedirectOrHtmx(nameof(SupplierPayment), new { id = supplierPaymentId });
     }
 
     [HttpPost]
@@ -556,6 +967,56 @@ public sealed class FinanceController : AdminBaseController
         return View("~/Views/Finance/SupplierPayments.cshtml", vm);
     }
 
+    private IActionResult RenderBankAccounts(object vm)
+    {
+        if (IsHtmxRequest())
+        {
+            return PartialView("~/Views/Finance/BankAccounts.cshtml", vm);
+        }
+
+        return View("~/Views/Finance/BankAccounts.cshtml", vm);
+    }
+
+    private IActionResult RenderBankStatements(object vm)
+    {
+        if (IsHtmxRequest())
+        {
+            return PartialView("~/Views/Finance/BankStatements.cshtml", vm);
+        }
+
+        return View("~/Views/Finance/BankStatements.cshtml", vm);
+    }
+
+    private IActionResult RenderBankReconciliation(object vm)
+    {
+        if (IsHtmxRequest())
+        {
+            return PartialView("~/Views/Finance/BankReconciliation.cshtml", vm);
+        }
+
+        return View("~/Views/Finance/BankReconciliation.cshtml", vm);
+    }
+
+    private IActionResult RenderBankStatementDetail(object vm)
+    {
+        if (IsHtmxRequest())
+        {
+            return PartialView("~/Views/Finance/BankStatement.cshtml", vm);
+        }
+
+        return View("~/Views/Finance/BankStatement.cshtml", vm);
+    }
+
+    private IActionResult RenderBankReconciliationDetail(object vm)
+    {
+        if (IsHtmxRequest())
+        {
+            return PartialView("~/Views/Finance/BankReconciliationMatch.cshtml", vm);
+        }
+
+        return View("~/Views/Finance/BankReconciliationMatch.cshtml", vm);
+    }
+
     private IActionResult RenderSupplierInvoiceDetail(object vm)
     {
         if (IsHtmxRequest())
@@ -600,6 +1061,43 @@ public sealed class FinanceController : AdminBaseController
         return View("~/Views/Finance/SupplierPaymentEditor.cshtml", vm);
     }
 
+    private IActionResult RenderBankAccountEditor(BankAccountEditDto vm)
+    {
+        if (IsHtmxRequest())
+        {
+            return PartialView("~/Views/Finance/BankAccountEditor.cshtml", vm);
+        }
+
+        return View("~/Views/Finance/BankAccountEditor.cshtml", vm);
+    }
+
+    private IActionResult RenderBankStatementEditor(BankStatementImportDetailDto vm)
+    {
+        while (vm.Lines.Count < 5)
+        {
+            vm.Lines.Add(new BankStatementLineDto { Currency = string.IsNullOrWhiteSpace(vm.Lines.FirstOrDefault()?.Currency) ? "EUR" : vm.Lines.First().Currency });
+        }
+
+        if (IsHtmxRequest())
+        {
+            return PartialView("~/Views/Finance/BankStatementEditor.cshtml", vm);
+        }
+
+        return View("~/Views/Finance/BankStatementEditor.cshtml", vm);
+    }
+
+    private IActionResult RenderBankReconciliationEditor(BankReconciliationEditDto vm)
+    {
+        EnsureBankReconciliationEditorRows(vm);
+
+        if (IsHtmxRequest())
+        {
+            return PartialView("~/Views/Finance/BankReconciliationEditor.cshtml", vm);
+        }
+
+        return View("~/Views/Finance/BankReconciliationEditor.cshtml", vm);
+    }
+
     private static void EnsureSupplierInvoiceEditorRows(SupplierInvoiceEditDto vm)
     {
         while (vm.Lines.Count < 5)
@@ -613,6 +1111,14 @@ public sealed class FinanceController : AdminBaseController
         while (vm.Allocations.Count < 5)
         {
             vm.Allocations.Add(new SupplierPaymentAllocationDto());
+        }
+    }
+
+    private static void EnsureBankReconciliationEditorRows(BankReconciliationEditDto vm)
+    {
+        while (vm.Lines.Count < 6)
+        {
+            vm.Lines.Add(new BankReconciliationLineDto());
         }
     }
 

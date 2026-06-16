@@ -511,6 +511,87 @@ namespace Darwin.Domain.Entities.Billing
         public string MetadataJson { get; set; } = "{}";
     }
 
+    public sealed class BankAccount : BaseEntity
+    {
+        public Guid BusinessId { get; set; }
+        public Guid? FinancialAccountId { get; set; }
+        public string Code { get; set; } = string.Empty;
+        public string DisplayName { get; set; } = string.Empty;
+        public string? BankName { get; set; }
+        public string Currency { get; set; } = DomainDefaults.DefaultCurrency;
+        public string? MaskedAccountIdentifier { get; set; }
+        public BankAccountStatus Status { get; set; } = BankAccountStatus.Active;
+        public bool IsDefault { get; set; }
+        public string MetadataJson { get; set; } = "{}";
+    }
+
+    public sealed class BankStatementImport : BaseEntity
+    {
+        public Guid BusinessId { get; set; }
+        public Guid BankAccountId { get; set; }
+        public string StatementReference { get; set; } = string.Empty;
+        public DateTime PeriodStartUtc { get; set; }
+        public DateTime PeriodEndUtc { get; set; }
+        public DateTime ImportedAtUtc { get; set; }
+        public BankStatementImportStatus Status { get; set; } = BankStatementImportStatus.Imported;
+        public int LineCount { get; set; }
+        public long DebitTotalMinor { get; set; }
+        public long CreditTotalMinor { get; set; }
+        public string MetadataJson { get; set; } = "{}";
+        public List<BankStatementLine> Lines { get; set; } = new();
+    }
+
+    public sealed class BankStatementLine : BaseEntity
+    {
+        public Guid BusinessId { get; set; }
+        public Guid BankAccountId { get; set; }
+        public Guid BankStatementImportId { get; set; }
+        public DateTime TransactionDateUtc { get; set; }
+        public DateTime? ValueDateUtc { get; set; }
+        public BankStatementLineDirection Direction { get; set; } = BankStatementLineDirection.Debit;
+        public long AmountMinor { get; set; }
+        public string Currency { get; set; } = DomainDefaults.DefaultCurrency;
+        public string? CounterpartyName { get; set; }
+        public string? CounterpartyReference { get; set; }
+        public string? RemittanceInformation { get; set; }
+        public string NormalizedIdentityKey { get; set; } = string.Empty;
+        public BankStatementLineReviewStatus ReviewStatus { get; set; } = BankStatementLineReviewStatus.Unreviewed;
+        public string MetadataJson { get; set; } = "{}";
+    }
+
+    public sealed class BankReconciliationMatch : BaseEntity
+    {
+        public Guid BusinessId { get; set; }
+        public Guid BankAccountId { get; set; }
+        public string? MatchNumber { get; set; }
+        public BankReconciliationMatchStatus Status { get; set; } = BankReconciliationMatchStatus.Draft;
+        public DateTime MatchDateUtc { get; set; }
+        public string Currency { get; set; } = DomainDefaults.DefaultCurrency;
+        public long BankTotalMinor { get; set; }
+        public long FinanceTotalMinor { get; set; }
+        public long DifferenceMinor { get; set; }
+        public DateTime? MatchedAtUtc { get; set; }
+        public DateTime? CancelledAtUtc { get; set; }
+        public string? ReviewNotes { get; set; }
+        public string MetadataJson { get; set; } = "{}";
+        public List<BankReconciliationMatchLine> Lines { get; set; } = new();
+    }
+
+    public sealed class BankReconciliationMatchLine : BaseEntity
+    {
+        public Guid BankReconciliationMatchId { get; set; }
+        public Guid BankStatementLineId { get; set; }
+        public Guid? JournalEntryId { get; set; }
+        public BankReconciliationSourceType? SourceType { get; set; }
+        public string? SourceEntityType { get; set; }
+        public Guid? SourceEntityId { get; set; }
+        public BankStatementLineDirection Direction { get; set; } = BankStatementLineDirection.Debit;
+        public long AmountMinor { get; set; }
+        public string? Memo { get; set; }
+        public int SortOrder { get; set; }
+        public bool IsActive { get; set; } = true;
+    }
+
     /// <summary>
     /// Represents a formal supplier invoice used as the payables source before posting.
     /// </summary>
@@ -584,6 +665,10 @@ namespace Darwin.Domain.Entities.Billing
         public Guid? ReversalJournalEntryId { get; set; }
         public DateTime? ReversedAtUtc { get; set; }
         public string? ReversalReason { get; set; }
+        public DateTime? BankSettledAtUtc { get; set; }
+        public Guid? BankSettlementJournalEntryId { get; set; }
+        public Guid? BankSettlementReconciliationMatchId { get; set; }
+        public string? BankSettlementNotes { get; set; }
         public DateTime? CancelledAtUtc { get; set; }
         public string? InternalNotes { get; set; }
         public string MetadataJson { get; set; } = "{}";
@@ -599,6 +684,29 @@ namespace Darwin.Domain.Entities.Billing
         public Guid SupplierInvoiceId { get; set; }
         public long AmountMinor { get; set; }
         public string? Memo { get; set; }
+    }
+
+    /// <summary>
+    /// Represents evidence-backed correction for bank-settled supplier payments.
+    /// </summary>
+    public sealed class SupplierPaymentBankCorrection : BaseEntity
+    {
+        public Guid BusinessId { get; set; }
+        public Guid SupplierPaymentId { get; set; }
+        public Guid BankReconciliationMatchId { get; set; }
+        public Guid? BankStatementLineId { get; set; }
+        public Guid? OriginalBankSettlementJournalEntryId { get; set; }
+        public Guid? CorrectionJournalEntryId { get; set; }
+        public SupplierPaymentBankCorrectionType CorrectionType { get; set; } = SupplierPaymentBankCorrectionType.ReturnedTransfer;
+        public SupplierPaymentBankCorrectionStatus Status { get; set; } = SupplierPaymentBankCorrectionStatus.Draft;
+        public DateTime CorrectionDateUtc { get; set; }
+        public DateTime? PostedAtUtc { get; set; }
+        public DateTime? CancelledAtUtc { get; set; }
+        public string Currency { get; set; } = DomainDefaults.DefaultCurrency;
+        public long AmountMinor { get; set; }
+        public string Reason { get; set; } = string.Empty;
+        public string? InternalNotes { get; set; }
+        public string MetadataJson { get; set; } = "{}";
     }
 
     /// <summary>

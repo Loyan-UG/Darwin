@@ -1,0 +1,51 @@
+@model Darwin.Application.Billing.DTOs.BankStatementImportDetailDto
+@using Darwin.Domain.Enums
+@inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
+
+<section id="finance-bank-statement-detail-shell" class="container-fluid py-3">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <div>
+            <h1 class="mb-1">@Model.StatementReference</h1>
+            <div class="text-muted">@Model.BankAccountLabel</div>
+        </div>
+        <a asp-action="BankStatements" asp-route-businessId="@Model.BusinessId" asp-route-bankAccountId="@Model.BankAccountId" class="btn btn-outline-secondary">@T.T("Back")</a>
+    </div>
+
+    <div class="row g-3 mb-3">
+        <div class="col-md-3"><div class="border rounded p-3"><div class="text-muted small">@T.T("Status")</div><strong>@T.T(Model.Status.ToString())</strong></div></div>
+        <div class="col-md-3"><div class="border rounded p-3"><div class="text-muted small">@T.T("Lines")</div><strong>@Model.LineCount</strong></div></div>
+        <div class="col-md-3"><div class="border rounded p-3"><div class="text-muted small">@T.T("Debit")</div><strong>@Model.DebitTotalMinor</strong></div></div>
+        <div class="col-md-3"><div class="border rounded p-3"><div class="text-muted small">@T.T("Credit")</div><strong>@Model.CreditTotalMinor</strong></div></div>
+    </div>
+
+    @if (Model.Status == BankStatementImportStatus.Imported)
+    {
+        <form method="post" asp-action="CancelBankStatement" class="mb-3">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="Id" value="@Model.Id" />
+            <input type="hidden" name="businessId" value="@Model.BusinessId" />
+            <input type="hidden" name="bankAccountId" value="@Model.BankAccountId" />
+            <input type="hidden" name="RowVersion" value="@Convert.ToBase64String(Model.RowVersion)" />
+            <button type="submit" class="btn btn-outline-danger">@T.T("CancelBankStatement")</button>
+        </form>
+    }
+
+    <div class="table-responsive">
+        <table class="table table-sm align-middle">
+            <thead><tr><th>@T.T("Date")</th><th>@T.T("Direction")</th><th>@T.T("Amount")</th><th>@T.T("Counterparty")</th><th>@T.T("Remittance")</th><th>@T.T("Review")</th></tr></thead>
+            <tbody>
+            @foreach (var line in Model.Lines)
+            {
+                <tr>
+                    <td>@line.TransactionDateUtc.ToString("yyyy-MM-dd")</td>
+                    <td>@T.T(line.Direction.ToString())</td>
+                    <td>@line.AmountMinor @line.Currency</td>
+                    <td>@line.CounterpartyName <div class="text-muted small">@line.CounterpartyReference</div></td>
+                    <td>@line.RemittanceInformation</td>
+                    <td>@T.T(line.ReviewStatus.ToString())</td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    </div>
+</section>

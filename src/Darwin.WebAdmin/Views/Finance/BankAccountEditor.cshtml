@@ -1,0 +1,59 @@
+@model Darwin.Application.Billing.DTOs.BankAccountEditDto
+@inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
+@{
+    ViewData["Title"] = Model.Id == Guid.Empty ? T.T("CreateBankAccount") : T.T("EditBankAccount");
+    var actionName = Model.Id == Guid.Empty ? "CreateBankAccount" : "EditBankAccount";
+}
+
+<section id="finance-bank-account-editor-shell" class="container-fluid py-3">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h1 class="mb-0">@ViewData["Title"]</h1>
+        <a asp-action="BankAccounts" asp-route-businessId="@Model.BusinessId" class="btn btn-outline-secondary">@T.T("Back")</a>
+    </div>
+
+    <form method="post" asp-action="@actionName" class="row g-3">
+        @Html.AntiForgeryToken()
+        <input type="hidden" asp-for="Id" />
+        <input type="hidden" asp-for="RowVersion" value="@Convert.ToBase64String(Model.RowVersion)" />
+        <input type="hidden" asp-for="Status" />
+        <div class="col-md-3">
+            <label class="form-label">@T.T("BusinessId")</label>
+            <input asp-for="BusinessId" class="form-control" />
+        </div>
+        <div class="col-md-3">
+            <label class="form-label">@T.T("FinancialAccountId")</label>
+            <input asp-for="FinancialAccountId" class="form-control" />
+        </div>
+        <div class="col-md-3">
+            <label class="form-label">@T.T("Code")</label>
+            <input asp-for="Code" class="form-control" />
+        </div>
+        <div class="col-md-3">
+            <label class="form-label">@T.T("Currency")</label>
+            <input asp-for="Currency" class="form-control" maxlength="3" />
+        </div>
+        <div class="col-md-4">
+            <label class="form-label">@T.T("Name")</label>
+            <input asp-for="DisplayName" class="form-control" />
+        </div>
+        <div class="col-md-4">
+            <label class="form-label">@T.T("Bank")</label>
+            <input asp-for="BankName" class="form-control" />
+        </div>
+        <div class="col-md-4">
+            <label class="form-label">@T.T("MaskedAccountIdentifier")</label>
+            <input asp-for="MaskedAccountIdentifier" class="form-control" />
+        </div>
+        <div class="col-md-3 form-check ms-2">
+            <input asp-for="IsDefault" class="form-check-input" />
+            <label class="form-check-label">@T.T("Default")</label>
+        </div>
+        <div class="col-12">
+            <label class="form-label">@T.T("Metadata")</label>
+            <textarea asp-for="MetadataJson" class="form-control" rows="4"></textarea>
+        </div>
+        <div class="col-12">
+            <button class="btn btn-primary" type="submit">@T.T("Save")</button>
+        </div>
+    </form>
+</section>

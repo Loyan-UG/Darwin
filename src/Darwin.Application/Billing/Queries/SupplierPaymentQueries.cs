@@ -68,6 +68,7 @@ public sealed class GetSupplierPaymentsPageHandler
                 TotalAmountMinor = x.TotalAmountMinor,
                 AllocationCount = x.Allocations.Count(a => !a.IsDeleted),
                 Reference = x.Reference ?? string.Empty,
+                BankSettledAtUtc = x.BankSettledAtUtc,
                 RowVersion = x.RowVersion
             })
             .ToListAsync(ct)
@@ -99,6 +100,9 @@ public sealed class GetSupplierPaymentDetailHandler
             .ToDictionaryAsync(x => x.Id, ct)
             .ConfigureAwait(false);
         var alreadyPaid = await SupplierPaymentQuerySupport.GetPostedPaidByInvoiceAsync(_db, allocationInvoiceIds, payment.Id, ct).ConfigureAwait(false);
+        var settlementCandidates = await SupplierPaymentQuerySupport.GetBankSettlementCandidatesAsync(_db, payment, ct).ConfigureAwait(false);
+        var correctionCandidates = await SupplierPaymentQuerySupport.GetBankCorrectionCandidatesAsync(_db, payment, ct).ConfigureAwait(false);
+        var corrections = await SupplierPaymentQuerySupport.GetBankCorrectionsAsync(_db, payment.Id, ct).ConfigureAwait(false);
 
         return new SupplierPaymentEditDto
         {
@@ -118,9 +122,16 @@ public sealed class GetSupplierPaymentDetailHandler
             ReversalJournalEntryId = payment.ReversalJournalEntryId,
             ReversedAtUtc = payment.ReversedAtUtc,
             ReversalReason = payment.ReversalReason,
+            BankSettlementJournalEntryId = payment.BankSettlementJournalEntryId,
+            BankSettlementReconciliationMatchId = payment.BankSettlementReconciliationMatchId,
+            BankSettledAtUtc = payment.BankSettledAtUtc,
+            BankSettlementNotes = payment.BankSettlementNotes,
             CancelledAtUtc = payment.CancelledAtUtc,
             InternalNotes = payment.InternalNotes,
             MetadataJson = payment.MetadataJson,
+            BankSettlementCandidates = settlementCandidates,
+            BankCorrectionCandidates = correctionCandidates,
+            BankCorrections = corrections,
             Allocations = payment.Allocations.Where(x => !x.IsDeleted).OrderBy(x => x.CreatedAtUtc).Select(allocation =>
             {
                 invoices.TryGetValue(allocation.SupplierInvoiceId, out var invoice);
@@ -211,5 +222,165 @@ internal static class SupplierPaymentQuerySupport
             .Select(x => new { SupplierInvoiceId = x.Key, AmountMinor = x.Sum(a => a.AmountMinor) })
             .ToDictionaryAsync(x => x.SupplierInvoiceId, x => x.AmountMinor, ct)
             .ConfigureAwait(false);
+    }
+
+    public static async Task<List<SupplierPaymentBankSettlementCandidateDto>> GetBankSettlementCandidatesAsync(IAppDbContext db, SupplierPayment payment, CancellationToken ct)
+    {
+        if (payment.Id == Guid.Empty ||
+            payment.Status != SupplierPaymentStatus.Posted ||
+            payment.PostingJournalEntryId is null ||
+            payment.BankSettledAtUtc.HasValue ||
+            payment.ReversalJournalEntryId.HasValue)
+        {
+            return new List<SupplierPaymentBankSettlementCandidateDto>();
+        }
+
+        var rows = await db.Set<BankReconciliationMatch>()
+            .AsNoTracking()
+            .Where(match =>
+                match.BusinessId == payment.BusinessId &&
+                match.Status == BankReconciliationMatchStatus.Matched &&
+                match.Currency == payment.Currency &&
+                match.DifferenceMinor == 0 &&
+                !match.IsDeleted &&
+                db.Set<BankAccount>().Any(account =>
+                    account.Id == match.BankAccountId &&
+                    account.BusinessId == payment.BusinessId &&
+                    account.Status == BankAccountStatus.Active &&
+                    !account.IsDeleted &&
+                    account.FinancialAccountId.HasValue &&
+                    db.Set<FinancialAccount>().Any(financialAccount =>
+                        financialAccount.Id == account.FinancialAccountId.Value &&
+                        financialAccount.BusinessId == payment.BusinessId &&
+                        financialAccount.Type == AccountType.Asset &&
+                        !financialAccount.IsDeleted)) &&
+                match.Lines.Any(line =>
+                    !line.IsDeleted &&
+                    line.IsActive &&
+                    line.JournalEntryId == payment.PostingJournalEntryId &&
+                    line.SourceEntityType == "SupplierPayment" &&
+                    line.SourceEntityId == payment.Id))
+            .Select(match => new
+            {
+                Match = match,
+                BankAccountName = db.Set<BankAccount>()
+                    .Where(account => account.Id == match.BankAccountId)
+                    .Select(account => account.DisplayName)
+                    .FirstOrDefault() ?? string.Empty,
+                PaymentAmount = match.Lines
+                    .Where(line => !line.IsDeleted && line.IsActive && line.JournalEntryId == payment.PostingJournalEntryId && line.SourceEntityType == "SupplierPayment" && line.SourceEntityId == payment.Id)
+                    .Sum(line => line.AmountMinor)
+            })
+            .Where(x => x.PaymentAmount == payment.TotalAmountMinor)
+            .OrderByDescending(x => x.Match.MatchedAtUtc ?? x.Match.MatchDateUtc)
+            .ThenByDescending(x => x.Match.CreatedAtUtc)
+            .Select(x => new SupplierPaymentBankSettlementCandidateDto
+            {
+                BankReconciliationMatchId = x.Match.Id,
+                MatchNumber = x.Match.MatchNumber ?? string.Empty,
+                BankAccountId = x.Match.BankAccountId,
+                BankAccountDisplayName = x.BankAccountName,
+                MatchDateUtc = x.Match.MatchDateUtc,
+                Currency = x.Match.Currency,
+                BankTotalMinor = x.Match.BankTotalMinor,
+                FinanceTotalMinor = x.Match.FinanceTotalMinor
+            })
+            .ToListAsync(ct)
+            .ConfigureAwait(false);
+
+        return rows;
+    }
+
+    public static Task<List<SupplierPaymentBankCorrectionListItemDto>> GetBankCorrectionsAsync(IAppDbContext db, Guid supplierPaymentId, CancellationToken ct)
+    {
+        if (supplierPaymentId == Guid.Empty)
+        {
+            return Task.FromResult(new List<SupplierPaymentBankCorrectionListItemDto>());
+        }
+
+        return db.Set<SupplierPaymentBankCorrection>()
+            .AsNoTracking()
+            .Where(x => x.SupplierPaymentId == supplierPaymentId && !x.IsDeleted)
+            .OrderByDescending(x => x.CorrectionDateUtc)
+            .ThenByDescending(x => x.CreatedAtUtc)
+            .Select(x => new SupplierPaymentBankCorrectionListItemDto
+            {
+                Id = x.Id,
+                SupplierPaymentId = x.SupplierPaymentId,
+                BankReconciliationMatchId = x.BankReconciliationMatchId,
+                BankStatementLineId = x.BankStatementLineId,
+                CorrectionJournalEntryId = x.CorrectionJournalEntryId,
+                CorrectionType = x.CorrectionType,
+                Status = x.Status,
+                CorrectionDateUtc = x.CorrectionDateUtc,
+                PostedAtUtc = x.PostedAtUtc,
+                Currency = x.Currency,
+                AmountMinor = x.AmountMinor,
+                Reason = x.Reason,
+                RowVersion = x.RowVersion ?? Array.Empty<byte>()
+            })
+            .ToListAsync(ct);
+    }
+
+    public static async Task<List<SupplierPaymentBankSettlementCandidateDto>> GetBankCorrectionCandidatesAsync(IAppDbContext db, SupplierPayment payment, CancellationToken ct)
+    {
+        if (payment.Id == Guid.Empty ||
+            payment.Status != SupplierPaymentStatus.Posted ||
+            payment.PostingJournalEntryId is null ||
+            payment.BankSettlementJournalEntryId is null ||
+            payment.BankSettlementReconciliationMatchId is null ||
+            !payment.BankSettledAtUtc.HasValue ||
+            payment.ReversalJournalEntryId.HasValue)
+        {
+            return new List<SupplierPaymentBankSettlementCandidateDto>();
+        }
+
+        var rows = await db.Set<BankReconciliationMatch>()
+            .AsNoTracking()
+            .Where(match =>
+                match.Id != payment.BankSettlementReconciliationMatchId.Value &&
+                match.BusinessId == payment.BusinessId &&
+                match.Status == BankReconciliationMatchStatus.Matched &&
+                match.Currency == payment.Currency &&
+                match.DifferenceMinor == 0 &&
+                !match.IsDeleted &&
+                match.Lines.Any(line =>
+                    !line.IsDeleted &&
+                    line.IsActive &&
+                    (line.JournalEntryId == payment.BankSettlementJournalEntryId.Value ||
+                     (line.SourceEntityType == "SupplierPayment" && line.SourceEntityId == payment.Id))))
+            .Select(match => new
+            {
+                Match = match,
+                BankAccountName = db.Set<BankAccount>()
+                    .Where(account => account.Id == match.BankAccountId)
+                    .Select(account => account.DisplayName)
+                    .FirstOrDefault() ?? string.Empty,
+                PaymentAmount = match.Lines
+                    .Where(line =>
+                        !line.IsDeleted &&
+                        line.IsActive &&
+                        (line.JournalEntryId == payment.BankSettlementJournalEntryId.Value ||
+                         (line.SourceEntityType == "SupplierPayment" && line.SourceEntityId == payment.Id)))
+                    .Sum(line => line.AmountMinor)
+            })
+            .Where(x => x.PaymentAmount == payment.TotalAmountMinor)
+            .OrderByDescending(x => x.Match.MatchedAtUtc ?? x.Match.MatchDateUtc)
+            .ThenByDescending(x => x.Match.CreatedAtUtc)
+            .Select(x => new SupplierPaymentBankSettlementCandidateDto
+            {
+                BankReconciliationMatchId = x.Match.Id,
+                MatchNumber = x.Match.MatchNumber ?? string.Empty,
+                BankAccountId = x.Match.BankAccountId,
+                BankAccountDisplayName = x.BankAccountName,
+                MatchDateUtc = x.Match.MatchDateUtc,
+                Currency = x.Match.Currency,
+                BankTotalMinor = x.Match.BankTotalMinor,
+                FinanceTotalMinor = x.Match.FinanceTotalMinor
+            })
+            .ToListAsync(ct)
+            .ConfigureAwait(false);
+
+        return rows;
     }
 }

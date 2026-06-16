@@ -16,6 +16,9 @@ public sealed class FinanceWebAdminSourceTests
         layout.Should().Contain("asp-controller=\"Finance\" asp-action=\"Exports\"");
         layout.Should().Contain("asp-controller=\"Finance\" asp-action=\"SupplierInvoices\"");
         layout.Should().Contain("asp-controller=\"Finance\" asp-action=\"SupplierPayments\"");
+        layout.Should().Contain("asp-controller=\"Finance\" asp-action=\"BankAccounts\"");
+        layout.Should().Contain("asp-controller=\"Finance\" asp-action=\"BankStatements\"");
+        layout.Should().Contain("asp-controller=\"Finance\" asp-action=\"BankReconciliation\"");
     }
 
     [Fact]
@@ -47,6 +50,22 @@ public sealed class FinanceWebAdminSourceTests
         controller.Should().Contain("PostSupplierPaymentHandler");
         controller.Should().Contain("CancelSupplierPaymentHandler");
         controller.Should().Contain("ReverseSupplierPaymentHandler");
+        controller.Should().Contain("SettleSupplierPaymentFromBankReconciliationHandler");
+        controller.Should().Contain("CreateSupplierPaymentBankCorrectionHandler");
+        controller.Should().Contain("PostSupplierPaymentBankCorrectionHandler");
+        controller.Should().Contain("CancelSupplierPaymentBankCorrectionHandler");
+        controller.Should().Contain("GetBankAccountsPageHandler");
+        controller.Should().Contain("CreateBankAccountHandler");
+        controller.Should().Contain("UpdateBankAccountHandler");
+        controller.Should().Contain("ArchiveBankAccountHandler");
+        controller.Should().Contain("GetBankStatementsPageHandler");
+        controller.Should().Contain("CreateBankStatementImportHandler");
+        controller.Should().Contain("CancelBankStatementImportHandler");
+        controller.Should().Contain("GetBankReconciliationPageHandler");
+        controller.Should().Contain("CreateBankReconciliationMatchHandler");
+        controller.Should().Contain("UpdateBankReconciliationMatchHandler");
+        controller.Should().Contain("MarkBankReconciliationMatchedHandler");
+        controller.Should().Contain("CancelBankReconciliationMatchHandler");
         controller.Should().Contain("[HttpGet]");
         controller.Should().Contain("[HttpPost]");
         controller.Should().Contain("UpsertAccountMapping");
@@ -65,6 +84,22 @@ public sealed class FinanceWebAdminSourceTests
         controller.Should().Contain("PostSupplierPayment");
         controller.Should().Contain("CancelSupplierPayment");
         controller.Should().Contain("ReverseSupplierPayment");
+        controller.Should().Contain("SettleSupplierPaymentFromBankReconciliation");
+        controller.Should().Contain("CreateSupplierPaymentBankCorrection");
+        controller.Should().Contain("PostSupplierPaymentBankCorrection");
+        controller.Should().Contain("CancelSupplierPaymentBankCorrection");
+        controller.Should().Contain("BankAccounts");
+        controller.Should().Contain("CreateBankAccount");
+        controller.Should().Contain("EditBankAccount");
+        controller.Should().Contain("ArchiveBankAccount");
+        controller.Should().Contain("BankStatements");
+        controller.Should().Contain("CreateBankStatement");
+        controller.Should().Contain("CancelBankStatement");
+        controller.Should().Contain("BankReconciliation");
+        controller.Should().Contain("CreateBankReconciliation");
+        controller.Should().Contain("EditBankReconciliation");
+        controller.Should().Contain("MarkBankReconciliationMatched");
+        controller.Should().Contain("CancelBankReconciliation");
         controller.Should().NotContain("CreateJournalEntry");
         controller.Should().NotContain("UpdateJournalEntry");
         controller.Should().NotContain("CreateCreditNote");
@@ -73,8 +108,12 @@ public sealed class FinanceWebAdminSourceTests
         controller.Should().NotContain("DownloadInvoiceArchive");
         controller.Should().NotContain("CreateRefund");
         controller.Should().NotContain("CreatePayment(");
-        controller.Should().NotContain("BankAccount");
+        controller.Should().NotContain("BankCredential");
+        controller.Should().NotContain("DirectBankSettlement");
+        controller.Should().NotContain("ReturnedTransferAutomation");
         controller.Should().NotContain("TreasuryLedger");
+        controller.Should().NotContain("SupplierAdvance");
+        controller.Should().NotContain("SupplierOverpayment");
     }
 
     [Fact]
@@ -108,8 +147,27 @@ public sealed class FinanceWebAdminSourceTests
         allFinanceViews.Should().Contain("asp-action=\"PostSupplierPayment\"");
         allFinanceViews.Should().Contain("asp-action=\"CancelSupplierPayment\"");
         allFinanceViews.Should().Contain("asp-action=\"ReverseSupplierPayment\"");
+        allFinanceViews.Should().Contain("asp-action=\"SettleSupplierPaymentFromBankReconciliation\"");
+        allFinanceViews.Should().Contain("asp-action=\"CreateSupplierPaymentBankCorrection\"");
+        allFinanceViews.Should().Contain("asp-action=\"PostSupplierPaymentBankCorrection\"");
+        allFinanceViews.Should().Contain("asp-action=\"CancelSupplierPaymentBankCorrection\"");
         allFinanceViews.Should().Contain("PostSupplierPayment");
         allFinanceViews.Should().Contain("ReversePayment");
+        allFinanceViews.Should().Contain("SettleFromBankReconciliation");
+        allFinanceViews.Should().Contain("CreateBankCorrection");
+        allFinanceViews.Should().Contain("PostCorrection");
+        allFinanceViews.Should().Contain("asp-action=\"BankAccounts\"");
+        allFinanceViews.Should().Contain("asp-action=\"CreateBankAccount\"");
+        allFinanceViews.Should().Contain("asp-action=\"EditBankAccount\"");
+        allFinanceViews.Should().Contain("asp-action=\"ArchiveBankAccount\"");
+        allFinanceViews.Should().Contain("asp-action=\"BankStatements\"");
+        allFinanceViews.Should().Contain("asp-action=\"CreateBankStatement\"");
+        allFinanceViews.Should().Contain("asp-action=\"CancelBankStatement\"");
+        allFinanceViews.Should().Contain("asp-action=\"BankReconciliation\"");
+        allFinanceViews.Should().Contain("asp-action=\"CreateBankReconciliation\"");
+        allFinanceViews.Should().Contain("asp-action=\"EditBankReconciliation\"");
+        allFinanceViews.Should().Contain("asp-action=\"MarkBankReconciliationMatched\"");
+        allFinanceViews.Should().Contain("asp-action=\"CancelBankReconciliation\"");
         allFinanceViews.Should().Contain("asp-action=\"Postings\"");
         allFinanceViews.Should().Contain("DownloadExportPackage");
         allFinanceViews.Should().Contain("ConnectorReadinessMessage");
@@ -132,10 +190,15 @@ public sealed class FinanceWebAdminSourceTests
         allFinanceViews.Should().NotContain("ConnectorPush");
         allFinanceViews.Should().NotContain("FinanceInvoice");
         allFinanceViews.Should().NotContain("SalesInvoice");
-        allFinanceViews.Should().NotContain("BankAccount");
+        allFinanceViews.Should().NotContain("BankCredential");
+        allFinanceViews.Should().NotContain("DirectBankSettlement");
+        allFinanceViews.Should().NotContain("BankApi");
+        allFinanceViews.Should().NotContain("BankTransferFailure");
         allFinanceViews.Should().NotContain("TreasuryLedger");
-        allFinanceViews.Should().NotContain("BankReconciliation");
         allFinanceViews.Should().NotContain("ReturnedPayment");
+        allFinanceViews.Should().NotContain("ReturnedTransferAutomation");
+        allFinanceViews.Should().NotContain("SupplierAdvance");
+        allFinanceViews.Should().NotContain("SupplierOverpayment");
     }
 
     [Fact]
@@ -169,6 +232,26 @@ public sealed class FinanceWebAdminSourceTests
         composition.Should().Contain("services.AddScoped<PostSupplierPaymentHandler>();");
         composition.Should().Contain("services.AddScoped<CancelSupplierPaymentHandler>();");
         composition.Should().Contain("services.AddScoped<ReverseSupplierPaymentHandler>();");
+        composition.Should().Contain("services.AddScoped<SettleSupplierPaymentFromBankReconciliationHandler>();");
+        composition.Should().Contain("services.AddScoped<CreateSupplierPaymentBankCorrectionHandler>();");
+        composition.Should().Contain("services.AddScoped<PostSupplierPaymentBankCorrectionHandler>();");
+        composition.Should().Contain("services.AddScoped<CancelSupplierPaymentBankCorrectionHandler>();");
+        composition.Should().Contain("services.AddScoped<GetBankAccountsPageHandler>();");
+        composition.Should().Contain("services.AddScoped<GetBankAccountForEditHandler>();");
+        composition.Should().Contain("services.AddScoped<CreateBankAccountHandler>();");
+        composition.Should().Contain("services.AddScoped<UpdateBankAccountHandler>();");
+        composition.Should().Contain("services.AddScoped<ArchiveBankAccountHandler>();");
+        composition.Should().Contain("services.AddScoped<GetBankStatementsPageHandler>();");
+        composition.Should().Contain("services.AddScoped<GetBankStatementImportDetailHandler>();");
+        composition.Should().Contain("services.AddScoped<CreateBankStatementImportHandler>();");
+        composition.Should().Contain("services.AddScoped<CancelBankStatementImportHandler>();");
+        composition.Should().Contain("services.AddScoped<GetBankReconciliationPageHandler>();");
+        composition.Should().Contain("services.AddScoped<GetBankReconciliationDetailHandler>();");
+        composition.Should().Contain("services.AddScoped<GetBankReconciliationDraftHandler>();");
+        composition.Should().Contain("services.AddScoped<CreateBankReconciliationMatchHandler>();");
+        composition.Should().Contain("services.AddScoped<UpdateBankReconciliationMatchHandler>();");
+        composition.Should().Contain("services.AddScoped<MarkBankReconciliationMatchedHandler>();");
+        composition.Should().Contain("services.AddScoped<CancelBankReconciliationMatchHandler>();");
         composition.Should().Contain("services.AddFinanceExportFileDeliveryAdapterIfConfigured(config);");
         composition.Should().NotContain("NoNetwork");
         composition.Should().NotContain("TestFinanceExportConnectorAdapter");
