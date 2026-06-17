@@ -1,0 +1,41 @@
+@model Darwin.WebAdmin.ViewModels.HumanResources.HrListVm<Darwin.Application.HumanResources.DTOs.PayrollPaymentListItemDto, Darwin.Application.HumanResources.DTOs.PayrollPaymentQueueFilter>
+@inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
+@{ ViewData["Title"] = T.T("PayrollPayments"); }
+<section class="admin-page">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h1 class="mb-0">@T.T("PayrollPayments")</h1>
+    </div>
+    <form asp-action="PayrollPayments" method="get" class="d-flex gap-2 mb-3">
+        <select name="businessId" asp-items="Model.BusinessOptions" class="form-select"></select>
+        <input type="text" name="q" value="@Model.Query" class="form-control" placeholder="@T.T("Search")" />
+        <select name="filter" asp-items="Model.FilterItems" class="form-select"></select>
+        <button class="btn btn-outline-secondary" type="submit">@T.T("Filter")</button>
+    </form>
+    <div class="row g-3 mb-3">
+        <div class="col-md-3"><div class="card"><div class="card-body"><div class="text-muted small">@T.T("Records")</div><div class="fs-4">@Model.Total</div></div></div></div>
+        <div class="col-md-3"><div class="card"><div class="card-body"><div class="text-muted small">@T.T("Draft")</div><div class="fs-4">@Model.Items.Count(x => x.Status == Darwin.Domain.Enums.PayrollPaymentStatus.Draft)</div></div></div></div>
+        <div class="col-md-3"><div class="card"><div class="card-body"><div class="text-muted small">@T.T("Posted")</div><div class="fs-4">@Model.Items.Count(x => x.Status == Darwin.Domain.Enums.PayrollPaymentStatus.Posted)</div></div></div></div>
+        <div class="col-md-3"><div class="card"><div class="card-body"><div class="text-muted small">@T.T("TotalAmountMinor")</div><div class="fs-4">@Model.Items.Sum(x => x.TotalAmountMinor)</div></div></div></div>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-sm table-striped align-middle">
+            <thead><tr><th>@T.T("PaymentNumber")</th><th>@T.T("PayrollRun")</th><th>@T.T("PaymentDateUtc")</th><th>@T.T("Method")</th><th>@T.T("Amount")</th><th>@T.T("Status")</th><th class="text-end">@T.T("Actions")</th></tr></thead>
+            <tbody>
+            @if (!Model.Items.Any()) { <tr><td colspan="7" class="text-muted">@T.T("NoRecords")</td></tr> }
+            else {
+                foreach (var item in Model.Items) {
+                    <tr>
+                        <td class="fw-semibold">@(string.IsNullOrWhiteSpace(item.PaymentNumber) ? T.T("Draft") : item.PaymentNumber)</td>
+                        <td>@item.RunNumber<br /><span class="text-muted small">@item.AllocationCount @T.T("Allocations")</span></td>
+                        <td>@item.PaymentDateUtc.ToString("yyyy-MM-dd")</td>
+                        <td>@T.T(item.PaymentMethod.ToString())</td>
+                        <td>@item.TotalAmountMinor @item.Currency</td>
+                        <td><span class="badge text-bg-light">@T.T(item.Status.ToString())</span></td>
+                        <td class="text-end"><a asp-action="EditPayrollPayment" asp-route-id="@item.Id" class="btn btn-sm btn-outline-secondary">@T.T("Open")</a></td>
+                    </tr>
+                }
+            }
+            </tbody>
+        </table>
+    </div>
+</section>

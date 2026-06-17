@@ -48,6 +48,7 @@ public enum NumberSequenceDocumentType
     SupplierAdvance = 13,
     WarehouseTask = 14,
     StockCount = 15,
+    PayrollPayment = 16,
     Custom = 99
 }
 
@@ -115,4 +116,87 @@ public enum FeatureAreaVisibilityScope
     Business = 2,
     Member = 3,
     Public = 4
+}
+
+public enum AiSensitiveDataCategory
+{
+    General = 0,
+    PersonalData = 1,
+    HumanResources = 2,
+    Payroll = 3,
+    Finance = 4,
+    Bank = 5,
+    Credential = 6,
+    ProviderPayload = 7,
+    DocumentContent = 8,
+    InvoiceArchive = 9,
+    Identity = 10,
+    Commerce = 11,
+    Inventory = 12
+}
+
+public enum AiSensitivityLevel
+{
+    Public = 0,
+    Internal = 1,
+    Confidential = 2,
+    Restricted = 3,
+    Secret = 4
+}
+
+public enum AiAccessDecision
+{
+    Deny = 0,
+    AllowSummary = 1,
+    AllowRedacted = 2,
+    AllowRaw = 3
+}
+
+public enum AiRecommendationStatus
+{
+    Open = 0,
+    Accepted = 1,
+    Dismissed = 2,
+    Expired = 3
+}
+
+public enum AiActionDraftStatus
+{
+    Draft = 0,
+    PendingApproval = 1,
+    Approved = 2,
+    Rejected = 3,
+    Executed = 4,
+    Cancelled = 5,
+    Expired = 6
+}
+
+public enum AiActionRiskLevel
+{
+    Low = 0,
+    Medium = 1,
+    High = 2,
+    Critical = 3
+}
+
+public enum AiActionApprovalDecision
+{
+    Approved = 0,
+    Rejected = 1
+}
+
+public enum InternalFollowUpTaskStatus
+{
+    Open = 0,
+    InProgress = 1,
+    Completed = 2,
+    Cancelled = 3
+}
+
+public enum InternalFollowUpTaskPriority
+{
+    Low = 0,
+    Normal = 1,
+    High = 2,
+    Urgent = 3
 }

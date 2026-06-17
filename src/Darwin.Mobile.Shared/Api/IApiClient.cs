@@ -30,6 +30,11 @@ namespace Darwin.Mobile.Shared.Api
         Task<Result<string>> GetStringResultAsync(string route, CancellationToken ct);
 
         /// <summary>
+        /// Issues a GET request and returns the raw binary payload for file endpoints.
+        /// </summary>
+        Task<Result<ApiFileResult>> GetFileResultAsync(string route, CancellationToken ct);
+
+        /// <summary>
         /// Issues a POST request and returns a functional result.
         /// </summary>
         Task<Result<TResponse>> PostResultAsync<TRequest, TResponse>(string route, TRequest request, CancellationToken ct);

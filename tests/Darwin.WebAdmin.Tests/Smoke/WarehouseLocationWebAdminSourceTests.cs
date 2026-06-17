@@ -91,6 +91,10 @@ public sealed class WarehouseLocationWebAdminSourceTests
         editorView.Should().Contain("WarehouseTaskType.Picking");
         editorView.Should().Contain("ShortQuantity");
         editorView.Should().Contain("ShortReason");
+        editorView.Should().Contain("InventoryLotId");
+        editorView.Should().Contain("InventorySerialUnitId");
+        editorView.Should().Contain("HandlingUnitId");
+        controller.Should().Contain("PopulateInventoryIdentityOptionsAsync");
 
         var combined = listView + editorView;
         combined.Should().NotContain("AdjustInventory");
@@ -115,13 +119,24 @@ public sealed class WarehouseLocationWebAdminSourceTests
 
         detailView.Should().Contain("CreateReceivingTaskFromGoodsReceipt");
         detailView.Should().Contain("CreatePutawayTaskFromGoodsReceipt");
+        detailView.Should().Contain("ReceiptIdentityEvidence");
+        detailView.Should().Contain("InventoryLotId");
+        detailView.Should().Contain("InventorySerialUnitId");
+        detailView.Should().Contain("HandlingUnitId");
+        detailView.Should().Contain("CreateGoodsReceiptInlineIdentity");
         detailView.Should().Contain("@Html.AntiForgeryToken()");
         controller.Should().Contain("CreateReceivingTaskFromGoodsReceipt");
         controller.Should().Contain("CreatePutawayTaskFromGoodsReceipt");
+        controller.Should().Contain("CreateGoodsReceiptInlineIdentity");
+        controller.Should().Contain("PopulateGoodsReceiptIdentityOptionsAsync");
+        controller.Should().Contain("GoodsReceiptLineIdentityDto");
 
         detailView.Should().NotContain("CreateSupplierInvoice");
         detailView.Should().NotContain("PostSupplierInvoice");
         detailView.Should().NotContain("CreateSupplierPayment");
+        detailView.Should().NotContain("CreateLot\"");
+        detailView.Should().NotContain("CreateSerialUnit\"");
+        detailView.Should().NotContain("CreateHandlingUnit\"");
         detailView.Should().NotContain("AdjustStock");
         detailView.Should().NotContain("ReserveStock");
         detailView.Should().NotContain("FinanceExport");
@@ -151,6 +166,10 @@ public sealed class WarehouseLocationWebAdminSourceTests
         listView.Should().Contain("NewStockCount");
         editorView.Should().Contain("StockCountSessionStatus.Prepared");
         editorView.Should().Contain("StockCountSessionStatus.Posted");
+        editorView.Should().Contain("InventoryLotId");
+        editorView.Should().Contain("InventorySerialUnitId");
+        editorView.Should().Contain("HandlingUnitId");
+        controller.Should().Contain("PopulateInventoryIdentityOptionsAsync");
 
         var combined = listView + editorView;
         combined.Should().NotContain("AdjustStock");
@@ -164,6 +183,102 @@ public sealed class WarehouseLocationWebAdminSourceTests
         combined.Should().NotContain("AddRefund");
         combined.Should().NotContain("Pwa");
         combined.Should().NotContain("Mobile");
+    }
+
+    [Fact]
+    public void StockTransferViews_Should_Render_IdentityEvidence_Without_Parallel_Stock_Finance_Or_Mobile_Mutations()
+    {
+        var root = RepositoryRoot();
+        var formView = File.ReadAllText(Path.Combine(root, "src", "Darwin.WebAdmin", "Views", "Inventory", "_StockTransferForm.cshtml"));
+        var controller = File.ReadAllText(Path.Combine(root, "src", "Darwin.WebAdmin", "Controllers", "Admin", "Inventory", "InventoryController.cs"));
+
+        formView.Should().Contain("InventoryLotId");
+        formView.Should().Contain("InventorySerialUnitId");
+        formView.Should().Contain("HandlingUnitId");
+        controller.Should().Contain("MapIdentityDto");
+        controller.Should().Contain("PopulateInventoryIdentityOptionsAsync");
+
+        formView.Should().NotContain("SupplierInvoice");
+        formView.Should().NotContain("SupplierPayment");
+        formView.Should().NotContain("FinanceExport");
+        formView.Should().NotContain("CreateInvoice");
+        formView.Should().NotContain("AddPayment");
+        formView.Should().NotContain("AddRefund");
+        formView.Should().NotContain("Pwa");
+        formView.Should().NotContain("Mobile");
+    }
+
+    [Fact]
+    public void BinStockView_Should_Render_ReadOnly_Derivation_Without_Parallel_Ledger_Or_Mutations()
+    {
+        var root = RepositoryRoot();
+        var view = File.ReadAllText(Path.Combine(root, "src", "Darwin.WebAdmin", "Views", "Inventory", "BinStock.cshtml"));
+        var controller = File.ReadAllText(Path.Combine(root, "src", "Darwin.WebAdmin", "Controllers", "Admin", "Inventory", "InventoryController.cs"));
+        var applicationQuery = File.ReadAllText(Path.Combine(root, "src", "Darwin.Application", "Inventory", "Queries", "GetBinStockDerivationHandler.cs"));
+        var layout = File.ReadAllText(Path.Combine(root, "src", "Darwin.WebAdmin", "Views", "Shared", "_Layout.cshtml"));
+
+        layout.Should().Contain("asp-action=\"BinStock\"");
+        controller.Should().Contain("public async Task<IActionResult> BinStock");
+        controller.Should().NotContain("HttpPost]\r\n        public async Task<IActionResult> BinStock");
+        view.Should().Contain("BinStockTitle");
+        view.Should().Contain("IdentityEvidence");
+        view.Should().Contain("VariantLedger");
+        applicationQuery.Should().Contain("GetBinStockDerivationHandler");
+        applicationQuery.Should().Contain("AsNoTracking");
+        applicationQuery.Should().NotContain("SaveChanges");
+        applicationQuery.Should().NotContain("db.Set<StockLevel>().Add");
+
+        view.Should().NotContain("method=\"post\"");
+        view.Should().NotContain("AdjustStock");
+        view.Should().NotContain("ReserveStock");
+        view.Should().NotContain("ReleaseReservation");
+        view.Should().NotContain("CreateStockLevel");
+        view.Should().NotContain("SupplierInvoice");
+        view.Should().NotContain("SupplierPayment");
+        view.Should().NotContain("FinanceExport");
+        view.Should().NotContain("CreateInvoice");
+        view.Should().NotContain("AddPayment");
+        view.Should().NotContain("AddRefund");
+        view.Should().NotContain("Pwa");
+        view.Should().NotContain("Mobile");
+    }
+
+    [Fact]
+    public void WarehousePwaView_Should_Render_Internal_OnlineFirst_Task_Surface_Without_Offline_Outbox_Or_Parallel_Mutations()
+    {
+        var root = RepositoryRoot();
+        var view = File.ReadAllText(Path.Combine(root, "src", "Darwin.WebAdmin", "Views", "Inventory", "WarehousePwa.cshtml"));
+        var controller = File.ReadAllText(Path.Combine(root, "src", "Darwin.WebAdmin", "Controllers", "Admin", "Inventory", "InventoryController.cs"));
+        var layout = File.ReadAllText(Path.Combine(root, "src", "Darwin.WebAdmin", "Views", "Shared", "_Layout.cshtml"));
+
+        layout.Should().Contain("asp-action=\"WarehousePwa\"");
+        controller.Should().Contain("public async Task<IActionResult> WarehousePwa");
+        controller.Should().Contain("UpdateWarehousePwaTaskLifecycle");
+        controller.Should().Contain("_updateWarehouseTaskLifecycle.HandleAsync");
+        controller.Should().Contain("_getBinStockDerivation.HandleAsync");
+        view.Should().Contain("WarehousePwa");
+        view.Should().Contain("ScanOrSearch");
+        view.Should().Contain("UpdateWarehousePwaTaskLifecycle");
+        view.Should().Contain("@Html.AntiForgeryToken()");
+        view.Should().Contain("RowVersion");
+        view.Should().Contain("BinStockTitle");
+        view.Should().Contain("hx-post");
+        view.Should().Contain("hx-get");
+
+        view.Should().NotContain("serviceWorker");
+        view.Should().NotContain("navigator.serviceWorker");
+        view.Should().NotContain("IndexedDB");
+        view.Should().NotContain("localStorage");
+        view.Should().NotContain("offline");
+        view.Should().NotContain("CreateShipment");
+        view.Should().NotContain("CreateInvoice");
+        view.Should().NotContain("SupplierInvoice");
+        view.Should().NotContain("SupplierPayment");
+        view.Should().NotContain("FinanceExport");
+        view.Should().NotContain("AddPayment");
+        view.Should().NotContain("AddRefund");
+        view.Should().NotContain("MobileApi");
+        view.Should().NotContain("MemberCommerce");
     }
 
     [Fact]

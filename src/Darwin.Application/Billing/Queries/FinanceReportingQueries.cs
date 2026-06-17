@@ -348,6 +348,11 @@ public sealed class GetFinanceAccountMappingsPageHandler
             FinancePostingAccountRole.InventoryClearing => AccountType.Asset.ToString(),
             FinancePostingAccountRole.TaxReceivable => AccountType.Asset.ToString(),
             FinancePostingAccountRole.SupplierAdvance => AccountType.Asset.ToString(),
+            FinancePostingAccountRole.PayrollExpense => AccountType.Expense.ToString(),
+            FinancePostingAccountRole.EmployerPayrollTaxExpense => AccountType.Expense.ToString(),
+            FinancePostingAccountRole.PayrollPayable => AccountType.Liability.ToString(),
+            FinancePostingAccountRole.PayrollTaxPayable => AccountType.Liability.ToString(),
+            FinancePostingAccountRole.SocialInsurancePayable => AccountType.Liability.ToString(),
             _ => string.Empty
         };
 }

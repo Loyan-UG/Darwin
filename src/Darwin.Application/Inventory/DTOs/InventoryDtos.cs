@@ -794,6 +794,7 @@ namespace Darwin.Application.Inventory.DTOs
         public string? SourceLineType { get; set; }
         public Guid? SourceLineId { get; set; }
         public string? MetadataJson { get; set; }
+        public List<InventoryIdentityEvidenceDto> Identities { get; set; } = new();
     }
 
     public sealed class WarehouseTaskLifecycleActionDto
@@ -921,6 +922,23 @@ namespace Darwin.Application.Inventory.DTOs
         public StockCountLineReviewStatus ReviewStatus { get; set; } = StockCountLineReviewStatus.Pending;
         public bool AdjustmentPosted { get; set; }
         public string? ReviewNotes { get; set; }
+        public int SortOrder { get; set; }
+        public string? MetadataJson { get; set; }
+        public List<InventoryIdentityEvidenceDto> Identities { get; set; } = new();
+    }
+
+    public sealed class InventoryIdentityEvidenceDto
+    {
+        public Guid Id { get; set; }
+        public Guid? InventoryLotId { get; set; }
+        public Guid? InventorySerialUnitId { get; set; }
+        public Guid? HandlingUnitId { get; set; }
+        public int Quantity { get; set; }
+        public string? LotCodeSnapshot { get; set; }
+        public string? SupplierLotCodeSnapshot { get; set; }
+        public DateTime? ExpiryDateUtc { get; set; }
+        public string? SerialNumberSnapshot { get; set; }
+        public string? HandlingUnitCodeSnapshot { get; set; }
         public int SortOrder { get; set; }
         public string? MetadataJson { get; set; }
     }
@@ -1075,6 +1093,50 @@ namespace Darwin.Application.Inventory.DTOs
         public byte[] RowVersion { get; set; } = Array.Empty<byte>();
     }
 
+    public enum BinStockQueueFilter
+    {
+        All = 0,
+        WithAttention = 1,
+        Assigned = 2,
+        Unassigned = 3
+    }
+
+    public sealed class BinStockListItemDto
+    {
+        public Guid WarehouseId { get; set; }
+        public string WarehouseName { get; set; } = string.Empty;
+        public Guid ProductVariantId { get; set; }
+        public string VariantSku { get; set; } = string.Empty;
+        public Guid? LocationId { get; set; }
+        public string LocationCode { get; set; } = string.Empty;
+        public string LocationDisplayName { get; set; } = string.Empty;
+        public int DerivedQuantity { get; set; }
+        public int AvailableQuantity { get; set; }
+        public int UnassignedQuantity { get; set; }
+        public bool HasAttention { get; set; }
+        public string AttentionCode { get; set; } = string.Empty;
+        public List<BinStockIdentityBreakdownDto> Identities { get; set; } = new();
+    }
+
+    public sealed class BinStockIdentityBreakdownDto
+    {
+        public Guid? InventoryLotId { get; set; }
+        public Guid? InventorySerialUnitId { get; set; }
+        public Guid? HandlingUnitId { get; set; }
+        public string LotCode { get; set; } = string.Empty;
+        public string SerialNumber { get; set; } = string.Empty;
+        public string HandlingUnitCode { get; set; } = string.Empty;
+        public int Quantity { get; set; }
+    }
+
+    public sealed class BinStockOpsSummaryDto
+    {
+        public int RowCount { get; set; }
+        public int AssignedCount { get; set; }
+        public int UnassignedCount { get; set; }
+        public int AttentionCount { get; set; }
+    }
+
     /// <summary>
     /// Stock level create payload.
     /// </summary>
@@ -1105,6 +1167,7 @@ namespace Darwin.Application.Inventory.DTOs
     {
         public Guid ProductVariantId { get; set; }
         public int Quantity { get; set; }
+        public List<InventoryIdentityEvidenceDto> Identities { get; set; } = new();
     }
 
     /// <summary>
@@ -1260,6 +1323,42 @@ namespace Darwin.Application.Inventory.DTOs
         public long UnitCostMinor { get; set; }
         public long TotalCostMinor { get; set; }
         public int SortOrder { get; set; }
+        public List<GoodsReceiptLineIdentityDto> Identities { get; set; } = new();
+    }
+
+    public sealed class GoodsReceiptLineIdentityDto
+    {
+        public Guid Id { get; set; }
+        public Guid GoodsReceiptLineId { get; set; }
+        public Guid ProductVariantId { get; set; }
+        public Guid? InventoryLotId { get; set; }
+        public Guid? InventorySerialUnitId { get; set; }
+        public Guid? HandlingUnitId { get; set; }
+        public int Quantity { get; set; }
+        public string? LotCodeSnapshot { get; set; }
+        public string? SupplierLotCodeSnapshot { get; set; }
+        public string? SerialNumberSnapshot { get; set; }
+        public string? HandlingUnitCodeSnapshot { get; set; }
+        public DateTime? ExpiryDateUtc { get; set; }
+        public int SortOrder { get; set; }
+        public string? MetadataJson { get; set; }
+    }
+
+    public sealed class GoodsReceiptInlineIdentityCreateDto
+    {
+        public Guid GoodsReceiptId { get; set; }
+        public Guid GoodsReceiptLineId { get; set; }
+        public byte[] RowVersion { get; set; } = Array.Empty<byte>();
+        public string IdentityType { get; set; } = string.Empty;
+        public string? LotCode { get; set; }
+        public string? SupplierLotCode { get; set; }
+        public DateTime? ExpiryDateUtc { get; set; }
+        public string? SerialNumber { get; set; }
+        public Guid? InventoryLotId { get; set; }
+        public string? HandlingUnitCode { get; set; }
+        public string? HandlingUnitDisplayName { get; set; }
+        public int Quantity { get; set; } = 1;
+        public string? MetadataJson { get; set; }
     }
 
     public sealed class GoodsReceiptListItemDto

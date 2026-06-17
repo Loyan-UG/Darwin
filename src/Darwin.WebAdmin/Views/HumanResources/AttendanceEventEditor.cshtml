@@ -1,0 +1,9 @@
+@model Darwin.WebAdmin.ViewModels.HumanResources.AttendanceEventEditVm
+@inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
+@{ ViewData["Title"] = T.T("CreateAttendanceEvent"); }
+<section class="admin-page"><h1 class="mb-3">@T.T("CreateAttendanceEvent")</h1>
+    <form asp-action="CreateAttendanceEvent" method="post">@Html.AntiForgeryToken()<input asp-for="Id" type="hidden" /><input asp-for="RowVersion" type="hidden" />
+        <div class="row g-3"><div class="col-md-4"><label asp-for="BusinessId" class="form-label"></label><select asp-for="BusinessId" asp-items="Model.BusinessOptions" class="form-select"></select></div><div class="col-md-4"><label asp-for="EmployeeId" class="form-label"></label><select asp-for="EmployeeId" asp-items="Model.EmployeeOptions" class="form-select"></select></div><div class="col-md-4"><label asp-for="EventType" class="form-label"></label><select asp-for="EventType" asp-items="Model.EventTypeOptions" class="form-select"></select></div><div class="col-md-4"><label asp-for="OccurredAtUtc" class="form-label"></label><input asp-for="OccurredAtUtc" type="datetime-local" class="form-control" /></div><div class="col-md-4"><label asp-for="SourceReference" class="form-label"></label><input asp-for="SourceReference" class="form-control" /></div><div class="col-md-4"><label asp-for="MetadataJson" class="form-label"></label><textarea asp-for="MetadataJson" class="form-control"></textarea></div></div>
+        <div class="mt-3"><button class="btn btn-primary" type="submit">@T.T("Save")</button> <a asp-action="AttendanceEvents" asp-route-businessId="@Model.BusinessId" class="btn btn-outline-secondary">@T.T("Back")</a></div>
+    </form>
+</section>

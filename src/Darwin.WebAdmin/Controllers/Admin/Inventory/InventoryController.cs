@@ -55,6 +55,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
         private readonly ArchiveSupplierContactHandler _archiveSupplierContact;
         private readonly RegisterSupplierDocumentHandler _registerSupplierDocument;
         private readonly GetStockLevelsPageHandler _getStockLevelsPage;
+        private readonly GetBinStockDerivationHandler _getBinStockDerivation;
         private readonly GetStockLevelForEditHandler _getStockLevelForEdit;
         private readonly CreateStockLevelHandler _createStockLevel;
         private readonly UpdateStockLevelHandler _updateStockLevel;
@@ -75,7 +76,11 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
         private readonly GetGoodsReceiptsPageHandler _getGoodsReceiptsPage;
         private readonly GetGoodsReceiptDetailHandler _getGoodsReceiptDetail;
         private readonly CreateGoodsReceiptFromPurchaseOrderHandler _createGoodsReceipt;
+        private readonly CreateGoodsReceiptInlineIdentityHandler _createGoodsReceiptInlineIdentity;
         private readonly UpdateGoodsReceiptLifecycleHandler _updateGoodsReceiptLifecycle;
+        private readonly GetInventoryLotsPageHandler _getInventoryLotsPage;
+        private readonly GetInventorySerialUnitsPageHandler _getInventorySerialUnitsPage;
+        private readonly GetHandlingUnitsPageHandler _getHandlingUnitsPage;
         private readonly GetInventoryLedgerHandler _getLedger;
         private readonly AdminReferenceDataService _referenceData;
         private readonly IClock _clock;
@@ -119,6 +124,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
             ArchiveSupplierContactHandler archiveSupplierContact,
             RegisterSupplierDocumentHandler registerSupplierDocument,
             GetStockLevelsPageHandler getStockLevelsPage,
+            GetBinStockDerivationHandler getBinStockDerivation,
             GetStockLevelForEditHandler getStockLevelForEdit,
             CreateStockLevelHandler createStockLevel,
             UpdateStockLevelHandler updateStockLevel,
@@ -139,7 +145,11 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
             GetGoodsReceiptsPageHandler getGoodsReceiptsPage,
             GetGoodsReceiptDetailHandler getGoodsReceiptDetail,
             CreateGoodsReceiptFromPurchaseOrderHandler createGoodsReceipt,
+            CreateGoodsReceiptInlineIdentityHandler createGoodsReceiptInlineIdentity,
             UpdateGoodsReceiptLifecycleHandler updateGoodsReceiptLifecycle,
+            GetInventoryLotsPageHandler getInventoryLotsPage,
+            GetInventorySerialUnitsPageHandler getInventorySerialUnitsPage,
+            GetHandlingUnitsPageHandler getHandlingUnitsPage,
             GetInventoryLedgerHandler getLedger,
             AdminReferenceDataService referenceData,
             IClock clock)
@@ -182,6 +192,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
             _archiveSupplierContact = archiveSupplierContact ?? throw new ArgumentNullException(nameof(archiveSupplierContact));
             _registerSupplierDocument = registerSupplierDocument ?? throw new ArgumentNullException(nameof(registerSupplierDocument));
             _getStockLevelsPage = getStockLevelsPage ?? throw new ArgumentNullException(nameof(getStockLevelsPage));
+            _getBinStockDerivation = getBinStockDerivation ?? throw new ArgumentNullException(nameof(getBinStockDerivation));
             _getStockLevelForEdit = getStockLevelForEdit ?? throw new ArgumentNullException(nameof(getStockLevelForEdit));
             _createStockLevel = createStockLevel ?? throw new ArgumentNullException(nameof(createStockLevel));
             _updateStockLevel = updateStockLevel ?? throw new ArgumentNullException(nameof(updateStockLevel));
@@ -202,7 +213,11 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
             _getGoodsReceiptsPage = getGoodsReceiptsPage ?? throw new ArgumentNullException(nameof(getGoodsReceiptsPage));
             _getGoodsReceiptDetail = getGoodsReceiptDetail ?? throw new ArgumentNullException(nameof(getGoodsReceiptDetail));
             _createGoodsReceipt = createGoodsReceipt ?? throw new ArgumentNullException(nameof(createGoodsReceipt));
+            _createGoodsReceiptInlineIdentity = createGoodsReceiptInlineIdentity ?? throw new ArgumentNullException(nameof(createGoodsReceiptInlineIdentity));
             _updateGoodsReceiptLifecycle = updateGoodsReceiptLifecycle ?? throw new ArgumentNullException(nameof(updateGoodsReceiptLifecycle));
+            _getInventoryLotsPage = getInventoryLotsPage ?? throw new ArgumentNullException(nameof(getInventoryLotsPage));
+            _getInventorySerialUnitsPage = getInventorySerialUnitsPage ?? throw new ArgumentNullException(nameof(getInventorySerialUnitsPage));
+            _getHandlingUnitsPage = getHandlingUnitsPage ?? throw new ArgumentNullException(nameof(getHandlingUnitsPage));
             _getLedger = getLedger ?? throw new ArgumentNullException(nameof(getLedger));
             _referenceData = referenceData ?? throw new ArgumentNullException(nameof(referenceData));
             _clock = clock ?? throw new ArgumentNullException(nameof(clock));
@@ -775,6 +790,99 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
             };
 
             return RenderWarehouseTasksWorkspace(vm);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> WarehousePwa(Guid? businessId = null, Guid? warehouseId = null, string? q = null, WarehouseTaskQueueFilter taskFilter = WarehouseTaskQueueFilter.Ready, CancellationToken ct = default)
+        {
+            businessId = await _referenceData.ResolveBusinessIdAsync(businessId, ct).ConfigureAwait(false);
+            warehouseId = await _referenceData.ResolveWarehouseIdAsync(warehouseId, businessId, ct).ConfigureAwait(false);
+
+            var tasks = new List<WarehouseTaskListItemVm>();
+            var taskSummary = new WarehouseTaskOpsSummaryVm();
+            if (businessId.HasValue)
+            {
+                var result = await _getWarehouseTasksPage.HandleAsync(businessId.Value, warehouseId, 1, 50, q, taskFilter, ct).ConfigureAwait(false);
+                var summaryDto = await _getWarehouseTasksPage.GetSummaryAsync(businessId.Value, warehouseId, ct).ConfigureAwait(false);
+                tasks = result.Items.Select(MapWarehouseTaskItem).ToList();
+                taskSummary = new WarehouseTaskOpsSummaryVm
+                {
+                    TotalCount = summaryDto.TotalCount,
+                    ReadyCount = summaryDto.ReadyCount,
+                    AssignedCount = summaryDto.AssignedCount,
+                    InProgressCount = summaryDto.InProgressCount,
+                    NeedsAssignmentCount = summaryDto.NeedsAssignmentCount,
+                    OverdueCount = summaryDto.OverdueCount,
+                    ShortageCount = summaryDto.ShortageCount,
+                    CompletedCount = summaryDto.CompletedCount,
+                    CancelledCount = summaryDto.CancelledCount
+                };
+            }
+
+            var binStock = await _getBinStockDerivation.HandleAsync(businessId, warehouseId, 1, 8, q, BinStockQueueFilter.WithAttention, ct).ConfigureAwait(false);
+            var binSummary = await _getBinStockDerivation.GetSummaryAsync(businessId, warehouseId, q, ct).ConfigureAwait(false);
+            var vm = new WarehousePwaVm
+            {
+                BusinessId = businessId,
+                WarehouseId = warehouseId,
+                Query = q ?? string.Empty,
+                TaskFilter = taskFilter,
+                BusinessOptions = await _referenceData.GetBusinessOptionsAsync(businessId, ct).ConfigureAwait(false),
+                WarehouseOptions = await _referenceData.GetWarehouseOptionsAsync(warehouseId, businessId, ct).ConfigureAwait(false),
+                TaskSummary = taskSummary,
+                BinStockSummary = new BinStockOpsSummaryVm
+                {
+                    RowCount = binSummary.RowCount,
+                    AssignedCount = binSummary.AssignedCount,
+                    UnassignedCount = binSummary.UnassignedCount,
+                    AttentionCount = binSummary.AttentionCount
+                },
+                Tasks = tasks,
+                BinStockItems = binStock.Items.Select(x => new BinStockListItemVm
+                {
+                    WarehouseId = x.WarehouseId,
+                    WarehouseName = x.WarehouseName,
+                    ProductVariantId = x.ProductVariantId,
+                    VariantSku = x.VariantSku,
+                    LocationId = x.LocationId,
+                    LocationCode = x.LocationCode,
+                    LocationDisplayName = x.LocationDisplayName,
+                    DerivedQuantity = x.DerivedQuantity,
+                    AvailableQuantity = x.AvailableQuantity,
+                    UnassignedQuantity = x.UnassignedQuantity,
+                    HasAttention = x.HasAttention,
+                    AttentionCode = x.AttentionCode,
+                    Identities = x.Identities.Select(identity => new BinStockIdentityBreakdownVm
+                    {
+                        InventoryLotId = identity.InventoryLotId,
+                        InventorySerialUnitId = identity.InventorySerialUnitId,
+                        HandlingUnitId = identity.HandlingUnitId,
+                        LotCode = identity.LotCode,
+                        SerialNumber = identity.SerialNumber,
+                        HandlingUnitCode = identity.HandlingUnitCode,
+                        Quantity = identity.Quantity
+                    }).ToList()
+                }).ToList()
+            };
+
+            return RenderWarehousePwaWorkspace(vm);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> UpdateWarehousePwaTaskLifecycle(WarehouseTaskLifecycleActionDto dto, Guid? businessId = null, Guid? warehouseId = null, string? q = null, WarehouseTaskQueueFilter taskFilter = WarehouseTaskQueueFilter.Ready, CancellationToken ct = default)
+        {
+            var result = await _updateWarehouseTaskLifecycle.HandleAsync(dto, ct).ConfigureAwait(false);
+            if (result.Succeeded)
+            {
+                SetSuccessMessage("WarehouseTaskLifecycleUpdatedMessage");
+            }
+            else
+            {
+                SetErrorMessage(result.Error ?? "WarehouseTaskLifecycleFailedMessage");
+            }
+
+            return RedirectOrHtmx(nameof(WarehousePwa), new { businessId, warehouseId, q, taskFilter });
         }
 
         [HttpPost]
@@ -1411,6 +1519,63 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
         }
 
         [HttpGet]
+        public async Task<IActionResult> BinStock(Guid? warehouseId = null, Guid? businessId = null, int page = 1, int pageSize = 20, string? q = null, BinStockQueueFilter filter = BinStockQueueFilter.All, CancellationToken ct = default)
+        {
+            businessId = await _referenceData.ResolveBusinessIdAsync(businessId, ct).ConfigureAwait(false);
+            warehouseId = await _referenceData.ResolveWarehouseIdAsync(warehouseId, businessId, ct).ConfigureAwait(false);
+
+            var result = await _getBinStockDerivation.HandleAsync(businessId, warehouseId, page, pageSize, q, filter, ct).ConfigureAwait(false);
+            var summary = await _getBinStockDerivation.GetSummaryAsync(businessId, warehouseId, q, ct).ConfigureAwait(false);
+
+            var vm = new BinStockListVm
+            {
+                BusinessId = businessId,
+                WarehouseId = warehouseId,
+                Query = q ?? string.Empty,
+                Filter = filter,
+                FilterItems = BuildBinStockFilterItems(filter),
+                WarehouseOptions = await _referenceData.GetWarehouseOptionsAsync(warehouseId, businessId, ct).ConfigureAwait(false),
+                Summary = new BinStockOpsSummaryVm
+                {
+                    RowCount = summary.RowCount,
+                    AssignedCount = summary.AssignedCount,
+                    UnassignedCount = summary.UnassignedCount,
+                    AttentionCount = summary.AttentionCount
+                },
+                Items = result.Items.Select(x => new BinStockListItemVm
+                {
+                    WarehouseId = x.WarehouseId,
+                    WarehouseName = x.WarehouseName,
+                    ProductVariantId = x.ProductVariantId,
+                    VariantSku = x.VariantSku,
+                    LocationId = x.LocationId,
+                    LocationCode = x.LocationCode,
+                    LocationDisplayName = x.LocationDisplayName,
+                    DerivedQuantity = x.DerivedQuantity,
+                    AvailableQuantity = x.AvailableQuantity,
+                    UnassignedQuantity = x.UnassignedQuantity,
+                    HasAttention = x.HasAttention,
+                    AttentionCode = x.AttentionCode,
+                    Identities = x.Identities.Select(identity => new BinStockIdentityBreakdownVm
+                    {
+                        InventoryLotId = identity.InventoryLotId,
+                        InventorySerialUnitId = identity.InventorySerialUnitId,
+                        HandlingUnitId = identity.HandlingUnitId,
+                        LotCode = identity.LotCode,
+                        SerialNumber = identity.SerialNumber,
+                        HandlingUnitCode = identity.HandlingUnitCode,
+                        Quantity = identity.Quantity
+                    }).ToList()
+                }).ToList(),
+                Page = page,
+                PageSize = pageSize,
+                Total = result.Total
+            };
+
+            return RenderBinStockWorkspace(vm);
+        }
+
+        [HttpGet]
         public async Task<IActionResult> AdjustStock(Guid stockLevelId, Guid? businessId = null, CancellationToken ct = default)
         {
             if (stockLevelId == Guid.Empty)
@@ -1865,7 +2030,8 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
                 Lines = vm.Lines.Select(x => new StockTransferLineDto
                 {
                     ProductVariantId = x.ProductVariantId,
-                    Quantity = x.Quantity
+                    Quantity = x.Quantity,
+                    Identities = x.Identities.Select(MapIdentityDto).ToList()
                 }).ToList()
             };
 
@@ -1910,7 +2076,8 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
                 Lines = dto.Lines.Select(x => new StockTransferLineVm
                 {
                     ProductVariantId = x.ProductVariantId,
-                    Quantity = x.Quantity
+                    Quantity = x.Quantity,
+                    Identities = x.Identities.Select(MapIdentityVm).ToList()
                 }).ToList()
             };
             EnsureStockTransferRows(vm);
@@ -2039,7 +2206,8 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
                 Lines = vm.Lines.Select(x => new StockTransferLineDto
                 {
                     ProductVariantId = x.ProductVariantId,
-                    Quantity = x.Quantity
+                    Quantity = x.Quantity,
+                    Identities = x.Identities.Select(MapIdentityDto).ToList()
                 }).ToList()
             };
 
@@ -2218,6 +2386,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
 
             var vm = MapGoodsReceiptDetail(dto);
             vm.PutawayLocationOptions = await GetWarehouseTaskLocationOptionsAsync(vm.BusinessId, vm.WarehouseId, vm.WarehouseTaskAction.ToLocationId, ct).ConfigureAwait(false);
+            await PopulateGoodsReceiptIdentityOptionsAsync(vm, ct).ConfigureAwait(false);
             return RenderGoodsReceiptDetail(vm);
         }
 
@@ -2244,7 +2413,19 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
                     ReceivedQuantity = x.ReceivedQuantity,
                     AcceptedQuantity = x.AcceptedQuantity,
                     RejectedQuantity = x.RejectedQuantity,
-                    DamagedQuantity = x.DamagedQuantity
+                    DamagedQuantity = x.DamagedQuantity,
+                    Identities = x.Identities.Select(identity => new GoodsReceiptLineIdentityDto
+                    {
+                        Id = identity.Id,
+                        GoodsReceiptLineId = x.Id,
+                        ProductVariantId = x.ProductVariantId,
+                        InventoryLotId = identity.InventoryLotId,
+                        InventorySerialUnitId = identity.InventorySerialUnitId,
+                        HandlingUnitId = identity.HandlingUnitId,
+                        Quantity = identity.Quantity,
+                        SortOrder = identity.SortOrder,
+                        MetadataJson = identity.MetadataJson
+                    }).ToList()
                 }).ToList()
             }, ct).ConfigureAwait(false);
 
@@ -2257,6 +2438,45 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
                 SetErrorMessage("GoodsReceiptLifecycleUpdateFailedMessage");
             }
             return RedirectOrHtmx(nameof(EditGoodsReceipt), new { id = vm.Id });
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> CreateGoodsReceiptInlineIdentity(GoodsReceiptInlineIdentityCreateVm vm, string rowVersion, CancellationToken ct = default)
+        {
+            if (vm.GoodsReceiptId == Guid.Empty || vm.GoodsReceiptLineId == Guid.Empty)
+            {
+                SetErrorMessage("GoodsReceiptIdentityCreateFailedMessage");
+                return RedirectOrHtmx(nameof(GoodsReceipts), new { });
+            }
+
+            var result = await _createGoodsReceiptInlineIdentity.HandleAsync(new GoodsReceiptInlineIdentityCreateDto
+            {
+                GoodsReceiptId = vm.GoodsReceiptId,
+                GoodsReceiptLineId = vm.GoodsReceiptLineId,
+                RowVersion = DecodeBase64RowVersion(rowVersion),
+                IdentityType = vm.IdentityType,
+                LotCode = vm.LotCode,
+                SupplierLotCode = vm.SupplierLotCode,
+                ExpiryDateUtc = vm.ExpiryDateUtc,
+                SerialNumber = vm.SerialNumber,
+                InventoryLotId = vm.InventoryLotId,
+                HandlingUnitCode = vm.HandlingUnitCode,
+                HandlingUnitDisplayName = vm.HandlingUnitDisplayName,
+                Quantity = vm.Quantity,
+                MetadataJson = vm.MetadataJson
+            }, ct).ConfigureAwait(false);
+
+            if (result.Succeeded)
+            {
+                SetSuccessMessage("GoodsReceiptIdentityCreatedMessage");
+            }
+            else
+            {
+                SetErrorMessage(result.Error ?? "GoodsReceiptIdentityCreateFailedMessage");
+            }
+
+            return RedirectOrHtmx(nameof(EditGoodsReceipt), new { id = vm.GoodsReceiptId });
         }
 
         [HttpPost]
@@ -2605,6 +2825,14 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
             yield return new SelectListItem(T("Inbound"), InventoryLedgerQueueFilter.Inbound.ToString(), selectedFilter == InventoryLedgerQueueFilter.Inbound);
             yield return new SelectListItem(T("Outbound"), InventoryLedgerQueueFilter.Outbound.ToString(), selectedFilter == InventoryLedgerQueueFilter.Outbound);
             yield return new SelectListItem(T("Reservations"), InventoryLedgerQueueFilter.Reservations.ToString(), selectedFilter == InventoryLedgerQueueFilter.Reservations);
+        }
+
+        private IEnumerable<SelectListItem> BuildBinStockFilterItems(BinStockQueueFilter selectedFilter)
+        {
+            yield return new SelectListItem(T("All"), BinStockQueueFilter.All.ToString(), selectedFilter == BinStockQueueFilter.All);
+            yield return new SelectListItem(T("NeedsAttention"), BinStockQueueFilter.WithAttention.ToString(), selectedFilter == BinStockQueueFilter.WithAttention);
+            yield return new SelectListItem(T("Assigned"), BinStockQueueFilter.Assigned.ToString(), selectedFilter == BinStockQueueFilter.Assigned);
+            yield return new SelectListItem(T("Unassigned"), BinStockQueueFilter.Unassigned.ToString(), selectedFilter == BinStockQueueFilter.Unassigned);
         }
 
         private List<InventoryOpsPlaybookVm> BuildInventoryLedgerPlaybooks()
@@ -2972,6 +3200,15 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
             {
                 vm.Lines.Add(new WarehouseTaskLineVm { RequestedQuantity = 1, SortOrder = 1 });
             }
+            foreach (var line in vm.Lines)
+            {
+                EnsureInventoryIdentityRows(line.Identities, Math.Max(1, line.RequestedQuantity - line.ShortQuantity));
+            }
+            await PopulateInventoryIdentityOptionsAsync(
+                lots => vm.LotOptions = lots,
+                serials => vm.SerialUnitOptions = serials,
+                handlingUnits => vm.HandlingUnitOptions = handlingUnits,
+                ct).ConfigureAwait(false);
         }
 
         private async Task PopulateStockCountOptionsAsync(StockCountEditVm vm, CancellationToken ct)
@@ -2983,6 +3220,15 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
             vm.CountTypeOptions = Enum.GetValues<StockCountType>().Select(x => new SelectListItem(T(x.ToString()), x.ToString(), x == vm.CountType)).ToList();
             vm.ReviewStatusOptions = Enum.GetValues<StockCountLineReviewStatus>().Select(x => new SelectListItem(T(x.ToString()), x.ToString())).ToList();
             EnsureStockCountRows(vm);
+            foreach (var line in vm.Lines)
+            {
+                EnsureInventoryIdentityRows(line.Identities, Math.Max(1, line.CountedQuantity));
+            }
+            await PopulateInventoryIdentityOptionsAsync(
+                lots => vm.LotOptions = lots,
+                serials => vm.SerialUnitOptions = serials,
+                handlingUnits => vm.HandlingUnitOptions = handlingUnits,
+                ct).ConfigureAwait(false);
         }
 
         private async Task<List<SelectListItem>> GetWarehouseOptionsAsync(Guid? selectedWarehouseId, CancellationToken ct)
@@ -3183,7 +3429,8 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
             SortOrder = dto.SortOrder,
             SourceLineType = dto.SourceLineType,
             SourceLineId = dto.SourceLineId,
-            MetadataJson = dto.MetadataJson
+            MetadataJson = dto.MetadataJson,
+            Identities = dto.Identities.Select(MapIdentityVm).ToList()
         };
 
         private static WarehouseTaskCreateDto MapWarehouseTaskCreateDto(WarehouseTaskEditVm vm) => new()
@@ -3245,6 +3492,39 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
             SortOrder = vm.SortOrder,
             SourceLineType = vm.SourceLineType,
             SourceLineId = vm.SourceLineId,
+            MetadataJson = vm.MetadataJson,
+            Identities = vm.Identities.Select(MapIdentityDto).ToList()
+        };
+
+        private static InventoryIdentityEvidenceVm MapIdentityVm(InventoryIdentityEvidenceDto dto) => new()
+        {
+            Id = dto.Id,
+            InventoryLotId = dto.InventoryLotId,
+            InventorySerialUnitId = dto.InventorySerialUnitId,
+            HandlingUnitId = dto.HandlingUnitId,
+            Quantity = dto.Quantity,
+            LotCodeSnapshot = dto.LotCodeSnapshot,
+            SupplierLotCodeSnapshot = dto.SupplierLotCodeSnapshot,
+            ExpiryDateUtc = dto.ExpiryDateUtc,
+            SerialNumberSnapshot = dto.SerialNumberSnapshot,
+            HandlingUnitCodeSnapshot = dto.HandlingUnitCodeSnapshot,
+            SortOrder = dto.SortOrder,
+            MetadataJson = dto.MetadataJson
+        };
+
+        private static InventoryIdentityEvidenceDto MapIdentityDto(InventoryIdentityEvidenceVm vm) => new()
+        {
+            Id = vm.Id,
+            InventoryLotId = vm.InventoryLotId,
+            InventorySerialUnitId = vm.InventorySerialUnitId,
+            HandlingUnitId = vm.HandlingUnitId,
+            Quantity = vm.Quantity,
+            LotCodeSnapshot = vm.LotCodeSnapshot,
+            SupplierLotCodeSnapshot = vm.SupplierLotCodeSnapshot,
+            ExpiryDateUtc = vm.ExpiryDateUtc,
+            SerialNumberSnapshot = vm.SerialNumberSnapshot,
+            HandlingUnitCodeSnapshot = vm.HandlingUnitCodeSnapshot,
+            SortOrder = vm.SortOrder,
             MetadataJson = vm.MetadataJson
         };
 
@@ -3259,6 +3539,101 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
             var locations = await _getWarehouseLocationsPage.HandleAsync(businessId, warehouseId, 1, 200, null, WarehouseLocationQueueFilter.Active, ct).ConfigureAwait(false);
             options.AddRange(locations.Items.Select(x => new SelectListItem($"{x.Code} - {x.DisplayName}", x.Id.ToString(), selectedLocationId == x.Id)));
             return options;
+        }
+
+        private async Task PopulateGoodsReceiptIdentityOptionsAsync(GoodsReceiptDetailVm vm, CancellationToken ct)
+        {
+            vm.LotOptions = new List<SelectListItem> { new(T("NoLot"), string.Empty) };
+            vm.SerialUnitOptions = new List<SelectListItem> { new(T("NoSerialUnit"), string.Empty) };
+            vm.HandlingUnitOptions = new List<SelectListItem> { new(T("NoHandlingUnit"), string.Empty) };
+            if (vm.BusinessId == Guid.Empty)
+            {
+                return;
+            }
+
+            var lots = await _getInventoryLotsPage.HandleAsync(vm.BusinessId, 1, 200, null, InventoryLotQueueFilter.Active, ct).ConfigureAwait(false);
+            vm.LotOptions.AddRange(lots.Items.Select(x =>
+            {
+                var label = string.IsNullOrWhiteSpace(x.SupplierLotCode)
+                    ? $"{x.VariantSku} / {x.LotCode}"
+                    : $"{x.VariantSku} / {x.LotCode} / {x.SupplierLotCode}";
+                return new SelectListItem(label, x.Id.ToString());
+            }));
+
+            var serials = await _getInventorySerialUnitsPage.HandleAsync(vm.BusinessId, 1, 200, null, InventorySerialUnitQueueFilter.Received, ct).ConfigureAwait(false);
+            vm.SerialUnitOptions.AddRange(serials.Items.Select(x =>
+            {
+                var label = string.IsNullOrWhiteSpace(x.LotCode)
+                    ? $"{x.VariantSku} / {x.SerialNumber}"
+                    : $"{x.VariantSku} / {x.SerialNumber} / {x.LotCode}";
+                return new SelectListItem(label, x.Id.ToString());
+            }));
+
+            var handlingUnits = await _getHandlingUnitsPage.HandleAsync(vm.BusinessId, 1, 200, null, HandlingUnitQueueFilter.Open, ct).ConfigureAwait(false);
+            vm.HandlingUnitOptions.AddRange(handlingUnits.Items.Select(x => new SelectListItem($"{x.Code} - {x.DisplayName}", x.Id.ToString())));
+
+            if (string.Equals(vm.Status, GoodsReceiptStatus.Received.ToString(), StringComparison.OrdinalIgnoreCase))
+            {
+                EnsureGoodsReceiptIdentityRows(vm);
+            }
+        }
+
+        private static void EnsureGoodsReceiptIdentityRows(GoodsReceiptDetailVm vm)
+        {
+            foreach (var line in vm.Lines)
+            {
+                var requiredRows = Math.Max(3, line.AcceptedQuantity > 0 ? line.AcceptedQuantity : line.ReceivedQuantity);
+                var targetRows = Math.Min(50, Math.Max(line.Identities.Count, requiredRows));
+                while (line.Identities.Count < targetRows)
+                {
+                    line.Identities.Add(new GoodsReceiptLineIdentityVm
+                    {
+                        GoodsReceiptLineId = line.Id,
+                        ProductVariantId = line.ProductVariantId,
+                        SortOrder = line.Identities.Count + 1
+                    });
+                }
+            }
+        }
+
+        private async Task PopulateInventoryIdentityOptionsAsync(
+            Action<List<SelectListItem>> assignLots,
+            Action<List<SelectListItem>> assignSerialUnits,
+            Action<List<SelectListItem>> assignHandlingUnits,
+            CancellationToken ct)
+        {
+            var businessId = await _referenceData.ResolveBusinessIdAsync(null, ct).ConfigureAwait(false);
+            var lotOptions = new List<SelectListItem> { new(T("NoLot"), string.Empty) };
+            var serialOptions = new List<SelectListItem> { new(T("NoSerialUnit"), string.Empty) };
+            var handlingUnitOptions = new List<SelectListItem> { new(T("NoHandlingUnit"), string.Empty) };
+
+            if (businessId.HasValue && businessId.Value != Guid.Empty)
+            {
+                var lots = await _getInventoryLotsPage.HandleAsync(businessId.Value, 1, 200, null, InventoryLotQueueFilter.Active, ct).ConfigureAwait(false);
+                lotOptions.AddRange(lots.Items.Select(x =>
+                {
+                    var label = string.IsNullOrWhiteSpace(x.SupplierLotCode)
+                        ? $"{x.VariantSku} / {x.LotCode}"
+                        : $"{x.VariantSku} / {x.LotCode} / {x.SupplierLotCode}";
+                    return new SelectListItem(label, x.Id.ToString());
+                }));
+
+                var serials = await _getInventorySerialUnitsPage.HandleAsync(businessId.Value, 1, 200, null, InventorySerialUnitQueueFilter.Received, ct).ConfigureAwait(false);
+                serialOptions.AddRange(serials.Items.Select(x =>
+                {
+                    var label = string.IsNullOrWhiteSpace(x.LotCode)
+                        ? $"{x.VariantSku} / {x.SerialNumber}"
+                        : $"{x.VariantSku} / {x.SerialNumber} / {x.LotCode}";
+                    return new SelectListItem(label, x.Id.ToString());
+                }));
+
+                var handlingUnits = await _getHandlingUnitsPage.HandleAsync(businessId.Value, 1, 200, null, HandlingUnitQueueFilter.Open, ct).ConfigureAwait(false);
+                handlingUnitOptions.AddRange(handlingUnits.Items.Select(x => new SelectListItem($"{x.Code} - {x.DisplayName}", x.Id.ToString())));
+            }
+
+            assignLots(lotOptions);
+            assignSerialUnits(serialOptions);
+            assignHandlingUnits(handlingUnitOptions);
         }
 
         private async Task<WarehouseLocationLabelPrintVm> BuildWarehouseLocationLabelPrintVmAsync(Guid businessId, Guid templateId, Guid[] locationIds, CancellationToken ct)
@@ -3415,6 +3790,15 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
             var resolvedBusinessId = businessId ?? await _referenceData.ResolveBusinessIdAsync(null, ct).ConfigureAwait(false);
             vm.WarehouseOptions = await _referenceData.GetWarehouseOptionsAsync(null, resolvedBusinessId, ct).ConfigureAwait(false);
             vm.VariantOptions = await _referenceData.GetVariantOptionsAsync(null, ct).ConfigureAwait(false);
+            foreach (var line in vm.Lines)
+            {
+                EnsureInventoryIdentityRows(line.Identities, Math.Max(1, line.Quantity));
+            }
+            await PopulateInventoryIdentityOptionsAsync(
+                lots => vm.LotOptions = lots,
+                serials => vm.SerialUnitOptions = serials,
+                handlingUnits => vm.HandlingUnitOptions = handlingUnits,
+                ct).ConfigureAwait(false);
         }
 
         private async Task PopulatePurchaseOrderOptionsAsync(PurchaseOrderEditVm vm, CancellationToken ct)
@@ -3451,6 +3835,15 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
             if (vm.Lines.Count == 0)
             {
                 vm.Lines.Add(new StockTransferLineVm());
+            }
+        }
+
+        private static void EnsureInventoryIdentityRows(List<InventoryIdentityEvidenceVm> identities, int requiredQuantity)
+        {
+            var targetRows = Math.Min(20, Math.Max(identities.Count, Math.Min(3, Math.Max(1, requiredQuantity))));
+            while (identities.Count < targetRows)
+            {
+                identities.Add(new InventoryIdentityEvidenceVm { Quantity = 1, SortOrder = identities.Count + 1 });
             }
         }
 
@@ -3533,6 +3926,16 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
             }
 
             return View("StockLevels", vm);
+        }
+
+        private IActionResult RenderBinStockWorkspace(BinStockListVm vm)
+        {
+            if (IsHtmxRequest())
+            {
+                return PartialView("~/Views/Inventory/BinStock.cshtml", vm);
+            }
+
+            return View("BinStock", vm);
         }
 
         private IActionResult RenderStockTransfersWorkspace(StockTransfersListVm vm)
@@ -3690,6 +4093,16 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
             return View("WarehouseTasks", vm);
         }
 
+        private IActionResult RenderWarehousePwaWorkspace(WarehousePwaVm vm)
+        {
+            if (IsHtmxRequest())
+            {
+                return PartialView("~/Views/Inventory/WarehousePwa.cshtml", vm);
+            }
+
+            return View("WarehousePwa", vm);
+        }
+
         private IActionResult RenderWarehouseTaskEditor(WarehouseTaskEditVm vm, bool isCreate)
         {
             if (IsHtmxRequest())
@@ -3788,7 +4201,8 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
             AdjustmentPosted = dto.AdjustmentPosted,
             ReviewNotes = dto.ReviewNotes,
             SortOrder = dto.SortOrder,
-            MetadataJson = dto.MetadataJson
+            MetadataJson = dto.MetadataJson,
+            Identities = dto.Identities.Select(MapIdentityVm).ToList()
         };
 
         private static StockCountCreateDto MapStockCountCreateDto(StockCountEditVm vm) => new()
@@ -3841,7 +4255,8 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
             AdjustmentPosted = vm.AdjustmentPosted,
             ReviewNotes = vm.ReviewNotes,
             SortOrder = vm.SortOrder,
-            MetadataJson = vm.MetadataJson
+            MetadataJson = vm.MetadataJson,
+            Identities = vm.Identities.Select(MapIdentityDto).ToList()
         };
 
         private static void EnsureStockCountRows(StockCountEditVm vm)
@@ -3903,6 +4318,12 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
                     BusinessId = dto.BusinessId,
                     Priority = WarehouseTaskPriority.Normal
                 },
+                InlineIdentity = new GoodsReceiptInlineIdentityCreateVm
+                {
+                    GoodsReceiptId = dto.Id,
+                    RowVersion = dto.RowVersion,
+                    Quantity = 1
+                },
                 Lines = dto.Lines.Select(x => new GoodsReceiptLineVm
                 {
                     Id = x.Id,
@@ -3919,7 +4340,24 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
                     DamagedQuantity = x.DamagedQuantity,
                     UnitCostMinor = x.UnitCostMinor,
                     TotalCostMinor = x.TotalCostMinor,
-                    SortOrder = x.SortOrder
+                    SortOrder = x.SortOrder,
+                    Identities = x.Identities.Select(identity => new GoodsReceiptLineIdentityVm
+                    {
+                        Id = identity.Id,
+                        GoodsReceiptLineId = identity.GoodsReceiptLineId,
+                        ProductVariantId = identity.ProductVariantId,
+                        InventoryLotId = identity.InventoryLotId,
+                        InventorySerialUnitId = identity.InventorySerialUnitId,
+                        HandlingUnitId = identity.HandlingUnitId,
+                        Quantity = identity.Quantity,
+                        LotCodeSnapshot = identity.LotCodeSnapshot,
+                        SupplierLotCodeSnapshot = identity.SupplierLotCodeSnapshot,
+                        SerialNumberSnapshot = identity.SerialNumberSnapshot,
+                        HandlingUnitCodeSnapshot = identity.HandlingUnitCodeSnapshot,
+                        ExpiryDateUtc = identity.ExpiryDateUtc,
+                        SortOrder = identity.SortOrder,
+                        MetadataJson = identity.MetadataJson
+                    }).ToList()
                 }).ToList()
             };
         }

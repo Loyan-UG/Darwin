@@ -178,6 +178,9 @@ public sealed class PushRegistrationServiceTests
         public Task<Result<string>> GetStringResultAsync(string route, CancellationToken ct)
             => throw new NotSupportedException();
 
+        public Task<Result<ApiFileResult>> GetFileResultAsync(string route, CancellationToken ct)
+            => throw new NotSupportedException();
+
         public Task<Result<TResponse>> GetEnvelopeResultAsync<TResponse>(string route, CancellationToken ct)
             => throw new NotSupportedException();
 

@@ -72,6 +72,7 @@ public sealed class CreateWarehouseTaskHandler
         }
 
         await WarehouseTaskHandlerSupport.EnsureWarehouseTaskLinksAsync(_db, dto, _localizer, ct).ConfigureAwait(false);
+        await WarehouseTaskHandlerSupport.PopulateLineIdentitySnapshotsAsync(_db, dto, _localizer, ct).ConfigureAwait(false);
 
         var task = new WarehouseTask
         {
@@ -109,7 +110,11 @@ public sealed class CreateWarehouseTaskHandler
                 SortOrder = line.SortOrder <= 0 ? index + 1 : line.SortOrder,
                 SourceLineType = InventoryManagementHandlerSupport.NormalizeOptional(line.SourceLineType),
                 SourceLineId = line.SourceLineId,
-                MetadataJson = InventoryManagementHandlerSupport.NormalizeMetadataJson(line.MetadataJson)
+                MetadataJson = InventoryManagementHandlerSupport.NormalizeMetadataJson(line.MetadataJson),
+                Identities = line.Identities
+                    .Where(identity => !InventoryIdentityEvidenceSupport.IsBlank(identity))
+                    .Select((identity, identityIndex) => WarehouseTaskHandlerSupport.CreateIdentity(identity, identityIndex + 1))
+                    .ToList()
             }).ToList()
         };
 
@@ -139,6 +144,8 @@ public sealed class CreateWarehouseTaskHandler
             line.ShortReason = InventoryManagementHandlerSupport.NormalizeOptional(line.ShortReason);
             line.SourceLineType = InventoryManagementHandlerSupport.NormalizeOptional(line.SourceLineType);
             line.MetadataJson = InventoryManagementHandlerSupport.NormalizeMetadataJson(line.MetadataJson);
+            line.Identities ??= new List<InventoryIdentityEvidenceDto>();
+            InventoryIdentityEvidenceSupport.Normalize(line.Identities);
         }
     }
 
@@ -152,7 +159,8 @@ public sealed class CreateWarehouseTaskHandler
                 FoundationInputNormalizer.LooksSensitive(line.Description) ||
                 FoundationInputNormalizer.LooksSensitive(line.ShortReason) ||
                 FoundationInputNormalizer.LooksSensitive(line.SourceLineType) ||
-                FoundationInputNormalizer.LooksSensitive(line.MetadataJson)))
+                FoundationInputNormalizer.LooksSensitive(line.MetadataJson) ||
+                InventoryIdentityEvidenceSupport.LooksSensitive(line.Identities)))
         {
             throw new ArgumentException("WarehouseTaskSensitiveMetadataRejected");
         }
@@ -205,6 +213,7 @@ public sealed class UpdateWarehouseTaskHandler
 
         var task = await _db.Set<WarehouseTask>()
             .Include(x => x.Lines)
+                .ThenInclude(x => x.Identities)
             .FirstOrDefaultAsync(x => x.Id == dto.Id && !x.IsDeleted, ct)
             .ConfigureAwait(false);
         if (task is null) throw new InvalidOperationException(_localizer["WarehouseTaskNotFound"]);
@@ -215,6 +224,7 @@ public sealed class UpdateWarehouseTaskHandler
         }
 
         await WarehouseTaskHandlerSupport.EnsureWarehouseTaskLinksAsync(_db, dto, _localizer, ct).ConfigureAwait(false);
+        await WarehouseTaskHandlerSupport.PopulateLineIdentitySnapshotsAsync(_db, dto, _localizer, ct).ConfigureAwait(false);
 
         task.BusinessId = dto.BusinessId;
         task.WarehouseId = dto.WarehouseId;
@@ -230,6 +240,7 @@ public sealed class UpdateWarehouseTaskHandler
         task.InternalNotes = InventoryManagementHandlerSupport.NormalizeOptional(dto.InternalNotes);
         task.MetadataJson = InventoryManagementHandlerSupport.NormalizeMetadataJson(dto.MetadataJson);
 
+        _db.Set<WarehouseTaskLineIdentity>().RemoveRange(task.Lines.SelectMany(x => x.Identities));
         _db.Set<WarehouseTaskLine>().RemoveRange(task.Lines);
         task.Lines = dto.Lines.Select((line, index) => new WarehouseTaskLine
         {
@@ -246,7 +257,11 @@ public sealed class UpdateWarehouseTaskHandler
             SortOrder = line.SortOrder <= 0 ? index + 1 : line.SortOrder,
             SourceLineType = InventoryManagementHandlerSupport.NormalizeOptional(line.SourceLineType),
             SourceLineId = line.SourceLineId,
-            MetadataJson = InventoryManagementHandlerSupport.NormalizeMetadataJson(line.MetadataJson)
+            MetadataJson = InventoryManagementHandlerSupport.NormalizeMetadataJson(line.MetadataJson),
+            Identities = line.Identities
+                .Where(identity => !InventoryIdentityEvidenceSupport.IsBlank(identity))
+                .Select((identity, identityIndex) => WarehouseTaskHandlerSupport.CreateIdentity(identity, identityIndex + 1))
+                .ToList()
         }).ToList();
 
         await WarehouseTaskHandlerSupport.RecordEvidenceOrSaveAsync(_db, _events, _clock, task, "updated", AuditTrailAction.Updated, ct).ConfigureAwait(false);
@@ -617,6 +632,7 @@ public sealed class UpdateWarehouseTaskLifecycleHandler
 
         var task = await _db.Set<WarehouseTask>()
             .Include(x => x.Lines)
+                .ThenInclude(x => x.Identities)
             .FirstOrDefaultAsync(x => x.Id == dto.Id && !x.IsDeleted, ct)
             .ConfigureAwait(false);
         if (task is null) return Result.Fail(_localizer["WarehouseTaskNotFound"]);
@@ -780,6 +796,32 @@ public sealed class UpdateWarehouseTaskLifecycleHandler
             }
         }
 
+        var identityValidation = await InventoryIdentityEvidenceSupport.ValidateRequiredEvidenceAsync(
+                _db,
+                task.BusinessId,
+                task.Lines.Where(x => !x.IsDeleted),
+                line => Math.Max(0, line.RequestedQuantity - line.ShortQuantity) > 0,
+                line => line.ProductVariantId,
+                line => Math.Max(0, line.RequestedQuantity - line.ShortQuantity),
+                line => line.Identities.Where(identity => !identity.IsDeleted),
+                identity => identity.InventoryLotId,
+                identity => identity.InventorySerialUnitId,
+                identity => identity.HandlingUnitId,
+                identity => identity.Quantity,
+                identity => identity.ExpiryDateUtc,
+                identity => identity.SupplierLotCodeSnapshot,
+                _localizer,
+                "WarehouseTaskIdentityRequired",
+                "WarehouseTaskInvalidIdentityQuantity",
+                "WarehouseTaskLotIdentityRequired",
+                "WarehouseTaskSerialIdentityRequired",
+                "WarehouseTaskExpiryIdentityRequired",
+                "WarehouseTaskSupplierLotIdentityRequired",
+                "WarehouseTaskHandlingUnitIdentityRequired",
+                ct)
+            .ConfigureAwait(false);
+        if (!identityValidation.Succeeded) return identityValidation;
+
         return Result.Ok();
     }
 
@@ -845,6 +887,54 @@ internal static class WarehouseTaskHandlerSupport
                 if (!variantExists) throw new InvalidOperationException(localizer["VariantNotFound"]);
             }
         }
+    }
+
+    public static async Task PopulateLineIdentitySnapshotsAsync(IAppDbContext db, WarehouseTaskCreateDto dto, IStringLocalizer<ValidationResource> localizer, CancellationToken ct)
+    {
+        foreach (var line in dto.Lines)
+        {
+            if (!line.ProductVariantId.HasValue) continue;
+            foreach (var identity in line.Identities.Where(identity => !InventoryIdentityEvidenceSupport.IsBlank(identity)))
+            {
+                var snapshots = await InventoryIdentityEvidenceSupport.PopulateSnapshotsAsync(
+                        db,
+                        dto.BusinessId,
+                        line.ProductVariantId.Value,
+                        identity.InventoryLotId,
+                        identity.InventorySerialUnitId,
+                        identity.HandlingUnitId,
+                        localizer,
+                        ct)
+                    .ConfigureAwait(false);
+                if (!snapshots.Succeeded) throw new InvalidOperationException(snapshots.Error);
+                ApplySnapshots(identity, snapshots.Value ?? throw new InvalidOperationException("InventoryIdentitySnapshotsMissing"));
+            }
+        }
+    }
+
+    public static WarehouseTaskLineIdentity CreateIdentity(InventoryIdentityEvidenceDto dto, int sortOrder)
+        => new()
+        {
+            InventoryLotId = dto.InventoryLotId,
+            InventorySerialUnitId = dto.InventorySerialUnitId,
+            HandlingUnitId = dto.HandlingUnitId,
+            Quantity = dto.Quantity,
+            LotCodeSnapshot = InventoryManagementHandlerSupport.NormalizeOptional(dto.LotCodeSnapshot),
+            SupplierLotCodeSnapshot = InventoryManagementHandlerSupport.NormalizeOptional(dto.SupplierLotCodeSnapshot),
+            ExpiryDateUtc = dto.ExpiryDateUtc,
+            SerialNumberSnapshot = InventoryManagementHandlerSupport.NormalizeOptional(dto.SerialNumberSnapshot),
+            HandlingUnitCodeSnapshot = InventoryManagementHandlerSupport.NormalizeOptional(dto.HandlingUnitCodeSnapshot),
+            SortOrder = dto.SortOrder <= 0 ? sortOrder : dto.SortOrder,
+            MetadataJson = InventoryManagementHandlerSupport.NormalizeMetadataJson(dto.MetadataJson)
+        };
+
+    private static void ApplySnapshots(InventoryIdentityEvidenceDto dto, InventoryIdentityEvidenceSupport.IdentitySnapshots snapshots)
+    {
+        dto.LotCodeSnapshot = snapshots.LotCodeSnapshot ?? dto.LotCodeSnapshot;
+        dto.SupplierLotCodeSnapshot = snapshots.SupplierLotCodeSnapshot ?? dto.SupplierLotCodeSnapshot;
+        dto.ExpiryDateUtc = snapshots.ExpiryDateUtc ?? dto.ExpiryDateUtc;
+        dto.SerialNumberSnapshot = snapshots.SerialNumberSnapshot ?? dto.SerialNumberSnapshot;
+        dto.HandlingUnitCodeSnapshot = snapshots.HandlingUnitCodeSnapshot ?? dto.HandlingUnitCodeSnapshot;
     }
 
     public static Task EnsureLocationForTaskAsync(IAppDbContext db, Guid businessId, Guid warehouseId, Guid? locationId, IStringLocalizer<ValidationResource> localizer, CancellationToken ct)

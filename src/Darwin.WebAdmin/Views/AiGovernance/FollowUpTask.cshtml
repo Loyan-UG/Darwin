@@ -1,0 +1,94 @@
+@model Darwin.Application.Foundation.InternalFollowUpTaskDetailDto
+@using Darwin.Domain.Enums
+@inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
+@{
+    ViewData["Title"] = T.T("FollowUpTask");
+    var canClose = Model.Status != InternalFollowUpTaskStatus.Completed && Model.Status != InternalFollowUpTaskStatus.Cancelled;
+}
+
+<partial name="~/Views/Shared/_Alerts.cshtml" />
+
+<div class="d-flex justify-content-between align-items-start gap-3 mb-4">
+    <div>
+        <h1 class="mb-0">@Model.Title</h1>
+        <div class="text-muted small">@Model.FeatureAreaCode / @Model.TargetEntityType / @T.T(Model.Status.ToString())</div>
+    </div>
+    <a asp-action="FollowUpTasks" class="btn btn-outline-secondary">@T.T("Back")</a>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-md-3"><div class="border rounded p-3"><div class="text-muted small">@T.T("Priority")</div><div class="fw-semibold">@T.T(Model.Priority.ToString())</div></div></div>
+    <div class="col-md-3"><div class="border rounded p-3"><div class="text-muted small">@T.T("DueAtUtc")</div><div class="fw-semibold">@(Model.DueAtUtc?.ToString("yyyy-MM-dd HH:mm") ?? "-")</div></div></div>
+    <div class="col-md-3"><div class="border rounded p-3"><div class="text-muted small">@T.T("AssignedTo")</div><div class="fw-semibold">@(Model.AssignedToUserId?.ToString("N") ?? "-")</div></div></div>
+    <div class="col-md-3"><div class="border rounded p-3"><div class="text-muted small">@T.T("CreatedAt")</div><div class="fw-semibold">@Model.CreatedAtUtc.ToString("yyyy-MM-dd HH:mm")</div></div></div>
+</div>
+
+<div class="border rounded p-3 mb-3">
+    <h2 class="h5">@T.T("Details")</h2>
+    <div class="row g-3">
+        <div class="col-md-4">
+            <div class="text-muted small">@T.T("TargetEntity")</div>
+            <div>@Model.TargetEntityType @Model.TargetEntityId.ToString("N")</div>
+        </div>
+        <div class="col-md-4">
+            <div class="text-muted small">@T.T("AiActionDraft")</div>
+            <div>
+                @if (Model.SourceAiActionDraftId.HasValue)
+                {
+                    <a asp-action="ActionDraft" asp-route-id="@Model.SourceAiActionDraftId.Value">@Model.SourceAiActionDraftId.Value.ToString("N")</a>
+                }
+                else
+                {
+                    <span>-</span>
+                }
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="text-muted small">@T.T("Status")</div>
+            <div>@T.T(Model.Status.ToString())</div>
+        </div>
+        <div class="col-12">
+            <div class="text-muted small">@T.T("Description")</div>
+            <div>@(Model.Description ?? "-")</div>
+        </div>
+    </div>
+</div>
+
+@if (canClose)
+{
+    <div class="border rounded p-3 mb-3">
+        <h2 class="h5">@T.T("Actions")</h2>
+        <div class="row g-3">
+            <div class="col-md-6">
+                <form method="post" asp-action="CompleteFollowUpTask">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="id" value="@Model.Id" />
+                    <input type="hidden" name="rowVersion" value="@Model.RowVersionText" />
+                    <label class="form-label">@T.T("Notes")</label>
+                    <input name="reason" class="form-control mb-2" maxlength="1000" />
+                    <button class="btn btn-success w-100" type="submit">@T.T("Complete")</button>
+                </form>
+            </div>
+            <div class="col-md-6">
+                <form method="post" asp-action="CancelFollowUpTask">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="id" value="@Model.Id" />
+                    <input type="hidden" name="rowVersion" value="@Model.RowVersionText" />
+                    <label class="form-label">@T.T("Reason")</label>
+                    <input name="reason" class="form-control mb-2" maxlength="1000" required />
+                    <button class="btn btn-outline-danger w-100" type="submit">@T.T("Cancel")</button>
+                </form>
+            </div>
+        </div>
+    </div>
+}
+
+<div class="border rounded p-3">
+    <h2 class="h5">@T.T("Closure")</h2>
+    <div class="row g-3">
+        <div class="col-md-3"><div class="text-muted small">@T.T("CompletedAt")</div><div>@(Model.CompletedAtUtc?.ToString("yyyy-MM-dd HH:mm") ?? "-")</div></div>
+        <div class="col-md-3"><div class="text-muted small">@T.T("CancelledAt")</div><div>@(Model.CancelledAtUtc?.ToString("yyyy-MM-dd HH:mm") ?? "-")</div></div>
+        <div class="col-md-3"><div class="text-muted small">@T.T("CompletionNotes")</div><div>@(Model.CompletionNotes ?? "-")</div></div>
+        <div class="col-md-3"><div class="text-muted small">@T.T("CancellationReason")</div><div>@(Model.CancellationReason ?? "-")</div></div>
+    </div>
+</div>

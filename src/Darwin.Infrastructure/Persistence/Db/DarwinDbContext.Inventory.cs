@@ -59,6 +59,11 @@ namespace Darwin.Infrastructure.Persistence.Db
         public DbSet<WarehouseTaskLine> WarehouseTaskLines => Set<WarehouseTaskLine>();
 
         /// <summary>
+        /// Warehouse task lot, serial, and handling-unit identity evidence.
+        /// </summary>
+        public DbSet<WarehouseTaskLineIdentity> WarehouseTaskLineIdentities => Set<WarehouseTaskLineIdentity>();
+
+        /// <summary>
         /// Formal stock count sessions.
         /// </summary>
         public DbSet<StockCountSession> StockCountSessions => Set<StockCountSession>();
@@ -67,6 +72,11 @@ namespace Darwin.Infrastructure.Persistence.Db
         /// Formal stock count lines.
         /// </summary>
         public DbSet<StockCountLine> StockCountLines => Set<StockCountLine>();
+
+        /// <summary>
+        /// Stock count lot, serial, and handling-unit identity evidence.
+        /// </summary>
+        public DbSet<StockCountLineIdentity> StockCountLineIdentities => Set<StockCountLineIdentity>();
 
         /// <summary>
         /// Stock levels by warehouse and variant.
@@ -82,6 +92,11 @@ namespace Darwin.Infrastructure.Persistence.Db
         /// Stock transfer lines.
         /// </summary>
         public DbSet<StockTransferLine> StockTransferLines => Set<StockTransferLine>();
+
+        /// <summary>
+        /// Stock transfer lot, serial, and handling-unit identity evidence.
+        /// </summary>
+        public DbSet<StockTransferLineIdentity> StockTransferLineIdentities => Set<StockTransferLineIdentity>();
 
         /// <summary>
         /// Suppliers.
@@ -102,6 +117,11 @@ namespace Darwin.Infrastructure.Persistence.Db
         /// Purchase order lines.
         /// </summary>
         public DbSet<PurchaseOrderLine> PurchaseOrderLines => Set<PurchaseOrderLine>();
+
+        /// <summary>
+        /// Goods receipt lot, serial, and handling-unit identity evidence.
+        /// </summary>
+        public DbSet<GoodsReceiptLineIdentity> GoodsReceiptLineIdentities => Set<GoodsReceiptLineIdentity>();
 
         /// <summary>
         /// Inventory movement ledger.

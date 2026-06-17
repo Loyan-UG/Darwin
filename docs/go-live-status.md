@@ -1,6 +1,6 @@
 # Darwin Go-Live Status
 
-Last reviewed: 2026-06-08
+Last reviewed: 2026-06-17
 
 This document records code-backed readiness. It is not a product overview or marketing status page; use [README.md](../README.md) for the platform summary. This document deliberately separates implemented plumbing from production-complete provider behavior. External smoke inputs and command shapes are documented in [docs/external-smoke-inputs.md](external-smoke-inputs.md).
 
@@ -21,6 +21,7 @@ This document records code-backed readiness. It is not a product overview or mar
 | E-invoice | Generation boundary, external-command adapter, local Mustangproject wrapper, storage boundary, WebAdmin download guard, validation-report enforcement option, and local adapter smoke for XRechnung XML plus ZUGFeRD/Factur-X PDF exist. | Legal validation fixtures, production artifact smoke, and sign-off. |
 | Mobile | Implemented Consumer and Business workflows are guarded and usable. Google external-login backend/service support exists. | Signed release artifacts, production mobile config, native Google sign-in UI/device smoke, device/camera smoke, and broader UI coverage. |
 | Web external identity | Google Identity Services handoff to WebApi external-login is implemented and keeps Darwin session cookies authoritative. | Web OAuth client ID configuration and browser smoke. |
+| Production evidence package | Evidence package rules are documented in [docs/production-readiness-evidence-package.md](production-readiness-evidence-package.md) and linked from production setup and onboarding. | Populate the package for each deployment with non-secret build, migration, storage, e-invoice, provider, mobile, monitoring, rollback, and approval evidence. |
 
 ## Implemented Baseline
 
@@ -156,3 +157,4 @@ Not production-complete until:
 - Production object-storage bucket/container validation.
 - E-invoice legal validation and production artifact smoke.
 - Signed mobile release and device/provider smoke.
+- Deployment-specific production readiness evidence package with owner approvals, rollback plan, monitoring ownership, and non-secret references to smoke evidence.

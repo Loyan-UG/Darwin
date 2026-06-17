@@ -255,6 +255,163 @@ public sealed class InventoryManagementHandlerTests
     }
 
     [Fact]
+    public async Task ProductTrackingPolicyAndLotSerial_Should_Normalize_AndRejectDuplicates()
+    {
+        await using var db = InventoryTestDbContext.Create();
+        var businessId = Guid.NewGuid();
+        var variantId = Guid.NewGuid();
+        db.Set<ProductVariant>().Add(new ProductVariant { Id = variantId, Sku = "TRACKED-1" });
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var policyHandler = new CreateProductTrackingPolicyHandler(db, new ProductTrackingPolicyCreateValidator(), CreateLocalizer(), new FixedClock());
+        var policyId = await policyHandler.HandleAsync(new ProductTrackingPolicyCreateDto
+        {
+            BusinessId = businessId,
+            ProductVariantId = variantId,
+            TrackingMode = ProductTrackingMode.LotAndExpiryTracked,
+            RequiresExpiryDate = false
+        }, TestContext.Current.CancellationToken);
+
+        var policy = await db.Set<ProductTrackingPolicy>().SingleAsync(x => x.Id == policyId, TestContext.Current.CancellationToken);
+        policy.RequiresExpiryDate.Should().BeTrue("expiry tracking mode must force expiry requirement");
+
+        var duplicatePolicy = async () => await policyHandler.HandleAsync(new ProductTrackingPolicyCreateDto
+        {
+            BusinessId = businessId,
+            ProductVariantId = variantId,
+            TrackingMode = ProductTrackingMode.SerialTracked
+        }, TestContext.Current.CancellationToken);
+        await duplicatePolicy.Should().ThrowAsync<InvalidOperationException>().WithMessage("*ProductTrackingPolicyAlreadyExists*");
+
+        var lotHandler = new CreateInventoryLotHandler(db, new InventoryLotCreateValidator(), CreateLocalizer(), new FixedClock());
+        var lotId = await lotHandler.HandleAsync(new InventoryLotCreateDto
+        {
+            BusinessId = businessId,
+            ProductVariantId = variantId,
+            LotCode = " lot-a ",
+            SupplierLotCode = " supplier-lot ",
+            ExpiryDateUtc = new DateTime(2027, 1, 1, 0, 0, 0, DateTimeKind.Utc)
+        }, TestContext.Current.CancellationToken);
+
+        var lot = await db.Set<InventoryLot>().SingleAsync(x => x.Id == lotId, TestContext.Current.CancellationToken);
+        lot.LotCode.Should().Be("LOT-A");
+        lot.SupplierLotCode.Should().Be("supplier-lot");
+
+        var duplicateLot = async () => await lotHandler.HandleAsync(new InventoryLotCreateDto
+        {
+            BusinessId = businessId,
+            ProductVariantId = variantId,
+            LotCode = "LOT-A"
+        }, TestContext.Current.CancellationToken);
+        await duplicateLot.Should().ThrowAsync<InvalidOperationException>().WithMessage("*InventoryLotAlreadyExists*");
+
+        var serialHandler = new CreateInventorySerialUnitHandler(db, new InventorySerialUnitCreateValidator(), CreateLocalizer(), new FixedClock());
+        var serialId = await serialHandler.HandleAsync(new InventorySerialUnitCreateDto
+        {
+            BusinessId = businessId,
+            ProductVariantId = variantId,
+            InventoryLotId = lotId,
+            SerialNumber = " sn-001 "
+        }, TestContext.Current.CancellationToken);
+
+        var serial = await db.Set<InventorySerialUnit>().SingleAsync(x => x.Id == serialId, TestContext.Current.CancellationToken);
+        serial.SerialNumber.Should().Be("SN-001");
+        serial.InventoryLotId.Should().Be(lotId);
+
+        var duplicateSerial = async () => await serialHandler.HandleAsync(new InventorySerialUnitCreateDto
+        {
+            BusinessId = businessId,
+            ProductVariantId = variantId,
+            SerialNumber = "SN-001"
+        }, TestContext.Current.CancellationToken);
+        await duplicateSerial.Should().ThrowAsync<InvalidOperationException>().WithMessage("*InventorySerialUnitAlreadyExists*");
+    }
+
+    [Fact]
+    public async Task HandlingUnitCreate_Should_Validate_ContentIdentity_AndSerialQuantity()
+    {
+        await using var db = InventoryTestDbContext.Create();
+        var businessId = Guid.NewGuid();
+        var variantId = Guid.NewGuid();
+        var otherVariantId = Guid.NewGuid();
+        var lotId = Guid.NewGuid();
+        var serialId = Guid.NewGuid();
+        db.Set<ProductVariant>().AddRange(
+            new ProductVariant { Id = variantId, Sku = "TRACKED-1" },
+            new ProductVariant { Id = otherVariantId, Sku = "OTHER-1" });
+        db.Set<InventoryLot>().Add(new InventoryLot { Id = lotId, BusinessId = businessId, ProductVariantId = variantId, LotCode = "LOT-A" });
+        db.Set<InventorySerialUnit>().Add(new InventorySerialUnit { Id = serialId, BusinessId = businessId, ProductVariantId = variantId, InventoryLotId = lotId, SerialNumber = "SN-001" });
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var handler = new CreateHandlingUnitHandler(db, new HandlingUnitCreateValidator(), CreateLocalizer(), new FixedClock());
+        var invalidVariant = async () => await handler.HandleAsync(new HandlingUnitCreateDto
+        {
+            BusinessId = businessId,
+            Code = " pallet-1 ",
+            DisplayName = "Pallet 1",
+            Contents =
+            [
+                new HandlingUnitContentDto
+                {
+                    ProductVariantId = otherVariantId,
+                    InventoryLotId = lotId,
+                    Quantity = 1,
+                    Description = "Wrong variant"
+                }
+            ]
+        }, TestContext.Current.CancellationToken);
+
+        await invalidVariant.Should().ThrowAsync<InvalidOperationException>().WithMessage("*InventoryLotNotFound*");
+
+        var invalidQuantity = async () => await handler.HandleAsync(new HandlingUnitCreateDto
+        {
+            BusinessId = businessId,
+            Code = "PALLET-1",
+            DisplayName = "Pallet 1",
+            Contents =
+            [
+                new HandlingUnitContentDto
+                {
+                    ProductVariantId = variantId,
+                    InventoryLotId = lotId,
+                    InventorySerialUnitId = serialId,
+                    Quantity = 2,
+                    Description = "Serial quantity"
+                }
+            ]
+        }, TestContext.Current.CancellationToken);
+
+        await invalidQuantity.Should().ThrowAsync<InvalidOperationException>().WithMessage("*HandlingUnitSerialQuantityMustBeOne*");
+
+        var id = await handler.HandleAsync(new HandlingUnitCreateDto
+        {
+            BusinessId = businessId,
+            Code = " pallet-1 ",
+            DisplayName = "Pallet 1",
+            Barcode = " hu-001 ",
+            Contents =
+            [
+                new HandlingUnitContentDto
+                {
+                    ProductVariantId = variantId,
+                    InventoryLotId = lotId,
+                    InventorySerialUnitId = serialId,
+                    Quantity = 1,
+                    SkuSnapshot = " tracked-1 ",
+                    Description = "Tracked unit"
+                }
+            ]
+        }, TestContext.Current.CancellationToken);
+
+        var saved = await db.Set<HandlingUnit>().Include(x => x.Contents).SingleAsync(x => x.Id == id, TestContext.Current.CancellationToken);
+        saved.Code.Should().Be("PALLET-1");
+        saved.Barcode.Should().Be("hu-001");
+        saved.Contents.Should().ContainSingle();
+        saved.Contents[0].Quantity.Should().Be(1);
+        saved.Contents[0].InventorySerialUnitId.Should().Be(serialId);
+    }
+
+    [Fact]
     public async Task WarehouseLabelTemplateCreate_Should_NormalizeDefault_AndRejectDuplicateKey()
     {
         await using var db = InventoryTestDbContext.Create();
@@ -1834,6 +1991,324 @@ public sealed class InventoryManagementHandlerTests
     }
 
     [Fact]
+    public async Task GoodsReceiptLifecycle_Should_BlockTrackedLotPosting_WithoutIdentityEvidence()
+    {
+        await using var db = InventoryTestDbContext.Create();
+        var businessId = Guid.NewGuid();
+        var warehouseId = Guid.NewGuid();
+        var receiptId = Guid.NewGuid();
+        var receiptLineId = Guid.NewGuid();
+        var purchaseOrderId = Guid.NewGuid();
+        var purchaseOrderLineId = Guid.NewGuid();
+        var variantId = Guid.NewGuid();
+
+        db.Set<Warehouse>().Add(new Warehouse { Id = warehouseId, BusinessId = businessId, Name = "Main" });
+        db.Set<ProductVariant>().Add(new ProductVariant { Id = variantId, Sku = "LOT-REQ" });
+        db.Set<ProductTrackingPolicy>().Add(new ProductTrackingPolicy { BusinessId = businessId, ProductVariantId = variantId, TrackingMode = ProductTrackingMode.LotTracked, Status = ProductTrackingPolicyStatus.Active });
+        db.Set<PurchaseOrder>().Add(new PurchaseOrder
+        {
+            Id = purchaseOrderId,
+            BusinessId = businessId,
+            SupplierId = Guid.NewGuid(),
+            OrderNumber = "PO-LOT-REQ",
+            Status = PurchaseOrderStatus.Issued,
+            Lines = [new PurchaseOrderLine { Id = purchaseOrderLineId, ProductVariantId = variantId, Quantity = 3 }]
+        });
+        db.Set<GoodsReceipt>().Add(new GoodsReceipt
+        {
+            Id = receiptId,
+            BusinessId = businessId,
+            SupplierId = Guid.NewGuid(),
+            PurchaseOrderId = purchaseOrderId,
+            WarehouseId = warehouseId,
+            Status = GoodsReceiptStatus.Inspected,
+            RowVersion = [4],
+            Lines =
+            [
+                new GoodsReceiptLine
+                {
+                    Id = receiptLineId,
+                    PurchaseOrderLineId = purchaseOrderLineId,
+                    ProductVariantId = variantId,
+                    OrderedQuantity = 3,
+                    ReceivedQuantity = 3,
+                    AcceptedQuantity = 3
+                }
+            ]
+        });
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var handler = new UpdateGoodsReceiptLifecycleHandler(db, CreateLocalizer());
+        var result = await handler.HandleAsync(new GoodsReceiptLifecycleActionDto
+        {
+            Id = receiptId,
+            RowVersion = [4],
+            Action = UpdateGoodsReceiptLifecycleHandler.PostAction
+        }, TestContext.Current.CancellationToken);
+
+        result.Succeeded.Should().BeFalse();
+        result.Error.Should().Contain("GoodsReceiptIdentityRequired");
+        db.Set<InventoryTransaction>().Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task GoodsReceiptLifecycle_Should_PostTrackedLot_WhenIdentityQuantityMatchesAcceptedQuantity()
+    {
+        await using var db = InventoryTestDbContext.Create();
+        var businessId = Guid.NewGuid();
+        var warehouseId = Guid.NewGuid();
+        var receiptId = Guid.NewGuid();
+        var receiptLineId = Guid.NewGuid();
+        var purchaseOrderId = Guid.NewGuid();
+        var purchaseOrderLineId = Guid.NewGuid();
+        var variantId = Guid.NewGuid();
+        var lotId = Guid.NewGuid();
+
+        db.Set<Warehouse>().Add(new Warehouse { Id = warehouseId, BusinessId = businessId, Name = "Main" });
+        db.Set<ProductVariant>().Add(new ProductVariant { Id = variantId, Sku = "LOT-OK" });
+        db.Set<ProductTrackingPolicy>().Add(new ProductTrackingPolicy
+        {
+            BusinessId = businessId,
+            ProductVariantId = variantId,
+            TrackingMode = ProductTrackingMode.LotAndExpiryTracked,
+            Status = ProductTrackingPolicyStatus.Active,
+            RequiresSupplierLot = true,
+            RequiresExpiryDate = true
+        });
+        db.Set<InventoryLot>().Add(new InventoryLot
+        {
+            Id = lotId,
+            BusinessId = businessId,
+            ProductVariantId = variantId,
+            LotCode = "LOT-2026",
+            SupplierLotCode = "SUP-LOT",
+            ExpiryDateUtc = new DateTime(2027, 1, 1, 0, 0, 0, DateTimeKind.Utc),
+            Status = InventoryLotStatus.Active
+        });
+        db.Set<PurchaseOrder>().Add(new PurchaseOrder
+        {
+            Id = purchaseOrderId,
+            BusinessId = businessId,
+            SupplierId = Guid.NewGuid(),
+            OrderNumber = "PO-LOT-OK",
+            Status = PurchaseOrderStatus.Issued,
+            Lines = [new PurchaseOrderLine { Id = purchaseOrderLineId, ProductVariantId = variantId, Quantity = 5 }]
+        });
+        db.Set<GoodsReceipt>().Add(new GoodsReceipt
+        {
+            Id = receiptId,
+            BusinessId = businessId,
+            SupplierId = Guid.NewGuid(),
+            PurchaseOrderId = purchaseOrderId,
+            WarehouseId = warehouseId,
+            Status = GoodsReceiptStatus.Received,
+            RowVersion = [5],
+            Lines =
+            [
+                new GoodsReceiptLine
+                {
+                    Id = receiptLineId,
+                    PurchaseOrderLineId = purchaseOrderLineId,
+                    ProductVariantId = variantId,
+                    OrderedQuantity = 5,
+                    ReceivedQuantity = 5
+                }
+            ]
+        });
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var handler = new UpdateGoodsReceiptLifecycleHandler(db, CreateLocalizer());
+        var inspect = await handler.HandleAsync(new GoodsReceiptLifecycleActionDto
+        {
+            Id = receiptId,
+            RowVersion = [5],
+            Action = UpdateGoodsReceiptLifecycleHandler.InspectAction,
+            Lines =
+            [
+                new GoodsReceiptLineDto
+                {
+                    Id = receiptLineId,
+                    PurchaseOrderLineId = purchaseOrderLineId,
+                    ProductVariantId = variantId,
+                    AcceptedQuantity = 5,
+                    Identities =
+                    [
+                        new GoodsReceiptLineIdentityDto
+                        {
+                            GoodsReceiptLineId = receiptLineId,
+                            ProductVariantId = variantId,
+                            InventoryLotId = lotId,
+                            Quantity = 5
+                        }
+                    ]
+                }
+            ]
+        }, TestContext.Current.CancellationToken);
+        inspect.Succeeded.Should().BeTrue();
+
+        var post = await handler.HandleAsync(new GoodsReceiptLifecycleActionDto
+        {
+            Id = receiptId,
+            RowVersion = [5],
+            Action = UpdateGoodsReceiptLifecycleHandler.PostAction
+        }, TestContext.Current.CancellationToken);
+
+        post.Succeeded.Should().BeTrue();
+        db.Set<GoodsReceiptLineIdentity>().Should().ContainSingle(x => x.InventoryLotId == lotId && x.Quantity == 5 && x.LotCodeSnapshot == "LOT-2026");
+        db.Set<InventoryTransaction>().Should().ContainSingle(x => x.ReferenceId == receiptId && x.QuantityDelta == 5);
+    }
+
+    [Fact]
+    public async Task GoodsReceiptLifecycle_Should_RequireOneSerialIdentityPerAcceptedUnit()
+    {
+        await using var db = InventoryTestDbContext.Create();
+        var businessId = Guid.NewGuid();
+        var warehouseId = Guid.NewGuid();
+        var receiptId = Guid.NewGuid();
+        var receiptLineId = Guid.NewGuid();
+        var purchaseOrderId = Guid.NewGuid();
+        var purchaseOrderLineId = Guid.NewGuid();
+        var variantId = Guid.NewGuid();
+        var serialId = Guid.NewGuid();
+
+        db.Set<Warehouse>().Add(new Warehouse { Id = warehouseId, BusinessId = businessId, Name = "Main" });
+        db.Set<ProductVariant>().Add(new ProductVariant { Id = variantId, Sku = "SER-REQ" });
+        db.Set<ProductTrackingPolicy>().Add(new ProductTrackingPolicy { BusinessId = businessId, ProductVariantId = variantId, TrackingMode = ProductTrackingMode.SerialTracked, Status = ProductTrackingPolicyStatus.Active });
+        db.Set<InventorySerialUnit>().Add(new InventorySerialUnit { Id = serialId, BusinessId = businessId, ProductVariantId = variantId, SerialNumber = "SN-1", Status = InventorySerialUnitStatus.Received });
+        db.Set<PurchaseOrder>().Add(new PurchaseOrder
+        {
+            Id = purchaseOrderId,
+            BusinessId = businessId,
+            SupplierId = Guid.NewGuid(),
+            OrderNumber = "PO-SER-REQ",
+            Status = PurchaseOrderStatus.Issued,
+            Lines = [new PurchaseOrderLine { Id = purchaseOrderLineId, ProductVariantId = variantId, Quantity = 2 }]
+        });
+        db.Set<GoodsReceipt>().Add(new GoodsReceipt
+        {
+            Id = receiptId,
+            BusinessId = businessId,
+            SupplierId = Guid.NewGuid(),
+            PurchaseOrderId = purchaseOrderId,
+            WarehouseId = warehouseId,
+            Status = GoodsReceiptStatus.Received,
+            RowVersion = [6],
+            Lines =
+            [
+                new GoodsReceiptLine
+                {
+                    Id = receiptLineId,
+                    PurchaseOrderLineId = purchaseOrderLineId,
+                    ProductVariantId = variantId,
+                    OrderedQuantity = 2,
+                    ReceivedQuantity = 2
+                }
+            ]
+        });
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var handler = new UpdateGoodsReceiptLifecycleHandler(db, CreateLocalizer());
+        var inspect = await handler.HandleAsync(new GoodsReceiptLifecycleActionDto
+        {
+            Id = receiptId,
+            RowVersion = [6],
+            Action = UpdateGoodsReceiptLifecycleHandler.InspectAction,
+            Lines =
+            [
+                new GoodsReceiptLineDto
+                {
+                    Id = receiptLineId,
+                    PurchaseOrderLineId = purchaseOrderLineId,
+                    ProductVariantId = variantId,
+                    AcceptedQuantity = 2,
+                    Identities =
+                    [
+                        new GoodsReceiptLineIdentityDto
+                        {
+                            ProductVariantId = variantId,
+                            InventorySerialUnitId = serialId,
+                            Quantity = 1
+                        }
+                    ]
+                }
+            ]
+        }, TestContext.Current.CancellationToken);
+        inspect.Succeeded.Should().BeTrue();
+
+        var post = await handler.HandleAsync(new GoodsReceiptLifecycleActionDto
+        {
+            Id = receiptId,
+            RowVersion = [6],
+            Action = UpdateGoodsReceiptLifecycleHandler.PostAction
+        }, TestContext.Current.CancellationToken);
+
+        post.Succeeded.Should().BeFalse();
+        post.Error.Should().Contain("GoodsReceiptSerialIdentityRequired");
+        db.Set<InventoryTransaction>().Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task GoodsReceiptInlineIdentity_Should_CreateLotAndLinkReceiptLine_WithoutStockMovement()
+    {
+        await using var db = InventoryTestDbContext.Create();
+        var businessId = Guid.NewGuid();
+        var warehouseId = Guid.NewGuid();
+        var receiptId = Guid.NewGuid();
+        var receiptLineId = Guid.NewGuid();
+        var variantId = Guid.NewGuid();
+
+        db.Set<Warehouse>().Add(new Warehouse { Id = warehouseId, BusinessId = businessId, Name = "Main" });
+        db.Set<ProductVariant>().Add(new ProductVariant { Id = variantId, Sku = "INLINE-LOT" });
+        db.Set<GoodsReceipt>().Add(new GoodsReceipt
+        {
+            Id = receiptId,
+            BusinessId = businessId,
+            SupplierId = Guid.NewGuid(),
+            PurchaseOrderId = Guid.NewGuid(),
+            WarehouseId = warehouseId,
+            Status = GoodsReceiptStatus.Received,
+            RowVersion = [9],
+            Lines =
+            [
+                new GoodsReceiptLine
+                {
+                    Id = receiptLineId,
+                    PurchaseOrderLineId = Guid.NewGuid(),
+                    ProductVariantId = variantId,
+                    OrderedQuantity = 4,
+                    ReceivedQuantity = 4
+                }
+            ]
+        });
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var handler = new CreateGoodsReceiptInlineIdentityHandler(db, CreateLocalizer());
+        var result = await handler.HandleAsync(new GoodsReceiptInlineIdentityCreateDto
+        {
+            GoodsReceiptId = receiptId,
+            GoodsReceiptLineId = receiptLineId,
+            RowVersion = [9],
+            IdentityType = CreateGoodsReceiptInlineIdentityHandler.LotIdentityType,
+            LotCode = " lot-x ",
+            SupplierLotCode = " sup-x ",
+            ExpiryDateUtc = new DateTime(2027, 6, 1, 0, 0, 0, DateTimeKind.Utc),
+            Quantity = 4
+        }, TestContext.Current.CancellationToken);
+
+        result.Succeeded.Should().BeTrue();
+        var lot = await db.Set<InventoryLot>().SingleAsync(TestContext.Current.CancellationToken);
+        lot.LotCode.Should().Be("LOT-X");
+        lot.SupplierLotCode.Should().Be("sup-x");
+        lot.Status.Should().Be(InventoryLotStatus.Active);
+        db.Set<GoodsReceiptLineIdentity>().Should().ContainSingle(x =>
+            x.GoodsReceiptLineId == receiptLineId
+            && x.InventoryLotId == lot.Id
+            && x.Quantity == 4
+            && x.LotCodeSnapshot == "LOT-X");
+        db.Set<InventoryTransaction>().Should().BeEmpty();
+    }
+
+    [Fact]
     public async Task UpdateWarehouse_Should_ThrowConcurrency_WhenSaveChangesThrowsConcurrencyException()
     {
         await using var db = InventoryTestDbContext.Create();
@@ -2900,6 +3375,134 @@ public sealed class InventoryManagementHandlerTests
         summary.ShortageCount.Should().Be(1);
     }
 
+    [Fact]
+    public async Task BinStockDerivation_Should_Derive_Bin_Identity_And_Unassigned_Availability()
+    {
+        await using var db = InventoryTestDbContext.Create();
+        var businessId = Guid.NewGuid();
+        var warehouseId = Guid.NewGuid();
+        var variantId = Guid.NewGuid();
+        var locationId = Guid.NewGuid();
+        var lotId = Guid.NewGuid();
+        var serialId = Guid.NewGuid();
+        var handlingUnitId = Guid.NewGuid();
+
+        db.Set<Warehouse>().Add(new Warehouse { Id = warehouseId, BusinessId = businessId, Name = "Main" });
+        db.Set<WarehouseLocation>().Add(new WarehouseLocation
+        {
+            Id = locationId,
+            BusinessId = businessId,
+            WarehouseId = warehouseId,
+            Code = "BIN-A",
+            DisplayName = "Bin A",
+            LocationType = WarehouseLocationType.Bin,
+            Status = WarehouseLocationStatus.Active
+        });
+        db.Set<ProductVariant>().Add(new ProductVariant { Id = variantId, Sku = "BIN-1" });
+        db.Set<StockLevel>().Add(new StockLevel { Id = Guid.NewGuid(), WarehouseId = warehouseId, ProductVariantId = variantId, AvailableQuantity = 8 });
+        db.Set<InventoryLot>().Add(new InventoryLot { Id = lotId, BusinessId = businessId, ProductVariantId = variantId, LotCode = "LOT-A", Status = InventoryLotStatus.Active });
+        db.Set<InventorySerialUnit>().Add(new InventorySerialUnit { Id = serialId, BusinessId = businessId, ProductVariantId = variantId, InventoryLotId = lotId, SerialNumber = "SN-A", Status = InventorySerialUnitStatus.Received });
+        db.Set<HandlingUnit>().Add(new HandlingUnit { Id = handlingUnitId, BusinessId = businessId, WarehouseId = warehouseId, LocationId = locationId, Code = "HU-A", DisplayName = "HU A", Status = HandlingUnitStatus.Closed });
+        db.Set<WarehouseTask>().AddRange(
+            new WarehouseTask
+            {
+                Id = Guid.NewGuid(),
+                BusinessId = businessId,
+                WarehouseId = warehouseId,
+                Title = "Putaway",
+                TaskType = WarehouseTaskType.Putaway,
+                Status = WarehouseTaskStatus.Completed,
+                CompletedAtUtc = new DateTime(2026, 6, 1, 8, 0, 0, DateTimeKind.Utc),
+                Lines =
+                [
+                    new WarehouseTaskLine
+                    {
+                        Id = Guid.NewGuid(),
+                        ProductVariantId = variantId,
+                        ToLocationId = locationId,
+                        Description = "Putaway",
+                        RequestedQuantity = 6,
+                        CompletedQuantity = 6,
+                        SortOrder = 1,
+                        Identities =
+                        [
+                            new WarehouseTaskLineIdentity
+                            {
+                                InventoryLotId = lotId,
+                                InventorySerialUnitId = serialId,
+                                HandlingUnitId = handlingUnitId,
+                                Quantity = 6,
+                                LotCodeSnapshot = "LOT-A",
+                                SerialNumberSnapshot = "SN-A",
+                                HandlingUnitCodeSnapshot = "HU-A",
+                                SortOrder = 1
+                            }
+                        ]
+                    }
+                ]
+            },
+            new WarehouseTask
+            {
+                Id = Guid.NewGuid(),
+                BusinessId = businessId,
+                WarehouseId = warehouseId,
+                Title = "Picking",
+                TaskType = WarehouseTaskType.Picking,
+                Status = WarehouseTaskStatus.Completed,
+                CompletedAtUtc = new DateTime(2026, 6, 2, 8, 0, 0, DateTimeKind.Utc),
+                Lines =
+                [
+                    new WarehouseTaskLine
+                    {
+                        Id = Guid.NewGuid(),
+                        ProductVariantId = variantId,
+                        FromLocationId = locationId,
+                        Description = "Pick",
+                        RequestedQuantity = 2,
+                        CompletedQuantity = 2,
+                        SortOrder = 1,
+                        Identities =
+                        [
+                            new WarehouseTaskLineIdentity
+                            {
+                                InventoryLotId = lotId,
+                                InventorySerialUnitId = serialId,
+                                HandlingUnitId = handlingUnitId,
+                                Quantity = 2,
+                                LotCodeSnapshot = "LOT-A",
+                                SerialNumberSnapshot = "SN-A",
+                                HandlingUnitCodeSnapshot = "HU-A",
+                                SortOrder = 1
+                            }
+                        ]
+                    }
+                ]
+            });
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var handler = new GetBinStockDerivationHandler(db);
+        var (items, total) = await handler.HandleAsync(businessId, warehouseId, 1, 20, ct: TestContext.Current.CancellationToken);
+        var summary = await handler.GetSummaryAsync(businessId, warehouseId, ct: TestContext.Current.CancellationToken);
+
+        total.Should().Be(2);
+        var bin = items.Should().ContainSingle(x => x.LocationId == locationId).Subject;
+        bin.DerivedQuantity.Should().Be(4);
+        bin.HasAttention.Should().BeFalse();
+        bin.Identities.Should().ContainSingle(x =>
+            x.InventoryLotId == lotId &&
+            x.InventorySerialUnitId == serialId &&
+            x.HandlingUnitId == handlingUnitId &&
+            x.Quantity == 4);
+
+        var unassigned = items.Should().ContainSingle(x => !x.LocationId.HasValue).Subject;
+        unassigned.DerivedQuantity.Should().Be(4);
+        unassigned.HasAttention.Should().BeTrue();
+        unassigned.AttentionCode.Should().Be("BinStockUnassignedQuantity");
+        summary.AssignedCount.Should().Be(1);
+        summary.UnassignedCount.Should().Be(1);
+        summary.AttentionCount.Should().Be(1);
+    }
+
     // ─────────────────────────────────────────────────────────────────────────
     // Private test infrastructure
     // ─────────────────────────────────────────────────────────────────────────
@@ -2964,6 +3567,90 @@ public sealed class InventoryManagementHandlerTests
                 b.Property(x => x.IsDeleted);
                 b.Property(x => x.RowVersion);
                 b.Ignore(x => x.Children);
+            });
+
+            modelBuilder.Entity<ProductTrackingPolicy>(b =>
+            {
+                b.HasKey(x => x.Id);
+                b.Property(x => x.BusinessId).IsRequired();
+                b.Property(x => x.ProductVariantId).IsRequired();
+                b.Property(x => x.TrackingMode);
+                b.Property(x => x.Status);
+                b.Property(x => x.RequiresSupplierLot);
+                b.Property(x => x.RequiresExpiryDate);
+                b.Property(x => x.RequiresHandlingUnit);
+                b.Property(x => x.Notes).HasMaxLength(2000);
+                b.Property(x => x.MetadataJson);
+                b.Property(x => x.IsDeleted);
+                b.Property(x => x.RowVersion);
+            });
+
+            modelBuilder.Entity<InventoryLot>(b =>
+            {
+                b.HasKey(x => x.Id);
+                b.Property(x => x.BusinessId).IsRequired();
+                b.Property(x => x.ProductVariantId).IsRequired();
+                b.Property(x => x.LotCode).HasMaxLength(100).IsRequired();
+                b.Property(x => x.SupplierLotCode).HasMaxLength(100);
+                b.Property(x => x.ManufactureDateUtc);
+                b.Property(x => x.ExpiryDateUtc);
+                b.Property(x => x.Status);
+                b.Property(x => x.Notes).HasMaxLength(2000);
+                b.Property(x => x.MetadataJson);
+                b.Property(x => x.IsDeleted);
+                b.Property(x => x.RowVersion);
+            });
+
+            modelBuilder.Entity<InventorySerialUnit>(b =>
+            {
+                b.HasKey(x => x.Id);
+                b.Property(x => x.BusinessId).IsRequired();
+                b.Property(x => x.ProductVariantId).IsRequired();
+                b.Property(x => x.InventoryLotId);
+                b.Property(x => x.SerialNumber).HasMaxLength(128).IsRequired();
+                b.Property(x => x.ManufactureDateUtc);
+                b.Property(x => x.ExpiryDateUtc);
+                b.Property(x => x.Status);
+                b.Property(x => x.Notes).HasMaxLength(2000);
+                b.Property(x => x.MetadataJson);
+                b.Property(x => x.IsDeleted);
+                b.Property(x => x.RowVersion);
+            });
+
+            modelBuilder.Entity<HandlingUnit>(b =>
+            {
+                b.HasKey(x => x.Id);
+                b.Property(x => x.BusinessId).IsRequired();
+                b.Property(x => x.WarehouseId);
+                b.Property(x => x.LocationId);
+                b.Property(x => x.ParentHandlingUnitId);
+                b.Property(x => x.Code).HasMaxLength(100).IsRequired();
+                b.Property(x => x.DisplayName).HasMaxLength(200).IsRequired();
+                b.Property(x => x.Barcode).HasMaxLength(128);
+                b.Property(x => x.HandlingUnitType);
+                b.Property(x => x.Status);
+                b.Property(x => x.Notes).HasMaxLength(2000);
+                b.Property(x => x.MetadataJson);
+                b.Property(x => x.IsDeleted);
+                b.Property(x => x.RowVersion);
+                b.HasMany(x => x.Contents).WithOne().HasForeignKey(x => x.HandlingUnitId).OnDelete(DeleteBehavior.Cascade);
+                b.Ignore(x => x.Children);
+            });
+
+            modelBuilder.Entity<HandlingUnitContent>(b =>
+            {
+                b.HasKey(x => x.Id);
+                b.Property(x => x.HandlingUnitId).IsRequired();
+                b.Property(x => x.ProductVariantId).IsRequired();
+                b.Property(x => x.InventoryLotId);
+                b.Property(x => x.InventorySerialUnitId);
+                b.Property(x => x.Quantity);
+                b.Property(x => x.SkuSnapshot).HasMaxLength(100);
+                b.Property(x => x.Description).HasMaxLength(1000).IsRequired();
+                b.Property(x => x.SortOrder);
+                b.Property(x => x.MetadataJson);
+                b.Property(x => x.IsDeleted);
+                b.Property(x => x.RowVersion);
             });
 
             modelBuilder.Entity<User>(b =>
@@ -3049,6 +3736,95 @@ public sealed class InventoryManagementHandlerTests
                 b.Property(x => x.MetadataJson);
                 b.Property(x => x.IsDeleted);
                 b.Ignore(x => x.RowVersion);
+                b.HasMany(x => x.Identities).WithOne().HasForeignKey(x => x.WarehouseTaskLineId).OnDelete(DeleteBehavior.Cascade);
+            });
+
+            modelBuilder.Entity<WarehouseTaskLineIdentity>(b =>
+            {
+                b.HasKey(x => x.Id);
+                b.Property(x => x.WarehouseTaskLineId).IsRequired();
+                b.Property(x => x.InventoryLotId);
+                b.Property(x => x.InventorySerialUnitId);
+                b.Property(x => x.HandlingUnitId);
+                b.Property(x => x.Quantity);
+                b.Property(x => x.LotCodeSnapshot).HasMaxLength(100);
+                b.Property(x => x.SupplierLotCodeSnapshot).HasMaxLength(100);
+                b.Property(x => x.ExpiryDateUtc);
+                b.Property(x => x.SerialNumberSnapshot).HasMaxLength(100);
+                b.Property(x => x.HandlingUnitCodeSnapshot).HasMaxLength(128);
+                b.Property(x => x.SortOrder);
+                b.Property(x => x.MetadataJson);
+                b.Property(x => x.IsDeleted);
+                b.Ignore(x => x.RowVersion);
+            });
+
+            modelBuilder.Entity<StockCountSession>(b =>
+            {
+                b.HasKey(x => x.Id);
+                b.Property(x => x.BusinessId).IsRequired();
+                b.Property(x => x.WarehouseId).IsRequired();
+                b.Property(x => x.LocationId);
+                b.Property(x => x.AssignedToUserId);
+                b.Property(x => x.CountNumber).HasMaxLength(100);
+                b.Property(x => x.Title).HasMaxLength(200).IsRequired();
+                b.Property(x => x.CountType);
+                b.Property(x => x.Status);
+                b.Property(x => x.CountWindowStartUtc);
+                b.Property(x => x.CountWindowEndUtc);
+                b.Property(x => x.PreparedAtUtc);
+                b.Property(x => x.StartedAtUtc);
+                b.Property(x => x.CountedAtUtc);
+                b.Property(x => x.ReviewRequestedAtUtc);
+                b.Property(x => x.ApprovedAtUtc);
+                b.Property(x => x.PostedAtUtc);
+                b.Property(x => x.RejectedAtUtc);
+                b.Property(x => x.CancelledAtUtc);
+                b.Property(x => x.ReviewNotes).HasMaxLength(4000);
+                b.Property(x => x.InternalNotes).HasMaxLength(4000);
+                b.Property(x => x.MetadataJson);
+                b.Property(x => x.IsDeleted);
+                b.Ignore(x => x.RowVersion);
+                b.HasMany(x => x.Lines).WithOne().HasForeignKey(x => x.StockCountSessionId).OnDelete(DeleteBehavior.Cascade);
+            });
+
+            modelBuilder.Entity<StockCountLine>(b =>
+            {
+                b.HasKey(x => x.Id);
+                b.Property(x => x.StockCountSessionId).IsRequired();
+                b.Property(x => x.ProductVariantId).IsRequired();
+                b.Property(x => x.LocationId);
+                b.Property(x => x.SkuSnapshot).HasMaxLength(100);
+                b.Property(x => x.Description).HasMaxLength(1000).IsRequired();
+                b.Property(x => x.ExpectedQuantity);
+                b.Property(x => x.CountedQuantity);
+                b.Property(x => x.VarianceQuantity);
+                b.Property(x => x.ReviewStatus);
+                b.Property(x => x.AdjustmentPosted);
+                b.Property(x => x.ReviewNotes).HasMaxLength(4000);
+                b.Property(x => x.SortOrder);
+                b.Property(x => x.MetadataJson);
+                b.Property(x => x.IsDeleted);
+                b.Ignore(x => x.RowVersion);
+                b.HasMany(x => x.Identities).WithOne().HasForeignKey(x => x.StockCountLineId).OnDelete(DeleteBehavior.Cascade);
+            });
+
+            modelBuilder.Entity<StockCountLineIdentity>(b =>
+            {
+                b.HasKey(x => x.Id);
+                b.Property(x => x.StockCountLineId).IsRequired();
+                b.Property(x => x.InventoryLotId);
+                b.Property(x => x.InventorySerialUnitId);
+                b.Property(x => x.HandlingUnitId);
+                b.Property(x => x.Quantity);
+                b.Property(x => x.LotCodeSnapshot).HasMaxLength(100);
+                b.Property(x => x.SupplierLotCodeSnapshot).HasMaxLength(100);
+                b.Property(x => x.ExpiryDateUtc);
+                b.Property(x => x.SerialNumberSnapshot).HasMaxLength(100);
+                b.Property(x => x.HandlingUnitCodeSnapshot).HasMaxLength(128);
+                b.Property(x => x.SortOrder);
+                b.Property(x => x.MetadataJson);
+                b.Property(x => x.IsDeleted);
+                b.Ignore(x => x.RowVersion);
             });
 
             modelBuilder.Entity<StockLevel>(b =>
@@ -3122,6 +3898,26 @@ public sealed class InventoryManagementHandlerTests
                 b.Property(x => x.ProductVariantId).IsRequired();
                 b.Property(x => x.Quantity);
                 b.Property(x => x.IsDeleted);
+                b.HasMany(x => x.Identities).WithOne().HasForeignKey(x => x.StockTransferLineId).OnDelete(DeleteBehavior.Cascade);
+            });
+
+            modelBuilder.Entity<StockTransferLineIdentity>(b =>
+            {
+                b.HasKey(x => x.Id);
+                b.Property(x => x.StockTransferLineId).IsRequired();
+                b.Property(x => x.InventoryLotId);
+                b.Property(x => x.InventorySerialUnitId);
+                b.Property(x => x.HandlingUnitId);
+                b.Property(x => x.Quantity);
+                b.Property(x => x.LotCodeSnapshot).HasMaxLength(100);
+                b.Property(x => x.SupplierLotCodeSnapshot).HasMaxLength(100);
+                b.Property(x => x.ExpiryDateUtc);
+                b.Property(x => x.SerialNumberSnapshot).HasMaxLength(100);
+                b.Property(x => x.HandlingUnitCodeSnapshot).HasMaxLength(128);
+                b.Property(x => x.SortOrder);
+                b.Property(x => x.MetadataJson);
+                b.Property(x => x.IsDeleted);
+                b.Ignore(x => x.RowVersion);
             });
 
             modelBuilder.Entity<PurchaseOrder>(b =>
@@ -3196,6 +3992,27 @@ public sealed class InventoryManagementHandlerTests
                 b.Property(x => x.TotalCostMinor);
                 b.Property(x => x.SortOrder);
                 b.Property(x => x.IsDeleted);
+                b.HasMany(x => x.Identities).WithOne().HasForeignKey(x => x.GoodsReceiptLineId).OnDelete(DeleteBehavior.Cascade);
+            });
+
+            modelBuilder.Entity<GoodsReceiptLineIdentity>(b =>
+            {
+                b.HasKey(x => x.Id);
+                b.Property(x => x.GoodsReceiptLineId).IsRequired();
+                b.Property(x => x.ProductVariantId).IsRequired();
+                b.Property(x => x.InventoryLotId);
+                b.Property(x => x.InventorySerialUnitId);
+                b.Property(x => x.HandlingUnitId);
+                b.Property(x => x.Quantity);
+                b.Property(x => x.LotCodeSnapshot).HasMaxLength(100);
+                b.Property(x => x.SupplierLotCodeSnapshot).HasMaxLength(100);
+                b.Property(x => x.SerialNumberSnapshot).HasMaxLength(100);
+                b.Property(x => x.HandlingUnitCodeSnapshot).HasMaxLength(128);
+                b.Property(x => x.ExpiryDateUtc);
+                b.Property(x => x.SortOrder);
+                b.Property(x => x.MetadataJson);
+                b.Property(x => x.IsDeleted);
+                b.Ignore(x => x.RowVersion);
             });
 
             modelBuilder.Entity<Order>(b =>

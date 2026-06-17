@@ -152,6 +152,7 @@ public sealed class GetStockCountDetailHandler
         var session = await _db.Set<StockCountSession>()
             .AsNoTracking()
             .Include(x => x.Lines.Where(line => !line.IsDeleted))
+                .ThenInclude(x => x.Identities)
             .FirstOrDefaultAsync(x => x.Id == id && !x.IsDeleted, ct)
             .ConfigureAwait(false);
         if (session is null) return null;
@@ -214,7 +215,25 @@ public sealed class GetStockCountDetailHandler
                     AdjustmentPosted = x.AdjustmentPosted,
                     ReviewNotes = x.ReviewNotes,
                     SortOrder = x.SortOrder,
-                    MetadataJson = x.MetadataJson
+                    MetadataJson = x.MetadataJson,
+                    Identities = x.Identities
+                        .Where(identity => !identity.IsDeleted)
+                        .OrderBy(identity => identity.SortOrder)
+                        .Select(identity => new InventoryIdentityEvidenceDto
+                        {
+                            Id = identity.Id,
+                            InventoryLotId = identity.InventoryLotId,
+                            InventorySerialUnitId = identity.InventorySerialUnitId,
+                            HandlingUnitId = identity.HandlingUnitId,
+                            Quantity = identity.Quantity,
+                            LotCodeSnapshot = identity.LotCodeSnapshot,
+                            SupplierLotCodeSnapshot = identity.SupplierLotCodeSnapshot,
+                            ExpiryDateUtc = identity.ExpiryDateUtc,
+                            SerialNumberSnapshot = identity.SerialNumberSnapshot,
+                            HandlingUnitCodeSnapshot = identity.HandlingUnitCodeSnapshot,
+                            SortOrder = identity.SortOrder,
+                            MetadataJson = identity.MetadataJson
+                        }).ToList()
                 })
                 .ToList()
         };

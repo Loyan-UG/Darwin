@@ -128,6 +128,36 @@
                         }
                         <td><input asp-for="Lines[i].SortOrder" type="number" min="0" class="form-control form-control-sm" /></td>
                     </tr>
+                    <tr>
+                        <td colspan="@(showShortage ? 7 : 5)">
+                            <div class="table-responsive">
+                                <table class="table table-sm align-middle mb-0">
+                                    <thead>
+                                    <tr>
+                                        <th>@T.T("Lot")</th>
+                                        <th>@T.T("SerialUnit")</th>
+                                        <th>@T.T("HandlingUnit")</th>
+                                        <th>@T.T("Quantity")</th>
+                                    </tr>
+                                    </thead>
+                                    <tbody>
+                                    @for (var j = 0; j < Model.Lines[i].Identities.Count; j++)
+                                    {
+                                        <tr>
+                                            <td>
+                                                <input type="hidden" asp-for="Lines[i].Identities[j].Id" />
+                                                <select asp-for="Lines[i].Identities[j].InventoryLotId" asp-items="Model.LotOptions" class="form-select form-select-sm"></select>
+                                            </td>
+                                            <td><select asp-for="Lines[i].Identities[j].InventorySerialUnitId" asp-items="Model.SerialUnitOptions" class="form-select form-select-sm"></select></td>
+                                            <td><select asp-for="Lines[i].Identities[j].HandlingUnitId" asp-items="Model.HandlingUnitOptions" class="form-select form-select-sm"></select></td>
+                                            <td><input asp-for="Lines[i].Identities[j].Quantity" type="number" min="0" class="form-control form-control-sm" /></td>
+                                        </tr>
+                                    }
+                                    </tbody>
+                                </table>
+                            </div>
+                        </td>
+                    </tr>
                 }
                 </tbody>
             </table>

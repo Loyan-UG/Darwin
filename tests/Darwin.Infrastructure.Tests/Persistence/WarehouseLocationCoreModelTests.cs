@@ -379,6 +379,65 @@ public sealed class WarehouseLocationCoreModelTests
         }
     }
 
+    [Theory]
+    [InlineData("PostgreSql")]
+    [InlineData("SqlServer")]
+    public void GoodsReceiptLineIdentity_Should_Map_To_Inventory_Schema_With_Stable_Indexes(string provider)
+    {
+        using var context = CreateContext(provider);
+        var entity = GetEntity(context, typeof(GoodsReceiptLineIdentity));
+
+        entity.GetSchema().Should().Be("Inventory");
+        entity.GetTableName().Should().Be("GoodsReceiptLineIdentities");
+        entity.FindProperty(nameof(GoodsReceiptLineIdentity.LotCodeSnapshot))!.GetMaxLength().Should().Be(100);
+        entity.FindProperty(nameof(GoodsReceiptLineIdentity.SupplierLotCodeSnapshot))!.GetMaxLength().Should().Be(100);
+        entity.FindProperty(nameof(GoodsReceiptLineIdentity.SerialNumberSnapshot))!.GetMaxLength().Should().Be(128);
+        entity.FindProperty(nameof(GoodsReceiptLineIdentity.HandlingUnitCodeSnapshot))!.GetMaxLength().Should().Be(100);
+        entity.FindProperty(nameof(GoodsReceiptLineIdentity.MetadataJson))!.GetMaxLength().Should().Be(8000);
+
+        if (provider == "PostgreSql")
+        {
+            entity.FindProperty(nameof(GoodsReceiptLineIdentity.MetadataJson))!.GetColumnType().Should().Be("jsonb");
+        }
+
+        entity.GetIndexes().Single(x => x.GetDatabaseName() == "IX_GoodsReceiptLineIdentities_GoodsReceiptLineId");
+        entity.GetIndexes().Single(x => x.GetDatabaseName() == "IX_GoodsReceiptLineIdentities_ProductVariantId");
+        entity.GetIndexes().Single(x => x.GetDatabaseName() == "IX_GoodsReceiptLineIdentities_InventoryLotId");
+        entity.GetIndexes().Single(x => x.GetDatabaseName() == "IX_GoodsReceiptLineIdentities_InventorySerialUnitId");
+        entity.GetIndexes().Single(x => x.GetDatabaseName() == "IX_GoodsReceiptLineIdentities_HandlingUnitId");
+        entity.GetIndexes().Single(x => x.GetDatabaseName() == "IX_GoodsReceiptLineIdentities_ExpiryDateUtc");
+        var serialIndex = entity.GetIndexes().Single(x => x.Properties.Select(p => p.Name).SequenceEqual(new[] { nameof(GoodsReceiptLineIdentity.GoodsReceiptLineId), nameof(GoodsReceiptLineIdentity.InventorySerialUnitId) }));
+        serialIndex.IsUnique.Should().BeTrue();
+        serialIndex.GetFilter().Should().Contain("InventorySerialUnitId");
+    }
+
+    [Fact]
+    public void ReceiptIdentityCapture_Migrations_Should_Add_Only_ReceiptIdentity_Table()
+    {
+        var root = RepositoryRoot();
+        var migrations = Directory
+            .GetFiles(Path.Combine(root, "src"), "*ReceiptIdentityCapture.cs", SearchOption.AllDirectories)
+            .Where(path => !path.EndsWith(".Designer.cs", StringComparison.OrdinalIgnoreCase))
+            .ToArray();
+
+        migrations.Should().HaveCount(2);
+        foreach (var migrationPath in migrations)
+        {
+            var migration = File.ReadAllText(migrationPath);
+            migration.Should().Contain("GoodsReceiptLineIdentities");
+            migration.Should().Contain("IX_GoodsReceiptLineIdentities_GoodsReceiptLineId");
+            migration.Should().Contain("InventorySerialUnitId");
+            migration.Should().Contain("unique: true");
+            migration.Should().NotContain("StockCount");
+            migration.Should().NotContain("WarehouseTasks");
+            migration.Should().NotContain("SupplierInvoice");
+            migration.Should().NotContain("SupplierPayment");
+            migration.Should().NotContain("Finance");
+            migration.Should().NotContain("Mobile");
+            migration.Should().NotContain("Public");
+        }
+    }
+
     private static IEntityType GetEntity(DarwinDbContext context, Type type)
         => context.Model.FindEntityType(type) ?? throw new InvalidOperationException($"Entity {type.Name} not found.");
 

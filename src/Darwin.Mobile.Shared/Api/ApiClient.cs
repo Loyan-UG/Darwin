@@ -231,6 +231,66 @@ namespace Darwin.Mobile.Shared.Api
         }
 
         /// <inheritdoc />
+        public async Task<Result<ApiFileResult>> GetFileResultAsync(string route, CancellationToken ct)
+        {
+            if (string.IsNullOrWhiteSpace(route))
+                return Result<ApiFileResult>.Fail("Route is required.");
+
+            if (IsAbsoluteRoute(route))
+                return Result<ApiFileResult>.Fail("Route must be a relative API path.");
+
+            var normalized = ApiRoutes.Normalize(route);
+
+            try
+            {
+                return await _retry.ExecuteAsync(async token =>
+                {
+                    using var response = await SendWithAuthenticationRetryAsync(
+                        normalized,
+                        (authorization, retryToken) => SendAsync(HttpMethod.Get, normalized, authorization, retryToken),
+                        token).ConfigureAwait(false);
+
+                    if (response.IsSuccessStatusCode)
+                    {
+                        if (response.StatusCode == HttpStatusCode.NoContent)
+                            return Result<ApiFileResult>.Fail(NoContentResultMessage);
+
+                        var bytes = await response.Content.ReadAsByteArrayAsync(token).ConfigureAwait(false);
+                        if (bytes.Length == 0)
+                            return Result<ApiFileResult>.Fail("Empty file payload from server.");
+
+                        var contentType = response.Content.Headers.ContentType?.ToString();
+                        var fileName = response.Content.Headers.ContentDisposition?.FileNameStar ??
+                                       response.Content.Headers.ContentDisposition?.FileName?.Trim('"') ??
+                                       string.Empty;
+
+                        return Result<ApiFileResult>.Ok(new ApiFileResult
+                        {
+                            Content = bytes,
+                            ContentType = string.IsNullOrWhiteSpace(contentType) ? "application/octet-stream" : contentType,
+                            FileName = fileName,
+                            ContentLength = response.Content.Headers.ContentLength
+                        });
+                    }
+
+                    var errorMessage = await TryReadErrorMessageAsync(response, token).ConfigureAwait(false);
+                    if (string.IsNullOrWhiteSpace(errorMessage))
+                        errorMessage = $"Request failed with status {(int)response.StatusCode} ({response.ReasonPhrase}).";
+
+                    return Result<ApiFileResult>.Fail(errorMessage);
+                }, ct).ConfigureAwait(false);
+            }
+            catch (OperationCanceledException)
+            {
+                throw;
+            }
+            catch (Exception)
+            {
+                return Result<ApiFileResult>.Fail(NetworkFailureMessage);
+            }
+        }
+
+        /// <inheritdoc />
         public async Task<TResponse?> GetAsync<TResponse>(string route, CancellationToken ct)
         {
             var result = await GetResultAsync<TResponse>(route, ct).ConfigureAwait(false);

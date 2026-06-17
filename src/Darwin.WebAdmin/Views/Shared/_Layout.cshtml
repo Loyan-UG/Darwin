@@ -189,6 +189,58 @@
                         <i class="fa-solid fa-link me-2"></i> @T.T("BankReconciliation")
                     </active-nav>
 
+                    <div class="px-3 pt-4 pb-2 text-uppercase small text-muted">@T.T("HR")</div>
+                    <active-nav class="list-group-item list-group-item-action" asp-controller="HumanResources" asp-action="Employees">
+                        <i class="fa-solid fa-id-badge me-2"></i> @T.T("Employees")
+                    </active-nav>
+                    <active-nav class="list-group-item list-group-item-action" asp-controller="HumanResources" asp-action="Departments">
+                        <i class="fa-solid fa-building-user me-2"></i> @T.T("Departments")
+                    </active-nav>
+                    <active-nav class="list-group-item list-group-item-action" asp-controller="HumanResources" asp-action="Positions">
+                        <i class="fa-solid fa-user-tie me-2"></i> @T.T("Positions")
+                    </active-nav>
+                    <active-nav class="list-group-item list-group-item-action" asp-controller="HumanResources" asp-action="EmploymentContracts">
+                        <i class="fa-solid fa-file-contract me-2"></i> @T.T("EmploymentContracts")
+                    </active-nav>
+                    <active-nav class="list-group-item list-group-item-action" asp-controller="HumanResources" asp-action="WorkSchedules">
+                        <i class="fa-solid fa-calendar-days me-2"></i> @T.T("WorkSchedules")
+                    </active-nav>
+                    <active-nav class="list-group-item list-group-item-action" asp-controller="HumanResources" asp-action="AttendanceEvents">
+                        <i class="fa-solid fa-clock me-2"></i> @T.T("AttendanceEvents")
+                    </active-nav>
+                    <active-nav class="list-group-item list-group-item-action" asp-controller="HumanResources" asp-action="TimeEntries">
+                        <i class="fa-solid fa-stopwatch me-2"></i> @T.T("TimeEntries")
+                    </active-nav>
+                    <active-nav class="list-group-item list-group-item-action" asp-controller="HumanResources" asp-action="Timesheets">
+                        <i class="fa-solid fa-clipboard-check me-2"></i> @T.T("Timesheets")
+                    </active-nav>
+                    <active-nav class="list-group-item list-group-item-action" asp-controller="HumanResources" asp-action="LeaveRequests">
+                        <i class="fa-solid fa-plane-departure me-2"></i> @T.T("LeaveRequests")
+                    </active-nav>
+                    <active-nav class="list-group-item list-group-item-action" asp-controller="HumanResources" asp-action="Absences">
+                        <i class="fa-solid fa-user-clock me-2"></i> @T.T("Absences")
+                    </active-nav>
+                    <active-nav class="list-group-item list-group-item-action" asp-controller="HumanResources" asp-action="PayrollPeriods">
+                        <i class="fa-solid fa-file-export me-2"></i> @T.T("PayrollPeriods")
+                    </active-nav>
+                    <active-nav class="list-group-item list-group-item-action" asp-controller="HumanResources" asp-action="PayrollRules">
+                        <i class="fa-solid fa-scale-balanced me-2"></i> @T.T("PayrollRules")
+                    </active-nav>
+                    <active-nav class="list-group-item list-group-item-action" asp-controller="HumanResources" asp-action="PayrollRuns">
+                        <i class="fa-solid fa-calculator me-2"></i> @T.T("PayrollRuns")
+                    </active-nav>
+                    <active-nav class="list-group-item list-group-item-action" asp-controller="HumanResources" asp-action="PayrollPayments">
+                        <i class="fa-solid fa-money-check-dollar me-2"></i> @T.T("PayrollPayments")
+                    </active-nav>
+
+                    <div class="px-3 pt-4 pb-2 text-uppercase small text-muted">@T.T("AI")</div>
+                    <active-nav class="list-group-item list-group-item-action" asp-controller="AiGovernance" asp-action="Index">
+                        <i class="fa-solid fa-shield-halved me-2"></i> @T.T("AiGovernance")
+                    </active-nav>
+                    <active-nav class="list-group-item list-group-item-action" asp-controller="AiGovernance" asp-action="FollowUpTasks">
+                        <i class="fa-solid fa-list-check me-2"></i> @T.T("FollowUpTasks")
+                    </active-nav>
+
                     <div class="px-3 pt-4 pb-2 text-uppercase small text-muted">@T.T("Crm")</div>
                     <active-nav class="list-group-item list-group-item-action" asp-controller="Crm" asp-action="Index">
                         <i class="fa-solid fa-chart-pie me-2"></i> @T.T("Overview")
@@ -239,6 +291,9 @@
                     <active-nav class="list-group-item list-group-item-action" asp-controller="Inventory" asp-action="WarehouseTasks">
                         <i class="fa-solid fa-clipboard-list me-2"></i> @T.T("WarehouseTasks")
                     </active-nav>
+                    <active-nav class="list-group-item list-group-item-action" asp-controller="Inventory" asp-action="WarehousePwa">
+                        <i class="fa-solid fa-mobile-screen-button me-2"></i> @T.T("WarehousePwa")
+                    </active-nav>
                     <active-nav class="list-group-item list-group-item-action" asp-controller="Inventory" asp-action="StockCounts">
                         <i class="fa-solid fa-clipboard-check me-2"></i> @T.T("StockCounts")
                     </active-nav>
@@ -259,6 +314,9 @@
                     </active-nav>
                     <active-nav class="list-group-item list-group-item-action" asp-controller="Inventory" asp-action="StockLevels">
                         <i class="fa-solid fa-boxes-stacked me-2"></i> @T.T("StockLevels")
+                    </active-nav>
+                    <active-nav class="list-group-item list-group-item-action" asp-controller="Inventory" asp-action="BinStock">
+                        <i class="fa-solid fa-boxes-packing me-2"></i> @T.T("BinStockTitle")
                     </active-nav>
                     <active-nav class="list-group-item list-group-item-action" asp-controller="Inventory" asp-action="StockTransfers">
                         <i class="fa-solid fa-arrow-right-arrow-left me-2"></i> @T.T("Transfers")

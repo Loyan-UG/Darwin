@@ -1,3 +1,4 @@
+using Darwin.Domain.Common;
 using Darwin.Domain.Entities.Inventory;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
@@ -18,17 +19,21 @@ namespace Darwin.Infrastructure.Persistence.Configurations.Inventory
         IEntityTypeConfiguration<WarehouseLabelTemplate>,
         IEntityTypeConfiguration<WarehouseTask>,
         IEntityTypeConfiguration<WarehouseTaskLine>,
+        IEntityTypeConfiguration<WarehouseTaskLineIdentity>,
         IEntityTypeConfiguration<StockCountSession>,
         IEntityTypeConfiguration<StockCountLine>,
+        IEntityTypeConfiguration<StockCountLineIdentity>,
         IEntityTypeConfiguration<StockLevel>,
         IEntityTypeConfiguration<StockTransfer>,
         IEntityTypeConfiguration<StockTransferLine>,
+        IEntityTypeConfiguration<StockTransferLineIdentity>,
         IEntityTypeConfiguration<Supplier>,
         IEntityTypeConfiguration<SupplierContact>,
         IEntityTypeConfiguration<PurchaseOrder>,
         IEntityTypeConfiguration<PurchaseOrderLine>,
         IEntityTypeConfiguration<GoodsReceipt>,
         IEntityTypeConfiguration<GoodsReceiptLine>,
+        IEntityTypeConfiguration<GoodsReceiptLineIdentity>,
         IEntityTypeConfiguration<InventoryTransaction>
     {
         /// <inheritdoc />
@@ -294,6 +299,17 @@ namespace Darwin.Infrastructure.Persistence.Configurations.Inventory
             builder.HasIndex(x => x.SourceLineId);
             builder.HasIndex(x => x.SortOrder);
             builder.HasIndex(x => x.ShortQuantity);
+
+            builder.HasMany(x => x.Identities)
+                .WithOne()
+                .HasForeignKey(x => x.WarehouseTaskLineId)
+                .OnDelete(DeleteBehavior.Cascade);
+        }
+
+        /// <inheritdoc />
+        public void Configure(EntityTypeBuilder<WarehouseTaskLineIdentity> builder)
+        {
+            ConfigureInventoryIdentityEvidence(builder, "WarehouseTaskLineIdentities", "WarehouseTaskLineId");
         }
 
         /// <inheritdoc />
@@ -354,6 +370,17 @@ namespace Darwin.Infrastructure.Persistence.Configurations.Inventory
             builder.HasIndex(x => new { x.StockCountSessionId, x.ProductVariantId })
                 .IsUnique()
                 .HasFilter("[IsDeleted] = 0");
+
+            builder.HasMany(x => x.Identities)
+                .WithOne()
+                .HasForeignKey(x => x.StockCountLineId)
+                .OnDelete(DeleteBehavior.Cascade);
+        }
+
+        /// <inheritdoc />
+        public void Configure(EntityTypeBuilder<StockCountLineIdentity> builder)
+        {
+            ConfigureInventoryIdentityEvidence(builder, "StockCountLineIdentities", "StockCountLineId");
         }
 
         /// <inheritdoc />
@@ -403,6 +430,38 @@ namespace Darwin.Infrastructure.Persistence.Configurations.Inventory
 
             builder.HasIndex(x => x.StockTransferId);
             builder.HasIndex(x => x.ProductVariantId);
+
+            builder.HasMany(x => x.Identities)
+                .WithOne()
+                .HasForeignKey(x => x.StockTransferLineId)
+                .OnDelete(DeleteBehavior.Cascade);
+        }
+
+        /// <inheritdoc />
+        public void Configure(EntityTypeBuilder<StockTransferLineIdentity> builder)
+        {
+            ConfigureInventoryIdentityEvidence(builder, "StockTransferLineIdentities", "StockTransferLineId");
+        }
+
+        private static void ConfigureInventoryIdentityEvidence<TEntity>(EntityTypeBuilder<TEntity> builder, string tableName, string lineIdProperty)
+            where TEntity : BaseEntity
+        {
+            builder.ToTable(tableName, schema: "Inventory");
+            builder.HasKey(x => x.Id);
+
+            builder.Property<int>("Quantity").IsRequired();
+            builder.Property<string?>("LotCodeSnapshot").HasMaxLength(100);
+            builder.Property<string?>("SupplierLotCodeSnapshot").HasMaxLength(100);
+            builder.Property<string?>("SerialNumberSnapshot").HasMaxLength(128);
+            builder.Property<string?>("HandlingUnitCodeSnapshot").HasMaxLength(128);
+            builder.Property<int>("SortOrder").IsRequired();
+            builder.Property<string?>("MetadataJson").HasMaxLength(8000);
+
+            builder.HasIndex(lineIdProperty);
+            builder.HasIndex("InventoryLotId");
+            builder.HasIndex("InventorySerialUnitId");
+            builder.HasIndex("HandlingUnitId");
+            builder.HasIndex("SortOrder");
         }
 
         /// <inheritdoc />
@@ -560,6 +619,38 @@ namespace Darwin.Infrastructure.Persistence.Configurations.Inventory
             builder.HasIndex(x => x.GoodsReceiptId);
             builder.HasIndex(x => x.PurchaseOrderLineId);
             builder.HasIndex(x => x.ProductVariantId);
+
+            builder.HasMany(x => x.Identities)
+                .WithOne()
+                .HasForeignKey(x => x.GoodsReceiptLineId)
+                .OnDelete(DeleteBehavior.Cascade);
+        }
+
+        /// <inheritdoc />
+        public void Configure(EntityTypeBuilder<GoodsReceiptLineIdentity> builder)
+        {
+            builder.ToTable("GoodsReceiptLineIdentities", schema: "Inventory");
+            builder.HasKey(x => x.Id);
+
+            builder.Property(x => x.GoodsReceiptLineId).IsRequired();
+            builder.Property(x => x.ProductVariantId).IsRequired();
+            builder.Property(x => x.Quantity).IsRequired();
+            builder.Property(x => x.LotCodeSnapshot).HasMaxLength(100);
+            builder.Property(x => x.SupplierLotCodeSnapshot).HasMaxLength(100);
+            builder.Property(x => x.SerialNumberSnapshot).HasMaxLength(128);
+            builder.Property(x => x.HandlingUnitCodeSnapshot).HasMaxLength(100);
+            builder.Property(x => x.SortOrder).IsRequired();
+            builder.Property(x => x.MetadataJson).HasMaxLength(8000);
+
+            builder.HasIndex(x => x.GoodsReceiptLineId);
+            builder.HasIndex(x => x.ProductVariantId);
+            builder.HasIndex(x => x.InventoryLotId);
+            builder.HasIndex(x => x.InventorySerialUnitId);
+            builder.HasIndex(x => x.HandlingUnitId);
+            builder.HasIndex(x => x.ExpiryDateUtc);
+            builder.HasIndex(x => new { x.GoodsReceiptLineId, x.InventorySerialUnitId })
+                .IsUnique()
+                .HasFilter("[InventorySerialUnitId] IS NOT NULL AND [IsDeleted] = 0");
         }
 
         /// <inheritdoc />

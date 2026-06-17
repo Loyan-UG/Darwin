@@ -215,6 +215,26 @@ namespace Darwin.Domain.Entities.Inventory
         public string? SourceLineType { get; set; }
         public Guid? SourceLineId { get; set; }
         public string? MetadataJson { get; set; }
+        public List<WarehouseTaskLineIdentity> Identities { get; set; } = new();
+    }
+
+    /// <summary>
+    /// Lot, serial, and handling-unit evidence captured while executing a warehouse task line.
+    /// </summary>
+    public sealed class WarehouseTaskLineIdentity : BaseEntity
+    {
+        public Guid WarehouseTaskLineId { get; set; }
+        public Guid? InventoryLotId { get; set; }
+        public Guid? InventorySerialUnitId { get; set; }
+        public Guid? HandlingUnitId { get; set; }
+        public int Quantity { get; set; }
+        public string? LotCodeSnapshot { get; set; }
+        public string? SupplierLotCodeSnapshot { get; set; }
+        public DateTime? ExpiryDateUtc { get; set; }
+        public string? SerialNumberSnapshot { get; set; }
+        public string? HandlingUnitCodeSnapshot { get; set; }
+        public int SortOrder { get; set; }
+        public string? MetadataJson { get; set; }
     }
 
     /// <summary>
@@ -262,6 +282,26 @@ namespace Darwin.Domain.Entities.Inventory
         public StockCountLineReviewStatus ReviewStatus { get; set; } = StockCountLineReviewStatus.Pending;
         public bool AdjustmentPosted { get; set; }
         public string? ReviewNotes { get; set; }
+        public int SortOrder { get; set; }
+        public string? MetadataJson { get; set; }
+        public List<StockCountLineIdentity> Identities { get; set; } = new();
+    }
+
+    /// <summary>
+    /// Lot, serial, and handling-unit evidence captured for a stock count line.
+    /// </summary>
+    public sealed class StockCountLineIdentity : BaseEntity
+    {
+        public Guid StockCountLineId { get; set; }
+        public Guid? InventoryLotId { get; set; }
+        public Guid? InventorySerialUnitId { get; set; }
+        public Guid? HandlingUnitId { get; set; }
+        public int Quantity { get; set; }
+        public string? LotCodeSnapshot { get; set; }
+        public string? SupplierLotCodeSnapshot { get; set; }
+        public DateTime? ExpiryDateUtc { get; set; }
+        public string? SerialNumberSnapshot { get; set; }
+        public string? HandlingUnitCodeSnapshot { get; set; }
         public int SortOrder { get; set; }
         public string? MetadataJson { get; set; }
     }
@@ -352,6 +392,30 @@ namespace Darwin.Domain.Entities.Inventory
         /// Gets or sets the transfer quantity.
         /// </summary>
         public int Quantity { get; set; }
+
+        /// <summary>
+        /// Gets or sets the lot, serial, and handling-unit evidence dispatched and received with this transfer line.
+        /// </summary>
+        public List<StockTransferLineIdentity> Identities { get; set; } = new();
+    }
+
+    /// <summary>
+    /// Lot, serial, and handling-unit evidence captured for a stock transfer line.
+    /// </summary>
+    public sealed class StockTransferLineIdentity : BaseEntity
+    {
+        public Guid StockTransferLineId { get; set; }
+        public Guid? InventoryLotId { get; set; }
+        public Guid? InventorySerialUnitId { get; set; }
+        public Guid? HandlingUnitId { get; set; }
+        public int Quantity { get; set; }
+        public string? LotCodeSnapshot { get; set; }
+        public string? SupplierLotCodeSnapshot { get; set; }
+        public DateTime? ExpiryDateUtc { get; set; }
+        public string? SerialNumberSnapshot { get; set; }
+        public string? HandlingUnitCodeSnapshot { get; set; }
+        public int SortOrder { get; set; }
+        public string? MetadataJson { get; set; }
     }
 
     /// <summary>
@@ -613,6 +677,27 @@ namespace Darwin.Domain.Entities.Inventory
         public long UnitCostMinor { get; set; }
         public long TotalCostMinor { get; set; }
         public int SortOrder { get; set; }
+        public List<GoodsReceiptLineIdentity> Identities { get; set; } = new();
+    }
+
+    /// <summary>
+    /// Represents structured lot, serial, and handling-unit evidence captured for a goods receipt line.
+    /// </summary>
+    public sealed class GoodsReceiptLineIdentity : BaseEntity
+    {
+        public Guid GoodsReceiptLineId { get; set; }
+        public Guid ProductVariantId { get; set; }
+        public Guid? InventoryLotId { get; set; }
+        public Guid? InventorySerialUnitId { get; set; }
+        public Guid? HandlingUnitId { get; set; }
+        public int Quantity { get; set; }
+        public string? LotCodeSnapshot { get; set; }
+        public string? SupplierLotCodeSnapshot { get; set; }
+        public string? SerialNumberSnapshot { get; set; }
+        public string? HandlingUnitCodeSnapshot { get; set; }
+        public DateTime? ExpiryDateUtc { get; set; }
+        public int SortOrder { get; set; }
+        public string? MetadataJson { get; set; }
     }
 
     /// <summary>

@@ -1,0 +1,42 @@
+@model Darwin.WebAdmin.ViewModels.HumanResources.HrListVm<Darwin.Application.HumanResources.DTOs.PayrollPeriodListItemDto, Darwin.Application.HumanResources.DTOs.PayrollPeriodQueueFilter>
+@inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
+@{ ViewData["Title"] = T.T("PayrollPeriods"); }
+<section class="admin-page">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h1 class="mb-0">@T.T("PayrollPeriods")</h1>
+        <a asp-action="CreatePayrollPeriod" asp-route-businessId="@Model.BusinessId" class="btn btn-primary">@T.T("Create")</a>
+    </div>
+    <form asp-action="PayrollPeriods" method="get" class="d-flex gap-2 mb-3">
+        <select name="businessId" asp-items="Model.BusinessOptions" class="form-select"></select>
+        <input type="text" name="q" value="@Model.Query" class="form-control" placeholder="@T.T("Search")" />
+        <select name="filter" asp-items="Model.FilterItems" class="form-select"></select>
+        <button class="btn btn-outline-secondary" type="submit">@T.T("Filter")</button>
+    </form>
+    <div class="row g-3 mb-3">
+        <div class="col-md-3"><div class="card"><div class="card-body"><div class="text-muted small">@T.T("Records")</div><div class="fs-4">@Model.Total</div></div></div></div>
+        <div class="col-md-3"><div class="card"><div class="card-body"><div class="text-muted small">@T.T("Prepared")</div><div class="fs-4">@Model.Items.Count(x => x.Status == Darwin.Domain.Enums.PayrollPeriodStatus.Prepared)</div></div></div></div>
+        <div class="col-md-3"><div class="card"><div class="card-body"><div class="text-muted small">@T.T("Reviewed")</div><div class="fs-4">@Model.Items.Count(x => x.Status == Darwin.Domain.Enums.PayrollPeriodStatus.Reviewed)</div></div></div></div>
+        <div class="col-md-3"><div class="card"><div class="card-body"><div class="text-muted small">@T.T("Approved")</div><div class="fs-4">@Model.Items.Count(x => x.Status == Darwin.Domain.Enums.PayrollPeriodStatus.Approved)</div></div></div></div>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-sm table-striped align-middle">
+            <thead><tr><th>@T.T("PeriodCode")</th><th>@T.T("Period")</th><th>@T.T("Employees")</th><th>@T.T("WorkMinutes")</th><th>@T.T("AbsenceMinutes")</th><th>@T.T("Status")</th><th class="text-end">@T.T("Actions")</th></tr></thead>
+            <tbody>
+            @if (!Model.Items.Any()) { <tr><td colspan="7" class="text-muted">@T.T("NoRecords")</td></tr> }
+            else {
+                foreach (var item in Model.Items) {
+                    <tr>
+                        <td class="fw-semibold">@item.PeriodCode</td>
+                        <td>@item.PeriodStartUtc.ToString("yyyy-MM-dd") - @item.PeriodEndUtc.ToString("yyyy-MM-dd")</td>
+                        <td>@item.EmployeeCount</td>
+                        <td>@item.TotalWorkMinutes</td>
+                        <td>@item.TotalAbsenceMinutes</td>
+                        <td><span class="badge text-bg-light">@T.T(item.Status.ToString())</span></td>
+                        <td class="text-end"><a asp-action="EditPayrollPeriod" asp-route-id="@item.Id" class="btn btn-sm btn-outline-secondary">@T.T("Open")</a></td>
+                    </tr>
+                }
+            }
+            </tbody>
+        </table>
+    </div>
+</section>

@@ -1023,6 +1023,9 @@ public sealed class MemberCommerceServiceTests
             return response as Result<string> ?? Result<string>.Fail("Unexpected text GET result type.");
         }
 
+        public Task<Result<ApiFileResult>> GetFileResultAsync(string route, CancellationToken ct)
+            => Task.FromResult(Result<ApiFileResult>.Fail("No file GET handler configured."));
+
         public Task<Result<TResponse>> PostResultAsync<TRequest, TResponse>(string route, TRequest request, CancellationToken ct)
         {
             PostResultAsyncCallCount++;

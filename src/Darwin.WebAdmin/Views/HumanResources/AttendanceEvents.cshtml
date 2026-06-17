@@ -1,0 +1,11 @@
+@model Darwin.WebAdmin.ViewModels.HumanResources.HrListVm<Darwin.Application.HumanResources.DTOs.AttendanceEventListItemDto, Darwin.Application.HumanResources.DTOs.AttendanceEventQueueFilter>
+@inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
+@{ ViewData["Title"] = T.T("AttendanceEvents"); }
+<section class="admin-page">
+    <div class="d-flex justify-content-between align-items-center mb-3"><h1 class="mb-0">@T.T("AttendanceEvents")</h1><a asp-action="CreateAttendanceEvent" asp-route-businessId="@Model.BusinessId" class="btn btn-primary">@T.T("Create")</a></div>
+    <form asp-action="AttendanceEvents" method="get" class="d-flex gap-2 mb-3"><select name="businessId" asp-items="Model.BusinessOptions" class="form-select"></select><select name="filter" asp-items="Model.FilterItems" class="form-select"></select><button class="btn btn-outline-secondary" type="submit">@T.T("Filter")</button></form>
+    <div class="table-responsive"><table class="table table-sm table-striped align-middle"><thead><tr><th>@T.T("OccurredAt")</th><th>@T.T("Employee")</th><th>@T.T("EventType")</th><th>@T.T("SourceReference")</th></tr></thead><tbody>
+    @if (!Model.Items.Any()) { <tr><td colspan="4" class="text-muted">@T.T("NoRecords")</td></tr> }
+    else { foreach (var item in Model.Items) { <tr><td>@item.OccurredAtUtc.ToString("yyyy-MM-dd HH:mm")</td><td>@item.EmployeeName</td><td><span class="badge text-bg-light">@T.T(item.EventType.ToString())</span></td><td>@item.SourceReference</td></tr> } }
+    </tbody></table></div>
+</section>

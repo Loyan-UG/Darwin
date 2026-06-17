@@ -911,6 +911,7 @@ namespace Darwin.Application.Inventory.Queries
             var transfer = await _db.Set<StockTransfer>()
                 .AsNoTracking()
                 .Include(x => x.Lines)
+                    .ThenInclude(x => x.Identities)
                 .FirstOrDefaultAsync(x => x.Id == id && !x.IsDeleted, ct)
                 .ConfigureAwait(false);
 
@@ -932,7 +933,25 @@ namespace Darwin.Application.Inventory.Queries
                     .Select(x => new StockTransferLineDto
                     {
                         ProductVariantId = x.ProductVariantId,
-                        Quantity = x.Quantity
+                        Quantity = x.Quantity,
+                        Identities = x.Identities
+                            .Where(identity => !identity.IsDeleted)
+                            .OrderBy(identity => identity.SortOrder)
+                            .Select(identity => new InventoryIdentityEvidenceDto
+                            {
+                                Id = identity.Id,
+                                InventoryLotId = identity.InventoryLotId,
+                                InventorySerialUnitId = identity.InventorySerialUnitId,
+                                HandlingUnitId = identity.HandlingUnitId,
+                                Quantity = identity.Quantity,
+                                LotCodeSnapshot = identity.LotCodeSnapshot,
+                                SupplierLotCodeSnapshot = identity.SupplierLotCodeSnapshot,
+                                ExpiryDateUtc = identity.ExpiryDateUtc,
+                                SerialNumberSnapshot = identity.SerialNumberSnapshot,
+                                HandlingUnitCodeSnapshot = identity.HandlingUnitCodeSnapshot,
+                                SortOrder = identity.SortOrder,
+                                MetadataJson = identity.MetadataJson
+                            }).ToList()
                     })
                     .ToList()
             };

@@ -1,6 +1,6 @@
 # Customer Deployment Onboarding Checklist
 
-Reviewed: 2026-05-27
+Reviewed: 2026-06-17
 
 This checklist defines the repeatable steps for preparing a Darwin deployment for a customer. It is deployment-neutral and must not contain customer names, domains, credentials, API keys, webhook secrets, signing keys, or private infrastructure details.
 
@@ -8,6 +8,7 @@ Use this document together with:
 
 - [docs/production-setup.md](production-setup.md)
 - [docs/external-smoke-inputs.md](external-smoke-inputs.md)
+- [docs/production-readiness-evidence-package.md](production-readiness-evidence-package.md)
 - [docs/go-live-status.md](go-live-status.md)
 - [docs/module-audit.md](module-audit.md)
 - [docs/e-invoice-acceptance-checklist.md](e-invoice-acceptance-checklist.md)
@@ -116,8 +117,10 @@ Approval:
 ### Object Storage
 
 - Run `scripts\check-minio-production-readiness.ps1` or equivalent selected-provider readiness check.
-- Confirm `InvoiceArchive`, `ShipmentLabels`, `MediaAssets`, `FinanceExports`, and `FinanceExportOutbound` profile decisions.
+- Confirm `InvoiceArchive`, `ShipmentLabels`, `MediaAssets`, `FinanceExports`, `FinanceExportOutbound`, `PersonnelDocuments`, and `PayrollPayslips` profile decisions.
 - Confirm `FinanceExports` is the generated finance export package source and `FinanceExportOutbound` is the outbound delivery destination when accounting export is in scope.
+- Confirm `PersonnelDocuments` is the internal HR personnel-file binary store and is not replaced by employee metadata, document metadata, notes, or payroll-provider payloads.
+- Confirm `PayrollPayslips` is the internal HR payroll artifact store and is not replaced by payroll run metadata, employee metadata, document metadata, notes, or payroll-provider payloads.
 - Confirm finance export profile configuration comes from secure deployment configuration, not from batch metadata, document metadata, external-reference metadata, or package content.
 - Confirm disposable smoke prefix and retention/delete behavior.
 - Run selected-provider smoke only after explicit production-like smoke confirmation.
@@ -194,6 +197,7 @@ Manual approvals:
 
 ## Phase 8: Final Verification
 
+- Create the deployment evidence package described in [docs/production-readiness-evidence-package.md](production-readiness-evidence-package.md).
 - Run focused build/test lanes for touched components.
 - Run `scripts\check-secrets.ps1`.
 - Run `git diff --check`.
@@ -201,6 +205,8 @@ Manual approvals:
 - Run provider smoke scripts only for providers in scope and only with approved credentials/configuration.
 - Record all blocked items and owner assignments.
 - Record rollback plan and support contact path.
+- Record non-secret references to build/test outputs, provider smoke outputs, object-storage retention/legal-hold proof, e-invoice validation evidence when in scope, signed mobile artifacts when in scope, monitoring/alert ownership, and approval owners.
+- Store customer approvals, legal/tax sign-off, provider dashboard evidence, selected-provider screenshots, and private operational artifacts outside source control.
 
 Go-live is not complete until:
 
@@ -209,3 +215,4 @@ Go-live is not complete until:
 - Backups and restore tests are complete.
 - Monitoring/alerting ownership is assigned.
 - Customer approvals are recorded outside source control.
+- The production readiness evidence package has an owner, a timestamped release/deployment reference, and no committed secrets or private payloads.

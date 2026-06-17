@@ -130,6 +130,7 @@ public sealed class GetGoodsReceiptDetailHandler
         var receipt = await _db.Set<GoodsReceipt>()
             .AsNoTracking()
             .Include(x => x.Lines)
+                .ThenInclude(x => x.Identities)
             .FirstOrDefaultAsync(x => x.Id == id && !x.IsDeleted, ct)
             .ConfigureAwait(false);
         if (receipt is null)
@@ -192,7 +193,28 @@ public sealed class GetGoodsReceiptDetailHandler
                     DamagedQuantity = x.DamagedQuantity,
                     UnitCostMinor = x.UnitCostMinor,
                     TotalCostMinor = x.TotalCostMinor,
-                    SortOrder = x.SortOrder
+                    SortOrder = x.SortOrder,
+                    Identities = x.Identities
+                        .Where(identity => !identity.IsDeleted)
+                        .OrderBy(identity => identity.SortOrder)
+                        .Select(identity => new GoodsReceiptLineIdentityDto
+                        {
+                            Id = identity.Id,
+                            GoodsReceiptLineId = identity.GoodsReceiptLineId,
+                            ProductVariantId = identity.ProductVariantId,
+                            InventoryLotId = identity.InventoryLotId,
+                            InventorySerialUnitId = identity.InventorySerialUnitId,
+                            HandlingUnitId = identity.HandlingUnitId,
+                            Quantity = identity.Quantity,
+                            LotCodeSnapshot = identity.LotCodeSnapshot,
+                            SupplierLotCodeSnapshot = identity.SupplierLotCodeSnapshot,
+                            SerialNumberSnapshot = identity.SerialNumberSnapshot,
+                            HandlingUnitCodeSnapshot = identity.HandlingUnitCodeSnapshot,
+                            ExpiryDateUtc = identity.ExpiryDateUtc,
+                            SortOrder = identity.SortOrder,
+                            MetadataJson = identity.MetadataJson
+                        })
+                        .ToList()
                 })
                 .ToList()
         };

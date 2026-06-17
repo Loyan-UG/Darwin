@@ -1,0 +1,126 @@
+@model Darwin.WebAdmin.ViewModels.HumanResources.EmployeeEditVm
+@inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
+@{
+    var isCreate = (bool?)ViewData["IsCreate"] ?? Model.Id == Guid.Empty;
+    ViewData["Title"] = isCreate ? T.T("CreateEmployee") : T.T("EditEmployee");
+}
+
+<div id="hr-employee-editor">
+    <h1 class="mb-3">@(isCreate ? T.T("CreateEmployee") : T.T("EditEmployee"))</h1>
+    <form asp-action="@(isCreate ? "CreateEmployee" : "EditEmployee")" method="post">
+        @Html.AntiForgeryToken()
+        <input asp-for="Id" type="hidden" />
+        <input asp-for="RowVersion" type="hidden" />
+        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+        <section class="admin-form-section">
+            <h2 class="admin-form-section-title">@T.T("EmployeeIdentity")</h2>
+            <div class="row g-3">
+                <div class="col-md-4"><label asp-for="BusinessId" class="form-label"></label><select asp-for="BusinessId" asp-items="Model.BusinessOptions" class="form-select"></select></div>
+                <div class="col-md-4"><label asp-for="EmployeeNumber" class="form-label"></label><input asp-for="EmployeeNumber" class="form-control" /><span asp-validation-for="EmployeeNumber" class="text-danger"></span></div>
+                <div class="col-md-4"><label asp-for="BusinessMemberId" class="form-label"></label><input asp-for="BusinessMemberId" class="form-control" /><span asp-validation-for="BusinessMemberId" class="text-danger"></span></div>
+                <div class="col-md-4"><label asp-for="FirstName" class="form-label"></label><input asp-for="FirstName" class="form-control" /><span asp-validation-for="FirstName" class="text-danger"></span></div>
+                <div class="col-md-4"><label asp-for="LastName" class="form-label"></label><input asp-for="LastName" class="form-control" /><span asp-validation-for="LastName" class="text-danger"></span></div>
+                <div class="col-md-4"><label asp-for="PreferredName" class="form-label"></label><input asp-for="PreferredName" class="form-control" /></div>
+                <div class="col-md-4"><label asp-for="DepartmentId" class="form-label"></label><select asp-for="DepartmentId" asp-items="Model.DepartmentOptions" class="form-select"></select></div>
+                <div class="col-md-4"><label asp-for="PositionId" class="form-label"></label><select asp-for="PositionId" asp-items="Model.PositionOptions" class="form-select"></select></div>
+                <div class="col-md-4"><label asp-for="Status" class="form-label"></label><select asp-for="Status" asp-items="Model.StatusOptions" class="form-select"></select></div>
+            </div>
+        </section>
+
+        <section class="admin-form-section">
+            <h2 class="admin-form-section-title">@T.T("EmployeeContactAndPrivacy")</h2>
+            <div class="row g-3">
+                <div class="col-md-4"><label asp-for="WorkEmail" class="form-label"></label><input asp-for="WorkEmail" class="form-control" /></div>
+                <div class="col-md-4"><label asp-for="WorkPhone" class="form-label"></label><input asp-for="WorkPhone" class="form-control" /></div>
+                <div class="col-md-4"><label asp-for="PrivacyClassification" class="form-label"></label><select asp-for="PrivacyClassification" asp-items="Model.PrivacyOptions" class="form-select"></select></div>
+                <div class="col-md-3"><label asp-for="HireDateUtc" class="form-label"></label><input asp-for="HireDateUtc" class="form-control" type="date" /></div>
+                <div class="col-md-3"><label asp-for="TerminationDateUtc" class="form-label"></label><input asp-for="TerminationDateUtc" class="form-control" type="date" /></div>
+                <div class="col-md-6"><label asp-for="InternalNotes" class="form-label"></label><textarea asp-for="InternalNotes" class="form-control" rows="3"></textarea></div>
+                <div class="col-md-6"><label asp-for="MetadataJson" class="form-label"></label><textarea asp-for="MetadataJson" class="form-control font-monospace" rows="3"></textarea></div>
+            </div>
+        </section>
+
+        @if (!isCreate && Model.Contracts.Count > 0)
+        {
+            <section class="admin-form-section">
+                <h2 class="admin-form-section-title">@T.T("EmploymentContracts")</h2>
+                <table class="table table-sm align-middle">
+                    <thead><tr><th>@T.T("ContractNumber")</th><th>@T.T("Type")</th><th>@T.T("Status")</th><th>@T.T("StartDate")</th><th class="text-end">@T.T("Actions")</th></tr></thead>
+                    <tbody>
+                    @foreach (var contract in Model.Contracts)
+                    {
+                        <tr><td>@contract.ContractNumber</td><td>@T.T(contract.EmploymentType.ToString())</td><td>@T.T(contract.Status.ToString())</td><td>@contract.StartDateUtc.ToString("yyyy-MM-dd")</td><td class="text-end"><a asp-action="EditEmploymentContract" asp-route-id="@contract.Id" class="btn btn-sm btn-outline-secondary">@T.T("Edit")</a></td></tr>
+                    }
+                    </tbody>
+                </table>
+            </section>
+        }
+
+        <div class="d-flex justify-content-between">
+            <div>
+                <button type="submit" class="btn btn-primary">@(isCreate ? T.T("Create") : T.T("Save"))</button>
+                <a asp-action="Employees" asp-route-businessId="@Model.BusinessId" class="btn btn-outline-secondary">@T.T("Back")</a>
+            </div>
+        </div>
+    </form>
+
+    @if (!isCreate)
+    {
+        <section class="admin-form-section mt-3">
+            <h2 class="admin-form-section-title">@T.T("PersonnelDocuments")</h2>
+            <div class="table-responsive">
+                <table class="table table-sm align-middle">
+                    <thead><tr><th>@T.T("Title")</th><th>@T.T("Type")</th><th>@T.T("FileName")</th><th>@T.T("Privacy")</th><th>@T.T("Retention")</th><th class="text-end">@T.T("Actions")</th></tr></thead>
+                    <tbody>
+                    @if (!Model.Documents.Any()) { <tr><td colspan="6" class="text-muted">@T.T("NoRecords")</td></tr> }
+                    else {
+                        foreach (var document in Model.Documents) {
+                            <tr>
+                                <td>@document.Title</td>
+                                <td>@T.T(document.DocumentKind.ToString())</td>
+                                <td>@document.FileName</td>
+                                <td><span class="badge text-bg-warning">@T.T(document.PrivacyClassification.ToString())</span></td>
+                                <td>@(document.RetentionUntilUtc?.ToString("yyyy-MM-dd") ?? "-")</td>
+                                <td class="text-end">
+                                    <a asp-action="DownloadEmployeeDocument" asp-route-businessId="@Model.BusinessId" asp-route-documentId="@document.Id" class="btn btn-sm btn-outline-secondary">@T.T("Download")</a>
+                                    <form asp-action="ArchiveEmployeeDocument" method="post" class="d-inline">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="businessId" value="@Model.BusinessId" />
+                                        <input type="hidden" name="employeeId" value="@Model.Id" />
+                                        <input type="hidden" name="documentId" value="@document.Id" />
+                                        <input type="hidden" name="rowVersion" value="@Convert.ToBase64String(document.RowVersion ?? Array.Empty<byte>())" />
+                                        <button class="btn btn-sm btn-outline-danger" type="submit">@T.T("Archive")</button>
+                                    </form>
+                                </td>
+                            </tr>
+                        }
+                    }
+                    </tbody>
+                </table>
+            </div>
+        </section>
+        <form asp-action="UploadEmployeeDocument" method="post" enctype="multipart/form-data" class="admin-form-section mt-3">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="BusinessId" value="@Model.BusinessId" />
+            <input type="hidden" name="EmployeeId" value="@Model.Id" />
+            <h2 class="admin-form-section-title">@T.T("UploadPersonnelDocument")</h2>
+            <div class="row g-3">
+                <div class="col-md-4"><label class="form-label">@T.T("Title")</label><input name="Title" class="form-control" maxlength="200" required /></div>
+                <div class="col-md-3"><label class="form-label">@T.T("Type")</label><select name="DocumentKind" asp-items="Model.DocumentKindOptions" class="form-select"></select></div>
+                <div class="col-md-3"><label class="form-label">@T.T("Privacy")</label><select name="PrivacyClassification" asp-items="Model.DocumentPrivacyOptions" class="form-select"></select></div>
+                <div class="col-md-2"><label class="form-label">@T.T("Retention")</label><input name="RetentionUntilUtc" type="date" class="form-control" /></div>
+                <div class="col-md-8"><label class="form-label">@T.T("File")</label><input name="File" type="file" class="form-control" required /></div>
+                <div class="col-md-2 d-flex align-items-end"><div class="form-check"><input name="LegalHold" value="true" class="form-check-input" type="checkbox" /><label class="form-check-label">@T.T("LegalHold")</label></div></div>
+                <div class="col-md-2 d-flex align-items-end"><button type="submit" class="btn btn-outline-primary w-100">@T.T("Upload")</button></div>
+            </div>
+        </form>
+        <form asp-action="ArchiveEmployee" method="post" class="mt-3">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="id" value="@Model.Id" />
+            <input type="hidden" name="businessId" value="@Model.BusinessId" />
+            <input type="hidden" name="rowVersion" value="@Convert.ToBase64String(Model.RowVersion ?? Array.Empty<byte>())" />
+            <button type="submit" class="btn btn-outline-danger">@T.T("Archive")</button>
+        </form>
+    }
+</div>

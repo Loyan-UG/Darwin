@@ -41,7 +41,11 @@ namespace Darwin.Domain.Enums
         SupplierPaymentBankSettled = 10,
         SupplierPaymentBankCorrection = 11,
         SupplierAdvancePosted = 12,
-        SupplierAdvanceApplied = 13
+        SupplierAdvanceApplied = 13,
+        PayrollRunPosted = 14,
+        PayrollPaymentPosted = 15,
+        PayrollPaymentBankSettled = 16,
+        PayrollPaymentBankCorrection = 17
     }
 
     /// <summary>
@@ -59,7 +63,12 @@ namespace Darwin.Domain.Enums
         PurchaseExpense = 7,
         InventoryClearing = 8,
         TaxReceivable = 9,
-        SupplierAdvance = 10
+        SupplierAdvance = 10,
+        PayrollExpense = 11,
+        EmployerPayrollTaxExpense = 12,
+        PayrollPayable = 13,
+        PayrollTaxPayable = 14,
+        SocialInsurancePayable = 15
     }
 
     /// <summary>

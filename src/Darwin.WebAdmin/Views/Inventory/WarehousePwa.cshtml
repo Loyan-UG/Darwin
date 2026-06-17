@@ -1,0 +1,188 @@
+@model Darwin.WebAdmin.ViewModels.Inventory.WarehousePwaVm
+@inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
+@{
+    ViewData["Title"] = T.T("WarehousePwa");
+    string PwaUrl(object? businessId = null, object? warehouseId = null, string? q = null, string? taskFilter = null) => Url.Action("WarehousePwa", "Inventory", new { businessId, warehouseId, q, taskFilter }) ?? string.Empty;
+    string EditTaskUrl(Guid id) => Url.Action("EditWarehouseTask", "Inventory", new { id }) ?? string.Empty;
+    string BinStockUrl(object? businessId = null, object? warehouseId = null) => Url.Action("BinStock", "Inventory", new { businessId, warehouseId }) ?? string.Empty;
+    string TaskBadge(Darwin.Domain.Enums.WarehouseTaskStatus status) => status switch
+    {
+        Darwin.Domain.Enums.WarehouseTaskStatus.Completed => "text-bg-success",
+        Darwin.Domain.Enums.WarehouseTaskStatus.Cancelled => "text-bg-secondary",
+        Darwin.Domain.Enums.WarehouseTaskStatus.InProgress => "text-bg-warning",
+        Darwin.Domain.Enums.WarehouseTaskStatus.Assigned => "text-bg-info",
+        _ => "text-bg-primary"
+    };
+    bool CanStart(Darwin.WebAdmin.ViewModels.Inventory.WarehouseTaskListItemVm task) =>
+        task.Status == Darwin.Domain.Enums.WarehouseTaskStatus.Ready || task.Status == Darwin.Domain.Enums.WarehouseTaskStatus.Assigned;
+    bool CanComplete(Darwin.WebAdmin.ViewModels.Inventory.WarehouseTaskListItemVm task) =>
+        task.Status == Darwin.Domain.Enums.WarehouseTaskStatus.InProgress;
+    bool CanCancel(Darwin.WebAdmin.ViewModels.Inventory.WarehouseTaskListItemVm task) =>
+        task.Status == Darwin.Domain.Enums.WarehouseTaskStatus.Ready ||
+        task.Status == Darwin.Domain.Enums.WarehouseTaskStatus.Assigned ||
+        task.Status == Darwin.Domain.Enums.WarehouseTaskStatus.InProgress;
+}
+
+<div id="warehouse-pwa-shell" class="container-fluid px-2 px-md-3">
+    <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
+        <h1 class="h4 mb-0">@T.T("WarehousePwa")</h1>
+        <a asp-action="BinStock" asp-route-businessId="@Model.BusinessId" asp-route-warehouseId="@Model.WarehouseId" class="btn btn-sm btn-outline-primary"
+           hx-get="@BinStockUrl(Model.BusinessId, Model.WarehouseId)"
+           hx-target="#warehouse-pwa-shell"
+           hx-swap="outerHTML"
+           hx-push-url="true">@T.T("BinStockTitle")</a>
+    </div>
+
+    <form asp-action="WarehousePwa" method="get" class="row g-2 mb-3"
+          hx-get="@PwaUrl()"
+          hx-target="#warehouse-pwa-shell"
+          hx-swap="outerHTML"
+          hx-push-url="true">
+        <div class="col-12 col-md-3">
+            <select name="businessId" asp-items="Model.BusinessOptions" class="form-select form-select-lg"></select>
+        </div>
+        <div class="col-12 col-md-3">
+            <select name="warehouseId" asp-items="Model.WarehouseOptions" class="form-select form-select-lg"></select>
+        </div>
+        <div class="col-12 col-md-3">
+            <input name="q" value="@Model.Query" class="form-control form-control-lg" autocomplete="off" inputmode="search" placeholder="@T.T("ScanOrSearch")" />
+        </div>
+        <div class="col-8 col-md-2">
+            <select name="taskFilter" class="form-select form-select-lg">
+                @foreach (var filter in new[] { Darwin.Application.Inventory.DTOs.WarehouseTaskQueueFilter.Ready, Darwin.Application.Inventory.DTOs.WarehouseTaskQueueFilter.Assigned, Darwin.Application.Inventory.DTOs.WarehouseTaskQueueFilter.InProgress, Darwin.Application.Inventory.DTOs.WarehouseTaskQueueFilter.Shortage, Darwin.Application.Inventory.DTOs.WarehouseTaskQueueFilter.All })
+                {
+                    <option value="@filter" selected="@(Model.TaskFilter == filter)">@T.T(filter.ToString())</option>
+                }
+            </select>
+        </div>
+        <div class="col-4 col-md-1 d-grid">
+            <button class="btn btn-lg btn-outline-secondary" type="submit">@T.T("Filter")</button>
+        </div>
+    </form>
+
+    <div class="row g-2 mb-3">
+        <div class="col-6 col-md-3"><div class="border rounded p-2 h-100"><div class="small text-muted">@T.T("Ready")</div><div class="fs-4 fw-semibold">@Model.TaskSummary.ReadyCount</div></div></div>
+        <div class="col-6 col-md-3"><div class="border rounded p-2 h-100"><div class="small text-muted">@T.T("InProgress")</div><div class="fs-4 fw-semibold">@Model.TaskSummary.InProgressCount</div></div></div>
+        <div class="col-6 col-md-3"><div class="border rounded p-2 h-100"><div class="small text-muted">@T.T("Shortage")</div><div class="fs-4 fw-semibold">@Model.TaskSummary.ShortageCount</div></div></div>
+        <div class="col-6 col-md-3"><div class="border rounded p-2 h-100"><div class="small text-muted">@T.T("BinStockTitle")</div><div class="fs-4 fw-semibold">@Model.BinStockSummary.AttentionCount</div></div></div>
+    </div>
+
+    <div class="row g-3">
+        <div class="col-12 col-xl-8">
+            <div class="d-flex flex-column gap-2">
+                @if (Model.Tasks.Count == 0)
+                {
+                    <div class="border rounded p-3 text-center text-muted">@T.T("NoWarehouseTasksFound")</div>
+                }
+                else
+                {
+                    foreach (var task in Model.Tasks)
+                    {
+                        <article class="card">
+                            <div class="card-body">
+                                <div class="d-flex flex-wrap justify-content-between align-items-start gap-2">
+                                    <div>
+                                        <div class="fw-semibold">@(task.TaskNumber ?? task.Title)</div>
+                                        <div class="small text-muted">@task.Title</div>
+                                    </div>
+                                    <div class="d-flex flex-wrap gap-1">
+                                        <span class="badge @TaskBadge(task.Status)">@T.T(task.Status.ToString())</span>
+                                        <span class="badge text-bg-light">@T.T(task.TaskType.ToString())</span>
+                                        <span class="badge text-bg-light">@T.T(task.Priority.ToString())</span>
+                                    </div>
+                                </div>
+
+                                <div class="row g-2 mt-2 small">
+                                    <div class="col-6 col-md-3"><span class="text-muted">@T.T("From")</span><div>@(task.FromLocationCode ?? "-")</div></div>
+                                    <div class="col-6 col-md-3"><span class="text-muted">@T.T("To")</span><div>@(task.ToLocationCode ?? "-")</div></div>
+                                    <div class="col-6 col-md-3"><span class="text-muted">@T.T("Quantity")</span><div>@task.CompletedQuantity / @task.RequestedQuantity</div></div>
+                                    <div class="col-6 col-md-3"><span class="text-muted">@T.T("AssignedTo")</span><div>@(task.AssignedToDisplayName ?? "-")</div></div>
+                                </div>
+
+                                @if (task.HasShortage)
+                                {
+                                    <div class="mt-2"><span class="badge text-bg-danger">@T.T("Shortage"): @task.ShortQuantity</span></div>
+                                }
+
+                                <div class="d-grid gap-2 d-md-flex mt-3">
+                                    @if (CanStart(task))
+                                    {
+                                        <form asp-action="UpdateWarehousePwaTaskLifecycle" method="post" class="d-grid flex-fill"
+                                              hx-post="@Url.Action("UpdateWarehousePwaTaskLifecycle", "Inventory", new { businessId = Model.BusinessId, warehouseId = Model.WarehouseId, q = Model.Query, taskFilter = Model.TaskFilter })"
+                                              hx-target="#warehouse-pwa-shell"
+                                              hx-swap="outerHTML">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="Id" value="@task.Id" />
+                                            <input type="hidden" name="RowVersion" value="@Convert.ToBase64String(task.RowVersion ?? Array.Empty<byte>())" />
+                                            <input type="hidden" name="TargetStatus" value="@Darwin.Domain.Enums.WarehouseTaskStatus.InProgress" />
+                                            <button class="btn btn-lg btn-primary" type="submit">@T.T("Start")</button>
+                                        </form>
+                                    }
+                                    @if (CanComplete(task))
+                                    {
+                                        <form asp-action="UpdateWarehousePwaTaskLifecycle" method="post" class="d-grid flex-fill"
+                                              hx-post="@Url.Action("UpdateWarehousePwaTaskLifecycle", "Inventory", new { businessId = Model.BusinessId, warehouseId = Model.WarehouseId, q = Model.Query, taskFilter = Model.TaskFilter })"
+                                              hx-target="#warehouse-pwa-shell"
+                                              hx-swap="outerHTML">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="Id" value="@task.Id" />
+                                            <input type="hidden" name="RowVersion" value="@Convert.ToBase64String(task.RowVersion ?? Array.Empty<byte>())" />
+                                            <input type="hidden" name="TargetStatus" value="@Darwin.Domain.Enums.WarehouseTaskStatus.Completed" />
+                                            <button class="btn btn-lg btn-success" type="submit">@T.T("Complete")</button>
+                                        </form>
+                                    }
+                                    @if (CanCancel(task))
+                                    {
+                                        <form asp-action="UpdateWarehousePwaTaskLifecycle" method="post" class="d-grid flex-fill"
+                                              hx-post="@Url.Action("UpdateWarehousePwaTaskLifecycle", "Inventory", new { businessId = Model.BusinessId, warehouseId = Model.WarehouseId, q = Model.Query, taskFilter = Model.TaskFilter })"
+                                              hx-target="#warehouse-pwa-shell"
+                                              hx-swap="outerHTML">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="Id" value="@task.Id" />
+                                            <input type="hidden" name="RowVersion" value="@Convert.ToBase64String(task.RowVersion ?? Array.Empty<byte>())" />
+                                            <input type="hidden" name="TargetStatus" value="@Darwin.Domain.Enums.WarehouseTaskStatus.Cancelled" />
+                                            <button class="btn btn-lg btn-outline-secondary" type="submit">@T.T("Cancel")</button>
+                                        </form>
+                                    }
+                                    <a asp-action="EditWarehouseTask" asp-route-id="@task.Id" class="btn btn-lg btn-outline-primary flex-fill"
+                                       hx-get="@EditTaskUrl(task.Id)"
+                                       hx-target="#warehouse-pwa-shell"
+                                       hx-swap="outerHTML"
+                                       hx-push-url="true">@T.T("Open")</a>
+                                </div>
+                            </div>
+                        </article>
+                    }
+                }
+            </div>
+        </div>
+
+        <div class="col-12 col-xl-4">
+            <div class="border rounded p-3">
+                <div class="d-flex justify-content-between align-items-center gap-2 mb-2">
+                    <div class="fw-semibold">@T.T("NeedsAttention")</div>
+                    <span class="badge text-bg-warning">@Model.BinStockSummary.AttentionCount</span>
+                </div>
+                <div class="d-flex flex-column gap-2">
+                    @if (Model.BinStockItems.Count == 0)
+                    {
+                        <div class="text-muted small">@T.T("Ready")</div>
+                    }
+                    else
+                    {
+                        foreach (var item in Model.BinStockItems)
+                        {
+                            <div class="border rounded p-2">
+                                <div class="d-flex justify-content-between gap-2">
+                                    <span class="fw-semibold">@item.VariantSku</span>
+                                    <span>@item.DerivedQuantity</span>
+                                </div>
+                                <div class="small text-muted">@(item.LocationId.HasValue ? $"{item.LocationCode} - {item.LocationDisplayName}" : T.T("Unassigned"))</div>
+                            </div>
+                        }
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

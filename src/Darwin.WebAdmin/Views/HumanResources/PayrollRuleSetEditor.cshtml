@@ -1,0 +1,102 @@
+@model Darwin.WebAdmin.ViewModels.HumanResources.PayrollRuleSetEditVm
+@inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
+@{
+    var isCreate = (bool?)ViewData["IsCreate"] ?? Model.Id == Guid.Empty;
+    var rowVersion = Convert.ToBase64String(Model.RowVersion ?? Array.Empty<byte>());
+    ViewData["Title"] = isCreate ? T.T("CreatePayrollRuleSet") : T.T("EditPayrollRuleSet");
+}
+<section class="admin-page">
+    <h1 class="mb-3">@(isCreate ? T.T("CreatePayrollRuleSet") : T.T("EditPayrollRuleSet"))</h1>
+    <form asp-action="@(isCreate ? "CreatePayrollRuleSet" : "EditPayrollRuleSet")" method="post">
+        @Html.AntiForgeryToken()
+        <input asp-for="Id" type="hidden" />
+        <input asp-for="RowVersion" type="hidden" />
+        <section class="admin-form-section">
+            <div class="row g-3">
+                <div class="col-md-4"><label asp-for="BusinessId" class="form-label"></label><select asp-for="BusinessId" asp-items="Model.BusinessOptions" class="form-select"></select></div>
+                <div class="col-md-2"><label asp-for="JurisdictionCode" class="form-label"></label><input asp-for="JurisdictionCode" class="form-control" /></div>
+                <div class="col-md-3"><label asp-for="RuleSetCode" class="form-label"></label><input asp-for="RuleSetCode" class="form-control" /></div>
+                <div class="col-md-3"><label asp-for="RuleVersion" class="form-label"></label><input asp-for="RuleVersion" class="form-control" /></div>
+                <div class="col-md-6"><label asp-for="DisplayName" class="form-label"></label><input asp-for="DisplayName" class="form-control" /></div>
+                <div class="col-md-2"><label asp-for="Status" class="form-label"></label><select asp-for="Status" asp-items="Model.StatusOptions" class="form-select"></select></div>
+                <div class="col-md-2"><label asp-for="EffectiveFromUtc" class="form-label"></label><input asp-for="EffectiveFromUtc" type="date" class="form-control" /></div>
+                <div class="col-md-2"><label asp-for="EffectiveToUtc" class="form-label"></label><input asp-for="EffectiveToUtc" type="date" class="form-control" /></div>
+                <div class="col-md-2"><label asp-for="Currency" class="form-label"></label><input asp-for="Currency" class="form-control" /></div>
+                <div class="col-md-5"><label asp-for="Description" class="form-label"></label><textarea asp-for="Description" class="form-control"></textarea></div>
+                <div class="col-md-5"><label asp-for="MetadataJson" class="form-label"></label><textarea asp-for="MetadataJson" class="form-control"></textarea></div>
+            </div>
+        </section>
+        <button class="btn btn-primary" type="submit">@T.T("Save")</button>
+        <a asp-action="PayrollRules" asp-route-businessId="@Model.BusinessId" class="btn btn-outline-secondary">@T.T("Back")</a>
+    </form>
+
+    @if (!isCreate)
+    {
+        <section class="admin-form-section mt-4">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <h2 class="admin-form-section-title mb-0">@T.T("PayrollRuleComponents")</h2>
+                <form asp-action="ArchivePayrollRuleSet" method="post">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="id" value="@Model.Id" />
+                    <input type="hidden" name="businessId" value="@Model.BusinessId" />
+                    <input type="hidden" name="rowVersion" value="@rowVersion" />
+                    <button class="btn btn-sm btn-outline-danger" type="submit">@T.T("Archive")</button>
+                </form>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-sm align-middle">
+                    <thead><tr><th>@T.T("Code")</th><th>@T.T("Type")</th><th>@T.T("Method")</th><th>@T.T("Basis")</th><th>@T.T("RateBasisPoints")</th><th>@T.T("AmountMinor")</th><th>@T.T("EmployerCost")</th><th class="text-end">@T.T("Actions")</th></tr></thead>
+                    <tbody>
+                    @if (!Model.Components.Any()) { <tr><td colspan="8" class="text-muted">@T.T("NoRecords")</td></tr> }
+                    else {
+                        foreach (var component in Model.Components) {
+                            var componentRowVersion = Convert.ToBase64String(component.RowVersion ?? Array.Empty<byte>());
+                            <tr>
+                                <td><div class="fw-semibold">@component.ComponentCode</div><div class="text-muted small">@component.DisplayName</div></td>
+                                <td>@T.T(component.ComponentType.ToString())</td>
+                                <td>@T.T(component.CalculationMethod.ToString())</td>
+                                <td>@T.T(component.Basis.ToString())</td>
+                                <td>@component.RateBasisPoints</td>
+                                <td>@component.AmountMinor</td>
+                                <td>@(component.IsEmployerCost ? T.T("Yes") : T.T("No"))</td>
+                                <td class="text-end">
+                                    <form asp-action="ArchivePayrollRuleComponent" method="post">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="id" value="@component.Id" />
+                                        <input type="hidden" name="payrollRuleSetId" value="@Model.Id" />
+                                        <input type="hidden" name="rowVersion" value="@componentRowVersion" />
+                                        <button class="btn btn-sm btn-outline-danger" type="submit">@T.T("Archive")</button>
+                                    </form>
+                                </td>
+                            </tr>
+                        }
+                    }
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <section class="admin-form-section mt-4">
+            <h2 class="admin-form-section-title">@T.T("AddComponent")</h2>
+            <form asp-action="AddPayrollRuleComponent" method="post">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="BusinessId" value="@Model.NewComponent.BusinessId" />
+                <input type="hidden" name="PayrollRuleSetId" value="@Model.NewComponent.PayrollRuleSetId" />
+                <div class="row g-3">
+                    <div class="col-md-3"><label class="form-label">@T.T("ComponentCode")</label><input name="ComponentCode" class="form-control" /></div>
+                    <div class="col-md-5"><label class="form-label">@T.T("DisplayName")</label><input name="DisplayName" class="form-control" /></div>
+                    <div class="col-md-2"><label class="form-label">@T.T("SortOrder")</label><input name="SortOrder" class="form-control" value="0" /></div>
+                    <div class="col-md-2 form-check align-self-end"><input name="IsEmployerCost" value="true" type="checkbox" class="form-check-input" /><input name="IsEmployerCost" value="false" type="hidden" /><label class="form-check-label">@T.T("IsEmployerCost")</label></div>
+                    <div class="col-md-4"><label class="form-label">@T.T("ComponentType")</label><select name="ComponentType" asp-items="Model.ComponentTypeOptions" class="form-select"></select></div>
+                    <div class="col-md-4"><label class="form-label">@T.T("CalculationMethod")</label><select name="CalculationMethod" asp-items="Model.CalculationMethodOptions" class="form-select"></select></div>
+                    <div class="col-md-4"><label class="form-label">@T.T("Basis")</label><select name="Basis" asp-items="Model.BasisOptions" class="form-select"></select></div>
+                    <div class="col-md-3"><label class="form-label">@T.T("RateBasisPoints")</label><input name="RateBasisPoints" class="form-control" /></div>
+                    <div class="col-md-3"><label class="form-label">@T.T("AmountMinor")</label><input name="AmountMinor" class="form-control" /></div>
+                    <div class="col-md-3"><label class="form-label">@T.T("ThresholdJson")</label><textarea name="ThresholdJson" class="form-control">{}</textarea></div>
+                    <div class="col-md-3"><label class="form-label">@T.T("MetadataJson")</label><textarea name="MetadataJson" class="form-control">{}</textarea></div>
+                </div>
+                <button class="btn btn-outline-primary mt-3" type="submit">@T.T("Add")</button>
+            </form>
+        </section>
+    }
+</section>

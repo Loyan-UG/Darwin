@@ -1,8 +1,10 @@
 # E-Invoice Acceptance Checklist
 
-Reviewed: 2026-05-27
+Reviewed: 2026-06-17
 
 This checklist defines the acceptance path before Darwin may expose generated e-invoice artifacts as compliant for a German deployment. It is not legal advice. A deployment owner, tax/accounting reviewer, and where needed legal/compliance reviewer must approve the evidence for the target customer.
+
+Accepted fixture and validation evidence must be referenced from the deployment evidence package defined in [production-readiness-evidence-package.md](production-readiness-evidence-package.md). Do not store generated customer artifacts, private invoice data, validator credentials, provider secrets, or legal sign-off records in source control.
 
 ## Current German Baseline
 
@@ -105,6 +107,7 @@ Legal-approved fixtures are created only after the tax/accounting reviewer and, 
    - Confirm no UI labels JSON/HTML/source-model exports as compliant e-invoices.
    - Confirm generated artifacts are hidden or disabled until validation and sign-off are complete.
    - Record go-live sign-off, rollback plan, and support owner.
+   - Add non-secret references to generated artifacts, validation reports, fixture approvals, storage/download smoke, and reviewer sign-off to the production readiness evidence package.
 
 ## Failure Handling
 

@@ -1,10 +1,10 @@
 # Darwin Production Setup
 
-Reviewed: 2026-05-27
+Reviewed: 2026-06-17
 
 This runbook describes production setup at a deployment-neutral level. Do not commit deployment-specific domains, customer names, credentials, keys, webhook secrets, access keys, or signing material.
 
-For repeatable customer rollout steps, approval ownership, and manual sign-off gates, use [docs/customer-deployment-onboarding-checklist.md](customer-deployment-onboarding-checklist.md).
+For repeatable customer rollout steps, approval ownership, and manual sign-off gates, use [docs/customer-deployment-onboarding-checklist.md](customer-deployment-onboarding-checklist.md). For the non-secret go-live evidence package, use [docs/production-readiness-evidence-package.md](production-readiness-evidence-package.md).
 
 ## Configuration Principles
 
@@ -13,6 +13,21 @@ For repeatable customer rollout steps, approval ownership, and manual sign-off g
 - Prefer PostgreSQL for new deployments. SQL Server remains supported.
 - Keep WebAdmin, WebApi, Worker, and front-office settings aligned to the same database and provider configuration.
 - Run all provider smoke scripts in dry-run mode first.
+
+## Production Evidence Package
+
+Before a customer deployment is treated as production-ready, create a non-secret evidence package following [docs/production-readiness-evidence-package.md](production-readiness-evidence-package.md). The package records proof and owner approvals; it does not store credentials, private endpoint tokens, webhook secrets, raw provider payloads, private documents, bank identifiers, payroll internals, or customer personal data.
+
+The package must include:
+
+- release build/test evidence, migration plan, rollback plan, and support ownership;
+- database backup, restore, monitoring, and alert ownership;
+- object-storage selected-provider preflight, disposable-prefix smoke, retention/legal-hold, backup, restore, and monitoring evidence;
+- e-invoice fixture, validation, storage, download, and reviewer sign-off evidence when e-invoice generation is in scope;
+- provider smoke outcomes for Stripe, DHL, Brevo, VIES, object storage, and mobile push/maps when each provider is in scope;
+- final customer business, accounting/tax, operations, system-admin, legal/compliance where required, and Darwin technical approvals outside source control.
+
+Do not mark production readiness from local smoke alone. Local MinIO, test-mode Stripe, local e-invoice adapter smoke, and parser fixtures prove code paths; they do not prove the selected production provider, retention policy, legal acceptance, or deployment monitoring.
 
 ## Required Runtime Services
 
@@ -174,13 +189,27 @@ Finance export profiles:
 - Profile names, container names, and prefixes are configuration. They must not be taken from batch metadata, attempt metadata, `DocumentRecord` metadata, `ExternalReference` metadata, or package content.
 - The two profiles may share a provider and container with separate prefixes, or use separate containers when the deployment needs clearer operational ownership.
 
+Personnel document profile:
+
+- `PersonnelDocuments` stores internal HR personnel-file binaries linked through `DocumentRecord`.
+- The profile is used only by WebAdmin HR upload, download, and archive flows. It must not be replaced by employee metadata, document metadata, event payloads, notes, or payroll-provider payloads.
+- Use a storage provider with retention and legal-hold behavior appropriate for personnel files. File-system storage is acceptable for local smoke only; production should use a managed object-storage target with backup, monitoring, least-privilege credentials, and retention policy ownership.
+- Access keys, secret keys, connection strings, and private credentials stay in secure configuration and must not appear in HR metadata, audit events, document metadata, docs, or logs.
+
+Payroll payslip profile:
+
+- `PayrollPayslips` stores internal HR payslip artifacts generated from approved payroll run snapshots and linked through `DocumentRecord`.
+- The profile is used only by WebAdmin payroll artifact generation and download flows. It must not be replaced by payroll run metadata, employee metadata, document metadata, event payloads, notes, or payroll-provider payloads.
+- Use a storage provider with retention and legal-hold behavior appropriate for payroll artifacts. File-system storage is acceptable for local smoke only; production should use a managed object-storage target with backup, monitoring, least-privilege credentials, and retention policy ownership.
+- Access keys, secret keys, connection strings, private credentials, raw payroll-provider payloads, and private employee data must not appear in payroll metadata, audit events, document metadata, docs, or logs.
+
 Run:
 
 ```powershell
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\check-minio-production-readiness.ps1
 ```
 
-The readiness preflight requires explicit confirmation for the archive, shipment-label, media, finance export source, and finance export outbound profile decisions, the disposable smoke prefix, retention/delete behavior, and the operator runbook. It does not accept or print access keys, secret keys, bucket policy JSON, object keys, or provider responses.
+The readiness preflight requires explicit confirmation for the archive, shipment-label, media, finance export source, finance export outbound, personnel document, and payroll payslip profile decisions, the disposable smoke prefix, retention/delete behavior, and the operator runbook. It does not accept or print access keys, secret keys, bucket policy JSON, object keys, or provider responses.
 
 Run the selected-provider object-storage smoke against a production-like endpoint only after an operator approves the disposable smoke prefix and cleanup or retention behavior:
 

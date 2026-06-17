@@ -126,6 +126,15 @@ namespace Darwin.Mobile.Shared.Api
         }
 
         /// <summary>
+        /// Employee self-service payroll endpoints.
+        /// </summary>
+        public static class Payroll
+        {
+            public const string GetMyPayslips = "api/v1/member/payroll/payslips";
+            public static string DownloadPayslipDocument(Guid id) => $"api/v1/member/payroll/payslips/{id:D}/document";
+        }
+
+        /// <summary>
         /// Businesses discovery endpoints (WebApi).
         /// </summary>
         public static class Businesses

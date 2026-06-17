@@ -7,6 +7,7 @@ using Darwin.Domain.Entities.Catalog;
 using Darwin.Domain.Entities.CMS;
 using Darwin.Domain.Entities.CRM;
 using Darwin.Domain.Entities.Foundation;
+using Darwin.Domain.Entities.HumanResources;
 using Darwin.Domain.Entities.Identity;
 using Darwin.Domain.Entities.Inventory;
 using Darwin.Domain.Entities.Integration;
@@ -119,6 +120,31 @@ namespace Darwin.Infrastructure.Persistence.Db
         public DbSet<CreditNote> CreditNotes => Set<CreditNote>();
         public DbSet<CreditNoteLine> CreditNoteLines => Set<CreditNoteLine>();
 
+        // Human Resources
+        public DbSet<Employee> Employees => Set<Employee>();
+        public DbSet<Department> Departments => Set<Department>();
+        public DbSet<Position> Positions => Set<Position>();
+        public DbSet<EmploymentContract> EmploymentContracts => Set<EmploymentContract>();
+        public DbSet<WorkSchedule> WorkSchedules => Set<WorkSchedule>();
+        public DbSet<WorkScheduleException> WorkScheduleExceptions => Set<WorkScheduleException>();
+        public DbSet<AttendanceEvent> AttendanceEvents => Set<AttendanceEvent>();
+        public DbSet<TimeEntry> TimeEntries => Set<TimeEntry>();
+        public DbSet<Timesheet> Timesheets => Set<Timesheet>();
+        public DbSet<TimesheetLine> TimesheetLines => Set<TimesheetLine>();
+        public DbSet<LeaveRequest> LeaveRequests => Set<LeaveRequest>();
+        public DbSet<AbsenceRecord> AbsenceRecords => Set<AbsenceRecord>();
+        public DbSet<PayrollPeriod> PayrollPeriods => Set<PayrollPeriod>();
+        public DbSet<PayrollPeriodLine> PayrollPeriodLines => Set<PayrollPeriodLine>();
+        public DbSet<PayrollRuleSet> PayrollRuleSets => Set<PayrollRuleSet>();
+        public DbSet<PayrollRuleComponent> PayrollRuleComponents => Set<PayrollRuleComponent>();
+        public DbSet<PayrollRun> PayrollRuns => Set<PayrollRun>();
+        public DbSet<PayrollRunLine> PayrollRunLines => Set<PayrollRunLine>();
+        public DbSet<PayrollRunLineComponent> PayrollRunLineComponents => Set<PayrollRunLineComponent>();
+        public DbSet<PayrollPayslip> PayrollPayslips => Set<PayrollPayslip>();
+        public DbSet<PayrollPayment> PayrollPayments => Set<PayrollPayment>();
+        public DbSet<PayrollPaymentAllocation> PayrollPaymentAllocations => Set<PayrollPaymentAllocation>();
+        public DbSet<PayrollPaymentBankCorrection> PayrollPaymentBankCorrections => Set<PayrollPaymentBankCorrection>();
+
         // Shipping
         public DbSet<ShippingMethod> ShippingMethods => Set<ShippingMethod>();
         public DbSet<ShippingRate> ShippingRates => Set<ShippingRate>();
@@ -150,6 +176,11 @@ namespace Darwin.Infrastructure.Persistence.Db
         public DbSet<AuditTrail> AuditTrails => Set<AuditTrail>();
         public DbSet<FeatureArea> FeatureAreas => Set<FeatureArea>();
         public DbSet<BusinessFeatureOverride> BusinessFeatureOverrides => Set<BusinessFeatureOverride>();
+        public DbSet<AiSensitiveFieldPolicy> AiSensitiveFieldPolicies => Set<AiSensitiveFieldPolicy>();
+        public DbSet<AiRecommendation> AiRecommendations => Set<AiRecommendation>();
+        public DbSet<AiActionDraft> AiActionDrafts => Set<AiActionDraft>();
+        public DbSet<AiActionApproval> AiActionApprovals => Set<AiActionApproval>();
+        public DbSet<InternalFollowUpTask> InternalFollowUpTasks => Set<InternalFollowUpTask>();
 
         /// <summary>
         /// Export jobs requested by business users.
@@ -186,11 +217,15 @@ namespace Darwin.Infrastructure.Persistence.Db
                 modelBuilder.Entity<InventorySerialUnit>().Property(x => x.MetadataJson).HasColumnType("jsonb");
                 modelBuilder.Entity<HandlingUnit>().Property(x => x.MetadataJson).HasColumnType("jsonb");
                 modelBuilder.Entity<HandlingUnitContent>().Property(x => x.MetadataJson).HasColumnType("jsonb");
+                modelBuilder.Entity<GoodsReceiptLineIdentity>().Property(x => x.MetadataJson).HasColumnType("jsonb");
                 modelBuilder.Entity<WarehouseLabelTemplate>().Property(x => x.MetadataJson).HasColumnType("jsonb");
                 modelBuilder.Entity<WarehouseTask>().Property(x => x.MetadataJson).HasColumnType("jsonb");
                 modelBuilder.Entity<WarehouseTaskLine>().Property(x => x.MetadataJson).HasColumnType("jsonb");
+                modelBuilder.Entity<WarehouseTaskLineIdentity>().Property(x => x.MetadataJson).HasColumnType("jsonb");
                 modelBuilder.Entity<StockCountSession>().Property(x => x.MetadataJson).HasColumnType("jsonb");
                 modelBuilder.Entity<StockCountLine>().Property(x => x.MetadataJson).HasColumnType("jsonb");
+                modelBuilder.Entity<StockCountLineIdentity>().Property(x => x.MetadataJson).HasColumnType("jsonb");
+                modelBuilder.Entity<StockTransferLineIdentity>().Property(x => x.MetadataJson).HasColumnType("jsonb");
                 modelBuilder.Entity<DeliveryNote>().Property(x => x.MetadataJson).HasColumnType("jsonb");
                 modelBuilder.Entity<ReturnOrder>().Property(x => x.MetadataJson).HasColumnType("jsonb");
                 modelBuilder.Entity<CreditNote>().Property(x => x.SourceModelJson).HasColumnType("jsonb");
@@ -199,6 +234,7 @@ namespace Darwin.Infrastructure.Persistence.Db
                 modelBuilder.Entity<FinancePostingAccountMapping>().Property(x => x.MetadataJson).HasColumnType("jsonb");
                 modelBuilder.Entity<FinanceExportBatch>().Property(x => x.MetadataJson).HasColumnType("jsonb");
                 modelBuilder.Entity<FinanceExportAttempt>().Property(x => x.MetadataJson).HasColumnType("jsonb");
+                modelBuilder.Entity<InternalFollowUpTask>().Property(x => x.MetadataJson).HasColumnType("jsonb");
                 modelBuilder.Entity<BankAccount>().Property(x => x.MetadataJson).HasColumnType("jsonb");
                 modelBuilder.Entity<BankStatementImport>().Property(x => x.MetadataJson).HasColumnType("jsonb");
                 modelBuilder.Entity<BankStatementLine>().Property(x => x.MetadataJson).HasColumnType("jsonb");
@@ -208,6 +244,20 @@ namespace Darwin.Infrastructure.Persistence.Db
                 modelBuilder.Entity<SupplierPaymentBankCorrection>().Property(x => x.MetadataJson).HasColumnType("jsonb");
                 modelBuilder.Entity<SupplierAdvance>().Property(x => x.MetadataJson).HasColumnType("jsonb");
                 modelBuilder.Entity<JournalEntry>().Property(x => x.MetadataJson).HasColumnType("jsonb");
+                modelBuilder.Entity<Employee>().Property(x => x.MetadataJson).HasColumnType("jsonb");
+                modelBuilder.Entity<Department>().Property(x => x.MetadataJson).HasColumnType("jsonb");
+                modelBuilder.Entity<Position>().Property(x => x.MetadataJson).HasColumnType("jsonb");
+                modelBuilder.Entity<EmploymentContract>().Property(x => x.MetadataJson).HasColumnType("jsonb");
+                modelBuilder.Entity<WorkSchedule>().Property(x => x.MetadataJson).HasColumnType("jsonb");
+                modelBuilder.Entity<WorkScheduleException>().Property(x => x.MetadataJson).HasColumnType("jsonb");
+                modelBuilder.Entity<AttendanceEvent>().Property(x => x.MetadataJson).HasColumnType("jsonb");
+                modelBuilder.Entity<TimeEntry>().Property(x => x.MetadataJson).HasColumnType("jsonb");
+                modelBuilder.Entity<Timesheet>().Property(x => x.MetadataJson).HasColumnType("jsonb");
+                modelBuilder.Entity<LeaveRequest>().Property(x => x.MetadataJson).HasColumnType("jsonb");
+                modelBuilder.Entity<AbsenceRecord>().Property(x => x.MetadataJson).HasColumnType("jsonb");
+                modelBuilder.Entity<PayrollPeriod>().Property(x => x.MetadataJson).HasColumnType("jsonb");
+                modelBuilder.Entity<PayrollPeriodLine>().Property(x => x.SummaryJson).HasColumnType("jsonb");
+                modelBuilder.Entity<PayrollPaymentBankCorrection>().Property(x => x.MetadataJson).HasColumnType("jsonb");
             }
 
             // 2) Keep decimal storage explicit across providers; entity-specific configurations can still override this.

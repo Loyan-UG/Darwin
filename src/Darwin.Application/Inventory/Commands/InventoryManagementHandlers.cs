@@ -919,6 +919,12 @@ namespace Darwin.Application.Inventory.Commands
         public async Task<Guid> HandleAsync(StockTransferCreateDto dto, CancellationToken ct = default)
         {
             await _validator.ValidateAndThrowAsync(dto, ct);
+            InventoryManagementHandlerSupport.NormalizeStockTransferIdentities(dto);
+            if (InventoryManagementHandlerSupport.HasStockTransferIdentityEvidence(dto))
+            {
+                var businessId = await InventoryManagementHandlerSupport.EnsureStockTransferWarehousesAsync(_db, dto.FromWarehouseId, dto.ToWarehouseId, _localizer, ct).ConfigureAwait(false);
+                await InventoryManagementHandlerSupport.PopulateStockTransferIdentitySnapshotsAsync(_db, dto, businessId, _localizer, ct).ConfigureAwait(false);
+            }
 
             var transfer = new StockTransfer
             {
@@ -928,7 +934,11 @@ namespace Darwin.Application.Inventory.Commands
                 Lines = dto.Lines.Select(x => new StockTransferLine
                 {
                     ProductVariantId = x.ProductVariantId,
-                    Quantity = x.Quantity
+                    Quantity = x.Quantity,
+                    Identities = x.Identities
+                        .Where(identity => !InventoryIdentityEvidenceSupport.IsBlank(identity))
+                        .Select((identity, index) => InventoryManagementHandlerSupport.CreateStockTransferIdentity(identity, index + 1))
+                        .ToList()
                 }).ToList()
             };
 
@@ -957,9 +967,11 @@ namespace Darwin.Application.Inventory.Commands
         public async Task HandleAsync(StockTransferEditDto dto, CancellationToken ct = default)
         {
             await _validator.ValidateAndThrowAsync(dto, ct);
+            InventoryManagementHandlerSupport.NormalizeStockTransferIdentities(dto);
 
             var transfer = await _db.Set<StockTransfer>()
                 .Include(x => x.Lines)
+                    .ThenInclude(x => x.Identities)
                 .FirstOrDefaultAsync(x => x.Id == dto.Id, ct)
                 .ConfigureAwait(false);
 
@@ -979,11 +991,16 @@ namespace Darwin.Application.Inventory.Commands
             transfer.ToWarehouseId = dto.ToWarehouseId;
             transfer.Status = InventoryManagementHandlerSupport.ParseTransferStatus(dto.Status, _localizer);
 
+            _db.Set<StockTransferLineIdentity>().RemoveRange(transfer.Lines.SelectMany(x => x.Identities));
             _db.Set<StockTransferLine>().RemoveRange(transfer.Lines);
             transfer.Lines = dto.Lines.Select(x => new StockTransferLine
             {
                 ProductVariantId = x.ProductVariantId,
-                Quantity = x.Quantity
+                Quantity = x.Quantity,
+                Identities = x.Identities
+                    .Where(identity => !InventoryIdentityEvidenceSupport.IsBlank(identity))
+                    .Select((identity, index) => InventoryManagementHandlerSupport.CreateStockTransferIdentity(identity, index + 1))
+                    .ToList()
             }).ToList();
 
             await InventoryManagementHandlerSupport.SaveChangesOrThrowConcurrencyAsync(_db, _localizer, ct).ConfigureAwait(false);
@@ -1020,6 +1037,7 @@ namespace Darwin.Application.Inventory.Commands
 
             var transfer = await _db.Set<StockTransfer>()
                 .Include(x => x.Lines)
+                    .ThenInclude(x => x.Identities)
                 .FirstOrDefaultAsync(x => x.Id == dto.Id, ct)
                 .ConfigureAwait(false);
 
@@ -1090,6 +1108,10 @@ namespace Darwin.Application.Inventory.Commands
                 return Result.Fail(_localizer["StockTransferLifecycleUnsupportedAction"]);
             }
 
+            var businessId = await InventoryManagementHandlerSupport.GetWarehouseBusinessIdAsync(_db, transfer.FromWarehouseId, _localizer, ct).ConfigureAwait(false);
+            var identityValidation = await ValidateTransferIdentityEvidenceAsync(transfer, businessId, ct).ConfigureAwait(false);
+            if (!identityValidation.Succeeded) return identityValidation;
+
             foreach (var line in transfer.Lines)
             {
                 var source = await InventoryStockHelper.GetOrCreateStockLevelAsync(_db, transfer.FromWarehouseId, line.ProductVariantId, ct).ConfigureAwait(false);
@@ -1125,6 +1147,10 @@ namespace Darwin.Application.Inventory.Commands
             {
                 return Result.Fail(_localizer["StockTransferLifecycleUnsupportedAction"]);
             }
+
+            var businessId = await InventoryManagementHandlerSupport.GetWarehouseBusinessIdAsync(_db, transfer.FromWarehouseId, _localizer, ct).ConfigureAwait(false);
+            var identityValidation = await ValidateTransferIdentityEvidenceAsync(transfer, businessId, ct).ConfigureAwait(false);
+            if (!identityValidation.Succeeded) return identityValidation;
 
             foreach (var line in transfer.Lines)
             {
@@ -1203,6 +1229,31 @@ namespace Darwin.Application.Inventory.Commands
             InventoryMovementReferencePolicy.EnsureReferencePolicy(reason, referenceId);
             InventoryMovementReferencePolicy.AddLedgerRow(_db, warehouseId, productVariantId, quantityDelta, reason, referenceId);
         }
+
+        private Task<Result> ValidateTransferIdentityEvidenceAsync(StockTransfer transfer, Guid businessId, CancellationToken ct)
+            => InventoryIdentityEvidenceSupport.ValidateRequiredEvidenceAsync(
+                _db,
+                businessId,
+                transfer.Lines.Where(x => !x.IsDeleted),
+                line => line.Quantity > 0,
+                line => line.ProductVariantId,
+                line => line.Quantity,
+                line => line.Identities.Where(identity => !identity.IsDeleted),
+                identity => identity.InventoryLotId,
+                identity => identity.InventorySerialUnitId,
+                identity => identity.HandlingUnitId,
+                identity => identity.Quantity,
+                identity => identity.ExpiryDateUtc,
+                identity => identity.SupplierLotCodeSnapshot,
+                _localizer,
+                "StockTransferIdentityRequired",
+                "StockTransferInvalidIdentityQuantity",
+                "StockTransferLotIdentityRequired",
+                "StockTransferSerialIdentityRequired",
+                "StockTransferExpiryIdentityRequired",
+                "StockTransferSupplierLotIdentityRequired",
+                "StockTransferHandlingUnitIdentityRequired",
+                ct);
     }
 
     public sealed class CreatePurchaseOrderHandler
@@ -1289,6 +1340,59 @@ namespace Darwin.Application.Inventory.Commands
                 .ConfigureAwait(false);
             return order.Id;
         }
+
+        private async Task PopulateStockTransferIdentitySnapshotsAsync(StockTransferCreateDto dto, Guid businessId, CancellationToken ct)
+        {
+            foreach (var line in dto.Lines)
+            {
+                foreach (var identity in line.Identities.Where(identity => !InventoryIdentityEvidenceSupport.IsBlank(identity)))
+                {
+                    var snapshots = await InventoryIdentityEvidenceSupport.PopulateSnapshotsAsync(
+                            _db,
+                            businessId,
+                            line.ProductVariantId,
+                            identity.InventoryLotId,
+                            identity.InventorySerialUnitId,
+                            identity.HandlingUnitId,
+                            _localizer,
+                            ct)
+                        .ConfigureAwait(false);
+                    if (!snapshots.Succeeded) throw new InvalidOperationException(snapshots.Error);
+                    var value = snapshots.Value ?? throw new InvalidOperationException("InventoryIdentitySnapshotsMissing");
+                    identity.LotCodeSnapshot = value.LotCodeSnapshot ?? identity.LotCodeSnapshot;
+                    identity.SupplierLotCodeSnapshot = value.SupplierLotCodeSnapshot ?? identity.SupplierLotCodeSnapshot;
+                    identity.ExpiryDateUtc = value.ExpiryDateUtc ?? identity.ExpiryDateUtc;
+                    identity.SerialNumberSnapshot = value.SerialNumberSnapshot ?? identity.SerialNumberSnapshot;
+                    identity.HandlingUnitCodeSnapshot = value.HandlingUnitCodeSnapshot ?? identity.HandlingUnitCodeSnapshot;
+                }
+            }
+        }
+
+        private static void NormalizeStockTransferIdentities(StockTransferCreateDto dto)
+        {
+            dto.Lines ??= new List<StockTransferLineDto>();
+            foreach (var line in dto.Lines)
+            {
+                line.Identities ??= new List<InventoryIdentityEvidenceDto>();
+                InventoryIdentityEvidenceSupport.Normalize(line.Identities);
+            }
+        }
+
+        private static StockTransferLineIdentity CreateStockTransferIdentity(InventoryIdentityEvidenceDto dto, int sortOrder)
+            => new()
+            {
+                InventoryLotId = dto.InventoryLotId,
+                InventorySerialUnitId = dto.InventorySerialUnitId,
+                HandlingUnitId = dto.HandlingUnitId,
+                Quantity = dto.Quantity,
+                LotCodeSnapshot = InventoryManagementHandlerSupport.NormalizeOptional(dto.LotCodeSnapshot),
+                SupplierLotCodeSnapshot = InventoryManagementHandlerSupport.NormalizeOptional(dto.SupplierLotCodeSnapshot),
+                ExpiryDateUtc = dto.ExpiryDateUtc,
+                SerialNumberSnapshot = InventoryManagementHandlerSupport.NormalizeOptional(dto.SerialNumberSnapshot),
+                HandlingUnitCodeSnapshot = InventoryManagementHandlerSupport.NormalizeOptional(dto.HandlingUnitCodeSnapshot),
+                SortOrder = dto.SortOrder <= 0 ? sortOrder : dto.SortOrder,
+                MetadataJson = InventoryManagementHandlerSupport.NormalizeMetadataJson(dto.MetadataJson)
+            };
     }
 
     public sealed class UpdatePurchaseOrderHandler
@@ -1657,6 +1761,102 @@ namespace Darwin.Application.Inventory.Commands
             var normalized = NormalizeOptional(value);
             return string.Equals(normalized, "{}", StringComparison.Ordinal) ? null : normalized;
         }
+
+        public static async Task<Guid> EnsureStockTransferWarehousesAsync(
+            IAppDbContext db,
+            Guid fromWarehouseId,
+            Guid toWarehouseId,
+            IStringLocalizer<ValidationResource> localizer,
+            CancellationToken ct)
+        {
+            var warehouses = await db.Set<Warehouse>()
+                .AsNoTracking()
+                .Where(x => !x.IsDeleted && (x.Id == fromWarehouseId || x.Id == toWarehouseId))
+                .Select(x => new { x.Id, x.BusinessId })
+                .ToListAsync(ct)
+                .ConfigureAwait(false);
+            var from = warehouses.FirstOrDefault(x => x.Id == fromWarehouseId);
+            var to = warehouses.FirstOrDefault(x => x.Id == toWarehouseId);
+            if (from is null || to is null || from.BusinessId != to.BusinessId)
+            {
+                throw new InvalidOperationException(localizer["WarehouseNotFound"]);
+            }
+
+            return from.BusinessId;
+        }
+
+        public static async Task<Guid> GetWarehouseBusinessIdAsync(IAppDbContext db, Guid warehouseId, IStringLocalizer<ValidationResource> localizer, CancellationToken ct)
+        {
+            var businessId = await db.Set<Warehouse>()
+                .AsNoTracking()
+                .Where(x => x.Id == warehouseId && !x.IsDeleted)
+                .Select(x => (Guid?)x.BusinessId)
+                .FirstOrDefaultAsync(ct)
+                .ConfigureAwait(false);
+            if (!businessId.HasValue) throw new InvalidOperationException(localizer["WarehouseNotFound"]);
+            return businessId.Value;
+        }
+
+        public static void NormalizeStockTransferIdentities(StockTransferCreateDto dto)
+        {
+            dto.Lines ??= new List<StockTransferLineDto>();
+            foreach (var line in dto.Lines)
+            {
+                line.Identities ??= new List<InventoryIdentityEvidenceDto>();
+                InventoryIdentityEvidenceSupport.Normalize(line.Identities);
+            }
+        }
+
+        public static bool HasStockTransferIdentityEvidence(StockTransferCreateDto dto)
+            => dto.Lines?.Any(line => line.Identities?.Any(identity => !InventoryIdentityEvidenceSupport.IsBlank(identity)) == true) == true;
+
+        public static async Task PopulateStockTransferIdentitySnapshotsAsync(
+            IAppDbContext db,
+            StockTransferCreateDto dto,
+            Guid businessId,
+            IStringLocalizer<ValidationResource> localizer,
+            CancellationToken ct)
+        {
+            foreach (var line in dto.Lines)
+            {
+                foreach (var identity in line.Identities.Where(identity => !InventoryIdentityEvidenceSupport.IsBlank(identity)))
+                {
+                    var snapshots = await InventoryIdentityEvidenceSupport.PopulateSnapshotsAsync(
+                            db,
+                            businessId,
+                            line.ProductVariantId,
+                            identity.InventoryLotId,
+                            identity.InventorySerialUnitId,
+                            identity.HandlingUnitId,
+                            localizer,
+                            ct)
+                        .ConfigureAwait(false);
+                    if (!snapshots.Succeeded) throw new InvalidOperationException(snapshots.Error);
+                    var value = snapshots.Value ?? throw new InvalidOperationException("InventoryIdentitySnapshotsMissing");
+                    identity.LotCodeSnapshot = value.LotCodeSnapshot ?? identity.LotCodeSnapshot;
+                    identity.SupplierLotCodeSnapshot = value.SupplierLotCodeSnapshot ?? identity.SupplierLotCodeSnapshot;
+                    identity.ExpiryDateUtc = value.ExpiryDateUtc ?? identity.ExpiryDateUtc;
+                    identity.SerialNumberSnapshot = value.SerialNumberSnapshot ?? identity.SerialNumberSnapshot;
+                    identity.HandlingUnitCodeSnapshot = value.HandlingUnitCodeSnapshot ?? identity.HandlingUnitCodeSnapshot;
+                }
+            }
+        }
+
+        public static StockTransferLineIdentity CreateStockTransferIdentity(InventoryIdentityEvidenceDto dto, int sortOrder)
+            => new()
+            {
+                InventoryLotId = dto.InventoryLotId,
+                InventorySerialUnitId = dto.InventorySerialUnitId,
+                HandlingUnitId = dto.HandlingUnitId,
+                Quantity = dto.Quantity,
+                LotCodeSnapshot = NormalizeOptional(dto.LotCodeSnapshot),
+                SupplierLotCodeSnapshot = NormalizeOptional(dto.SupplierLotCodeSnapshot),
+                ExpiryDateUtc = dto.ExpiryDateUtc,
+                SerialNumberSnapshot = NormalizeOptional(dto.SerialNumberSnapshot),
+                HandlingUnitCodeSnapshot = NormalizeOptional(dto.HandlingUnitCodeSnapshot),
+                SortOrder = dto.SortOrder <= 0 ? sortOrder : dto.SortOrder,
+                MetadataJson = NormalizeMetadataJson(dto.MetadataJson)
+            };
 
         public static async Task EnsureSupplierReadyForPurchaseOrderAsync(
             IAppDbContext db,

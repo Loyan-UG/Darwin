@@ -1,8 +1,10 @@
 # External Smoke Inputs
 
-Reviewed: 2026-05-27
+Reviewed: 2026-06-17
 
 This file lists non-committed inputs for external smoke checks. Do not store real secret values in this file or any committed configuration. Do not store real provider secrets, API keys, webhook secrets, access keys, or private signing material in this file.
+
+When a smoke is used for deployment approval, record only non-secret run evidence in [production-readiness-evidence-package.md](production-readiness-evidence-package.md): command, run date, operator, target profile or provider label, high-level result, artifact hash or safe evidence reference when applicable, and owner sign-off. Do not copy provider responses, credentials, private payloads, customer data, bank details, payroll contents, or private document contents into source control.
 
 Run the aggregate dry-run first:
 

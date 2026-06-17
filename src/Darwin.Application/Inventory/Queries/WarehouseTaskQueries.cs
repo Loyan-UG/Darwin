@@ -149,7 +149,7 @@ public sealed class GetWarehouseTaskDetailHandler
     {
         if (id == Guid.Empty) return null;
         var row = await (
-                from task in _db.Set<WarehouseTask>().AsNoTracking().Include(x => x.Lines)
+                from task in _db.Set<WarehouseTask>().AsNoTracking().Include(x => x.Lines).ThenInclude(x => x.Identities)
                 join warehouse in _db.Set<Warehouse>().AsNoTracking() on task.WarehouseId equals warehouse.Id
                 join fromLocation in _db.Set<WarehouseLocation>().AsNoTracking() on task.FromLocationId equals fromLocation.Id into fromLocationJoin
                 from fromLocation in fromLocationJoin.DefaultIfEmpty()
@@ -214,7 +214,25 @@ public sealed class GetWarehouseTaskDetailHandler
                     SortOrder = line.SortOrder,
                     SourceLineType = line.SourceLineType,
                     SourceLineId = line.SourceLineId,
-                    MetadataJson = line.MetadataJson
+                    MetadataJson = line.MetadataJson,
+                    Identities = line.Identities
+                        .Where(identity => !identity.IsDeleted)
+                        .OrderBy(identity => identity.SortOrder)
+                        .Select(identity => new InventoryIdentityEvidenceDto
+                        {
+                            Id = identity.Id,
+                            InventoryLotId = identity.InventoryLotId,
+                            InventorySerialUnitId = identity.InventorySerialUnitId,
+                            HandlingUnitId = identity.HandlingUnitId,
+                            Quantity = identity.Quantity,
+                            LotCodeSnapshot = identity.LotCodeSnapshot,
+                            SupplierLotCodeSnapshot = identity.SupplierLotCodeSnapshot,
+                            ExpiryDateUtc = identity.ExpiryDateUtc,
+                            SerialNumberSnapshot = identity.SerialNumberSnapshot,
+                            HandlingUnitCodeSnapshot = identity.HandlingUnitCodeSnapshot,
+                            SortOrder = identity.SortOrder,
+                            MetadataJson = identity.MetadataJson
+                        }).ToList()
                 }).ToList()
         };
     }

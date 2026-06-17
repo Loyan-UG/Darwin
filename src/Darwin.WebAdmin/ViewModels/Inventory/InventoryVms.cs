@@ -772,6 +772,20 @@ namespace Darwin.WebAdmin.ViewModels.Inventory
         public int Total { get; set; }
     }
 
+    public sealed class WarehousePwaVm
+    {
+        public Guid? BusinessId { get; set; }
+        public Guid? WarehouseId { get; set; }
+        public string Query { get; set; } = string.Empty;
+        public WarehouseTaskQueueFilter TaskFilter { get; set; } = WarehouseTaskQueueFilter.Ready;
+        public List<SelectListItem> BusinessOptions { get; set; } = new();
+        public List<SelectListItem> WarehouseOptions { get; set; } = new();
+        public WarehouseTaskOpsSummaryVm TaskSummary { get; set; } = new();
+        public BinStockOpsSummaryVm BinStockSummary { get; set; } = new();
+        public List<WarehouseTaskListItemVm> Tasks { get; set; } = new();
+        public List<BinStockListItemVm> BinStockItems { get; set; } = new();
+    }
+
     public sealed class WarehousePickingTaskCreateVm
     {
         public Guid BusinessId { get; set; }
@@ -874,6 +888,9 @@ namespace Darwin.WebAdmin.ViewModels.Inventory
         public List<SelectListItem> StatusOptions { get; set; } = new();
         public List<SelectListItem> PriorityOptions { get; set; } = new();
         public List<SelectListItem> SourceTypeOptions { get; set; } = new();
+        public List<SelectListItem> LotOptions { get; set; } = new();
+        public List<SelectListItem> SerialUnitOptions { get; set; } = new();
+        public List<SelectListItem> HandlingUnitOptions { get; set; } = new();
     }
 
     public sealed class WarehouseTaskLineVm
@@ -909,6 +926,29 @@ namespace Darwin.WebAdmin.ViewModels.Inventory
 
         public Guid? SourceLineId { get; set; }
 
+        [StringLength(8000)]
+        public string? MetadataJson { get; set; }
+        public List<InventoryIdentityEvidenceVm> Identities { get; set; } = new();
+    }
+
+    public sealed class InventoryIdentityEvidenceVm
+    {
+        public Guid Id { get; set; }
+        public Guid? InventoryLotId { get; set; }
+        public Guid? InventorySerialUnitId { get; set; }
+        public Guid? HandlingUnitId { get; set; }
+        [Range(0, int.MaxValue)]
+        public int Quantity { get; set; }
+        [StringLength(100)]
+        public string? LotCodeSnapshot { get; set; }
+        [StringLength(100)]
+        public string? SupplierLotCodeSnapshot { get; set; }
+        public DateTime? ExpiryDateUtc { get; set; }
+        [StringLength(128)]
+        public string? SerialNumberSnapshot { get; set; }
+        [StringLength(128)]
+        public string? HandlingUnitCodeSnapshot { get; set; }
+        public int SortOrder { get; set; }
         [StringLength(8000)]
         public string? MetadataJson { get; set; }
     }
@@ -1135,6 +1175,57 @@ namespace Darwin.WebAdmin.ViewModels.Inventory
         public byte[] RowVersion { get; set; } = Array.Empty<byte>();
     }
 
+    public sealed class BinStockListVm
+    {
+        public Guid? WarehouseId { get; set; }
+        public Guid? BusinessId { get; set; }
+        public string Query { get; set; } = string.Empty;
+        public BinStockQueueFilter Filter { get; set; } = BinStockQueueFilter.All;
+        public IEnumerable<SelectListItem> FilterItems { get; set; } = new List<SelectListItem>();
+        public List<SelectListItem> WarehouseOptions { get; set; } = new();
+        public BinStockOpsSummaryVm Summary { get; set; } = new();
+        public List<BinStockListItemVm> Items { get; set; } = new();
+        public int Page { get; set; } = 1;
+        public int PageSize { get; set; } = 20;
+        public int Total { get; set; }
+    }
+
+    public sealed class BinStockOpsSummaryVm
+    {
+        public int RowCount { get; set; }
+        public int AssignedCount { get; set; }
+        public int UnassignedCount { get; set; }
+        public int AttentionCount { get; set; }
+    }
+
+    public sealed class BinStockListItemVm
+    {
+        public Guid WarehouseId { get; set; }
+        public string WarehouseName { get; set; } = string.Empty;
+        public Guid ProductVariantId { get; set; }
+        public string VariantSku { get; set; } = string.Empty;
+        public Guid? LocationId { get; set; }
+        public string LocationCode { get; set; } = string.Empty;
+        public string LocationDisplayName { get; set; } = string.Empty;
+        public int DerivedQuantity { get; set; }
+        public int AvailableQuantity { get; set; }
+        public int UnassignedQuantity { get; set; }
+        public bool HasAttention { get; set; }
+        public string AttentionCode { get; set; } = string.Empty;
+        public List<BinStockIdentityBreakdownVm> Identities { get; set; } = new();
+    }
+
+    public sealed class BinStockIdentityBreakdownVm
+    {
+        public Guid? InventoryLotId { get; set; }
+        public Guid? InventorySerialUnitId { get; set; }
+        public Guid? HandlingUnitId { get; set; }
+        public string LotCode { get; set; } = string.Empty;
+        public string SerialNumber { get; set; } = string.Empty;
+        public string HandlingUnitCode { get; set; } = string.Empty;
+        public int Quantity { get; set; }
+    }
+
     public sealed class StockLevelEditVm
     {
         public Guid Id { get; set; }
@@ -1279,6 +1370,7 @@ namespace Darwin.WebAdmin.ViewModels.Inventory
 
         [Range(0, int.MaxValue)]
         public int CancelledQuantity { get; set; }
+        public List<InventoryIdentityEvidenceVm> Identities { get; set; } = new();
     }
 
     public sealed class StockTransferEditVm
@@ -1298,6 +1390,9 @@ namespace Darwin.WebAdmin.ViewModels.Inventory
         public List<StockTransferLineVm> Lines { get; set; } = new();
         public List<SelectListItem> WarehouseOptions { get; set; } = new();
         public List<SelectListItem> VariantOptions { get; set; } = new();
+        public List<SelectListItem> LotOptions { get; set; } = new();
+        public List<SelectListItem> SerialUnitOptions { get; set; } = new();
+        public List<SelectListItem> HandlingUnitOptions { get; set; } = new();
     }
 
     public sealed class PurchaseOrdersListVm
@@ -1500,6 +1595,9 @@ namespace Darwin.WebAdmin.ViewModels.Inventory
         public List<SelectListItem> UserOptions { get; set; } = new();
         public List<SelectListItem> CountTypeOptions { get; set; } = new();
         public List<SelectListItem> ReviewStatusOptions { get; set; } = new();
+        public List<SelectListItem> LotOptions { get; set; } = new();
+        public List<SelectListItem> SerialUnitOptions { get; set; } = new();
+        public List<SelectListItem> HandlingUnitOptions { get; set; } = new();
     }
 
     public sealed class StockCountLineVm
@@ -1533,6 +1631,7 @@ namespace Darwin.WebAdmin.ViewModels.Inventory
 
         public int SortOrder { get; set; }
         public string? MetadataJson { get; set; }
+        public List<InventoryIdentityEvidenceVm> Identities { get; set; } = new();
     }
 
     public sealed class GoodsReceiptsListVm
@@ -1604,8 +1703,31 @@ namespace Darwin.WebAdmin.ViewModels.Inventory
         public DateTime? CancelledAtUtc { get; set; }
         public string? InternalNotes { get; set; }
         public GoodsReceiptWarehouseTaskVm WarehouseTaskAction { get; set; } = new();
+        public GoodsReceiptInlineIdentityCreateVm InlineIdentity { get; set; } = new();
         public List<SelectListItem> PutawayLocationOptions { get; set; } = new();
+        public List<SelectListItem> LotOptions { get; set; } = new();
+        public List<SelectListItem> SerialUnitOptions { get; set; } = new();
+        public List<SelectListItem> HandlingUnitOptions { get; set; } = new();
         public List<GoodsReceiptLineVm> Lines { get; set; } = new();
+    }
+
+    public sealed class GoodsReceiptInlineIdentityCreateVm
+    {
+        public Guid GoodsReceiptId { get; set; }
+        public Guid GoodsReceiptLineId { get; set; }
+        public byte[] RowVersion { get; set; } = Array.Empty<byte>();
+        public string IdentityType { get; set; } = "Lot";
+        public string? LotCode { get; set; }
+        public string? SupplierLotCode { get; set; }
+        public DateTime? ExpiryDateUtc { get; set; }
+        public string? SerialNumber { get; set; }
+        public Guid? InventoryLotId { get; set; }
+        public string? HandlingUnitCode { get; set; }
+        public string? HandlingUnitDisplayName { get; set; }
+        [Range(1, int.MaxValue)]
+        public int Quantity { get; set; } = 1;
+        [StringLength(8000)]
+        public string? MetadataJson { get; set; }
     }
 
     public sealed class GoodsReceiptWarehouseTaskVm
@@ -1640,5 +1762,26 @@ namespace Darwin.WebAdmin.ViewModels.Inventory
         public long UnitCostMinor { get; set; }
         public long TotalCostMinor { get; set; }
         public int SortOrder { get; set; }
+        public List<GoodsReceiptLineIdentityVm> Identities { get; set; } = new();
+    }
+
+    public sealed class GoodsReceiptLineIdentityVm
+    {
+        public Guid Id { get; set; }
+        public Guid GoodsReceiptLineId { get; set; }
+        public Guid ProductVariantId { get; set; }
+        public Guid? InventoryLotId { get; set; }
+        public Guid? InventorySerialUnitId { get; set; }
+        public Guid? HandlingUnitId { get; set; }
+        [Range(0, int.MaxValue)]
+        public int Quantity { get; set; }
+        public string? LotCodeSnapshot { get; set; }
+        public string? SupplierLotCodeSnapshot { get; set; }
+        public string? SerialNumberSnapshot { get; set; }
+        public string? HandlingUnitCodeSnapshot { get; set; }
+        public DateTime? ExpiryDateUtc { get; set; }
+        public int SortOrder { get; set; }
+        [StringLength(8000)]
+        public string? MetadataJson { get; set; }
     }
 }

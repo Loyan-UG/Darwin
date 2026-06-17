@@ -280,6 +280,7 @@ namespace Darwin.Application.Inventory.Validators
             RuleFor(x => x.SkuSnapshot).MaximumLength(100);
             RuleFor(x => x.SourceLineType).MaximumLength(100);
             RuleFor(x => x.MetadataJson).MaximumLength(8000);
+            RuleForEach(x => x.Identities).SetValidator(new InventoryIdentityEvidenceValidator());
         }
     }
 
@@ -323,6 +324,7 @@ namespace Darwin.Application.Inventory.Validators
             RuleFor(x => x.ReviewStatus).IsInEnum();
             RuleFor(x => x.ReviewNotes).MaximumLength(2000);
             RuleFor(x => x.MetadataJson).MaximumLength(8000);
+            RuleForEach(x => x.Identities).SetValidator(new InventoryIdentityEvidenceValidator());
         }
     }
 
@@ -416,6 +418,22 @@ namespace Darwin.Application.Inventory.Validators
         {
             RuleFor(x => x.ProductVariantId).NotEmpty();
             RuleFor(x => x.Quantity).GreaterThan(0);
+            RuleForEach(x => x.Identities).SetValidator(new InventoryIdentityEvidenceValidator());
+        }
+    }
+
+    public sealed class InventoryIdentityEvidenceValidator : AbstractValidator<InventoryIdentityEvidenceDto>
+    {
+        public InventoryIdentityEvidenceValidator()
+        {
+            RuleFor(x => x.Quantity).GreaterThan(0);
+            RuleFor(x => x).Must(x => x.InventoryLotId.HasValue || x.InventorySerialUnitId.HasValue || x.HandlingUnitId.HasValue)
+                .WithMessage("InventoryIdentityEvidenceRequired");
+            RuleFor(x => x.LotCodeSnapshot).MaximumLength(100);
+            RuleFor(x => x.SupplierLotCodeSnapshot).MaximumLength(100);
+            RuleFor(x => x.SerialNumberSnapshot).MaximumLength(128);
+            RuleFor(x => x.HandlingUnitCodeSnapshot).MaximumLength(128);
+            RuleFor(x => x.MetadataJson).MaximumLength(8000);
         }
     }
 

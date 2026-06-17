@@ -253,6 +253,9 @@ public sealed class ProfileServiceTests
         public Task<Result<string>> GetStringResultAsync(string route, CancellationToken ct)
             => throw new NotSupportedException();
 
+        public Task<Result<ApiFileResult>> GetFileResultAsync(string route, CancellationToken ct)
+            => throw new NotSupportedException();
+
         public Task<Result<TResponse>> PostResultAsync<TRequest, TResponse>(string route, TRequest request, CancellationToken ct)
             => throw new NotSupportedException();
 

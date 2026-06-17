@@ -43,6 +43,7 @@ public sealed class CreateStockCountHandler
         await _validator.ValidateAndThrowAsync(dto, ct).ConfigureAwait(false);
         StockCountHandlerSupport.EnsureSafe(dto);
         await StockCountHandlerSupport.EnsureLinksAsync(_db, dto, _localizer, ct).ConfigureAwait(false);
+        await StockCountHandlerSupport.PopulateLineIdentitySnapshotsAsync(_db, dto, _localizer, ct).ConfigureAwait(false);
         StockCountHandlerSupport.EnsureNoDuplicateProducts(dto.Lines);
 
         var session = new StockCountSession
@@ -70,7 +71,11 @@ public sealed class CreateStockCountHandler
                 ReviewStatus = line.ReviewStatus,
                 ReviewNotes = InventoryManagementHandlerSupport.NormalizeOptional(line.ReviewNotes),
                 SortOrder = line.SortOrder <= 0 ? index + 1 : line.SortOrder,
-                MetadataJson = InventoryManagementHandlerSupport.NormalizeMetadataJson(line.MetadataJson)
+                MetadataJson = InventoryManagementHandlerSupport.NormalizeMetadataJson(line.MetadataJson),
+                Identities = line.Identities
+                    .Where(identity => !InventoryIdentityEvidenceSupport.IsBlank(identity))
+                    .Select((identity, identityIndex) => StockCountHandlerSupport.CreateIdentity(identity, identityIndex + 1))
+                    .ToList()
             }).ToList()
         };
 
@@ -108,10 +113,12 @@ public sealed class UpdateStockCountHandler
         await _validator.ValidateAndThrowAsync(dto, ct).ConfigureAwait(false);
         StockCountHandlerSupport.EnsureSafe(dto);
         await StockCountHandlerSupport.EnsureLinksAsync(_db, dto, _localizer, ct).ConfigureAwait(false);
+        await StockCountHandlerSupport.PopulateLineIdentitySnapshotsAsync(_db, dto, _localizer, ct).ConfigureAwait(false);
         StockCountHandlerSupport.EnsureNoDuplicateProducts(dto.Lines);
 
         var session = await _db.Set<StockCountSession>()
             .Include(x => x.Lines)
+                .ThenInclude(x => x.Identities)
             .FirstOrDefaultAsync(x => x.Id == dto.Id && !x.IsDeleted, ct)
             .ConfigureAwait(false);
         if (session is null) throw new InvalidOperationException(_localizer["StockCountNotFound"]);
@@ -132,6 +139,7 @@ public sealed class UpdateStockCountHandler
         session.InternalNotes = InventoryManagementHandlerSupport.NormalizeOptional(dto.InternalNotes);
         session.MetadataJson = InventoryManagementHandlerSupport.NormalizeMetadataJson(dto.MetadataJson);
 
+        _db.Set<StockCountLineIdentity>().RemoveRange(session.Lines.SelectMany(x => x.Identities));
         _db.Set<StockCountLine>().RemoveRange(session.Lines);
         session.Lines = dto.Lines.Select((line, index) => new StockCountLine
         {
@@ -146,7 +154,11 @@ public sealed class UpdateStockCountHandler
             ReviewStatus = line.ReviewStatus,
             ReviewNotes = InventoryManagementHandlerSupport.NormalizeOptional(line.ReviewNotes),
             SortOrder = line.SortOrder <= 0 ? index + 1 : line.SortOrder,
-            MetadataJson = InventoryManagementHandlerSupport.NormalizeMetadataJson(line.MetadataJson)
+            MetadataJson = InventoryManagementHandlerSupport.NormalizeMetadataJson(line.MetadataJson),
+            Identities = line.Identities
+                .Where(identity => !InventoryIdentityEvidenceSupport.IsBlank(identity))
+                .Select((identity, identityIndex) => StockCountHandlerSupport.CreateIdentity(identity, identityIndex + 1))
+                .ToList()
         }).ToList();
 
         await StockCountHandlerSupport.RecordEvidenceOrSaveAsync(_db, _events, _clock, session, "updated", AuditTrailAction.Updated, ct).ConfigureAwait(false);
@@ -186,6 +198,7 @@ public sealed class UpdateStockCountLifecycleHandler
 
         var session = await _db.Set<StockCountSession>()
             .Include(x => x.Lines.Where(line => !line.IsDeleted))
+                .ThenInclude(x => x.Identities)
             .FirstOrDefaultAsync(x => x.Id == dto.Id && !x.IsDeleted, ct)
             .ConfigureAwait(false);
         if (session is null) return Result.Fail(_localizer["StockCountNotFound"]);
@@ -217,6 +230,8 @@ public sealed class UpdateStockCountLifecycleHandler
                 {
                     return Result.Fail(_localizer["StockCountVarianceApprovalRequired"]);
                 }
+                var identityValidation = await ValidateCountIdentityEvidenceAsync(session, ct).ConfigureAwait(false);
+                if (!identityValidation.Succeeded) return identityValidation;
                 break;
             case StockCountSessionStatus.Posted:
                 var postResult = await PostAdjustmentsAsync(session, ct).ConfigureAwait(false);
@@ -265,6 +280,9 @@ public sealed class UpdateStockCountLifecycleHandler
             return Result.Fail(_localizer["StockCountVarianceApprovalRequired"]);
         }
 
+        var identityValidation = await ValidateCountIdentityEvidenceAsync(session, ct).ConfigureAwait(false);
+        if (!identityValidation.Succeeded) return identityValidation;
+
         foreach (var line in session.Lines.Where(line => line.VarianceQuantity != 0))
         {
             if (line.AdjustmentPosted) continue;
@@ -281,6 +299,31 @@ public sealed class UpdateStockCountLifecycleHandler
 
         return Result.Ok();
     }
+
+    private Task<Result> ValidateCountIdentityEvidenceAsync(StockCountSession session, CancellationToken ct)
+        => InventoryIdentityEvidenceSupport.ValidateRequiredEvidenceAsync(
+            _db,
+            session.BusinessId,
+            session.Lines.Where(x => !x.IsDeleted),
+            line => line.CountedQuantity > 0,
+            line => line.ProductVariantId,
+            line => line.CountedQuantity,
+            line => line.Identities.Where(identity => !identity.IsDeleted),
+            identity => identity.InventoryLotId,
+            identity => identity.InventorySerialUnitId,
+            identity => identity.HandlingUnitId,
+            identity => identity.Quantity,
+            identity => identity.ExpiryDateUtc,
+            identity => identity.SupplierLotCodeSnapshot,
+            _localizer,
+            "StockCountIdentityRequired",
+            "StockCountInvalidIdentityQuantity",
+            "StockCountLotIdentityRequired",
+            "StockCountSerialIdentityRequired",
+            "StockCountExpiryIdentityRequired",
+            "StockCountSupplierLotIdentityRequired",
+            "StockCountHandlingUnitIdentityRequired",
+            ct);
 
     private static Result CanTransition(StockCountSessionStatus current, StockCountSessionStatus target)
     {
@@ -347,6 +390,8 @@ internal static class StockCountHandlerSupport
             line.ReviewNotes = InventoryManagementHandlerSupport.NormalizeOptional(line.ReviewNotes);
             line.MetadataJson = InventoryManagementHandlerSupport.NormalizeMetadataJson(line.MetadataJson);
             line.VarianceQuantity = line.CountedQuantity - line.ExpectedQuantity;
+            line.Identities ??= new List<InventoryIdentityEvidenceDto>();
+            InventoryIdentityEvidenceSupport.Normalize(line.Identities);
         }
     }
 
@@ -359,7 +404,8 @@ internal static class StockCountHandlerSupport
                 FoundationInputNormalizer.LooksSensitive(line.SkuSnapshot) ||
                 FoundationInputNormalizer.LooksSensitive(line.Description) ||
                 FoundationInputNormalizer.LooksSensitive(line.ReviewNotes) ||
-                FoundationInputNormalizer.LooksSensitive(line.MetadataJson)))
+                FoundationInputNormalizer.LooksSensitive(line.MetadataJson) ||
+                InventoryIdentityEvidenceSupport.LooksSensitive(line.Identities)))
         {
             throw new ArgumentException("StockCountSensitiveMetadataRejected");
         }
@@ -394,6 +440,53 @@ internal static class StockCountHandlerSupport
             var variantExists = await db.Set<ProductVariant>().AsNoTracking().AnyAsync(x => x.Id == line.ProductVariantId && !x.IsDeleted, ct).ConfigureAwait(false);
             if (!variantExists) throw new InvalidOperationException(localizer["VariantNotFound"]);
         }
+    }
+
+    public static async Task PopulateLineIdentitySnapshotsAsync(IAppDbContext db, StockCountCreateDto dto, IStringLocalizer<ValidationResource> localizer, CancellationToken ct)
+    {
+        foreach (var line in dto.Lines)
+        {
+            foreach (var identity in line.Identities.Where(identity => !InventoryIdentityEvidenceSupport.IsBlank(identity)))
+            {
+                var snapshots = await InventoryIdentityEvidenceSupport.PopulateSnapshotsAsync(
+                        db,
+                        dto.BusinessId,
+                        line.ProductVariantId,
+                        identity.InventoryLotId,
+                        identity.InventorySerialUnitId,
+                        identity.HandlingUnitId,
+                        localizer,
+                        ct)
+                    .ConfigureAwait(false);
+                if (!snapshots.Succeeded) throw new InvalidOperationException(snapshots.Error);
+                ApplySnapshots(identity, snapshots.Value ?? throw new InvalidOperationException("InventoryIdentitySnapshotsMissing"));
+            }
+        }
+    }
+
+    public static StockCountLineIdentity CreateIdentity(InventoryIdentityEvidenceDto dto, int sortOrder)
+        => new()
+        {
+            InventoryLotId = dto.InventoryLotId,
+            InventorySerialUnitId = dto.InventorySerialUnitId,
+            HandlingUnitId = dto.HandlingUnitId,
+            Quantity = dto.Quantity,
+            LotCodeSnapshot = InventoryManagementHandlerSupport.NormalizeOptional(dto.LotCodeSnapshot),
+            SupplierLotCodeSnapshot = InventoryManagementHandlerSupport.NormalizeOptional(dto.SupplierLotCodeSnapshot),
+            ExpiryDateUtc = dto.ExpiryDateUtc,
+            SerialNumberSnapshot = InventoryManagementHandlerSupport.NormalizeOptional(dto.SerialNumberSnapshot),
+            HandlingUnitCodeSnapshot = InventoryManagementHandlerSupport.NormalizeOptional(dto.HandlingUnitCodeSnapshot),
+            SortOrder = dto.SortOrder <= 0 ? sortOrder : dto.SortOrder,
+            MetadataJson = InventoryManagementHandlerSupport.NormalizeMetadataJson(dto.MetadataJson)
+        };
+
+    private static void ApplySnapshots(InventoryIdentityEvidenceDto dto, InventoryIdentityEvidenceSupport.IdentitySnapshots snapshots)
+    {
+        dto.LotCodeSnapshot = snapshots.LotCodeSnapshot ?? dto.LotCodeSnapshot;
+        dto.SupplierLotCodeSnapshot = snapshots.SupplierLotCodeSnapshot ?? dto.SupplierLotCodeSnapshot;
+        dto.ExpiryDateUtc = snapshots.ExpiryDateUtc ?? dto.ExpiryDateUtc;
+        dto.SerialNumberSnapshot = snapshots.SerialNumberSnapshot ?? dto.SerialNumberSnapshot;
+        dto.HandlingUnitCodeSnapshot = snapshots.HandlingUnitCodeSnapshot ?? dto.HandlingUnitCodeSnapshot;
     }
 
     private static async Task EnsureLocationAsync(IAppDbContext db, Guid businessId, Guid warehouseId, Guid? locationId, IStringLocalizer<ValidationResource> localizer, CancellationToken ct)
