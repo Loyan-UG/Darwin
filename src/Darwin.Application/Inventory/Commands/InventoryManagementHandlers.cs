@@ -116,6 +116,597 @@ namespace Darwin.Application.Inventory.Commands
 
     }
 
+    public sealed class CreateWarehouseLocationHandler
+    {
+        private readonly IAppDbContext _db;
+        private readonly IValidator<WarehouseLocationCreateDto> _validator;
+        private readonly IStringLocalizer<ValidationResource> _localizer;
+        private readonly IClock _clock;
+        private readonly BusinessEventService? _events;
+
+        public CreateWarehouseLocationHandler(
+            IAppDbContext db,
+            IValidator<WarehouseLocationCreateDto> validator,
+            IStringLocalizer<ValidationResource> localizer,
+            IClock clock,
+            BusinessEventService? events = null)
+        {
+            _db = db ?? throw new ArgumentNullException(nameof(db));
+            _validator = validator ?? throw new ArgumentNullException(nameof(validator));
+            _localizer = localizer ?? throw new ArgumentNullException(nameof(localizer));
+            _clock = clock ?? throw new ArgumentNullException(nameof(clock));
+            _events = events;
+        }
+
+        public async Task<Guid> HandleAsync(WarehouseLocationCreateDto dto, CancellationToken ct = default)
+        {
+            await _validator.ValidateAndThrowAsync(dto, ct);
+            EnsureSafeWarehouseLocationText(dto);
+
+            var normalizedCode = InventoryManagementHandlerSupport.NormalizeRequiredCode(dto.Code);
+            var normalizedBarcode = InventoryManagementHandlerSupport.NormalizeOptional(dto.Barcode);
+            var normalizedMetadata = InventoryManagementHandlerSupport.NormalizeMetadataJson(dto.MetadataJson);
+
+            await EnsureWarehouseAndParentAsync(dto.BusinessId, dto.WarehouseId, dto.ParentLocationId, null, ct).ConfigureAwait(false);
+            await EnsureWarehouseLocationCodeAvailableAsync(dto.BusinessId, dto.WarehouseId, normalizedCode, null, ct).ConfigureAwait(false);
+
+            var location = new WarehouseLocation
+            {
+                BusinessId = dto.BusinessId,
+                WarehouseId = dto.WarehouseId,
+                ParentLocationId = dto.ParentLocationId,
+                Code = normalizedCode,
+                DisplayName = dto.DisplayName.Trim(),
+                LocationType = dto.LocationType,
+                Status = dto.Status,
+                Barcode = normalizedBarcode,
+                SortOrder = dto.SortOrder,
+                Description = InventoryManagementHandlerSupport.NormalizeOptional(dto.Description),
+                MetadataJson = normalizedMetadata
+            };
+
+            _db.Set<WarehouseLocation>().Add(location);
+            await RecordWarehouseLocationEvidenceOrSaveAsync(location, "created", AuditTrailAction.Created, ct).ConfigureAwait(false);
+            return location.Id;
+        }
+
+        private async Task EnsureWarehouseAndParentAsync(Guid businessId, Guid warehouseId, Guid? parentLocationId, Guid? currentLocationId, CancellationToken ct)
+        {
+            var warehouseExists = await _db.Set<Warehouse>()
+                .AsNoTracking()
+                .AnyAsync(x => x.Id == warehouseId && x.BusinessId == businessId && !x.IsDeleted, ct)
+                .ConfigureAwait(false);
+            if (!warehouseExists)
+            {
+                throw new InvalidOperationException(_localizer["WarehouseNotFound"]);
+            }
+
+            if (!parentLocationId.HasValue)
+            {
+                return;
+            }
+
+            if (currentLocationId.HasValue && parentLocationId.Value == currentLocationId.Value)
+            {
+                throw new InvalidOperationException(_localizer["WarehouseLocationParentInvalid"]);
+            }
+
+            var parent = await _db.Set<WarehouseLocation>()
+                .AsNoTracking()
+                .FirstOrDefaultAsync(x => x.Id == parentLocationId.Value && !x.IsDeleted, ct)
+                .ConfigureAwait(false);
+            if (parent is null || parent.BusinessId != businessId || parent.WarehouseId != warehouseId)
+            {
+                throw new InvalidOperationException(_localizer["WarehouseLocationParentInvalid"]);
+            }
+        }
+
+        private async Task EnsureWarehouseLocationCodeAvailableAsync(Guid businessId, Guid warehouseId, string code, Guid? currentLocationId, CancellationToken ct)
+        {
+            var exists = await _db.Set<WarehouseLocation>()
+                .AsNoTracking()
+                .AnyAsync(x => x.BusinessId == businessId
+                    && x.WarehouseId == warehouseId
+                    && x.Code == code
+                    && !x.IsDeleted
+                    && (!currentLocationId.HasValue || x.Id != currentLocationId.Value), ct)
+                .ConfigureAwait(false);
+            if (exists)
+            {
+                throw new InvalidOperationException(_localizer["WarehouseLocationCodeAlreadyExists"]);
+            }
+        }
+
+        private async Task RecordWarehouseLocationEvidenceOrSaveAsync(WarehouseLocation location, string action, AuditTrailAction auditAction, CancellationToken ct)
+        {
+            if (_events is null)
+            {
+                await _db.SaveChangesAsync(ct).ConfigureAwait(false);
+                return;
+            }
+
+            var now = _clock.UtcNow;
+            var payload = $$"""
+                {"warehouseLocationId":"{{location.Id}}","businessId":"{{location.BusinessId}}","warehouseId":"{{location.WarehouseId}}","parentLocationId":"{{location.ParentLocationId}}","code":"{{location.Code}}","type":"{{location.LocationType}}","status":"{{location.Status}}"}
+                """;
+            var eventResult = await _events.AddEventAsync(
+                    new AddBusinessEventCommand(
+                        location.BusinessId,
+                        "WarehouseLocation",
+                        location.Id,
+                        $"inventory.warehouse_location.{action}",
+                        $"inventory.warehouse_location.{action}:{location.Id}:{location.Status}",
+                        now,
+                        null,
+                        BusinessEventSource.User,
+                        BusinessEventSeverity.Info,
+                        FoundationVisibility.Internal,
+                        $"Warehouse location {action}",
+                        null,
+                        null,
+                        null,
+                        payload),
+                    ct)
+                .ConfigureAwait(false);
+            if (!eventResult.Succeeded) throw new InvalidOperationException(eventResult.Error);
+
+            var auditResult = await _events.AddAuditTrailAsync(
+                    new AddAuditTrailCommand(
+                        location.BusinessId,
+                        "WarehouseLocation",
+                        location.Id,
+                        auditAction,
+                        now,
+                        null,
+                        eventResult.Value,
+                        $"Warehouse location {action}",
+                        null,
+                        payload),
+                    ct)
+                .ConfigureAwait(false);
+            if (!auditResult.Succeeded) throw new InvalidOperationException(auditResult.Error);
+        }
+
+        internal static void EnsureSafeWarehouseLocationText(WarehouseLocationCreateDto dto)
+        {
+            if (FoundationInputNormalizer.LooksSensitive(dto.Code) ||
+                FoundationInputNormalizer.LooksSensitive(dto.DisplayName) ||
+                FoundationInputNormalizer.LooksSensitive(dto.Barcode) ||
+                FoundationInputNormalizer.LooksSensitive(dto.Description) ||
+                FoundationInputNormalizer.LooksSensitive(dto.MetadataJson))
+            {
+                throw new ArgumentException("WarehouseLocationSensitiveMetadataRejected");
+            }
+        }
+    }
+
+    public sealed class UpdateWarehouseLocationHandler
+    {
+        private readonly IAppDbContext _db;
+        private readonly IValidator<WarehouseLocationEditDto> _validator;
+        private readonly IStringLocalizer<ValidationResource> _localizer;
+        private readonly IClock _clock;
+        private readonly BusinessEventService? _events;
+
+        public UpdateWarehouseLocationHandler(
+            IAppDbContext db,
+            IValidator<WarehouseLocationEditDto> validator,
+            IStringLocalizer<ValidationResource> localizer,
+            IClock clock,
+            BusinessEventService? events = null)
+        {
+            _db = db ?? throw new ArgumentNullException(nameof(db));
+            _validator = validator ?? throw new ArgumentNullException(nameof(validator));
+            _localizer = localizer ?? throw new ArgumentNullException(nameof(localizer));
+            _clock = clock ?? throw new ArgumentNullException(nameof(clock));
+            _events = events;
+        }
+
+        public async Task HandleAsync(WarehouseLocationEditDto dto, CancellationToken ct = default)
+        {
+            await _validator.ValidateAndThrowAsync(dto, ct);
+            CreateWarehouseLocationHandler.EnsureSafeWarehouseLocationText(dto);
+
+            var location = await _db.Set<WarehouseLocation>()
+                .FirstOrDefaultAsync(x => x.Id == dto.Id && !x.IsDeleted, ct)
+                .ConfigureAwait(false);
+            if (location is null)
+            {
+                throw new InvalidOperationException(_localizer["WarehouseLocationNotFound"]);
+            }
+
+            var rowVersion = dto.RowVersion ?? Array.Empty<byte>();
+            var currentVersion = location.RowVersion ?? Array.Empty<byte>();
+            if (rowVersion.Length == 0 || !currentVersion.SequenceEqual(rowVersion))
+            {
+                throw new DbUpdateConcurrencyException(_localizer["ConcurrencyConflictDetected"]);
+            }
+
+            var normalizedCode = InventoryManagementHandlerSupport.NormalizeRequiredCode(dto.Code);
+            await EnsureWarehouseAndParentAsync(dto.BusinessId, dto.WarehouseId, dto.ParentLocationId, dto.Id, ct).ConfigureAwait(false);
+            await EnsureNoParentCycleAsync(dto.Id, dto.ParentLocationId, ct).ConfigureAwait(false);
+            await EnsureWarehouseLocationCodeAvailableAsync(dto.BusinessId, dto.WarehouseId, normalizedCode, dto.Id, ct).ConfigureAwait(false);
+
+            location.BusinessId = dto.BusinessId;
+            location.WarehouseId = dto.WarehouseId;
+            location.ParentLocationId = dto.ParentLocationId;
+            location.Code = normalizedCode;
+            location.DisplayName = dto.DisplayName.Trim();
+            location.LocationType = dto.LocationType;
+            location.Status = dto.Status;
+            location.Barcode = InventoryManagementHandlerSupport.NormalizeOptional(dto.Barcode);
+            location.SortOrder = dto.SortOrder;
+            location.Description = InventoryManagementHandlerSupport.NormalizeOptional(dto.Description);
+            location.MetadataJson = InventoryManagementHandlerSupport.NormalizeMetadataJson(dto.MetadataJson);
+
+            await RecordWarehouseLocationEvidenceOrSaveAsync(location, "updated", AuditTrailAction.Updated, ct).ConfigureAwait(false);
+        }
+
+        private async Task EnsureWarehouseAndParentAsync(Guid businessId, Guid warehouseId, Guid? parentLocationId, Guid currentLocationId, CancellationToken ct)
+        {
+            var warehouseExists = await _db.Set<Warehouse>()
+                .AsNoTracking()
+                .AnyAsync(x => x.Id == warehouseId && x.BusinessId == businessId && !x.IsDeleted, ct)
+                .ConfigureAwait(false);
+            if (!warehouseExists)
+            {
+                throw new InvalidOperationException(_localizer["WarehouseNotFound"]);
+            }
+
+            if (!parentLocationId.HasValue)
+            {
+                return;
+            }
+
+            if (parentLocationId.Value == currentLocationId)
+            {
+                throw new InvalidOperationException(_localizer["WarehouseLocationParentInvalid"]);
+            }
+
+            var parent = await _db.Set<WarehouseLocation>()
+                .AsNoTracking()
+                .FirstOrDefaultAsync(x => x.Id == parentLocationId.Value && !x.IsDeleted, ct)
+                .ConfigureAwait(false);
+            if (parent is null || parent.BusinessId != businessId || parent.WarehouseId != warehouseId)
+            {
+                throw new InvalidOperationException(_localizer["WarehouseLocationParentInvalid"]);
+            }
+        }
+
+        private async Task EnsureWarehouseLocationCodeAvailableAsync(Guid businessId, Guid warehouseId, string code, Guid currentLocationId, CancellationToken ct)
+        {
+            var exists = await _db.Set<WarehouseLocation>()
+                .AsNoTracking()
+                .AnyAsync(x => x.BusinessId == businessId
+                    && x.WarehouseId == warehouseId
+                    && x.Code == code
+                    && !x.IsDeleted
+                    && x.Id != currentLocationId, ct)
+                .ConfigureAwait(false);
+            if (exists)
+            {
+                throw new InvalidOperationException(_localizer["WarehouseLocationCodeAlreadyExists"]);
+            }
+        }
+
+        private async Task EnsureNoParentCycleAsync(Guid locationId, Guid? parentLocationId, CancellationToken ct)
+        {
+            var seen = new HashSet<Guid> { locationId };
+            var cursor = parentLocationId;
+            while (cursor.HasValue)
+            {
+                if (!seen.Add(cursor.Value))
+                {
+                    throw new InvalidOperationException(_localizer["WarehouseLocationParentInvalid"]);
+                }
+
+                cursor = await _db.Set<WarehouseLocation>()
+                    .AsNoTracking()
+                    .Where(x => x.Id == cursor.Value && !x.IsDeleted)
+                    .Select(x => x.ParentLocationId)
+                    .FirstOrDefaultAsync(ct)
+                    .ConfigureAwait(false);
+            }
+        }
+
+        private async Task RecordWarehouseLocationEvidenceOrSaveAsync(WarehouseLocation location, string action, AuditTrailAction auditAction, CancellationToken ct)
+        {
+            if (_events is null)
+            {
+                await InventoryManagementHandlerSupport.SaveChangesOrThrowConcurrencyAsync(_db, _localizer, ct).ConfigureAwait(false);
+                return;
+            }
+
+            var now = _clock.UtcNow;
+            var payload = $$"""
+                {"warehouseLocationId":"{{location.Id}}","businessId":"{{location.BusinessId}}","warehouseId":"{{location.WarehouseId}}","parentLocationId":"{{location.ParentLocationId}}","code":"{{location.Code}}","type":"{{location.LocationType}}","status":"{{location.Status}}"}
+                """;
+            var eventResult = await _events.AddEventAsync(new AddBusinessEventCommand(location.BusinessId, "WarehouseLocation", location.Id, $"inventory.warehouse_location.{action}", $"inventory.warehouse_location.{action}:{location.Id}:{Convert.ToBase64String(location.RowVersion ?? Array.Empty<byte>())}", now, null, BusinessEventSource.User, BusinessEventSeverity.Info, FoundationVisibility.Internal, $"Warehouse location {action}", null, null, null, payload), ct).ConfigureAwait(false);
+            if (!eventResult.Succeeded) throw new InvalidOperationException(eventResult.Error);
+            var auditResult = await _events.AddAuditTrailAsync(new AddAuditTrailCommand(location.BusinessId, "WarehouseLocation", location.Id, auditAction, now, null, eventResult.Value, $"Warehouse location {action}", null, payload), ct).ConfigureAwait(false);
+            if (!auditResult.Succeeded) throw new InvalidOperationException(auditResult.Error);
+        }
+    }
+
+    public sealed class ArchiveWarehouseLocationHandler
+    {
+        private readonly IAppDbContext _db;
+        private readonly IStringLocalizer<ValidationResource> _localizer;
+        private readonly IClock _clock;
+        private readonly BusinessEventService? _events;
+
+        public ArchiveWarehouseLocationHandler(IAppDbContext db, IStringLocalizer<ValidationResource> localizer, IClock clock, BusinessEventService? events = null)
+        {
+            _db = db ?? throw new ArgumentNullException(nameof(db));
+            _localizer = localizer ?? throw new ArgumentNullException(nameof(localizer));
+            _clock = clock ?? throw new ArgumentNullException(nameof(clock));
+            _events = events;
+        }
+
+        public async Task<Result> HandleAsync(WarehouseLocationArchiveDto dto, CancellationToken ct = default)
+        {
+            if (dto.Id == Guid.Empty)
+            {
+                return Result.Fail(_localizer["InvalidDeleteRequest"]);
+            }
+
+            var rowVersion = dto.RowVersion ?? Array.Empty<byte>();
+            if (rowVersion.Length == 0)
+            {
+                return Result.Fail(_localizer["RowVersionRequired"]);
+            }
+
+            var location = await _db.Set<WarehouseLocation>()
+                .FirstOrDefaultAsync(x => x.Id == dto.Id && !x.IsDeleted, ct)
+                .ConfigureAwait(false);
+            if (location is null)
+            {
+                return Result.Fail(_localizer["WarehouseLocationNotFound"]);
+            }
+
+            if (!(location.RowVersion ?? Array.Empty<byte>()).SequenceEqual(rowVersion))
+            {
+                return Result.Fail(_localizer["ItemConcurrencyConflict"]);
+            }
+
+            var hasChildren = await _db.Set<WarehouseLocation>()
+                .AsNoTracking()
+                .AnyAsync(x => x.ParentLocationId == location.Id && !x.IsDeleted, ct)
+                .ConfigureAwait(false);
+            if (hasChildren)
+            {
+                return Result.Fail(_localizer["WarehouseLocationArchiveHasChildren"]);
+            }
+
+            location.IsDeleted = true;
+            location.ModifiedAtUtc = _clock.UtcNow;
+
+            if (_events is null)
+            {
+                await _db.SaveChangesAsync(ct).ConfigureAwait(false);
+                return Result.Ok();
+            }
+
+            var payload = $$"""
+                {"warehouseLocationId":"{{location.Id}}","businessId":"{{location.BusinessId}}","warehouseId":"{{location.WarehouseId}}","code":"{{location.Code}}","type":"{{location.LocationType}}","status":"{{location.Status}}"}
+                """;
+            var eventResult = await _events.AddEventAsync(new AddBusinessEventCommand(location.BusinessId, "WarehouseLocation", location.Id, "inventory.warehouse_location.archived", $"inventory.warehouse_location.archived:{location.Id}", _clock.UtcNow, null, BusinessEventSource.User, BusinessEventSeverity.Info, FoundationVisibility.Internal, "Warehouse location archived", null, null, null, payload), ct).ConfigureAwait(false);
+            if (!eventResult.Succeeded) return Result.Fail(eventResult.Error ?? "WarehouseLocationArchiveFailed");
+            var auditResult = await _events.AddAuditTrailAsync(new AddAuditTrailCommand(location.BusinessId, "WarehouseLocation", location.Id, AuditTrailAction.Deleted, _clock.UtcNow, null, eventResult.Value, "Warehouse location archived", null, payload), ct).ConfigureAwait(false);
+            if (!auditResult.Succeeded) return Result.Fail(auditResult.Error ?? "WarehouseLocationArchiveFailed");
+            return Result.Ok();
+        }
+    }
+
+    public sealed class CreateWarehouseLabelTemplateHandler
+    {
+        private readonly IAppDbContext _db;
+        private readonly IValidator<WarehouseLabelTemplateCreateDto> _validator;
+        private readonly IStringLocalizer<ValidationResource> _localizer;
+
+        public CreateWarehouseLabelTemplateHandler(IAppDbContext db, IValidator<WarehouseLabelTemplateCreateDto> validator, IStringLocalizer<ValidationResource> localizer)
+        {
+            _db = db ?? throw new ArgumentNullException(nameof(db));
+            _validator = validator ?? throw new ArgumentNullException(nameof(validator));
+            _localizer = localizer ?? throw new ArgumentNullException(nameof(localizer));
+        }
+
+        public async Task<Guid> HandleAsync(WarehouseLabelTemplateCreateDto dto, CancellationToken ct = default)
+        {
+            dto.Name = dto.Name?.Trim() ?? string.Empty;
+            dto.TemplateKey = dto.TemplateKey?.Trim() ?? string.Empty;
+            dto.ContentTemplate = dto.ContentTemplate?.Trim() ?? string.Empty;
+            await _validator.ValidateAndThrowAsync(dto, ct);
+            EnsureSafeWarehouseLabelTemplate(dto);
+            var templateKey = InventoryManagementHandlerSupport.NormalizeRequiredCode(dto.TemplateKey);
+            await EnsureTemplateKeyAvailableAsync(dto.BusinessId, templateKey, null, ct).ConfigureAwait(false);
+
+            if (dto.IsDefault)
+            {
+                await ClearDefaultTemplatesAsync(dto.BusinessId, ct).ConfigureAwait(false);
+            }
+
+            var template = new WarehouseLabelTemplate
+            {
+                BusinessId = dto.BusinessId,
+                Name = dto.Name.Trim(),
+                TemplateKey = templateKey,
+                Status = dto.Status,
+                Format = dto.Format,
+                IsDefault = dto.IsDefault,
+                WidthMm = dto.WidthMm,
+                HeightMm = dto.HeightMm,
+                ContentTemplate = dto.ContentTemplate.Trim(),
+                Description = InventoryManagementHandlerSupport.NormalizeOptional(dto.Description),
+                MetadataJson = InventoryManagementHandlerSupport.NormalizeMetadataJson(dto.MetadataJson)
+            };
+
+            _db.Set<WarehouseLabelTemplate>().Add(template);
+            await _db.SaveChangesAsync(ct).ConfigureAwait(false);
+            return template.Id;
+        }
+
+        private async Task EnsureTemplateKeyAvailableAsync(Guid businessId, string templateKey, Guid? currentTemplateId, CancellationToken ct)
+        {
+            var exists = await _db.Set<WarehouseLabelTemplate>()
+                .AsNoTracking()
+                .AnyAsync(x => x.BusinessId == businessId
+                    && x.TemplateKey == templateKey
+                    && !x.IsDeleted
+                    && (!currentTemplateId.HasValue || x.Id != currentTemplateId.Value), ct)
+                .ConfigureAwait(false);
+            if (exists)
+            {
+                throw new InvalidOperationException(_localizer["WarehouseLabelTemplateKeyAlreadyExists"]);
+            }
+        }
+
+        private async Task ClearDefaultTemplatesAsync(Guid businessId, CancellationToken ct)
+        {
+            var defaults = await _db.Set<WarehouseLabelTemplate>()
+                .Where(x => x.BusinessId == businessId && x.IsDefault && !x.IsDeleted)
+                .ToListAsync(ct)
+                .ConfigureAwait(false);
+            foreach (var item in defaults)
+            {
+                item.IsDefault = false;
+            }
+        }
+
+        internal static void EnsureSafeWarehouseLabelTemplate(WarehouseLabelTemplateCreateDto dto)
+        {
+            if (FoundationInputNormalizer.LooksSensitive(dto.Name) ||
+                FoundationInputNormalizer.LooksSensitive(dto.TemplateKey) ||
+                FoundationInputNormalizer.LooksSensitive(dto.ContentTemplate) ||
+                FoundationInputNormalizer.LooksSensitive(dto.Description) ||
+                FoundationInputNormalizer.LooksSensitive(dto.MetadataJson))
+            {
+                throw new ArgumentException("WarehouseLabelTemplateSensitiveMetadataRejected");
+            }
+        }
+    }
+
+    public sealed class UpdateWarehouseLabelTemplateHandler
+    {
+        private readonly IAppDbContext _db;
+        private readonly IValidator<WarehouseLabelTemplateEditDto> _validator;
+        private readonly IStringLocalizer<ValidationResource> _localizer;
+
+        public UpdateWarehouseLabelTemplateHandler(IAppDbContext db, IValidator<WarehouseLabelTemplateEditDto> validator, IStringLocalizer<ValidationResource> localizer)
+        {
+            _db = db ?? throw new ArgumentNullException(nameof(db));
+            _validator = validator ?? throw new ArgumentNullException(nameof(validator));
+            _localizer = localizer ?? throw new ArgumentNullException(nameof(localizer));
+        }
+
+        public async Task HandleAsync(WarehouseLabelTemplateEditDto dto, CancellationToken ct = default)
+        {
+            dto.Name = dto.Name?.Trim() ?? string.Empty;
+            dto.TemplateKey = dto.TemplateKey?.Trim() ?? string.Empty;
+            dto.ContentTemplate = dto.ContentTemplate?.Trim() ?? string.Empty;
+            await _validator.ValidateAndThrowAsync(dto, ct);
+            CreateWarehouseLabelTemplateHandler.EnsureSafeWarehouseLabelTemplate(dto);
+            var template = await _db.Set<WarehouseLabelTemplate>()
+                .FirstOrDefaultAsync(x => x.Id == dto.Id && !x.IsDeleted, ct)
+                .ConfigureAwait(false);
+            if (template is null)
+            {
+                throw new InvalidOperationException(_localizer["WarehouseLabelTemplateNotFound"]);
+            }
+
+            if (!(template.RowVersion ?? Array.Empty<byte>()).SequenceEqual(dto.RowVersion ?? Array.Empty<byte>()))
+            {
+                throw new DbUpdateConcurrencyException(_localizer["ConcurrencyConflictDetected"]);
+            }
+
+            var templateKey = InventoryManagementHandlerSupport.NormalizeRequiredCode(dto.TemplateKey);
+            await EnsureTemplateKeyAvailableAsync(dto.BusinessId, templateKey, dto.Id, ct).ConfigureAwait(false);
+            if (dto.IsDefault)
+            {
+                await ClearDefaultTemplatesAsync(dto.BusinessId, dto.Id, ct).ConfigureAwait(false);
+            }
+
+            template.BusinessId = dto.BusinessId;
+            template.Name = dto.Name.Trim();
+            template.TemplateKey = templateKey;
+            template.Status = dto.Status;
+            template.Format = dto.Format;
+            template.IsDefault = dto.IsDefault;
+            template.WidthMm = dto.WidthMm;
+            template.HeightMm = dto.HeightMm;
+            template.ContentTemplate = dto.ContentTemplate.Trim();
+            template.Description = InventoryManagementHandlerSupport.NormalizeOptional(dto.Description);
+            template.MetadataJson = InventoryManagementHandlerSupport.NormalizeMetadataJson(dto.MetadataJson);
+
+            await InventoryManagementHandlerSupport.SaveChangesOrThrowConcurrencyAsync(_db, _localizer, ct).ConfigureAwait(false);
+        }
+
+        private async Task EnsureTemplateKeyAvailableAsync(Guid businessId, string templateKey, Guid currentTemplateId, CancellationToken ct)
+        {
+            var exists = await _db.Set<WarehouseLabelTemplate>()
+                .AsNoTracking()
+                .AnyAsync(x => x.BusinessId == businessId
+                    && x.TemplateKey == templateKey
+                    && !x.IsDeleted
+                    && x.Id != currentTemplateId, ct)
+                .ConfigureAwait(false);
+            if (exists)
+            {
+                throw new InvalidOperationException(_localizer["WarehouseLabelTemplateKeyAlreadyExists"]);
+            }
+        }
+
+        private async Task ClearDefaultTemplatesAsync(Guid businessId, Guid currentTemplateId, CancellationToken ct)
+        {
+            var defaults = await _db.Set<WarehouseLabelTemplate>()
+                .Where(x => x.BusinessId == businessId && x.Id != currentTemplateId && x.IsDefault && !x.IsDeleted)
+                .ToListAsync(ct)
+                .ConfigureAwait(false);
+            foreach (var item in defaults)
+            {
+                item.IsDefault = false;
+            }
+        }
+    }
+
+    public sealed class ArchiveWarehouseLabelTemplateHandler
+    {
+        private readonly IAppDbContext _db;
+        private readonly IStringLocalizer<ValidationResource> _localizer;
+
+        public ArchiveWarehouseLabelTemplateHandler(IAppDbContext db, IStringLocalizer<ValidationResource> localizer)
+        {
+            _db = db ?? throw new ArgumentNullException(nameof(db));
+            _localizer = localizer ?? throw new ArgumentNullException(nameof(localizer));
+        }
+
+        public async Task<Result> HandleAsync(WarehouseLabelTemplateArchiveDto dto, CancellationToken ct = default)
+        {
+            if (dto.Id == Guid.Empty || (dto.RowVersion ?? Array.Empty<byte>()).Length == 0)
+            {
+                return Result.Fail(_localizer["InvalidDeleteRequest"]);
+            }
+
+            var template = await _db.Set<WarehouseLabelTemplate>()
+                .FirstOrDefaultAsync(x => x.Id == dto.Id && !x.IsDeleted, ct)
+                .ConfigureAwait(false);
+            if (template is null)
+            {
+                return Result.Fail(_localizer["WarehouseLabelTemplateNotFound"]);
+            }
+
+            if (!(template.RowVersion ?? Array.Empty<byte>()).SequenceEqual(dto.RowVersion))
+            {
+                return Result.Fail(_localizer["ItemConcurrencyConflict"]);
+            }
+
+            template.Status = WarehouseLabelTemplateStatus.Archived;
+            template.IsDeleted = true;
+            await _db.SaveChangesAsync(ct).ConfigureAwait(false);
+            return Result.Ok();
+        }
+    }
+
     public sealed class CreateSupplierHandler
     {
         private readonly IAppDbContext _db;
@@ -502,14 +1093,25 @@ namespace Darwin.Application.Inventory.Commands
             foreach (var line in transfer.Lines)
             {
                 var source = await InventoryStockHelper.GetOrCreateStockLevelAsync(_db, transfer.FromWarehouseId, line.ProductVariantId, ct).ConfigureAwait(false);
-                if (source.AvailableQuantity < line.Quantity)
+                var alreadyDispatched = await InventoryMovementReferencePolicy.ExistsAsync(
+                        _db,
+                        transfer.Id,
+                        InventoryMovementReferencePolicy.StockTransferDispatched,
+                        transfer.FromWarehouseId,
+                        line.ProductVariantId,
+                        ct)
+                    .ConfigureAwait(false);
+                if (!alreadyDispatched)
                 {
-                    return Result.Fail(_localizer["StockTransferLifecycleInsufficientSourceStock"]);
-                }
+                    if (source.AvailableQuantity < line.Quantity)
+                    {
+                        return Result.Fail(_localizer["StockTransferLifecycleInsufficientSourceStock"]);
+                    }
 
-                source.AvailableQuantity -= line.Quantity;
-                source.InTransitQuantity += line.Quantity;
-                AddInventoryTransaction(transfer.FromWarehouseId, line.ProductVariantId, -line.Quantity, "StockTransferDispatched", transfer.Id);
+                    source.AvailableQuantity -= line.Quantity;
+                    source.InTransitQuantity += line.Quantity;
+                    AddInventoryTransaction(transfer.FromWarehouseId, line.ProductVariantId, -line.Quantity, InventoryMovementReferencePolicy.StockTransferDispatched, transfer.Id);
+                }
                 variantIdsToRefresh.Add(line.ProductVariantId);
             }
 
@@ -527,15 +1129,26 @@ namespace Darwin.Application.Inventory.Commands
             foreach (var line in transfer.Lines)
             {
                 var source = await InventoryStockHelper.GetOrCreateStockLevelAsync(_db, transfer.FromWarehouseId, line.ProductVariantId, ct).ConfigureAwait(false);
-                if (source.InTransitQuantity < line.Quantity)
-                {
-                    return Result.Fail(_localizer["StockTransferLifecycleInsufficientInTransitStock"]);
-                }
-
                 var destination = await InventoryStockHelper.GetOrCreateStockLevelAsync(_db, transfer.ToWarehouseId, line.ProductVariantId, ct).ConfigureAwait(false);
-                source.InTransitQuantity -= line.Quantity;
-                destination.AvailableQuantity += line.Quantity;
-                AddInventoryTransaction(transfer.ToWarehouseId, line.ProductVariantId, line.Quantity, "StockTransferReceived", transfer.Id);
+                var alreadyReceived = await InventoryMovementReferencePolicy.ExistsAsync(
+                        _db,
+                        transfer.Id,
+                        InventoryMovementReferencePolicy.StockTransferReceived,
+                        transfer.ToWarehouseId,
+                        line.ProductVariantId,
+                        ct)
+                    .ConfigureAwait(false);
+                if (!alreadyReceived)
+                {
+                    if (source.InTransitQuantity < line.Quantity)
+                    {
+                        return Result.Fail(_localizer["StockTransferLifecycleInsufficientInTransitStock"]);
+                    }
+
+                    source.InTransitQuantity -= line.Quantity;
+                    destination.AvailableQuantity += line.Quantity;
+                    AddInventoryTransaction(transfer.ToWarehouseId, line.ProductVariantId, line.Quantity, InventoryMovementReferencePolicy.StockTransferReceived, transfer.Id);
+                }
                 variantIdsToRefresh.Add(line.ProductVariantId);
             }
 
@@ -559,14 +1172,25 @@ namespace Darwin.Application.Inventory.Commands
             foreach (var line in transfer.Lines)
             {
                 var source = await InventoryStockHelper.GetOrCreateStockLevelAsync(_db, transfer.FromWarehouseId, line.ProductVariantId, ct).ConfigureAwait(false);
-                if (source.InTransitQuantity < line.Quantity)
+                var alreadyCancelled = await InventoryMovementReferencePolicy.ExistsAsync(
+                        _db,
+                        transfer.Id,
+                        InventoryMovementReferencePolicy.StockTransferCancelled,
+                        transfer.FromWarehouseId,
+                        line.ProductVariantId,
+                        ct)
+                    .ConfigureAwait(false);
+                if (!alreadyCancelled)
                 {
-                    return Result.Fail(_localizer["StockTransferLifecycleInsufficientInTransitStock"]);
-                }
+                    if (source.InTransitQuantity < line.Quantity)
+                    {
+                        return Result.Fail(_localizer["StockTransferLifecycleInsufficientInTransitStock"]);
+                    }
 
-                source.InTransitQuantity -= line.Quantity;
-                source.AvailableQuantity += line.Quantity;
-                AddInventoryTransaction(transfer.FromWarehouseId, line.ProductVariantId, line.Quantity, "StockTransferCancelled", transfer.Id);
+                    source.InTransitQuantity -= line.Quantity;
+                    source.AvailableQuantity += line.Quantity;
+                    AddInventoryTransaction(transfer.FromWarehouseId, line.ProductVariantId, line.Quantity, InventoryMovementReferencePolicy.StockTransferCancelled, transfer.Id);
+                }
                 variantIdsToRefresh.Add(line.ProductVariantId);
             }
 
@@ -576,14 +1200,8 @@ namespace Darwin.Application.Inventory.Commands
 
         private void AddInventoryTransaction(Guid warehouseId, Guid productVariantId, int quantityDelta, string reason, Guid referenceId)
         {
-            _db.Set<InventoryTransaction>().Add(new InventoryTransaction
-            {
-                WarehouseId = warehouseId,
-                ProductVariantId = productVariantId,
-                QuantityDelta = quantityDelta,
-                Reason = reason,
-                ReferenceId = referenceId
-            });
+            InventoryMovementReferencePolicy.EnsureReferencePolicy(reason, referenceId);
+            InventoryMovementReferencePolicy.AddLedgerRow(_db, warehouseId, productVariantId, quantityDelta, reason, referenceId);
         }
     }
 
@@ -967,14 +1585,13 @@ namespace Darwin.Application.Inventory.Commands
                 var stockLevel = await InventoryStockHelper.GetOrCreateStockLevelAsync(_db, warehouseId, line.ProductVariantId, ct).ConfigureAwait(false);
                 stockLevel.AvailableQuantity += remaining;
                 line.ReceivedQuantity += remaining;
-                _db.Set<InventoryTransaction>().Add(new InventoryTransaction
-                {
-                    WarehouseId = warehouseId,
-                    ProductVariantId = line.ProductVariantId,
-                    QuantityDelta = remaining,
-                    Reason = UpdateGoodsReceiptLifecycleHandler.PostedReason,
-                    ReferenceId = receipt.Id
-                });
+                InventoryMovementReferencePolicy.AddLedgerRow(
+                    _db,
+                    warehouseId,
+                    line.ProductVariantId,
+                    remaining,
+                    InventoryMovementReferencePolicy.GoodsReceiptPosted,
+                    receipt.Id);
                 variantIdsToRefresh.Add(line.ProductVariantId);
             }
 
@@ -1030,8 +1647,16 @@ namespace Darwin.Application.Inventory.Commands
         public static string? NormalizeCode(string? value) =>
             string.IsNullOrWhiteSpace(value) ? null : value.Trim().ToUpperInvariant();
 
+        public static string NormalizeRequiredCode(string value) => value.Trim().ToUpperInvariant();
+
         public static string? NormalizeCurrency(string? value) =>
             string.IsNullOrWhiteSpace(value) ? null : value.Trim().ToUpperInvariant();
+
+        public static string? NormalizeMetadataJson(string? value)
+        {
+            var normalized = NormalizeOptional(value);
+            return string.Equals(normalized, "{}", StringComparison.Ordinal) ? null : normalized;
+        }
 
         public static async Task EnsureSupplierReadyForPurchaseOrderAsync(
             IAppDbContext db,

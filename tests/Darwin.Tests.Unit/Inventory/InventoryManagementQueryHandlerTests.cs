@@ -198,6 +198,113 @@ public sealed class InventoryManagementQueryHandlerTests
         result.Should().BeNull("soft-deleted warehouse should not be returned for edit");
     }
 
+    [Fact]
+    public async Task GetWarehouseLocationsPage_Should_FilterAndExposeHierarchyFields()
+    {
+        await using var db = InventoryQueryTestDbContext.Create();
+        var businessId = Guid.NewGuid();
+        var warehouseId = Guid.NewGuid();
+        var parentId = Guid.NewGuid();
+        db.Set<Warehouse>().Add(new Warehouse { Id = warehouseId, BusinessId = businessId, Name = "Main" });
+        db.Set<WarehouseLocation>().AddRange(
+            new WarehouseLocation { Id = parentId, BusinessId = businessId, WarehouseId = warehouseId, Code = "ZONE-A", DisplayName = "Zone A", LocationType = WarehouseLocationType.Zone, Status = WarehouseLocationStatus.Active, SortOrder = 1 },
+            new WarehouseLocation { Id = Guid.NewGuid(), BusinessId = businessId, WarehouseId = warehouseId, ParentLocationId = parentId, Code = "BIN-01", DisplayName = "Bin 01", LocationType = WarehouseLocationType.Bin, Status = WarehouseLocationStatus.Active, Barcode = "B-01", SortOrder = 2 },
+            new WarehouseLocation { Id = Guid.NewGuid(), BusinessId = businessId, WarehouseId = warehouseId, Code = "DOCK-01", DisplayName = "Dock", LocationType = WarehouseLocationType.Dock, Status = WarehouseLocationStatus.Blocked, SortOrder = 3 });
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var handler = new GetWarehouseLocationsPageHandler(db);
+        var (items, total) = await handler.HandleAsync(businessId, warehouseId, 1, 20, query: "bin", filter: WarehouseLocationQueueFilter.Bins, ct: TestContext.Current.CancellationToken);
+        var summary = await handler.GetSummaryAsync(businessId, warehouseId, TestContext.Current.CancellationToken);
+
+        total.Should().Be(1);
+        items.Should().ContainSingle(x => x.Code == "BIN-01" && x.ParentCode == "ZONE-A" && x.Barcode == "B-01");
+        summary.TotalCount.Should().Be(3);
+        summary.BinCount.Should().Be(1);
+        summary.BlockedCount.Should().Be(1);
+    }
+
+    [Fact]
+    public async Task GetWarehouseLocationTree_Should_ReturnNestedLocations()
+    {
+        await using var db = InventoryQueryTestDbContext.Create();
+        var businessId = Guid.NewGuid();
+        var warehouseId = Guid.NewGuid();
+        var parentId = Guid.NewGuid();
+        db.Set<Warehouse>().Add(new Warehouse { Id = warehouseId, BusinessId = businessId, Name = "Main" });
+        db.Set<WarehouseLocation>().AddRange(
+            new WarehouseLocation { Id = parentId, BusinessId = businessId, WarehouseId = warehouseId, Code = "ZONE-A", DisplayName = "Zone A", LocationType = WarehouseLocationType.Zone, Status = WarehouseLocationStatus.Active },
+            new WarehouseLocation { Id = Guid.NewGuid(), BusinessId = businessId, WarehouseId = warehouseId, ParentLocationId = parentId, Code = "BIN-01", DisplayName = "Bin 01", LocationType = WarehouseLocationType.Bin, Status = WarehouseLocationStatus.Active });
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var handler = new GetWarehouseLocationTreeHandler(db);
+        var tree = await handler.HandleAsync(businessId, warehouseId, TestContext.Current.CancellationToken);
+
+        tree.Should().ContainSingle(x => x.Code == "ZONE-A");
+        tree[0].Children.Should().ContainSingle(x => x.Code == "BIN-01");
+    }
+
+    [Fact]
+    public async Task RenderWarehouseLocationLabels_Should_UseTemplateAndLocationSnapshots()
+    {
+        await using var db = InventoryQueryTestDbContext.Create();
+        var businessId = Guid.NewGuid();
+        var warehouseId = Guid.NewGuid();
+        var templateId = Guid.NewGuid();
+        var locationId = Guid.NewGuid();
+        db.Set<Warehouse>().Add(new Warehouse { Id = warehouseId, BusinessId = businessId, Name = "Main" });
+        db.Set<WarehouseLocation>().Add(new WarehouseLocation
+        {
+            Id = locationId,
+            BusinessId = businessId,
+            WarehouseId = warehouseId,
+            Code = "BIN-01",
+            DisplayName = "<Bin 01>",
+            LocationType = WarehouseLocationType.Bin,
+            Status = WarehouseLocationStatus.Active,
+            Barcode = "BC-01"
+        });
+        db.Set<WarehouseLabelTemplate>().Add(new WarehouseLabelTemplate
+        {
+            Id = templateId,
+            BusinessId = businessId,
+            Name = "Default",
+            TemplateKey = "DEFAULT",
+            Status = WarehouseLabelTemplateStatus.Active,
+            Format = WarehouseLabelTemplateFormat.Html,
+            WidthMm = 70,
+            HeightMm = 35,
+            ContentTemplate = "{WarehouseName}|{Code}|{DisplayName}|{Barcode}"
+        });
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var handler = new RenderWarehouseLocationLabelsHandler(db);
+        var render = await handler.HandleAsync(businessId, templateId, [locationId], TestContext.Current.CancellationToken);
+
+        render.Should().NotBeNull();
+        render!.Labels.Should().ContainSingle();
+        render.Labels[0].RenderedContent.Should().Be("Main|BIN-01|&lt;Bin 01&gt;|BC-01");
+    }
+
+    [Fact]
+    public async Task GetWarehouseLabelTemplatesPage_Should_FilterActiveAndDefault()
+    {
+        await using var db = InventoryQueryTestDbContext.Create();
+        var businessId = Guid.NewGuid();
+        db.Set<WarehouseLabelTemplate>().AddRange(
+            new WarehouseLabelTemplate { Id = Guid.NewGuid(), BusinessId = businessId, Name = "Default", TemplateKey = "DEFAULT", Status = WarehouseLabelTemplateStatus.Active, Format = WarehouseLabelTemplateFormat.Html, IsDefault = true, ContentTemplate = "{Code}" },
+            new WarehouseLabelTemplate { Id = Guid.NewGuid(), BusinessId = businessId, Name = "Inactive", TemplateKey = "INACTIVE", Status = WarehouseLabelTemplateStatus.Inactive, Format = WarehouseLabelTemplateFormat.Text, ContentTemplate = "{Code}" });
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var handler = new GetWarehouseLabelTemplatesPageHandler(db);
+        var (items, total) = await handler.HandleAsync(businessId, 1, 20, null, WarehouseLabelTemplateQueueFilter.Active, TestContext.Current.CancellationToken);
+        var summary = await handler.GetSummaryAsync(businessId, TestContext.Current.CancellationToken);
+
+        total.Should().Be(1);
+        items.Should().ContainSingle(x => x.TemplateKey == "DEFAULT" && x.IsDefault);
+        summary.TotalCount.Should().Be(2);
+        summary.DefaultCount.Should().Be(1);
+    }
+
     // ─────────────────────────────────────────────────────────────────────────
     // GetSuppliersPageHandler
     // ─────────────────────────────────────────────────────────────────────────
@@ -693,6 +800,44 @@ public sealed class InventoryManagementQueryHandlerTests
                 b.Property(x => x.RowVersion).IsRowVersion();
                 // Keep StockLevels navigation so that queries using StockLevels.Count/Any translate correctly.
                 b.HasMany(x => x.StockLevels).WithOne().HasForeignKey(s => s.WarehouseId);
+                b.HasMany(x => x.Locations).WithOne().HasForeignKey(s => s.WarehouseId);
+            });
+
+            modelBuilder.Entity<WarehouseLocation>(b =>
+            {
+                b.HasKey(x => x.Id);
+                b.Property(x => x.BusinessId).IsRequired();
+                b.Property(x => x.WarehouseId).IsRequired();
+                b.Property(x => x.ParentLocationId);
+                b.Property(x => x.Code).HasMaxLength(64).IsRequired();
+                b.Property(x => x.DisplayName).HasMaxLength(200).IsRequired();
+                b.Property(x => x.LocationType);
+                b.Property(x => x.Status);
+                b.Property(x => x.Barcode).HasMaxLength(128);
+                b.Property(x => x.SortOrder);
+                b.Property(x => x.Description).HasMaxLength(1000);
+                b.Property(x => x.MetadataJson);
+                b.Property(x => x.IsDeleted);
+                b.Property(x => x.RowVersion).IsRowVersion();
+                b.HasMany(x => x.Children).WithOne().HasForeignKey(x => x.ParentLocationId);
+            });
+
+            modelBuilder.Entity<WarehouseLabelTemplate>(b =>
+            {
+                b.HasKey(x => x.Id);
+                b.Property(x => x.BusinessId).IsRequired();
+                b.Property(x => x.Name).HasMaxLength(200).IsRequired();
+                b.Property(x => x.TemplateKey).HasMaxLength(100).IsRequired();
+                b.Property(x => x.Status);
+                b.Property(x => x.Format);
+                b.Property(x => x.IsDefault);
+                b.Property(x => x.WidthMm);
+                b.Property(x => x.HeightMm);
+                b.Property(x => x.ContentTemplate).HasMaxLength(8000).IsRequired();
+                b.Property(x => x.Description).HasMaxLength(1000);
+                b.Property(x => x.MetadataJson);
+                b.Property(x => x.IsDeleted);
+                b.Property(x => x.RowVersion).IsRowVersion();
             });
 
             modelBuilder.Entity<StockLevel>(b =>

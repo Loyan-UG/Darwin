@@ -16,6 +16,7 @@ public sealed class FinanceWebAdminSourceTests
         layout.Should().Contain("asp-controller=\"Finance\" asp-action=\"Exports\"");
         layout.Should().Contain("asp-controller=\"Finance\" asp-action=\"SupplierInvoices\"");
         layout.Should().Contain("asp-controller=\"Finance\" asp-action=\"SupplierPayments\"");
+        layout.Should().Contain("asp-controller=\"Finance\" asp-action=\"SupplierAdvances\"");
         layout.Should().Contain("asp-controller=\"Finance\" asp-action=\"BankAccounts\"");
         layout.Should().Contain("asp-controller=\"Finance\" asp-action=\"BankStatements\"");
         layout.Should().Contain("asp-controller=\"Finance\" asp-action=\"BankReconciliation\"");
@@ -54,6 +55,15 @@ public sealed class FinanceWebAdminSourceTests
         controller.Should().Contain("CreateSupplierPaymentBankCorrectionHandler");
         controller.Should().Contain("PostSupplierPaymentBankCorrectionHandler");
         controller.Should().Contain("CancelSupplierPaymentBankCorrectionHandler");
+        controller.Should().Contain("GetSupplierAdvancesPageHandler");
+        controller.Should().Contain("GetSupplierAdvanceDetailHandler");
+        controller.Should().Contain("CreateSupplierAdvanceHandler");
+        controller.Should().Contain("UpdateSupplierAdvanceHandler");
+        controller.Should().Contain("PostSupplierAdvanceHandler");
+        controller.Should().Contain("CancelSupplierAdvanceHandler");
+        controller.Should().Contain("ReverseSupplierAdvanceHandler");
+        controller.Should().Contain("ApplySupplierAdvanceHandler");
+        controller.Should().Contain("ReverseSupplierAdvanceApplicationHandler");
         controller.Should().Contain("GetBankAccountsPageHandler");
         controller.Should().Contain("CreateBankAccountHandler");
         controller.Should().Contain("UpdateBankAccountHandler");
@@ -88,6 +98,14 @@ public sealed class FinanceWebAdminSourceTests
         controller.Should().Contain("CreateSupplierPaymentBankCorrection");
         controller.Should().Contain("PostSupplierPaymentBankCorrection");
         controller.Should().Contain("CancelSupplierPaymentBankCorrection");
+        controller.Should().Contain("SupplierAdvances");
+        controller.Should().Contain("CreateSupplierAdvance");
+        controller.Should().Contain("EditSupplierAdvance");
+        controller.Should().Contain("PostSupplierAdvance");
+        controller.Should().Contain("CancelSupplierAdvance");
+        controller.Should().Contain("ReverseSupplierAdvance");
+        controller.Should().Contain("ApplySupplierAdvance");
+        controller.Should().Contain("ReverseSupplierAdvanceApplication");
         controller.Should().Contain("BankAccounts");
         controller.Should().Contain("CreateBankAccount");
         controller.Should().Contain("EditBankAccount");
@@ -112,7 +130,6 @@ public sealed class FinanceWebAdminSourceTests
         controller.Should().NotContain("DirectBankSettlement");
         controller.Should().NotContain("ReturnedTransferAutomation");
         controller.Should().NotContain("TreasuryLedger");
-        controller.Should().NotContain("SupplierAdvance");
         controller.Should().NotContain("SupplierOverpayment");
     }
 
@@ -151,6 +168,14 @@ public sealed class FinanceWebAdminSourceTests
         allFinanceViews.Should().Contain("asp-action=\"CreateSupplierPaymentBankCorrection\"");
         allFinanceViews.Should().Contain("asp-action=\"PostSupplierPaymentBankCorrection\"");
         allFinanceViews.Should().Contain("asp-action=\"CancelSupplierPaymentBankCorrection\"");
+        allFinanceViews.Should().Contain("asp-action=\"SupplierAdvances\"");
+        allFinanceViews.Should().Contain("asp-action=\"CreateSupplierAdvance\"");
+        allFinanceViews.Should().Contain("asp-action=\"EditSupplierAdvance\"");
+        allFinanceViews.Should().Contain("asp-action=\"PostSupplierAdvance\"");
+        allFinanceViews.Should().Contain("asp-action=\"CancelSupplierAdvance\"");
+        allFinanceViews.Should().Contain("asp-action=\"ReverseSupplierAdvance\"");
+        allFinanceViews.Should().Contain("asp-action=\"ApplySupplierAdvance\"");
+        allFinanceViews.Should().Contain("asp-action=\"ReverseSupplierAdvanceApplication\"");
         allFinanceViews.Should().Contain("PostSupplierPayment");
         allFinanceViews.Should().Contain("ReversePayment");
         allFinanceViews.Should().Contain("SettleFromBankReconciliation");
@@ -197,7 +222,6 @@ public sealed class FinanceWebAdminSourceTests
         allFinanceViews.Should().NotContain("TreasuryLedger");
         allFinanceViews.Should().NotContain("ReturnedPayment");
         allFinanceViews.Should().NotContain("ReturnedTransferAutomation");
-        allFinanceViews.Should().NotContain("SupplierAdvance");
         allFinanceViews.Should().NotContain("SupplierOverpayment");
     }
 
@@ -236,6 +260,17 @@ public sealed class FinanceWebAdminSourceTests
         composition.Should().Contain("services.AddScoped<CreateSupplierPaymentBankCorrectionHandler>();");
         composition.Should().Contain("services.AddScoped<PostSupplierPaymentBankCorrectionHandler>();");
         composition.Should().Contain("services.AddScoped<CancelSupplierPaymentBankCorrectionHandler>();");
+        composition.Should().Contain("services.AddScoped<SupplierAdvanceWorkflowPolicy>();");
+        composition.Should().Contain("services.AddScoped<GetSupplierAdvancesPageHandler>();");
+        composition.Should().Contain("services.AddScoped<GetSupplierAdvanceDetailHandler>();");
+        composition.Should().Contain("services.AddScoped<GetSupplierAdvanceDraftHandler>();");
+        composition.Should().Contain("services.AddScoped<CreateSupplierAdvanceHandler>();");
+        composition.Should().Contain("services.AddScoped<UpdateSupplierAdvanceHandler>();");
+        composition.Should().Contain("services.AddScoped<PostSupplierAdvanceHandler>();");
+        composition.Should().Contain("services.AddScoped<CancelSupplierAdvanceHandler>();");
+        composition.Should().Contain("services.AddScoped<ReverseSupplierAdvanceHandler>();");
+        composition.Should().Contain("services.AddScoped<ApplySupplierAdvanceHandler>();");
+        composition.Should().Contain("services.AddScoped<ReverseSupplierAdvanceApplicationHandler>();");
         composition.Should().Contain("services.AddScoped<GetBankAccountsPageHandler>();");
         composition.Should().Contain("services.AddScoped<GetBankAccountForEditHandler>();");
         composition.Should().Contain("services.AddScoped<CreateBankAccountHandler>();");

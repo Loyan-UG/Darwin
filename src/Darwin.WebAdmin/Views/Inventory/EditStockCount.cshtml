@@ -1,0 +1,5 @@
+@model Darwin.WebAdmin.ViewModels.Inventory.StockCountEditVm
+@{
+    ViewData["IsCreate"] = false;
+}
+@await Html.PartialAsync("_StockCountEditorShell", Model)

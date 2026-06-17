@@ -76,6 +76,8 @@ The core decision is that bank and treasury evidence must be modeled as operatio
    - Outcome: implemented. Internal `SupplierPaymentBankCorrection` records correction evidence, posts full-settlement returned-transfer correction through finance posting, and keeps duplicate-payment correction as attention/evidence only.
 8. `Supplier Advance And Overpayment Boundary Design`
    - Outcome: completed in [supplier-advance-overpayment-boundary-design.md](supplier-advance-overpayment-boundary-design.md). Supplier advance is a future formal Asset-backed Billing/Finance balance, not negative AP or silent overpayment conversion.
+9. `Supplier Advance Core Model And Admin Slice`
+   - Outcome: completed. `SupplierAdvance` and `SupplierAdvanceApplication` now provide formal internal/WebAdmin advance creation, posting, cancel-draft, and explicit application to posted supplier invoices through finance posting services.
 
 ## Implementation Outcome
 
@@ -90,11 +92,12 @@ The core Bank/Treasury foundation is implemented for internal/WebAdmin use:
 - Bank reconciliation matches do not create `JournalEntry`, payment mutation, refund mutation, reversal, supplier advance, overpayment, bank credential, bank API state, or finance export format changes.
 - Supplier payment bank settlement core is complete. The settlement workflow is internal, evidence-backed by reconciliation, limited to posted supplier payments, journal-backed through `CashClearing` and mapped bank Asset, and unable to rewrite payment, journal, refund, or finance export history.
 - Returned/failed transfer and duplicate-payment correction core is complete. Corrections use bank statement and reconciliation evidence, remain full-settlement in v1 for returned transfers, avoid automatic duplicate reversal, and keep bank API adapters as separate future slices.
-- Supplier advance and overpayment boundary design is complete. Future advance handling must use a dedicated Asset-backed model and explicit posting/allocation workflows.
+- Supplier advance core/admin is complete. Advance handling uses a dedicated Asset-backed model and explicit posting/allocation workflows.
+- Supplier advance reversal hardening is complete. Posted unapplied advances and active advance applications are reversed only through finance posting and preserve history.
 - Public WebApi, mobile/member, storefront, customer invoice archive/download, customer payment/refund flows, and finance export package format remain unchanged.
 
 ## Next Implementation Slice
 
-`Supplier Advance Core Model And Admin Slice`
+`Purchasing Documents And Supplier Contacts`
 
-The next slice should implement supplier advance and overpayment as a formal Billing/Finance model with explicit posting and allocation workflows. It must still avoid bank API integration, public/mobile exposure, and finance export format changes until their own boundaries are implemented.
+The next slice should deepen purchasing master data with structured supplier contacts and purchasing document surfaces. It must still avoid bank API integration, public/mobile exposure, status-only financial correction, and finance export format changes until their own boundaries are implemented.

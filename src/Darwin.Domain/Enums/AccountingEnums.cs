@@ -39,7 +39,9 @@ namespace Darwin.Domain.Enums
         SupplierInvoicePosted = 8,
         SupplierPaymentPosted = 9,
         SupplierPaymentBankSettled = 10,
-        SupplierPaymentBankCorrection = 11
+        SupplierPaymentBankCorrection = 11,
+        SupplierAdvancePosted = 12,
+        SupplierAdvanceApplied = 13
     }
 
     /// <summary>
@@ -56,7 +58,8 @@ namespace Darwin.Domain.Enums
         AccountsPayable = 6,
         PurchaseExpense = 7,
         InventoryClearing = 8,
-        TaxReceivable = 9
+        TaxReceivable = 9,
+        SupplierAdvance = 10
     }
 
     /// <summary>
@@ -186,5 +189,14 @@ namespace Darwin.Domain.Enums
         Draft = 0,
         Posted = 1,
         Cancelled = 2
+    }
+
+    public enum SupplierAdvanceStatus : short
+    {
+        Draft = 0,
+        Posted = 1,
+        Applied = 2,
+        Cancelled = 3,
+        Reversed = 4
     }
 }

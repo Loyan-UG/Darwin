@@ -176,6 +176,7 @@ public sealed class FinanceAccountMappingService
             FinancePostingAccountRole.PurchaseExpense => accountType == AccountType.Expense,
             FinancePostingAccountRole.InventoryClearing => accountType == AccountType.Asset,
             FinancePostingAccountRole.TaxReceivable => accountType == AccountType.Asset,
+            FinancePostingAccountRole.SupplierAdvance => accountType == AccountType.Asset,
             _ => false
         };
 

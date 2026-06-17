@@ -180,6 +180,17 @@ namespace Darwin.Infrastructure.Persistence.Db
             if (Database.ProviderName?.Contains("Npgsql", StringComparison.OrdinalIgnoreCase) == true)
             {
                 modelBuilder.Entity<GoodsReceipt>().Property(x => x.MetadataJson).HasColumnType("jsonb");
+                modelBuilder.Entity<WarehouseLocation>().Property(x => x.MetadataJson).HasColumnType("jsonb");
+                modelBuilder.Entity<ProductTrackingPolicy>().Property(x => x.MetadataJson).HasColumnType("jsonb");
+                modelBuilder.Entity<InventoryLot>().Property(x => x.MetadataJson).HasColumnType("jsonb");
+                modelBuilder.Entity<InventorySerialUnit>().Property(x => x.MetadataJson).HasColumnType("jsonb");
+                modelBuilder.Entity<HandlingUnit>().Property(x => x.MetadataJson).HasColumnType("jsonb");
+                modelBuilder.Entity<HandlingUnitContent>().Property(x => x.MetadataJson).HasColumnType("jsonb");
+                modelBuilder.Entity<WarehouseLabelTemplate>().Property(x => x.MetadataJson).HasColumnType("jsonb");
+                modelBuilder.Entity<WarehouseTask>().Property(x => x.MetadataJson).HasColumnType("jsonb");
+                modelBuilder.Entity<WarehouseTaskLine>().Property(x => x.MetadataJson).HasColumnType("jsonb");
+                modelBuilder.Entity<StockCountSession>().Property(x => x.MetadataJson).HasColumnType("jsonb");
+                modelBuilder.Entity<StockCountLine>().Property(x => x.MetadataJson).HasColumnType("jsonb");
                 modelBuilder.Entity<DeliveryNote>().Property(x => x.MetadataJson).HasColumnType("jsonb");
                 modelBuilder.Entity<ReturnOrder>().Property(x => x.MetadataJson).HasColumnType("jsonb");
                 modelBuilder.Entity<CreditNote>().Property(x => x.SourceModelJson).HasColumnType("jsonb");
@@ -195,6 +206,7 @@ namespace Darwin.Infrastructure.Persistence.Db
                 modelBuilder.Entity<SupplierInvoice>().Property(x => x.MetadataJson).HasColumnType("jsonb");
                 modelBuilder.Entity<SupplierPayment>().Property(x => x.MetadataJson).HasColumnType("jsonb");
                 modelBuilder.Entity<SupplierPaymentBankCorrection>().Property(x => x.MetadataJson).HasColumnType("jsonb");
+                modelBuilder.Entity<SupplierAdvance>().Property(x => x.MetadataJson).HasColumnType("jsonb");
                 modelBuilder.Entity<JournalEntry>().Property(x => x.MetadataJson).HasColumnType("jsonb");
             }
 

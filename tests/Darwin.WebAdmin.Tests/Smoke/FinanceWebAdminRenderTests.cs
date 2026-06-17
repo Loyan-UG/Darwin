@@ -21,6 +21,7 @@ public sealed class FinanceWebAdminRenderTests : IClassFixture<WebAdminTestFacto
     [InlineData("/Finance/Exports")]
     [InlineData("/Finance/SupplierInvoices")]
     [InlineData("/Finance/SupplierPayments")]
+    [InlineData("/Finance/SupplierAdvances")]
     [InlineData("/Finance/BankAccounts")]
     [InlineData("/Finance/BankStatements")]
     [InlineData("/Finance/BankReconciliation")]
@@ -36,7 +37,7 @@ public sealed class FinanceWebAdminRenderTests : IClassFixture<WebAdminTestFacto
         html.Should().Contain("/js/admin-core.js");
         html.Should().Contain("Finance");
         html.Should().NotContain("https://cdn.jsdelivr.net");
-        if (path is not "/Finance/AccountMappings" and not "/Finance/Exports" and not "/Finance/SupplierInvoices" and not "/Finance/SupplierPayments" and not "/Finance/BankAccounts" and not "/Finance/BankStatements" and not "/Finance/BankReconciliation")
+        if (path is not "/Finance/AccountMappings" and not "/Finance/Exports" and not "/Finance/SupplierInvoices" and not "/Finance/SupplierPayments" and not "/Finance/SupplierAdvances" and not "/Finance/BankAccounts" and not "/Finance/BankStatements" and not "/Finance/BankReconciliation")
         {
             html.Should().NotContain("hx-post=");
             html.Should().NotContain("method=\"post\" action=\"/Finance");

@@ -39,6 +39,16 @@ public sealed class FinanceController : AdminBaseController
     private readonly CreateSupplierPaymentBankCorrectionHandler _createSupplierPaymentBankCorrection;
     private readonly PostSupplierPaymentBankCorrectionHandler _postSupplierPaymentBankCorrection;
     private readonly CancelSupplierPaymentBankCorrectionHandler _cancelSupplierPaymentBankCorrection;
+    private readonly GetSupplierAdvancesPageHandler _getSupplierAdvances;
+    private readonly GetSupplierAdvanceDetailHandler _getSupplierAdvance;
+    private readonly GetSupplierAdvanceDraftHandler _getSupplierAdvanceDraft;
+    private readonly CreateSupplierAdvanceHandler _createSupplierAdvance;
+    private readonly UpdateSupplierAdvanceHandler _updateSupplierAdvance;
+    private readonly PostSupplierAdvanceHandler _postSupplierAdvance;
+    private readonly CancelSupplierAdvanceHandler _cancelSupplierAdvance;
+    private readonly ReverseSupplierAdvanceHandler _reverseSupplierAdvance;
+    private readonly ApplySupplierAdvanceHandler _applySupplierAdvance;
+    private readonly ReverseSupplierAdvanceApplicationHandler _reverseSupplierAdvanceApplication;
     private readonly GetBankAccountsPageHandler _getBankAccounts;
     private readonly GetBankAccountForEditHandler _getBankAccount;
     private readonly CreateBankAccountHandler _createBankAccount;
@@ -85,6 +95,16 @@ public sealed class FinanceController : AdminBaseController
         CreateSupplierPaymentBankCorrectionHandler createSupplierPaymentBankCorrection,
         PostSupplierPaymentBankCorrectionHandler postSupplierPaymentBankCorrection,
         CancelSupplierPaymentBankCorrectionHandler cancelSupplierPaymentBankCorrection,
+        GetSupplierAdvancesPageHandler getSupplierAdvances,
+        GetSupplierAdvanceDetailHandler getSupplierAdvance,
+        GetSupplierAdvanceDraftHandler getSupplierAdvanceDraft,
+        CreateSupplierAdvanceHandler createSupplierAdvance,
+        UpdateSupplierAdvanceHandler updateSupplierAdvance,
+        PostSupplierAdvanceHandler postSupplierAdvance,
+        CancelSupplierAdvanceHandler cancelSupplierAdvance,
+        ReverseSupplierAdvanceHandler reverseSupplierAdvance,
+        ApplySupplierAdvanceHandler applySupplierAdvance,
+        ReverseSupplierAdvanceApplicationHandler reverseSupplierAdvanceApplication,
         GetBankAccountsPageHandler getBankAccounts,
         GetBankAccountForEditHandler getBankAccount,
         CreateBankAccountHandler createBankAccount,
@@ -130,6 +150,16 @@ public sealed class FinanceController : AdminBaseController
         _createSupplierPaymentBankCorrection = createSupplierPaymentBankCorrection ?? throw new ArgumentNullException(nameof(createSupplierPaymentBankCorrection));
         _postSupplierPaymentBankCorrection = postSupplierPaymentBankCorrection ?? throw new ArgumentNullException(nameof(postSupplierPaymentBankCorrection));
         _cancelSupplierPaymentBankCorrection = cancelSupplierPaymentBankCorrection ?? throw new ArgumentNullException(nameof(cancelSupplierPaymentBankCorrection));
+        _getSupplierAdvances = getSupplierAdvances ?? throw new ArgumentNullException(nameof(getSupplierAdvances));
+        _getSupplierAdvance = getSupplierAdvance ?? throw new ArgumentNullException(nameof(getSupplierAdvance));
+        _getSupplierAdvanceDraft = getSupplierAdvanceDraft ?? throw new ArgumentNullException(nameof(getSupplierAdvanceDraft));
+        _createSupplierAdvance = createSupplierAdvance ?? throw new ArgumentNullException(nameof(createSupplierAdvance));
+        _updateSupplierAdvance = updateSupplierAdvance ?? throw new ArgumentNullException(nameof(updateSupplierAdvance));
+        _postSupplierAdvance = postSupplierAdvance ?? throw new ArgumentNullException(nameof(postSupplierAdvance));
+        _cancelSupplierAdvance = cancelSupplierAdvance ?? throw new ArgumentNullException(nameof(cancelSupplierAdvance));
+        _reverseSupplierAdvance = reverseSupplierAdvance ?? throw new ArgumentNullException(nameof(reverseSupplierAdvance));
+        _applySupplierAdvance = applySupplierAdvance ?? throw new ArgumentNullException(nameof(applySupplierAdvance));
+        _reverseSupplierAdvanceApplication = reverseSupplierAdvanceApplication ?? throw new ArgumentNullException(nameof(reverseSupplierAdvanceApplication));
         _getBankAccounts = getBankAccounts ?? throw new ArgumentNullException(nameof(getBankAccounts));
         _getBankAccount = getBankAccount ?? throw new ArgumentNullException(nameof(getBankAccount));
         _createBankAccount = createBankAccount ?? throw new ArgumentNullException(nameof(createBankAccount));
@@ -225,6 +255,19 @@ public sealed class FinanceController : AdminBaseController
     {
         var vm = await _getSupplierPayments.HandleAsync(businessId, q, status, page, pageSize, ct).ConfigureAwait(false);
         return RenderSupplierPayments(vm);
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> SupplierAdvances(
+        Guid? businessId = null,
+        string? q = null,
+        SupplierAdvanceStatus? status = null,
+        int page = 1,
+        int pageSize = 20,
+        CancellationToken ct = default)
+    {
+        var vm = await _getSupplierAdvances.HandleAsync(businessId, q, status, page, pageSize, ct).ConfigureAwait(false);
+        return RenderSupplierAdvances(vm);
     }
 
     [HttpGet]
@@ -383,6 +426,13 @@ public sealed class FinanceController : AdminBaseController
     }
 
     [HttpGet]
+    public async Task<IActionResult> CreateSupplierAdvance(Guid? businessId = null, Guid? supplierId = null, CancellationToken ct = default)
+    {
+        var vm = await _getSupplierAdvanceDraft.HandleAsync(businessId, supplierId, ct).ConfigureAwait(false);
+        return RenderSupplierAdvanceEditor(vm);
+    }
+
+    [HttpGet]
     public async Task<IActionResult> SupplierInvoice(Guid id, CancellationToken ct = default)
     {
         var vm = await _getSupplierInvoice.HandleAsync(id, ct).ConfigureAwait(false);
@@ -409,6 +459,19 @@ public sealed class FinanceController : AdminBaseController
     }
 
     [HttpGet]
+    public async Task<IActionResult> SupplierAdvance(Guid id, CancellationToken ct = default)
+    {
+        var vm = await _getSupplierAdvance.HandleAsync(id, ct).ConfigureAwait(false);
+        if (vm is null)
+        {
+            SetErrorMessage("SupplierAdvanceNotFound");
+            return RedirectOrHtmx(nameof(SupplierAdvances), new { });
+        }
+
+        return RenderSupplierAdvanceDetail(vm);
+    }
+
+    [HttpGet]
     public async Task<IActionResult> EditSupplierInvoice(Guid id, CancellationToken ct = default)
     {
         var vm = await _getSupplierInvoice.HandleAsync(id, ct).ConfigureAwait(false);
@@ -432,6 +495,19 @@ public sealed class FinanceController : AdminBaseController
         }
 
         return RenderSupplierPaymentEditor(vm);
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> EditSupplierAdvance(Guid id, CancellationToken ct = default)
+    {
+        var vm = await _getSupplierAdvance.HandleAsync(id, ct).ConfigureAwait(false);
+        if (vm is null)
+        {
+            SetErrorMessage("SupplierAdvanceNotFound");
+            return RedirectOrHtmx(nameof(SupplierAdvances), new { });
+        }
+
+        return RenderSupplierAdvanceEditor(vm);
     }
 
     [HttpPost]
@@ -487,6 +563,23 @@ public sealed class FinanceController : AdminBaseController
 
     [HttpPost]
     [ValidateAntiForgeryToken]
+    public async Task<IActionResult> CreateSupplierAdvance(SupplierAdvanceEditDto dto, CancellationToken ct = default)
+    {
+        try
+        {
+            var id = await _createSupplierAdvance.HandleAsync(dto, ct).ConfigureAwait(false);
+            SetSuccessMessage("SupplierAdvanceCreated");
+            return RedirectOrHtmx(nameof(SupplierAdvance), new { id });
+        }
+        catch (Exception ex) when (ex is InvalidOperationException or ArgumentException)
+        {
+            SetErrorMessage("SupplierAdvanceCreateFailed");
+            return RenderSupplierAdvanceEditor(dto);
+        }
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
     public async Task<IActionResult> EditSupplierInvoice(SupplierInvoiceEditDto dto, CancellationToken ct = default)
     {
         try
@@ -516,6 +609,23 @@ public sealed class FinanceController : AdminBaseController
         {
             SetErrorMessage("SupplierPaymentUpdateFailed");
             return RenderSupplierPaymentEditor(dto);
+        }
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> EditSupplierAdvance(SupplierAdvanceEditDto dto, CancellationToken ct = default)
+    {
+        try
+        {
+            await _updateSupplierAdvance.HandleAsync(dto, ct).ConfigureAwait(false);
+            SetSuccessMessage("SupplierAdvanceUpdated");
+            return RedirectOrHtmx(nameof(SupplierAdvance), new { id = dto.Id });
+        }
+        catch (Exception ex) when (ex is InvalidOperationException or ArgumentException)
+        {
+            SetErrorMessage("SupplierAdvanceUpdateFailed");
+            return RenderSupplierAdvanceEditor(dto);
         }
     }
 
@@ -827,6 +937,91 @@ public sealed class FinanceController : AdminBaseController
 
     [HttpPost]
     [ValidateAntiForgeryToken]
+    public async Task<IActionResult> PostSupplierAdvance(SupplierAdvanceLifecycleActionDto dto, CancellationToken ct = default)
+    {
+        try
+        {
+            await _postSupplierAdvance.HandleAsync(dto, ct).ConfigureAwait(false);
+            SetSuccessMessage("SupplierAdvancePosted");
+        }
+        catch (Exception ex) when (ex is InvalidOperationException or ArgumentException)
+        {
+            SetErrorMessage("SupplierAdvancePostFailed");
+        }
+
+        return RedirectOrHtmx(nameof(SupplierAdvance), new { id = dto.Id });
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> CancelSupplierAdvance(SupplierAdvanceLifecycleActionDto dto, CancellationToken ct = default)
+    {
+        try
+        {
+            await _cancelSupplierAdvance.HandleAsync(dto, ct).ConfigureAwait(false);
+            SetSuccessMessage("SupplierAdvanceCancelled");
+        }
+        catch (Exception ex) when (ex is InvalidOperationException or ArgumentException)
+        {
+            SetErrorMessage("SupplierAdvanceCancelFailed");
+        }
+
+        return RedirectOrHtmx(nameof(SupplierAdvance), new { id = dto.Id });
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> ReverseSupplierAdvance(SupplierAdvanceLifecycleActionDto dto, CancellationToken ct = default)
+    {
+        try
+        {
+            await _reverseSupplierAdvance.HandleAsync(dto, ct).ConfigureAwait(false);
+            SetSuccessMessage("SupplierAdvanceReversed");
+        }
+        catch (Exception ex) when (ex is InvalidOperationException or ArgumentException)
+        {
+            SetErrorMessage("SupplierAdvanceReverseFailed");
+        }
+
+        return RedirectOrHtmx(nameof(SupplierAdvance), new { id = dto.Id });
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> ApplySupplierAdvance(SupplierAdvanceApplyDto dto, CancellationToken ct = default)
+    {
+        try
+        {
+            await _applySupplierAdvance.HandleAsync(dto, ct).ConfigureAwait(false);
+            SetSuccessMessage("SupplierAdvanceApplied");
+        }
+        catch (Exception ex) when (ex is InvalidOperationException or ArgumentException)
+        {
+            SetErrorMessage("SupplierAdvanceApplyFailed");
+        }
+
+        return RedirectOrHtmx(nameof(SupplierAdvance), new { id = dto.Id });
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> ReverseSupplierAdvanceApplication(SupplierAdvanceApplicationReverseDto dto, CancellationToken ct = default)
+    {
+        try
+        {
+            await _reverseSupplierAdvanceApplication.HandleAsync(dto, ct).ConfigureAwait(false);
+            SetSuccessMessage("SupplierAdvanceApplicationReversed");
+        }
+        catch (Exception ex) when (ex is InvalidOperationException or ArgumentException)
+        {
+            SetErrorMessage("SupplierAdvanceApplicationReverseFailed");
+        }
+
+        return RedirectOrHtmx(nameof(SupplierAdvance), new { id = dto.Id });
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
     public async Task<IActionResult> CreateExportBatch(FinanceExportBatchCreateDto dto, CancellationToken ct = default)
     {
         try
@@ -967,6 +1162,16 @@ public sealed class FinanceController : AdminBaseController
         return View("~/Views/Finance/SupplierPayments.cshtml", vm);
     }
 
+    private IActionResult RenderSupplierAdvances(object vm)
+    {
+        if (IsHtmxRequest())
+        {
+            return PartialView("~/Views/Finance/SupplierAdvances.cshtml", vm);
+        }
+
+        return View("~/Views/Finance/SupplierAdvances.cshtml", vm);
+    }
+
     private IActionResult RenderBankAccounts(object vm)
     {
         if (IsHtmxRequest())
@@ -1037,6 +1242,16 @@ public sealed class FinanceController : AdminBaseController
         return View("~/Views/Finance/SupplierPayment.cshtml", vm);
     }
 
+    private IActionResult RenderSupplierAdvanceDetail(object vm)
+    {
+        if (IsHtmxRequest())
+        {
+            return PartialView("~/Views/Finance/SupplierAdvance.cshtml", vm);
+        }
+
+        return View("~/Views/Finance/SupplierAdvance.cshtml", vm);
+    }
+
     private IActionResult RenderSupplierInvoiceEditor(SupplierInvoiceEditDto vm)
     {
         EnsureSupplierInvoiceEditorRows(vm);
@@ -1059,6 +1274,16 @@ public sealed class FinanceController : AdminBaseController
         }
 
         return View("~/Views/Finance/SupplierPaymentEditor.cshtml", vm);
+    }
+
+    private IActionResult RenderSupplierAdvanceEditor(SupplierAdvanceEditDto vm)
+    {
+        if (IsHtmxRequest())
+        {
+            return PartialView("~/Views/Finance/SupplierAdvanceEditor.cshtml", vm);
+        }
+
+        return View("~/Views/Finance/SupplierAdvanceEditor.cshtml", vm);
     }
 
     private IActionResult RenderBankAccountEditor(BankAccountEditDto vm)

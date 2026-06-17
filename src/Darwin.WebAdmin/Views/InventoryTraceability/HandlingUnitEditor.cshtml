@@ -1,0 +1,77 @@
+@model Darwin.WebAdmin.ViewModels.Inventory.HandlingUnitEditVm
+@inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
+@{
+    var isCreate = (bool?)ViewData["IsCreate"] ?? Model.Id == Guid.Empty;
+    ViewData["Title"] = isCreate ? T.T("CreateHandlingUnit") : T.T("EditHandlingUnit");
+}
+<div id="inventory-traceability-workspace-shell">
+    <h1 class="mb-3">@(isCreate ? T.T("CreateHandlingUnit") : T.T("EditHandlingUnit"))</h1>
+    <form asp-action="@(isCreate ? "CreateHandlingUnit" : "EditHandlingUnit")" method="post" hx-post="@Url.Action(isCreate ? "CreateHandlingUnit" : "EditHandlingUnit", "InventoryTraceability")" hx-target="#inventory-traceability-workspace-shell" hx-swap="outerHTML">
+        @Html.AntiForgeryToken()
+        <input asp-for="Id" type="hidden" />
+        <input asp-for="RowVersion" type="hidden" />
+        <section class="admin-form-section">
+            <h2 class="admin-form-section-title">@T.T("HandlingUnitIdentity")</h2>
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            <div class="row g-3">
+                <div class="col-md-3"><label asp-for="BusinessId" class="form-label"></label><select asp-for="BusinessId" asp-items="Model.BusinessOptions" class="form-select"></select></div>
+                <div class="col-md-3"><label asp-for="WarehouseId" class="form-label"></label><select asp-for="WarehouseId" asp-items="Model.WarehouseOptions" class="form-select"></select></div>
+                <div class="col-md-3"><label asp-for="LocationId" class="form-label"></label><select asp-for="LocationId" asp-items="Model.LocationOptions" class="form-select"></select></div>
+                <div class="col-md-3"><label asp-for="ParentHandlingUnitId" class="form-label"></label><select asp-for="ParentHandlingUnitId" asp-items="Model.ParentHandlingUnitOptions" class="form-select"></select></div>
+                <div class="col-md-3"><label asp-for="Code" class="form-label"></label><input asp-for="Code" class="form-control" autocomplete="off" /></div>
+                <div class="col-md-5"><label asp-for="DisplayName" class="form-label"></label><input asp-for="DisplayName" class="form-control" /></div>
+                <div class="col-md-4"><label asp-for="Barcode" class="form-label"></label><input asp-for="Barcode" class="form-control" autocomplete="off" /></div>
+                <div class="col-md-3"><label asp-for="HandlingUnitType" class="form-label"></label><select asp-for="HandlingUnitType" asp-items="Model.TypeOptions" class="form-select"></select></div>
+                <div class="col-md-3"><label asp-for="Status" class="form-label"></label><select asp-for="Status" asp-items="Model.StatusOptions" class="form-select"></select></div>
+                <div class="col-md-3"><label asp-for="Notes" class="form-label"></label><textarea asp-for="Notes" class="form-control" rows="3"></textarea></div>
+                <div class="col-md-3"><label asp-for="MetadataJson" class="form-label"></label><textarea asp-for="MetadataJson" class="form-control font-monospace" rows="3"></textarea></div>
+            </div>
+        </section>
+        <section class="admin-form-section">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <h2 class="admin-form-section-title mb-0">@T.T("HandlingUnitContents")</h2>
+                <button type="button" class="btn btn-sm btn-outline-primary" data-dynamic-lines-add data-dynamic-lines-container="#handling-unit-content-rows" data-dynamic-lines-template="#handling-unit-content-template" data-dynamic-lines-row=".handling-unit-content-row">@T.T("AddLine")</button>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-sm align-middle">
+                    <thead><tr><th>@T.T("Variant")</th><th>@T.T("Lot")</th><th>@T.T("Serial")</th><th>@T.T("Description")</th><th>@T.T("Quantity")</th><th>@T.T("SortOrder")</th><th></th></tr></thead>
+                    <tbody id="handling-unit-content-rows">
+                    @for (var i = 0; i < Model.Contents.Count; i++)
+                    {
+                        <tr class="handling-unit-content-row">
+                            <td><input asp-for="Contents[i].Id" type="hidden" /><select asp-for="Contents[i].ProductVariantId" asp-items="Model.VariantOptions" class="form-select form-select-sm"></select></td>
+                            <td><select asp-for="Contents[i].InventoryLotId" asp-items="Model.LotOptions" class="form-select form-select-sm"></select></td>
+                            <td><select asp-for="Contents[i].InventorySerialUnitId" asp-items="Model.SerialOptions" class="form-select form-select-sm"></select></td>
+                            <td><input asp-for="Contents[i].Description" class="form-control form-control-sm" /></td>
+                            <td><input asp-for="Contents[i].Quantity" class="form-control form-control-sm" /></td>
+                            <td><input asp-for="Contents[i].SortOrder" class="form-control form-control-sm" /></td>
+                            <td><button type="button" class="btn btn-sm btn-outline-danger" data-dynamic-lines-remove data-dynamic-lines-row=".handling-unit-content-row">@T.T("Remove")</button></td>
+                        </tr>
+                    }
+                    </tbody>
+                </table>
+            </div>
+        </section>
+        <div><button class="btn btn-primary" type="submit">@(isCreate ? T.T("Create") : T.T("Save"))</button> <a asp-action="HandlingUnits" asp-route-businessId="@Model.BusinessId" class="btn btn-outline-secondary">@T.T("Back")</a></div>
+    </form>
+    @if (!isCreate)
+    {
+        <form asp-action="ArchiveHandlingUnit" method="post" class="mt-3">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="Id" value="@Model.Id" />
+            <input type="hidden" name="RowVersion" value="@Convert.ToBase64String(Model.RowVersion ?? Array.Empty<byte>())" />
+            <button class="btn btn-outline-danger" type="submit">@T.T("Archive")</button>
+        </form>
+    }
+    <template id="handling-unit-content-template">
+        <tr class="handling-unit-content-row">
+            <td><input name="Contents[__index__].Id" type="hidden" value="" /><select name="Contents[__index__].ProductVariantId" class="form-select form-select-sm">@foreach (var item in Model.VariantOptions) { <option value="@item.Value">@item.Text</option> }</select></td>
+            <td><select name="Contents[__index__].InventoryLotId" class="form-select form-select-sm">@foreach (var item in Model.LotOptions) { <option value="@item.Value">@item.Text</option> }</select></td>
+            <td><select name="Contents[__index__].InventorySerialUnitId" class="form-select form-select-sm">@foreach (var item in Model.SerialOptions) { <option value="@item.Value">@item.Text</option> }</select></td>
+            <td><input name="Contents[__index__].Description" class="form-control form-control-sm" value="" /></td>
+            <td><input name="Contents[__index__].Quantity" class="form-control form-control-sm" value="1" /></td>
+            <td><input name="Contents[__index__].SortOrder" class="form-control form-control-sm" value="0" /></td>
+            <td><button type="button" class="btn btn-sm btn-outline-danger" data-dynamic-lines-remove data-dynamic-lines-row=".handling-unit-content-row">@T.T("Remove")</button></td>
+        </tr>
+    </template>
+</div>

@@ -435,6 +435,115 @@ public sealed class SupplierPaymentBankCorrectionCreateDto
     public string? InternalNotes { get; set; }
 }
 
+public sealed class SupplierAdvancesPageDto
+{
+    public Guid? BusinessId { get; set; }
+    public string BusinessName { get; set; } = string.Empty;
+    public string Query { get; set; } = string.Empty;
+    public SupplierAdvanceStatus? Status { get; set; }
+    public int Page { get; set; } = 1;
+    public int PageSize { get; set; } = 20;
+    public int Total { get; set; }
+    public int DraftCount { get; set; }
+    public int PostedCount { get; set; }
+    public int AppliedCount { get; set; }
+    public int CancelledCount { get; set; }
+    public int ReversedCount { get; set; }
+    public List<FinanceBusinessOptionDto> BusinessOptions { get; set; } = new();
+    public List<SupplierAdvanceListItemDto> Items { get; set; } = new();
+}
+
+public sealed class SupplierAdvanceListItemDto
+{
+    public Guid Id { get; set; }
+    public Guid BusinessId { get; set; }
+    public Guid SupplierId { get; set; }
+    public string SupplierName { get; set; } = string.Empty;
+    public string AdvanceNumber { get; set; } = string.Empty;
+    public SupplierAdvanceStatus Status { get; set; }
+    public SupplierPaymentMethod PaymentMethod { get; set; }
+    public DateTime AdvanceDateUtc { get; set; }
+    public string Currency { get; set; } = "EUR";
+    public long TotalAmountMinor { get; set; }
+    public long OpenAmountMinor { get; set; }
+    public string Reference { get; set; } = string.Empty;
+    public int ApplicationCount { get; set; }
+    public byte[] RowVersion { get; set; } = Array.Empty<byte>();
+}
+
+public sealed class SupplierAdvanceApplicationDto
+{
+    public Guid Id { get; set; }
+    public Guid SupplierInvoiceId { get; set; }
+    public string SupplierInvoiceNumber { get; set; } = string.Empty;
+    public string InternalInvoiceNumber { get; set; } = string.Empty;
+    public DateTime? DueDateUtc { get; set; }
+    public long InvoiceGrossMinor { get; set; }
+    public long AlreadySettledMinor { get; set; }
+    public long InvoiceOpenAmountMinor { get; set; }
+    public long AmountMinor { get; set; }
+    public string? Memo { get; set; }
+    public Guid? PostingJournalEntryId { get; set; }
+    public Guid? ReversalJournalEntryId { get; set; }
+    public DateTime? AppliedAtUtc { get; set; }
+    public DateTime? ReversedAtUtc { get; set; }
+    public string? ReversalReason { get; set; }
+}
+
+public class SupplierAdvanceCreateDto
+{
+    public Guid BusinessId { get; set; }
+    public Guid SupplierId { get; set; }
+    public SupplierPaymentMethod PaymentMethod { get; set; } = SupplierPaymentMethod.BankTransfer;
+    public DateTime AdvanceDateUtc { get; set; }
+    public string Currency { get; set; } = "EUR";
+    public long TotalAmountMinor { get; set; }
+    public string? Reference { get; set; }
+    public string? InternalNotes { get; set; }
+    public string MetadataJson { get; set; } = "{}";
+}
+
+public sealed class SupplierAdvanceEditDto : SupplierAdvanceCreateDto
+{
+    public Guid Id { get; set; }
+    public byte[] RowVersion { get; set; } = Array.Empty<byte>();
+    public string AdvanceNumber { get; set; } = string.Empty;
+    public SupplierAdvanceStatus Status { get; set; } = SupplierAdvanceStatus.Draft;
+    public long OpenAmountMinor { get; set; }
+    public Guid? PostingJournalEntryId { get; set; }
+    public Guid? ReversalJournalEntryId { get; set; }
+    public DateTime? PostedAtUtc { get; set; }
+    public DateTime? CancelledAtUtc { get; set; }
+    public DateTime? ReversedAtUtc { get; set; }
+    public string? ReversalReason { get; set; }
+    public List<SupplierAdvanceApplicationDto> Applications { get; set; } = new();
+    public List<SupplierAdvanceApplicationDto> ApplicationCandidates { get; set; } = new();
+}
+
+public sealed class SupplierAdvanceLifecycleActionDto
+{
+    public Guid Id { get; set; }
+    public byte[] RowVersion { get; set; } = Array.Empty<byte>();
+    public string? Reason { get; set; }
+}
+
+public sealed class SupplierAdvanceApplyDto
+{
+    public Guid Id { get; set; }
+    public byte[] RowVersion { get; set; } = Array.Empty<byte>();
+    public Guid SupplierInvoiceId { get; set; }
+    public long AmountMinor { get; set; }
+    public string? Memo { get; set; }
+}
+
+public sealed class SupplierAdvanceApplicationReverseDto
+{
+    public Guid Id { get; set; }
+    public byte[] RowVersion { get; set; } = Array.Empty<byte>();
+    public Guid ApplicationId { get; set; }
+    public string? Reason { get; set; }
+}
+
 public sealed class BankAccountsPageDto
 {
     public Guid? BusinessId { get; set; }

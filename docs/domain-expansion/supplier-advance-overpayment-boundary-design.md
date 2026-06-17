@@ -65,17 +65,22 @@ The core decision is that supplier advance and overpayment must be formal Billin
    - Support standalone advance and explicit split payment only if validation and UX stay clear: payable allocation remains separate from advance creation.
    - Must not add bank API integration, public/mobile exposure, customer payment/refund reuse, customer invoice archive/download changes, or finance export format changes.
 3. `Supplier Advance Reversal And Bank Correction Hardening`
-   - Add full reversal/correction rules for posted or bank-settled advances only after the core balance model is verified.
+   - Add full journal-backed reversal for posted unapplied advances and full journal-backed reversal for advance applications before reversing the advance itself.
 4. `Purchasing Documents And Supplier Contacts`
    - Continue purchasing master data and document surfaces after advance/overpayment no longer has an unresolved finance boundary.
 
 ## Implementation Outcome
 
-This step is documentation-only:
-
-- Supplier advance and overpayment decisions are locked before any schema or UI implementation.
-- Current supplier payment overpayment guards remain correct and intentional.
-- Future advance is Asset-backed, journal-owned, explicit, and separate from AP aging.
-- Future split payment must be explicit; the system must not silently convert overpayment into credit.
-- Bank statement and reconciliation evidence support review, but do not create or allocate advance.
+- Supplier advance core/admin is implemented in Billing/Finance.
+- `SupplierAdvance` and `SupplierAdvanceApplication` are formal Billing models with PostgreSQL and SQL Server migrations, indexed business/supplier/status/date lookups, unique active advance numbering, and JSON metadata mapping.
+- `FinancePostingAccountRole.SupplierAdvance`, `JournalEntryPostingKind.SupplierAdvancePosted`, `JournalEntryPostingKind.SupplierAdvanceApplied`, and `NumberSequenceDocumentType.SupplierAdvance` are available.
+- Standalone advance posting is journal-backed: debit `SupplierAdvance`, credit `CashClearing`.
+- Explicit application to a posted supplier invoice is journal-backed: debit `AccountsPayable`, credit `SupplierAdvance`.
+- Current supplier payment overpayment guards remain active. The system does not silently convert invoice overpayment into credit or advance.
+- WebAdmin Finance now exposes Supplier Advances with list, detail, create/update draft, post, cancel draft, and apply-to-invoice actions. All mutations are internal, anti-forgery protected, and row-version protected where lifecycle state changes.
+- Supplier advance reversal hardening is implemented. Posted, unapplied advances can be reversed only through a balanced finance posting that debits `CashClearing` and credits `SupplierAdvance`; status-only reversal is not allowed.
+- Supplier advance application reversal is implemented. Applied advance allocations can be reversed only through a balanced finance posting that debits `SupplierAdvance` and credits `AccountsPayable`, which reopens payable balance without deleting application history.
+- Applied advances cannot be reversed directly. Operators must reverse active applications first, then reverse the advance if the full balance is open.
+- Bank statement and reconciliation evidence support review, but they do not create, allocate, reverse, or settle advance outside the owning advance handlers.
 - Public WebApi, mobile/member, storefront, customer invoice archive/download, customer payment/refund flows, and finance export package format remain unchanged.
+- Next gate: `Purchasing Documents And Supplier Contacts`.

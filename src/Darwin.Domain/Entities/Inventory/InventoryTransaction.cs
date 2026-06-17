@@ -40,6 +40,230 @@ namespace Darwin.Domain.Entities.Inventory
         /// Gets or sets the stock levels tracked in this warehouse.
         /// </summary>
         public List<StockLevel> StockLevels { get; set; } = new();
+
+        /// <summary>
+        /// Gets or sets structured zones, bins, docks, and other warehouse locations.
+        /// </summary>
+        public List<WarehouseLocation> Locations { get; set; } = new();
+    }
+
+    /// <summary>
+    /// Represents a structured warehouse location or bin in a single hierarchy.
+    /// </summary>
+    public sealed class WarehouseLocation : BaseEntity
+    {
+        public Guid BusinessId { get; set; }
+        public Guid WarehouseId { get; set; }
+        public Guid? ParentLocationId { get; set; }
+        public string Code { get; set; } = string.Empty;
+        public string DisplayName { get; set; } = string.Empty;
+        public WarehouseLocationType LocationType { get; set; } = WarehouseLocationType.Bin;
+        public WarehouseLocationStatus Status { get; set; } = WarehouseLocationStatus.Active;
+        public string? Barcode { get; set; }
+        public int SortOrder { get; set; }
+        public string? Description { get; set; }
+        public string? MetadataJson { get; set; }
+        public List<WarehouseLocation> Children { get; set; } = new();
+    }
+
+    /// <summary>
+    /// Inventory-owned tracking policy for a product variant.
+    /// </summary>
+    public sealed class ProductTrackingPolicy : BaseEntity
+    {
+        public Guid BusinessId { get; set; }
+        public Guid ProductVariantId { get; set; }
+        public ProductTrackingMode TrackingMode { get; set; } = ProductTrackingMode.Untracked;
+        public ProductTrackingPolicyStatus Status { get; set; } = ProductTrackingPolicyStatus.Active;
+        public bool RequiresSupplierLot { get; set; }
+        public bool RequiresExpiryDate { get; set; }
+        public bool RequiresHandlingUnit { get; set; }
+        public string? Notes { get; set; }
+        public string? MetadataJson { get; set; }
+    }
+
+    /// <summary>
+    /// Reusable lot identity for quantity-tracked stock.
+    /// </summary>
+    public sealed class InventoryLot : BaseEntity
+    {
+        public Guid BusinessId { get; set; }
+        public Guid ProductVariantId { get; set; }
+        public string LotCode { get; set; } = string.Empty;
+        public string? SupplierLotCode { get; set; }
+        public DateTime? ManufactureDateUtc { get; set; }
+        public DateTime? ExpiryDateUtc { get; set; }
+        public InventoryLotStatus Status { get; set; } = InventoryLotStatus.Draft;
+        public string? Notes { get; set; }
+        public string? MetadataJson { get; set; }
+    }
+
+    /// <summary>
+    /// Unique serial identity for exact-unit stock.
+    /// </summary>
+    public sealed class InventorySerialUnit : BaseEntity
+    {
+        public Guid BusinessId { get; set; }
+        public Guid ProductVariantId { get; set; }
+        public Guid? InventoryLotId { get; set; }
+        public string SerialNumber { get; set; } = string.Empty;
+        public DateTime? ManufactureDateUtc { get; set; }
+        public DateTime? ExpiryDateUtc { get; set; }
+        public InventorySerialUnitStatus Status { get; set; } = InventorySerialUnitStatus.Received;
+        public string? Notes { get; set; }
+        public string? MetadataJson { get; set; }
+    }
+
+    /// <summary>
+    /// Warehouse execution identity for grouped stock such as pallets, cartons, totes, or cases.
+    /// </summary>
+    public sealed class HandlingUnit : BaseEntity
+    {
+        public Guid BusinessId { get; set; }
+        public Guid? WarehouseId { get; set; }
+        public Guid? LocationId { get; set; }
+        public Guid? ParentHandlingUnitId { get; set; }
+        public string Code { get; set; } = string.Empty;
+        public string DisplayName { get; set; } = string.Empty;
+        public string? Barcode { get; set; }
+        public HandlingUnitType HandlingUnitType { get; set; } = HandlingUnitType.Pallet;
+        public HandlingUnitStatus Status { get; set; } = HandlingUnitStatus.Open;
+        public string? Notes { get; set; }
+        public string? MetadataJson { get; set; }
+        public List<HandlingUnit> Children { get; set; } = new();
+        public List<HandlingUnitContent> Contents { get; set; } = new();
+    }
+
+    /// <summary>
+    /// Product quantity or exact-unit content inside a handling unit.
+    /// </summary>
+    public sealed class HandlingUnitContent : BaseEntity
+    {
+        public Guid HandlingUnitId { get; set; }
+        public Guid ProductVariantId { get; set; }
+        public Guid? InventoryLotId { get; set; }
+        public Guid? InventorySerialUnitId { get; set; }
+        public int Quantity { get; set; }
+        public string? SkuSnapshot { get; set; }
+        public string Description { get; set; } = string.Empty;
+        public int SortOrder { get; set; }
+        public string? MetadataJson { get; set; }
+    }
+
+    /// <summary>
+    /// Provider-neutral label template for warehouse locations and bins.
+    /// </summary>
+    public sealed class WarehouseLabelTemplate : BaseEntity
+    {
+        public Guid BusinessId { get; set; }
+        public string Name { get; set; } = string.Empty;
+        public string TemplateKey { get; set; } = string.Empty;
+        public WarehouseLabelTemplateStatus Status { get; set; } = WarehouseLabelTemplateStatus.Active;
+        public WarehouseLabelTemplateFormat Format { get; set; } = WarehouseLabelTemplateFormat.Html;
+        public bool IsDefault { get; set; }
+        public int WidthMm { get; set; } = 70;
+        public int HeightMm { get; set; } = 35;
+        public string ContentTemplate { get; set; } = string.Empty;
+        public string? Description { get; set; }
+        public string? MetadataJson { get; set; }
+    }
+
+    /// <summary>
+    /// Formal internal warehouse execution task for review and later PWA execution.
+    /// </summary>
+    public sealed class WarehouseTask : BaseEntity
+    {
+        public Guid BusinessId { get; set; }
+        public Guid WarehouseId { get; set; }
+        public Guid? FromLocationId { get; set; }
+        public Guid? ToLocationId { get; set; }
+        public Guid? AssignedToUserId { get; set; }
+        public string? TaskNumber { get; set; }
+        public string Title { get; set; } = string.Empty;
+        public WarehouseTaskType TaskType { get; set; } = WarehouseTaskType.General;
+        public WarehouseTaskStatus Status { get; set; } = WarehouseTaskStatus.Draft;
+        public WarehouseTaskPriority Priority { get; set; } = WarehouseTaskPriority.Normal;
+        public WarehouseTaskSourceType SourceType { get; set; } = WarehouseTaskSourceType.Manual;
+        public Guid? SourceEntityId { get; set; }
+        public DateTime? DueAtUtc { get; set; }
+        public DateTime? ReadyAtUtc { get; set; }
+        public DateTime? AssignedAtUtc { get; set; }
+        public DateTime? StartedAtUtc { get; set; }
+        public DateTime? CompletedAtUtc { get; set; }
+        public DateTime? CancelledAtUtc { get; set; }
+        public string? InternalNotes { get; set; }
+        public string? MetadataJson { get; set; }
+        public List<WarehouseTaskLine> Lines { get; set; } = new();
+    }
+
+    /// <summary>
+    /// Product, location, quantity, and source-line evidence for a warehouse task.
+    /// </summary>
+    public sealed class WarehouseTaskLine : BaseEntity
+    {
+        public Guid WarehouseTaskId { get; set; }
+        public Guid? ProductVariantId { get; set; }
+        public Guid? FromLocationId { get; set; }
+        public Guid? ToLocationId { get; set; }
+        public string? SkuSnapshot { get; set; }
+        public string Description { get; set; } = string.Empty;
+        public int RequestedQuantity { get; set; }
+        public int CompletedQuantity { get; set; }
+        public int ShortQuantity { get; set; }
+        public string? ShortReason { get; set; }
+        public int SortOrder { get; set; }
+        public string? SourceLineType { get; set; }
+        public Guid? SourceLineId { get; set; }
+        public string? MetadataJson { get; set; }
+    }
+
+    /// <summary>
+    /// Formal internal stock count session for count evidence, variance review, and adjustment posting.
+    /// </summary>
+    public sealed class StockCountSession : BaseEntity
+    {
+        public Guid BusinessId { get; set; }
+        public Guid WarehouseId { get; set; }
+        public Guid? LocationId { get; set; }
+        public Guid? AssignedToUserId { get; set; }
+        public string? CountNumber { get; set; }
+        public string Title { get; set; } = string.Empty;
+        public StockCountType CountType { get; set; } = StockCountType.Cycle;
+        public StockCountSessionStatus Status { get; set; } = StockCountSessionStatus.Draft;
+        public DateTime? CountWindowStartUtc { get; set; }
+        public DateTime? CountWindowEndUtc { get; set; }
+        public DateTime? PreparedAtUtc { get; set; }
+        public DateTime? StartedAtUtc { get; set; }
+        public DateTime? CountedAtUtc { get; set; }
+        public DateTime? ReviewRequestedAtUtc { get; set; }
+        public DateTime? ApprovedAtUtc { get; set; }
+        public DateTime? PostedAtUtc { get; set; }
+        public DateTime? RejectedAtUtc { get; set; }
+        public DateTime? CancelledAtUtc { get; set; }
+        public string? ReviewNotes { get; set; }
+        public string? InternalNotes { get; set; }
+        public string? MetadataJson { get; set; }
+        public List<StockCountLine> Lines { get; set; } = new();
+    }
+
+    /// <summary>
+    /// Product and location count evidence for a formal stock count session.
+    /// </summary>
+    public sealed class StockCountLine : BaseEntity
+    {
+        public Guid StockCountSessionId { get; set; }
+        public Guid ProductVariantId { get; set; }
+        public Guid? LocationId { get; set; }
+        public string? SkuSnapshot { get; set; }
+        public string Description { get; set; } = string.Empty;
+        public int ExpectedQuantity { get; set; }
+        public int CountedQuantity { get; set; }
+        public int VarianceQuantity { get; set; }
+        public StockCountLineReviewStatus ReviewStatus { get; set; } = StockCountLineReviewStatus.Pending;
+        public bool AdjustmentPosted { get; set; }
+        public string? ReviewNotes { get; set; }
+        public int SortOrder { get; set; }
+        public string? MetadataJson { get; set; }
     }
 
     /// <summary>
@@ -209,6 +433,28 @@ namespace Darwin.Domain.Entities.Inventory
         /// Gets or sets purchase orders issued to this supplier.
         /// </summary>
         public List<PurchaseOrder> PurchaseOrders { get; set; } = new();
+
+        /// <summary>
+        /// Gets or sets structured contacts for purchasing, payables, logistics, and quality workflows.
+        /// </summary>
+        public List<SupplierContact> Contacts { get; set; } = new();
+    }
+
+    /// <summary>
+    /// Represents a structured supplier contact owned by the supplier master record.
+    /// </summary>
+    public sealed class SupplierContact : BaseEntity
+    {
+        public Guid BusinessId { get; set; }
+        public Guid SupplierId { get; set; }
+        public SupplierContactRole Role { get; set; } = SupplierContactRole.General;
+        public string Name { get; set; } = string.Empty;
+        public string? JobTitle { get; set; }
+        public string? Email { get; set; }
+        public string? Phone { get; set; }
+        public string? LanguageCode { get; set; }
+        public bool IsPrimary { get; set; }
+        public string? Notes { get; set; }
     }
 
     /// <summary>

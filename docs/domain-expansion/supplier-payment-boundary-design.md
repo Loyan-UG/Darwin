@@ -82,9 +82,13 @@ The core decision is that future `SupplierPayment` is a formal Billing/Finance s
    - Outcome: implemented. `SupplierPaymentBankCorrection` is the formal internal correction model. Returned-transfer correction posts full-settlement journal-backed correction; duplicate-payment correction remains evidence/attention and cannot auto-post.
 12. `Supplier Advance And Overpayment Boundary Design Slice`
    - Outcome: completed in [supplier-advance-overpayment-boundary-design.md](supplier-advance-overpayment-boundary-design.md). Supplier advance must be a formal Asset-backed Billing/Finance concept with explicit posting, allocation, aging, reconciliation, and reversal boundaries. Existing supplier payment overpayment guards remain active until implementation.
+13. `Supplier Advance Core Model And Admin Slice`
+   - Outcome: completed. `SupplierAdvance` and `SupplierAdvanceApplication` exist in Billing with internal/WebAdmin create/update draft, post, cancel draft, and explicit apply-to-posted-invoice workflows. Advance posting and application are journal-backed and finance-export compatible through posted `JournalEntry` facts.
+14. `Supplier Advance Reversal And Bank Correction Hardening`
+   - Outcome: completed. Posted unapplied advances and active advance applications can be reversed only through formal finance posting. Reversal preserves source history, opens balances correctly, and does not alter customer payment/refund or finance export contracts.
 
 ## Next Implementation Slice
 
-`Supplier Advance Core Model And Admin Slice`
+`Purchasing Documents And Supplier Contacts`
 
-The next step should implement formal supplier advance and overpayment handling with a dedicated advance model, `SupplierAdvance` Asset account role, explicit allocation to future posted supplier invoices, and internal WebAdmin workflow. It must not add bank API integration, public/mobile exposure, customer payment/refund reuse, or finance export format changes.
+The next step should add structured purchasing contacts and document surfaces on the existing supplier foundation. It must not add bank API integration, public/mobile exposure, customer payment/refund reuse, status-only correction, or finance export format changes.

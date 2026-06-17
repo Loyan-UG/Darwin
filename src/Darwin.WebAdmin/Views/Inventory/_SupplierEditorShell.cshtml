@@ -1,4 +1,5 @@
 @model Darwin.WebAdmin.ViewModels.Inventory.SupplierEditVm
+@using Darwin.Domain.Enums
 @inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
 @{
     var isCreate = (bool?)ViewData["IsCreate"] == true;
@@ -30,4 +31,253 @@
                hx-push-url="true">@T.T("Back")</a>
         </div>
     </form>
+
+    @if (!isCreate)
+    {
+        <section class="mt-4">
+            <div class="d-flex align-items-center justify-content-between mb-2">
+                <h2 class="h5 mb-0">@T.T("SupplierContacts")</h2>
+                <span class="badge bg-secondary">@Model.Contacts.Count</span>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-sm align-middle">
+                    <thead>
+                        <tr>
+                            <th>@T.T("Role")</th>
+                            <th>@T.T("Name")</th>
+                            <th>@T.T("Email")</th>
+                            <th>@T.T("Phone")</th>
+                            <th>@T.T("Primary")</th>
+                            <th class="text-end">@T.T("Actions")</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    @if (Model.Contacts.Count == 0)
+                    {
+                        <tr>
+                            <td colspan="6" class="text-muted">@T.T("NoSupplierContacts")</td>
+                        </tr>
+                    }
+                    @foreach (var contact in Model.Contacts)
+                    {
+                        <tr>
+                            <td colspan="6">
+                                <form asp-action="EditSupplierContact" method="post" class="row g-2 align-items-end"
+                                      hx-post="@Url.Action("EditSupplierContact", "Inventory")"
+                                      hx-target="#inventory-supplier-editor-shell"
+                                      hx-swap="outerHTML">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="Id" value="@contact.Id" />
+                                    <input type="hidden" name="BusinessId" value="@contact.BusinessId" />
+                                    <input type="hidden" name="SupplierId" value="@contact.SupplierId" />
+                                    <input type="hidden" name="RowVersion" value="@Convert.ToBase64String(contact.RowVersion ?? Array.Empty<byte>())" />
+                                    <div class="col-md-2">
+                                        <label class="form-label">@T.T("Role")</label>
+                                        <select name="Role" class="form-select form-select-sm">
+                                            @foreach (var role in Enum.GetValues<SupplierContactRole>())
+                                            {
+                                                <option value="@role" selected="@(role == contact.Role)">@role</option>
+                                            }
+                                        </select>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <label class="form-label">@T.T("Name")</label>
+                                        <input name="Name" value="@contact.Name" class="form-control form-control-sm" maxlength="200" required />
+                                    </div>
+                                    <div class="col-md-2">
+                                        <label class="form-label">@T.T("Email")</label>
+                                        <input name="Email" value="@contact.Email" class="form-control form-control-sm" maxlength="320" />
+                                    </div>
+                                    <div class="col-md-2">
+                                        <label class="form-label">@T.T("Phone")</label>
+                                        <input name="Phone" value="@contact.Phone" class="form-control form-control-sm" maxlength="50" />
+                                    </div>
+                                    <div class="col-md-2">
+                                        <label class="form-label">@T.T("JobTitle")</label>
+                                        <input name="JobTitle" value="@contact.JobTitle" class="form-control form-control-sm" maxlength="200" />
+                                    </div>
+                                    <div class="col-md-1">
+                                        <label class="form-label">@T.T("Language")</label>
+                                        <input name="LanguageCode" value="@contact.LanguageCode" class="form-control form-control-sm" maxlength="16" />
+                                    </div>
+                                    <div class="col-md-1 form-check mt-4">
+                                        <input type="checkbox" class="form-check-input" name="IsPrimary" value="true" @(contact.IsPrimary ? "checked" : string.Empty) />
+                                        <input type="hidden" name="IsPrimary" value="false" />
+                                        <label class="form-check-label">@T.T("Primary")</label>
+                                    </div>
+                                    <div class="col-md-10">
+                                        <label class="form-label">@T.T("Notes")</label>
+                                        <input name="Notes" value="@contact.Notes" class="form-control form-control-sm" maxlength="1000" />
+                                    </div>
+                                    <div class="col-md-2 d-flex gap-2 justify-content-end">
+                                        <button type="submit" class="btn btn-sm btn-primary">@T.T("Save")</button>
+                                        <button type="submit"
+                                                formaction="@Url.Action("ArchiveSupplierContact", "Inventory")"
+                                                name="supplierId"
+                                                value="@contact.SupplierId"
+                                                class="btn btn-sm btn-outline-danger">@T.T("Archive")</button>
+                                    </div>
+                                </form>
+                            </td>
+                        </tr>
+                    }
+                    </tbody>
+                </table>
+            </div>
+
+            <form asp-action="CreateSupplierContact" method="post" class="row g-2 align-items-end border-top pt-3"
+                  hx-post="@Url.Action("CreateSupplierContact", "Inventory")"
+                  hx-target="#inventory-supplier-editor-shell"
+                  hx-swap="outerHTML">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="BusinessId" value="@Model.BusinessId" />
+                <input type="hidden" name="SupplierId" value="@Model.Id" />
+                <div class="col-md-2">
+                    <label class="form-label">@T.T("Role")</label>
+                    <select name="Role" class="form-select form-select-sm">
+                        @foreach (var role in Enum.GetValues<SupplierContactRole>())
+                        {
+                            <option value="@role">@role</option>
+                        }
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">@T.T("Name")</label>
+                    <input name="Name" class="form-control form-control-sm" maxlength="200" required />
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">@T.T("Email")</label>
+                    <input name="Email" class="form-control form-control-sm" maxlength="320" />
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">@T.T("Phone")</label>
+                    <input name="Phone" class="form-control form-control-sm" maxlength="50" />
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">@T.T("JobTitle")</label>
+                    <input name="JobTitle" class="form-control form-control-sm" maxlength="200" />
+                </div>
+                <div class="col-md-1">
+                    <label class="form-label">@T.T("Language")</label>
+                    <input name="LanguageCode" class="form-control form-control-sm" maxlength="16" />
+                </div>
+                <div class="col-md-1 form-check mt-4">
+                    <input type="checkbox" class="form-check-input" name="IsPrimary" value="true" />
+                    <input type="hidden" name="IsPrimary" value="false" />
+                    <label class="form-check-label">@T.T("Primary")</label>
+                </div>
+                <div class="col-md-10">
+                    <label class="form-label">@T.T("Notes")</label>
+                    <input name="Notes" class="form-control form-control-sm" maxlength="1000" />
+                </div>
+                <div class="col-md-2 text-end">
+                    <button type="submit" class="btn btn-sm btn-outline-primary">@T.T("AddContact")</button>
+                </div>
+            </form>
+        </section>
+
+        <section class="mt-4">
+            <div class="d-flex align-items-center justify-content-between mb-2">
+                <h2 class="h5 mb-0">@T.T("SupplierDocuments")</h2>
+                <span class="badge bg-secondary">@Model.Documents.Count</span>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-sm align-middle">
+                    <thead>
+                        <tr>
+                            <th>@T.T("Kind")</th>
+                            <th>@T.T("Title")</th>
+                            <th>@T.T("FileName")</th>
+                            <th>@T.T("ContentType")</th>
+                            <th>@T.T("Visibility")</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    @if (Model.Documents.Count == 0)
+                    {
+                        <tr>
+                            <td colspan="5" class="text-muted">@T.T("NoSupplierDocuments")</td>
+                        </tr>
+                    }
+                    @foreach (var document in Model.Documents)
+                    {
+                        <tr>
+                            <td>@document.DocumentKind</td>
+                            <td>@document.Title</td>
+                            <td>@document.FileName</td>
+                            <td>@document.ContentType</td>
+                            <td>@document.Visibility</td>
+                        </tr>
+                    }
+                    </tbody>
+                </table>
+            </div>
+
+            <form asp-action="RegisterSupplierDocument" method="post" class="row g-2 align-items-end border-top pt-3"
+                  hx-post="@Url.Action("RegisterSupplierDocument", "Inventory")"
+                  hx-target="#inventory-supplier-editor-shell"
+                  hx-swap="outerHTML">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="BusinessId" value="@Model.BusinessId" />
+                <input type="hidden" name="SupplierId" value="@Model.Id" />
+                <div class="col-md-2">
+                    <label class="form-label">@T.T("Kind")</label>
+                    <select name="DocumentKind" class="form-select form-select-sm">
+                        @foreach (var kind in Enum.GetValues<DocumentRecordKind>())
+                        {
+                            <option value="@kind">@kind</option>
+                        }
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">@T.T("Title")</label>
+                    <input name="Title" class="form-control form-control-sm" maxlength="200" required />
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">@T.T("FileName")</label>
+                    <input name="FileName" class="form-control form-control-sm" maxlength="260" required />
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">@T.T("ContentType")</label>
+                    <input name="ContentType" value="application/octet-stream" class="form-control form-control-sm" maxlength="128" required />
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">@T.T("Visibility")</label>
+                    <select name="Visibility" class="form-select form-select-sm">
+                        @foreach (var visibility in Enum.GetValues<FoundationVisibility>())
+                        {
+                            <option value="@visibility" selected="@(visibility == FoundationVisibility.Internal)">@visibility</option>
+                        }
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">@T.T("StorageProvider")</label>
+                    <input name="StorageProvider" value="External" class="form-control form-control-sm" maxlength="128" required />
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">@T.T("StorageContainer")</label>
+                    <input name="StorageContainer" value="supplier-documents" class="form-control form-control-sm" maxlength="128" required />
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">@T.T("StorageKey")</label>
+                    <input name="StorageKey" class="form-control form-control-sm" maxlength="1024" required />
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">@T.T("SizeBytes")</label>
+                    <input name="SizeBytes" type="number" min="0" class="form-control form-control-sm" />
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">@T.T("ContentHash")</label>
+                    <input name="ContentHash" class="form-control form-control-sm" maxlength="256" />
+                </div>
+                <div class="col-md-10">
+                    <label class="form-label">@T.T("MetadataJson")</label>
+                    <input name="MetadataJson" value="{}" class="form-control form-control-sm" maxlength="4000" />
+                </div>
+                <div class="col-md-2 text-end">
+                    <button type="submit" class="btn btn-sm btn-outline-primary">@T.T("RegisterDocument")</button>
+                </div>
+            </form>
+        </section>
+    }
 </div>

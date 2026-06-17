@@ -1,0 +1,150 @@
+@model Darwin.WebAdmin.ViewModels.Inventory.WarehouseLocationsListVm
+@inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
+@{
+    ViewData["Title"] = T.T("WarehouseLocationsTitle");
+    string LocationsUrl(object? businessId = null, object? warehouseId = null, string? q = null, string? filter = null) => Url.Action("Locations", "Inventory", new { businessId, warehouseId, q, filter }) ?? string.Empty;
+    string CreateLocationUrl(object? businessId = null, object? warehouseId = null, object? parentLocationId = null) => Url.Action("CreateLocation", "Inventory", new { businessId, warehouseId, parentLocationId }) ?? string.Empty;
+    string EditLocationUrl(Guid id) => Url.Action("EditLocation", "Inventory", new { id }) ?? string.Empty;
+}
+
+<div id="inventory-locations-workspace-shell">
+<h1 class="mb-3">@T.T("WarehouseLocationsTitle")</h1>
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <form asp-action="Locations" method="get" class="d-flex gap-2"
+          hx-get="@LocationsUrl()"
+          hx-target="#inventory-locations-workspace-shell"
+          hx-swap="outerHTML"
+          hx-push-url="true">
+        <select name="businessId" asp-items="Model.BusinessOptions" class="form-select"></select>
+        <select name="warehouseId" asp-items="Model.WarehouseOptions" class="form-select"></select>
+        <input type="text" name="q" value="@Model.Query" class="form-control" placeholder="@T.T("SearchWarehouseLocationsPlaceholder")">
+        <select name="filter" asp-items="Model.FilterItems" class="form-select"></select>
+        <button class="btn btn-outline-secondary" type="submit">@T.T("Filter")</button>
+        <a asp-action="Locations" asp-route-businessId="@Model.BusinessId" asp-route-warehouseId="@Model.WarehouseId" class="btn btn-outline-secondary"
+           hx-get="@LocationsUrl(Model.BusinessId, Model.WarehouseId)"
+           hx-target="#inventory-locations-workspace-shell"
+           hx-swap="outerHTML"
+           hx-push-url="true">@T.T("Reset")</a>
+    </form>
+    <div class="d-flex gap-2">
+        <a asp-action="PrintLocationLabels" asp-route-businessId="@Model.BusinessId" class="btn btn-outline-primary">@T.T("PrintLabels")</a>
+        <a asp-action="CreateLocation" asp-route-businessId="@Model.BusinessId" asp-route-warehouseId="@Model.WarehouseId" class="btn btn-primary"
+           hx-get="@CreateLocationUrl(Model.BusinessId, Model.WarehouseId)"
+           hx-target="#inventory-locations-workspace-shell"
+           hx-swap="outerHTML"
+           hx-push-url="true">@T.T("NewWarehouseLocation")</a>
+    </div>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-md-2"><div class="card h-100"><div class="card-body"><div class="text-muted small">@T.T("Total")</div><div class="fs-4 fw-semibold">@Model.Summary.TotalCount</div></div></div></div>
+    <div class="col-md-2"><div class="card h-100 border-success-subtle"><div class="card-body"><div class="text-muted small">@T.T("Active")</div><div class="fs-4 fw-semibold">@Model.Summary.ActiveCount</div></div></div></div>
+    <div class="col-md-2"><div class="card h-100 border-danger-subtle"><div class="card-body"><div class="text-muted small">@T.T("Blocked")</div><div class="fs-4 fw-semibold">@Model.Summary.BlockedCount</div></div></div></div>
+    <div class="col-md-2"><div class="card h-100"><div class="card-body"><div class="text-muted small">@T.T("Bins")</div><div class="fs-4 fw-semibold">@Model.Summary.BinCount</div></div></div></div>
+    <div class="col-md-2"><div class="card h-100"><div class="card-body"><div class="text-muted small">@T.T("Docks")</div><div class="fs-4 fw-semibold">@Model.Summary.DockCount</div></div></div></div>
+    <div class="col-md-2"><div class="card h-100 border-warning-subtle"><div class="card-body"><div class="text-muted small">@T.T("QualityHold")</div><div class="fs-4 fw-semibold">@Model.Summary.QualityHoldCount</div></div></div></div>
+</div>
+
+<div class="row g-4">
+    <div class="col-lg-4">
+        <section class="admin-form-section">
+            <h2 class="admin-form-section-title">@T.T("WarehouseLocationHierarchy")</h2>
+            @if (Model.TreeItems.Count == 0)
+            {
+                <div class="text-muted">@T.T("NoWarehouseLocationsFound")</div>
+            }
+            else
+            {
+                <ul class="list-unstyled mb-0">
+                    @foreach (var item in Model.TreeItems)
+                    {
+                        @Html.Raw(RenderTreeItem(item))
+                    }
+                </ul>
+            }
+        </section>
+    </div>
+    <div class="col-lg-8">
+        <div class="table-responsive">
+            <table class="table table-sm table-striped align-middle">
+                <thead>
+                <tr>
+                    <th>@T.T("Code")</th>
+                    <th>@T.T("DisplayName")</th>
+                    <th>@T.T("Warehouse")</th>
+                    <th>@T.T("Type")</th>
+                    <th>@T.T("Status")</th>
+                    <th>@T.T("Barcode")</th>
+                    <th class="text-end">@T.T("Actions")</th>
+                </tr>
+                </thead>
+                <tbody>
+                @if (Model.Items.Count == 0)
+                {
+                    <tr><td colspan="7" class="text-center text-muted">@T.T("NoWarehouseLocationsFound")</td></tr>
+                }
+                else
+                {
+                    foreach (var item in Model.Items)
+                    {
+                        <tr>
+                            <td class="fw-semibold">@item.Code</td>
+                            <td>
+                                @item.DisplayName
+                                @if (!string.IsNullOrWhiteSpace(item.ParentCode))
+                                {
+                                    <div class="small text-muted">@T.T("Parent"): @item.ParentCode</div>
+                                }
+                            </td>
+                            <td>@item.WarehouseName</td>
+                            <td><span class="badge text-bg-light">@T.T(item.LocationType.ToString())</span></td>
+                            <td><span class="badge @(item.Status == Darwin.Domain.Enums.WarehouseLocationStatus.Active ? "text-bg-success" : item.Status == Darwin.Domain.Enums.WarehouseLocationStatus.Blocked ? "text-bg-danger" : "text-bg-secondary")">@T.T(item.Status.ToString())</span></td>
+                            <td>@item.Barcode</td>
+                            <td class="text-end">
+                                <a asp-action="CreateLocation" asp-route-businessId="@item.BusinessId" asp-route-warehouseId="@item.WarehouseId" asp-route-parentLocationId="@item.Id" class="btn btn-sm btn-outline-primary"
+                                   hx-get="@CreateLocationUrl(item.BusinessId, item.WarehouseId, item.Id)"
+                                   hx-target="#inventory-locations-workspace-shell"
+                                   hx-swap="outerHTML"
+                                   hx-push-url="true">@T.T("AddChild")</a>
+                                <a asp-action="EditLocation" asp-route-id="@item.Id" class="btn btn-sm btn-outline-secondary"
+                                   hx-get="@EditLocationUrl(item.Id)"
+                                   hx-target="#inventory-locations-workspace-shell"
+                                   hx-swap="outerHTML"
+                                   hx-push-url="true">@T.T("Edit")</a>
+                            </td>
+                        </tr>
+                    }
+                }
+                </tbody>
+            </table>
+        </div>
+        <pager page="Model.Page" page-size="Model.PageSize" total="Model.Total" asp-controller="Inventory" asp-action="Locations" asp-route-businessId="@Model.BusinessId" asp-route-warehouseId="@Model.WarehouseId" asp-route-q="@Model.Query" asp-route-filter="@Model.Filter" hx-target="#inventory-locations-workspace-shell" hx-swap="outerHTML" hx-push-url="true"></pager>
+    </div>
+</div>
+</div>
+
+@functions {
+    private string RenderTreeItem(Darwin.WebAdmin.ViewModels.Inventory.WarehouseLocationTreeItemVm item)
+    {
+        var builder = new System.Text.StringBuilder();
+        builder.Append("<li class=\"mb-2\"><div class=\"d-flex justify-content-between gap-2\"><span><span class=\"fw-semibold\">");
+        builder.Append(System.Net.WebUtility.HtmlEncode(item.Code));
+        builder.Append("</span> ");
+        builder.Append(System.Net.WebUtility.HtmlEncode(item.DisplayName));
+        builder.Append("</span><span class=\"badge text-bg-light\">");
+        builder.Append(System.Net.WebUtility.HtmlEncode(T.T(item.LocationType.ToString())));
+        builder.Append("</span></div>");
+        if (item.Children.Count > 0)
+        {
+            builder.Append("<ul class=\"list-unstyled ms-3 mt-2 border-start ps-3\">");
+            foreach (var child in item.Children)
+            {
+                builder.Append(RenderTreeItem(child));
+            }
+            builder.Append("</ul>");
+        }
+        builder.Append("</li>");
+        return builder.ToString();
+    }
+}

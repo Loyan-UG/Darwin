@@ -84,6 +84,16 @@ namespace Darwin.Infrastructure.Persistence.Db
         public DbSet<SupplierPaymentBankCorrection> SupplierPaymentBankCorrections => Set<SupplierPaymentBankCorrection>();
 
         /// <summary>
+        /// Supplier advances used as formal prepaid supplier assets before payable application.
+        /// </summary>
+        public DbSet<SupplierAdvance> SupplierAdvances => Set<SupplierAdvance>();
+
+        /// <summary>
+        /// Applications from supplier advances to posted supplier invoices.
+        /// </summary>
+        public DbSet<SupplierAdvanceApplication> SupplierAdvanceApplications => Set<SupplierAdvanceApplication>();
+
+        /// <summary>
         /// Journal entries.
         /// </summary>
         public DbSet<JournalEntry> JournalEntries => Set<JournalEntry>();

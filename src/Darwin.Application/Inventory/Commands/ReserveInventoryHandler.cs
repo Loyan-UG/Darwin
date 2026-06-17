@@ -1,6 +1,7 @@
 ﻿using System.Threading;
 using System.Threading.Tasks;
 using Darwin.Application.Abstractions.Persistence;
+using Darwin.Application.Inventory;
 using Darwin.Application.Inventory.DTOs;
 using Darwin.Application.Inventory.Validators;
 using Darwin.Domain.Entities.Catalog;
@@ -26,18 +27,14 @@ namespace Darwin.Application.Inventory.Commands
         {
             var v = _validator.Validate(dto);
             if (!v.IsValid) throw new FluentValidation.ValidationException(v.Errors);
+            dto.Reason = InventoryMovementReferencePolicy.NormalizeReason(dto.Reason);
+            InventoryMovementReferencePolicy.EnsureReferencePolicy(dto.Reason, dto.ReferenceId);
 
             var warehouseId = await Darwin.Application.Inventory.InventoryStockHelper.ResolveWarehouseIdAsync(_db, dto.VariantId, dto.WarehouseId, _localizer, ct);
 
-            if (dto.ReferenceId.HasValue)
+            if (await InventoryMovementReferencePolicy.ExistsAsync(_db, dto.ReferenceId, dto.Reason, warehouseId, dto.VariantId, ct).ConfigureAwait(false))
             {
-                var exists = await _db.Set<InventoryTransaction>()
-                    .AsNoTracking()
-                    .AnyAsync(t => t.ReferenceId == dto.ReferenceId
-                                   && t.Reason == dto.Reason
-                                   && t.ProductVariantId == dto.VariantId
-                                   && t.WarehouseId == warehouseId, ct);
-                if (exists) return;
+                return;
             }
 
             var stockLevel = await _db.Set<StockLevel>()
@@ -54,14 +51,7 @@ namespace Darwin.Application.Inventory.Commands
             stockLevel.ReservedQuantity += dto.Quantity;
 
             // Ledger: reservation itself does not change on-hand; write a zero-delta row for traceability (optional).
-            _db.Set<InventoryTransaction>().Add(new InventoryTransaction
-            {
-                WarehouseId = warehouseId,
-                ProductVariantId = dto.VariantId,
-                QuantityDelta = 0,
-                Reason = dto.Reason,
-                ReferenceId = dto.ReferenceId
-            });
+            InventoryMovementReferencePolicy.AddLedgerRow(_db, warehouseId, dto.VariantId, 0, dto.Reason, dto.ReferenceId);
 
             await Darwin.Application.Inventory.InventoryStockHelper.RefreshLegacyVariantStockAsync(_db, dto.VariantId, _localizer, ct);
             await _db.SaveChangesAsync(ct);

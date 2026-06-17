@@ -1,0 +1,81 @@
+@model Darwin.WebAdmin.ViewModels.Inventory.WarehouseLocationLabelPrintVm
+@inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
+@{
+    ViewData["Title"] = T.T("PrintWarehouseLocationLabels");
+}
+
+<h1 class="mb-3">@T.T("PrintWarehouseLocationLabels")</h1>
+
+<form method="post" asp-action="PreviewLocationLabels" class="admin-filter-toolbar mb-3">
+    @Html.AntiForgeryToken()
+    <input type="hidden" name="businessId" value="@Model.BusinessId">
+    <select name="templateId" class="form-select">
+        @foreach (var item in Model.TemplateOptions)
+        {
+            <option value="@item.Value" selected="@item.Selected">@item.Text</option>
+        }
+    </select>
+    <select name="locationIds" class="form-select" multiple size="8">
+        @foreach (var location in Model.Locations)
+        {
+            <option value="@location.Id" selected="@Model.LocationIds.Contains(location.Id)">@location.WarehouseName / @location.Code - @location.DisplayName</option>
+        }
+    </select>
+    <button class="btn btn-primary" type="submit">@T.T("Preview")</button>
+</form>
+
+@if (Model.Render is not null && Model.Render.Labels.Count > 0)
+{
+    <form method="post" asp-action="DownloadLocationLabels" class="mb-3">
+        @Html.AntiForgeryToken()
+        <input type="hidden" name="businessId" value="@Model.BusinessId">
+        <input type="hidden" name="templateId" value="@Model.TemplateId">
+        @foreach (var id in Model.LocationIds)
+        {
+            <input type="hidden" name="locationIds" value="@id">
+        }
+        <button class="btn btn-outline-primary" type="submit">@T.T("Download")</button>
+        <button class="btn btn-outline-secondary" type="button" onclick="window.print()">@T.T("Print")</button>
+    </form>
+
+    <div class="warehouse-label-sheet">
+        @foreach (var label in Model.Render.Labels)
+        {
+            <section class="warehouse-label-preview" style="width:@Model.Render.WidthMm mm;height:@Model.Render.HeightMm mm">
+                @Html.Raw(label.RenderedContent)
+            </section>
+        }
+    </div>
+}
+else
+{
+    <div class="text-muted">@T.T("NoWarehouseLabelsSelected")</div>
+}
+
+<style>
+    .warehouse-label-sheet {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+    .warehouse-label-preview {
+        border: 1px solid #111827;
+        padding: 4mm;
+        overflow: hidden;
+        background: #fff;
+        color: #111827;
+        page-break-inside: avoid;
+    }
+    @@media print {
+        body * {
+            visibility: hidden;
+        }
+        .warehouse-label-sheet, .warehouse-label-sheet * {
+            visibility: visible;
+        }
+        .warehouse-label-sheet {
+            position: absolute;
+            inset: 0;
+        }
+    }
+</style>

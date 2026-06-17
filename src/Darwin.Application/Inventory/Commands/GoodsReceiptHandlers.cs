@@ -1,6 +1,7 @@
 using Darwin.Application.Abstractions.Persistence;
 using Darwin.Application.Abstractions.Services;
 using Darwin.Application.Foundation;
+using Darwin.Application.Inventory;
 using Darwin.Application.Inventory.DTOs;
 using Darwin.Application.Inventory.Validators;
 using Darwin.Domain.Entities.Inventory;
@@ -127,7 +128,7 @@ public sealed class UpdateGoodsReceiptLifecycleHandler
     public const string InspectAction = "Inspect";
     public const string PostAction = "Post";
     public const string CancelAction = "Cancel";
-    public const string PostedReason = "GoodsReceiptPosted";
+    public const string PostedReason = InventoryMovementReferencePolicy.GoodsReceiptPosted;
 
     private readonly IAppDbContext _db;
     private readonly IStringLocalizer<ValidationResource> _localizer;
@@ -333,17 +334,6 @@ public sealed class UpdateGoodsReceiptLifecycleHandler
             return Result.Ok();
         }
 
-        var alreadyPosted = await _db.Set<InventoryTransaction>()
-            .AsNoTracking()
-            .AnyAsync(x => x.ReferenceId == receipt.Id && x.Reason == PostedReason && !x.IsDeleted, ct)
-            .ConfigureAwait(false);
-        if (alreadyPosted)
-        {
-            receipt.Status = GoodsReceiptStatus.Posted;
-            receipt.PostedAtUtc ??= _clock.UtcNow;
-            return Result.Ok();
-        }
-
         var purchaseOrder = await _db.Set<PurchaseOrder>()
             .Include(x => x.Lines)
             .FirstOrDefaultAsync(x => x.Id == receipt.PurchaseOrderId && !x.IsDeleted, ct)
@@ -368,17 +358,24 @@ public sealed class UpdateGoodsReceiptLifecycleHandler
                 return Result.Fail(_localizer["GoodsReceiptInvalidQuantity"]);
             }
 
+            var alreadyPosted = await InventoryMovementReferencePolicy.ExistsAsync(
+                    _db,
+                    receipt.Id,
+                    PostedReason,
+                    receipt.WarehouseId,
+                    line.ProductVariantId,
+                    ct)
+                .ConfigureAwait(false);
+            if (alreadyPosted)
+            {
+                variantIdsToRefresh.Add(line.ProductVariantId);
+                continue;
+            }
+
             var stockLevel = await InventoryStockHelper.GetOrCreateStockLevelAsync(_db, receipt.WarehouseId, line.ProductVariantId, ct).ConfigureAwait(false);
             stockLevel.AvailableQuantity += line.AcceptedQuantity;
             purchaseLine.ReceivedQuantity += line.AcceptedQuantity;
-            _db.Set<InventoryTransaction>().Add(new InventoryTransaction
-            {
-                WarehouseId = receipt.WarehouseId,
-                ProductVariantId = line.ProductVariantId,
-                QuantityDelta = line.AcceptedQuantity,
-                Reason = PostedReason,
-                ReferenceId = receipt.Id
-            });
+            InventoryMovementReferencePolicy.AddLedgerRow(_db, receipt.WarehouseId, line.ProductVariantId, line.AcceptedQuantity, PostedReason, receipt.Id);
             variantIdsToRefresh.Add(line.ProductVariantId);
         }
 

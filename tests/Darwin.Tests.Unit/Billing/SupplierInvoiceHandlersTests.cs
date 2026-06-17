@@ -847,6 +847,140 @@ public sealed class SupplierInvoiceHandlersTests
         await partialEvidence.Should().ThrowAsync<InvalidOperationException>().WithMessage("*RequiresFullSettlementEvidence*");
     }
 
+    [Fact]
+    public async Task SupplierAdvance_Post_Should_CreateBalancedAdvancePosting()
+    {
+        await using var db = SupplierInvoiceTestDbContext.Create();
+        var ids = await SeedPurchasingAsync(db, postedReceipt: true);
+        SeedMappedAccount(db, ids.BusinessId, FinancePostingAccountRole.SupplierAdvance, AccountType.Asset);
+        SeedMappedAccount(db, ids.BusinessId, FinancePostingAccountRole.CashClearing, AccountType.Asset);
+        db.Set<NumberSequence>().Add(new NumberSequence
+        {
+            BusinessId = ids.BusinessId,
+            DocumentType = NumberSequenceDocumentType.SupplierAdvance,
+            ScopeKey = NumberSequenceService.GlobalScopeKey,
+            PrefixPattern = "SA-{seq}",
+            NextValue = 5,
+            PaddingLength = 3,
+            IsActive = true,
+            MetadataJson = "{}"
+        });
+
+        var id = await new CreateSupplierAdvanceHandler(db, new FixedClock(Now)).HandleAsync(BuildAdvanceCreate(ids, 1500), TestContext.Current.CancellationToken);
+        var advance = await db.Set<SupplierAdvance>().SingleAsync(TestContext.Current.CancellationToken);
+        advance.RowVersion = [241];
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        await CreatePostSupplierAdvanceHandler(db).HandleAsync(new SupplierAdvanceLifecycleActionDto { Id = id, RowVersion = [241] }, TestContext.Current.CancellationToken);
+
+        var posted = await db.Set<SupplierAdvance>().SingleAsync(TestContext.Current.CancellationToken);
+        posted.Status.Should().Be(SupplierAdvanceStatus.Posted);
+        posted.AdvanceNumber.Should().Be("SA-005");
+        posted.OpenAmountMinor.Should().Be(1500);
+        var entry = await db.Set<JournalEntry>().Include(x => x.Lines).SingleAsync(x => x.PostingKind == JournalEntryPostingKind.SupplierAdvancePosted, TestContext.Current.CancellationToken);
+        entry.PostingKey.Should().Be($"{PostSupplierAdvanceHandler.PostingKeyPrefix}:{id}");
+        entry.SourceEntityType.Should().Be("SupplierAdvance");
+        entry.Lines.Sum(x => x.DebitMinor).Should().Be(1500);
+        entry.Lines.Sum(x => x.CreditMinor).Should().Be(1500);
+    }
+
+    [Fact]
+    public async Task SupplierAdvance_Apply_Should_ClearOpenPayableWithFormalApplicationPosting()
+    {
+        await using var db = SupplierInvoiceTestDbContext.Create();
+        var ids = await SeedPurchasingAsync(db, postedReceipt: true);
+        SeedPostingAccountsIfMissing(db, ids.BusinessId);
+        SeedMappedAccount(db, ids.BusinessId, FinancePostingAccountRole.SupplierAdvance, AccountType.Asset);
+        var invoiceId = await CreatePostedSupplierInvoiceAsync(db, ids, [251]);
+        var advanceId = await CreatePostedSupplierAdvanceAsync(db, ids, 2380, [252]);
+        var advance = await db.Set<SupplierAdvance>().SingleAsync(x => x.Id == advanceId, TestContext.Current.CancellationToken);
+        advance.RowVersion = [253];
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        await CreateApplySupplierAdvanceHandler(db).HandleAsync(new SupplierAdvanceApplyDto { Id = advanceId, RowVersion = [253], SupplierInvoiceId = invoiceId, AmountMinor = 2380, Memo = "Apply advance" }, TestContext.Current.CancellationToken);
+
+        var applied = await db.Set<SupplierAdvance>().Include(x => x.Applications).SingleAsync(x => x.Id == advanceId, TestContext.Current.CancellationToken);
+        applied.Status.Should().Be(SupplierAdvanceStatus.Applied);
+        applied.OpenAmountMinor.Should().Be(0);
+        applied.Applications.Should().ContainSingle(x => x.SupplierInvoiceId == invoiceId && x.AmountMinor == 2380 && x.PostingJournalEntryId.HasValue);
+        var entry = await db.Set<JournalEntry>().Include(x => x.Lines).SingleAsync(x => x.PostingKind == JournalEntryPostingKind.SupplierAdvanceApplied, TestContext.Current.CancellationToken);
+        entry.PostingKey.Should().Be($"{ApplySupplierAdvanceHandler.PostingKeyPrefix}:{advanceId}:{invoiceId}");
+        entry.SourceEntityType.Should().Be("SupplierAdvanceApplication");
+        entry.Lines.Sum(x => x.DebitMinor).Should().Be(2380);
+        entry.Lines.Sum(x => x.CreditMinor).Should().Be(2380);
+        var open = await SupplierAdvanceSupport.GetOpenPayableMinorAsync(db, await db.Set<SupplierInvoice>().SingleAsync(x => x.Id == invoiceId, TestContext.Current.CancellationToken), null, TestContext.Current.CancellationToken);
+        open.Should().Be(0);
+    }
+
+    [Fact]
+    public async Task SupplierAdvance_Apply_Should_RejectOverApplicationAndSensitiveMemo()
+    {
+        await using var db = SupplierInvoiceTestDbContext.Create();
+        var ids = await SeedPurchasingAsync(db, postedReceipt: true);
+        SeedPostingAccountsIfMissing(db, ids.BusinessId);
+        SeedMappedAccount(db, ids.BusinessId, FinancePostingAccountRole.SupplierAdvance, AccountType.Asset);
+        var invoiceId = await CreatePostedSupplierInvoiceAsync(db, ids, [61]);
+        var advanceId = await CreatePostedSupplierAdvanceAsync(db, ids, 500, [62]);
+        var advance = await db.Set<SupplierAdvance>().SingleAsync(x => x.Id == advanceId, TestContext.Current.CancellationToken);
+        advance.RowVersion = [63];
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var over = async () => await CreateApplySupplierAdvanceHandler(db).HandleAsync(new SupplierAdvanceApplyDto { Id = advanceId, RowVersion = [63], SupplierInvoiceId = invoiceId, AmountMinor = 501 }, TestContext.Current.CancellationToken);
+        var sensitive = async () => await CreateApplySupplierAdvanceHandler(db).HandleAsync(new SupplierAdvanceApplyDto { Id = advanceId, RowVersion = [63], SupplierInvoiceId = invoiceId, AmountMinor = 100, Memo = "token=secret" }, TestContext.Current.CancellationToken);
+
+        await over.Should().ThrowAsync<InvalidOperationException>().WithMessage("*ExceedsOpenAdvance*");
+        await sensitive.Should().ThrowAsync<ArgumentException>().WithMessage("*SensitiveMemoRejected*");
+        db.Set<SupplierAdvanceApplication>().Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task SupplierAdvance_Reverse_Should_CreateBalancedReversalAndBlockAppliedAdvance()
+    {
+        await using var db = SupplierInvoiceTestDbContext.Create();
+        var ids = await SeedPurchasingAsync(db, postedReceipt: true);
+        SeedPostingAccountsIfMissing(db, ids.BusinessId);
+        SeedMappedAccount(db, ids.BusinessId, FinancePostingAccountRole.SupplierAdvance, AccountType.Asset);
+        var advanceId = await CreatePostedSupplierAdvanceAsync(db, ids, 1200, [71]);
+        var advance = await db.Set<SupplierAdvance>().SingleAsync(x => x.Id == advanceId, TestContext.Current.CancellationToken);
+        advance.RowVersion = [72];
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        await CreateReverseSupplierAdvanceHandler(db).HandleAsync(new SupplierAdvanceLifecycleActionDto { Id = advanceId, RowVersion = [72], Reason = "Returned by supplier" }, TestContext.Current.CancellationToken);
+
+        var reversed = await db.Set<SupplierAdvance>().SingleAsync(x => x.Id == advanceId, TestContext.Current.CancellationToken);
+        reversed.Status.Should().Be(SupplierAdvanceStatus.Reversed);
+        reversed.OpenAmountMinor.Should().Be(0);
+        reversed.ReversalReason.Should().Be("Returned by supplier");
+        reversed.ReversalJournalEntryId.Should().NotBeNull();
+        var entry = await db.Set<JournalEntry>().Include(x => x.Lines).SingleAsync(x => x.PostingKey == $"{ReverseSupplierAdvanceHandler.PostingKeyPrefix}:{advanceId}", TestContext.Current.CancellationToken);
+        entry.PostingKind.Should().Be(JournalEntryPostingKind.Reversal);
+        entry.Lines.Sum(x => x.DebitMinor).Should().Be(1200);
+        entry.Lines.Sum(x => x.CreditMinor).Should().Be(1200);
+
+        var invoiceId = await CreatePostedSupplierInvoiceAsync(db, ids, [73]);
+        var appliedAdvanceId = await CreatePostedSupplierAdvanceAsync(db, ids, 500, [74]);
+        var appliedAdvance = await db.Set<SupplierAdvance>().SingleAsync(x => x.Id == appliedAdvanceId, TestContext.Current.CancellationToken);
+        appliedAdvance.RowVersion = [75];
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+        await CreateApplySupplierAdvanceHandler(db).HandleAsync(new SupplierAdvanceApplyDto { Id = appliedAdvanceId, RowVersion = [75], SupplierInvoiceId = invoiceId, AmountMinor = 100 }, TestContext.Current.CancellationToken);
+        appliedAdvance = await db.Set<SupplierAdvance>().SingleAsync(x => x.Id == appliedAdvanceId, TestContext.Current.CancellationToken);
+        appliedAdvance.RowVersion = [76];
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var reverseApplied = async () => await CreateReverseSupplierAdvanceHandler(db).HandleAsync(new SupplierAdvanceLifecycleActionDto { Id = appliedAdvanceId, RowVersion = [76], Reason = "Cannot shortcut applied advance" }, TestContext.Current.CancellationToken);
+        await reverseApplied.Should().ThrowAsync<InvalidOperationException>().WithMessage("*RequiresUnappliedAdvance*");
+
+        appliedAdvance.RowVersion = [77];
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+        var applicationId = await db.Set<SupplierAdvanceApplication>().Where(x => x.SupplierAdvanceId == appliedAdvanceId).Select(x => x.Id).SingleAsync(TestContext.Current.CancellationToken);
+        await CreateReverseSupplierAdvanceApplicationHandler(db).HandleAsync(new SupplierAdvanceApplicationReverseDto { Id = appliedAdvanceId, RowVersion = [77], ApplicationId = applicationId, Reason = "Undo wrong invoice application" }, TestContext.Current.CancellationToken);
+        var reversedApplication = await db.Set<SupplierAdvanceApplication>().SingleAsync(x => x.Id == applicationId, TestContext.Current.CancellationToken);
+        reversedApplication.ReversalJournalEntryId.Should().NotBeNull();
+        reversedApplication.ReversalReason.Should().Be("Undo wrong invoice application");
+        var reopened = await SupplierAdvanceSupport.GetOpenPayableMinorAsync(db, await db.Set<SupplierInvoice>().SingleAsync(x => x.Id == invoiceId, TestContext.Current.CancellationToken), null, TestContext.Current.CancellationToken);
+        reopened.Should().BeGreaterThan(0);
+    }
+
     private static UpdateSupplierInvoiceLifecycleHandler CreateLifecycleHandler(SupplierInvoiceTestDbContext db)
         => new(db, new FixedClock(Now), new NumberSequenceService(db, new FixedClock(Now)), new SupplierInvoiceWorkflowPolicy());
 
@@ -861,6 +995,18 @@ public sealed class SupplierInvoiceHandlersTests
 
     private static SettleSupplierPaymentFromBankReconciliationHandler CreateSettleSupplierPaymentHandler(SupplierInvoiceTestDbContext db)
         => new(db, new FixedClock(Now), new SupplierPaymentWorkflowPolicy(), new FinanceAccountMappingService(db), new FinancePostingService(db, new FixedClock(Now)));
+
+    private static PostSupplierAdvanceHandler CreatePostSupplierAdvanceHandler(SupplierInvoiceTestDbContext db)
+        => new(db, new FixedClock(Now), new NumberSequenceService(db, new FixedClock(Now)), new SupplierAdvanceWorkflowPolicy(), new FinanceAccountMappingService(db), new FinancePostingService(db, new FixedClock(Now)));
+
+    private static ApplySupplierAdvanceHandler CreateApplySupplierAdvanceHandler(SupplierInvoiceTestDbContext db)
+        => new(db, new FixedClock(Now), new SupplierAdvanceWorkflowPolicy(), new FinanceAccountMappingService(db), new FinancePostingService(db, new FixedClock(Now)));
+
+    private static ReverseSupplierAdvanceHandler CreateReverseSupplierAdvanceHandler(SupplierInvoiceTestDbContext db)
+        => new(db, new FixedClock(Now), new SupplierAdvanceWorkflowPolicy(), new FinanceAccountMappingService(db), new FinancePostingService(db, new FixedClock(Now)));
+
+    private static ReverseSupplierAdvanceApplicationHandler CreateReverseSupplierAdvanceApplicationHandler(SupplierInvoiceTestDbContext db)
+        => new(db, new FixedClock(Now), new FinanceAccountMappingService(db), new FinancePostingService(db, new FixedClock(Now)));
 
     private static CreateSupplierPaymentBankCorrectionHandler CreateSupplierPaymentBankCorrectionHandler(SupplierInvoiceTestDbContext db)
         => new(db, new FixedClock(Now));
@@ -1047,6 +1193,31 @@ public sealed class SupplierInvoiceHandlersTests
             Allocations = [new SupplierPaymentAllocationDto { SupplierInvoiceId = invoiceId, AmountMinor = amountMinor, Memo = " invoice settlement " }]
         };
 
+    private static SupplierAdvanceCreateDto BuildAdvanceCreate(SeedIds ids, long amountMinor)
+        => new()
+        {
+            BusinessId = ids.BusinessId,
+            SupplierId = ids.SupplierId,
+            PaymentMethod = SupplierPaymentMethod.BankTransfer,
+            AdvanceDateUtc = Now,
+            Currency = " eur ",
+            TotalAmountMinor = amountMinor,
+            Reference = " ADV-REF ",
+            MetadataJson = "{}"
+        };
+
+    private static async Task<Guid> CreatePostedSupplierAdvanceAsync(SupplierInvoiceTestDbContext db, SeedIds ids, long amountMinor, byte[] rowVersion)
+    {
+        SeedMappedAccountIfMissing(db, ids.BusinessId, FinancePostingAccountRole.SupplierAdvance, AccountType.Asset);
+        SeedMappedAccountIfMissing(db, ids.BusinessId, FinancePostingAccountRole.CashClearing, AccountType.Asset);
+        var id = await new CreateSupplierAdvanceHandler(db, new FixedClock(Now)).HandleAsync(BuildAdvanceCreate(ids, amountMinor), TestContext.Current.CancellationToken);
+        var advance = await db.Set<SupplierAdvance>().SingleAsync(x => x.Id == id, TestContext.Current.CancellationToken);
+        advance.RowVersion = rowVersion;
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+        await CreatePostSupplierAdvanceHandler(db).HandleAsync(new SupplierAdvanceLifecycleActionDto { Id = id, RowVersion = rowVersion }, TestContext.Current.CancellationToken);
+        return id;
+    }
+
     private static async Task<SeedIds> SeedPurchasingAsync(SupplierInvoiceTestDbContext db, bool postedReceipt)
     {
         var businessId = Guid.NewGuid();
@@ -1097,6 +1268,8 @@ public sealed class SupplierInvoiceHandlersTests
             modelBuilder.Entity<SupplierInvoiceLine>().HasKey(x => x.Id);
             modelBuilder.Entity<SupplierPayment>(b => { b.HasKey(x => x.Id); b.HasMany(x => x.Allocations).WithOne().HasForeignKey(x => x.SupplierPaymentId); });
             modelBuilder.Entity<SupplierPaymentAllocation>().HasKey(x => x.Id);
+            modelBuilder.Entity<SupplierAdvance>(b => { b.HasKey(x => x.Id); b.HasMany(x => x.Applications).WithOne().HasForeignKey(x => x.SupplierAdvanceId); });
+            modelBuilder.Entity<SupplierAdvanceApplication>().HasKey(x => x.Id);
             modelBuilder.Entity<BankAccount>().HasKey(x => x.Id);
             modelBuilder.Entity<BankStatementImport>().HasKey(x => x.Id);
             modelBuilder.Entity<BankStatementLine>().HasKey(x => x.Id);

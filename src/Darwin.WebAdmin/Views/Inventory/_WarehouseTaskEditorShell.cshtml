@@ -1,0 +1,160 @@
+@model Darwin.WebAdmin.ViewModels.Inventory.WarehouseTaskEditVm
+@inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
+@{
+    var isCreate = (bool?)ViewData["IsCreate"] ?? Model.Id == Guid.Empty;
+    var showShortage = Model.TaskType == Darwin.Domain.Enums.WarehouseTaskType.Picking;
+    var formAction = isCreate ? "CreateWarehouseTask" : "EditWarehouseTask";
+    string TasksUrl(object? businessId = null, object? warehouseId = null) => Url.Action("WarehouseTasks", "Inventory", new { businessId, warehouseId }) ?? string.Empty;
+}
+
+<div id="inventory-warehouse-tasks-workspace-shell">
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+        <h1 class="mb-1">@(isCreate ? T.T("NewWarehouseTask") : T.T("WarehouseTaskDetail"))</h1>
+        @if (!string.IsNullOrWhiteSpace(Model.TaskNumber))
+        {
+            <div class="text-muted">@Model.TaskNumber</div>
+        }
+    </div>
+    <a asp-action="WarehouseTasks" asp-route-businessId="@Model.BusinessId" asp-route-warehouseId="@Model.WarehouseId" class="btn btn-outline-secondary"
+       hx-get="@TasksUrl(Model.BusinessId, Model.WarehouseId)"
+       hx-target="#inventory-warehouse-tasks-workspace-shell"
+       hx-swap="outerHTML"
+       hx-push-url="true">@T.T("Back")</a>
+</div>
+
+<form asp-action="@formAction" method="post">
+    @Html.AntiForgeryToken()
+    <input type="hidden" asp-for="Id" />
+    <input type="hidden" asp-for="RowVersion" value="@Convert.ToBase64String(Model.RowVersion ?? Array.Empty<byte>())" />
+    <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+    <section class="admin-form-section">
+        <h2 class="admin-form-section-title">@T.T("Task")</h2>
+        <div class="row g-3">
+            <div class="col-md-4">
+                <label asp-for="BusinessId" class="form-label">@T.T("Business")</label>
+                <select asp-for="BusinessId" asp-items="Model.BusinessOptions" class="form-select"></select>
+            </div>
+            <div class="col-md-4">
+                <label asp-for="WarehouseId" class="form-label">@T.T("Warehouse")</label>
+                <select asp-for="WarehouseId" asp-items="Model.WarehouseOptions" class="form-select"></select>
+            </div>
+            <div class="col-md-4">
+                <label asp-for="AssignedToUserId" class="form-label">@T.T("AssignedTo")</label>
+                <select asp-for="AssignedToUserId" asp-items="Model.UserOptions" class="form-select"></select>
+            </div>
+            <div class="col-md-8">
+                <label asp-for="Title" class="form-label">@T.T("Title")</label>
+                <input asp-for="Title" class="form-control" />
+            </div>
+            <div class="col-md-4">
+                <label asp-for="DueAtUtc" class="form-label">@T.T("DueAtUtc")</label>
+                <input asp-for="DueAtUtc" type="datetime-local" class="form-control" />
+            </div>
+            <div class="col-md-3">
+                <label asp-for="TaskType" class="form-label">@T.T("Type")</label>
+                <select asp-for="TaskType" asp-items="Model.TaskTypeOptions" class="form-select"></select>
+            </div>
+            <div class="col-md-3">
+                <label asp-for="Status" class="form-label">@T.T("Status")</label>
+                <select asp-for="Status" asp-items="Model.StatusOptions" class="form-select" disabled="@(!isCreate)"></select>
+                @if (!isCreate)
+                {
+                    <input type="hidden" asp-for="Status" />
+                }
+            </div>
+            <div class="col-md-3">
+                <label asp-for="Priority" class="form-label">@T.T("Priority")</label>
+                <select asp-for="Priority" asp-items="Model.PriorityOptions" class="form-select"></select>
+            </div>
+            <div class="col-md-3">
+                <label asp-for="SourceType" class="form-label">@T.T("Source")</label>
+                <select asp-for="SourceType" asp-items="Model.SourceTypeOptions" class="form-select"></select>
+            </div>
+            <div class="col-md-3">
+                <label asp-for="FromLocationId" class="form-label">@T.T("FromLocation")</label>
+                <select asp-for="FromLocationId" asp-items="Model.LocationOptions" class="form-select"></select>
+            </div>
+            <div class="col-md-3">
+                <label asp-for="ToLocationId" class="form-label">@T.T("ToLocation")</label>
+                <select asp-for="ToLocationId" asp-items="Model.LocationOptions" class="form-select"></select>
+            </div>
+            <div class="col-md-6">
+                <label asp-for="SourceEntityId" class="form-label">@T.T("SourceEntityId")</label>
+                <input asp-for="SourceEntityId" class="form-control" />
+            </div>
+            <div class="col-12">
+                <label asp-for="InternalNotes" class="form-label">@T.T("InternalNotes")</label>
+                <textarea asp-for="InternalNotes" class="form-control" rows="3"></textarea>
+            </div>
+        </div>
+    </section>
+
+    <section class="admin-form-section mt-4">
+        <h2 class="admin-form-section-title">@T.T("Lines")</h2>
+        <div class="table-responsive">
+            <table class="table table-sm align-middle">
+                <thead>
+                <tr>
+                    <th>@T.T("Description")</th>
+                    <th>@T.T("Sku")</th>
+                    <th>@T.T("Requested")</th>
+                    <th>@T.T("Completed")</th>
+                    @if (showShortage)
+                    {
+                        <th>@T.T("Shortage")</th>
+                        <th>@T.T("ShortReason")</th>
+                    }
+                    <th>@T.T("SortOrder")</th>
+                </tr>
+                </thead>
+                <tbody>
+                @for (var i = 0; i < Model.Lines.Count; i++)
+                {
+                    <tr>
+                        <td>
+                            <input type="hidden" asp-for="Lines[i].Id" />
+                            <input type="hidden" asp-for="Lines[i].ProductVariantId" />
+                            <input asp-for="Lines[i].Description" class="form-control form-control-sm" />
+                        </td>
+                        <td><input asp-for="Lines[i].SkuSnapshot" class="form-control form-control-sm" /></td>
+                        <td><input asp-for="Lines[i].RequestedQuantity" type="number" min="1" class="form-control form-control-sm" /></td>
+                        <td><input asp-for="Lines[i].CompletedQuantity" type="number" min="0" class="form-control form-control-sm" readonly="@(!isCreate)" /></td>
+                        @if (showShortage)
+                        {
+                            <td><input asp-for="Lines[i].ShortQuantity" type="number" min="0" class="form-control form-control-sm" /></td>
+                            <td><input asp-for="Lines[i].ShortReason" class="form-control form-control-sm" /></td>
+                        }
+                        <td><input asp-for="Lines[i].SortOrder" type="number" min="0" class="form-control form-control-sm" /></td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <div class="d-flex gap-2 mt-4">
+        <button type="submit" class="btn btn-primary">@T.T("Save")</button>
+    </div>
+</form>
+
+@if (!isCreate)
+{
+    <section class="admin-form-section mt-4">
+        <h2 class="admin-form-section-title">@T.T("Lifecycle")</h2>
+        <div class="d-flex flex-wrap gap-2">
+            @foreach (var target in new[] { Darwin.Domain.Enums.WarehouseTaskStatus.Ready, Darwin.Domain.Enums.WarehouseTaskStatus.Assigned, Darwin.Domain.Enums.WarehouseTaskStatus.InProgress, Darwin.Domain.Enums.WarehouseTaskStatus.Completed, Darwin.Domain.Enums.WarehouseTaskStatus.Cancelled })
+            {
+                <form asp-action="UpdateWarehouseTaskLifecycle" method="post">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="Id" value="@Model.Id" />
+                    <input type="hidden" name="RowVersion" value="@Convert.ToBase64String(Model.RowVersion ?? Array.Empty<byte>())" />
+                    <input type="hidden" name="TargetStatus" value="@target" />
+                    <button type="submit" class="btn btn-sm btn-outline-secondary">@T.T(target.ToString())</button>
+                </form>
+            }
+        </div>
+    </section>
+}
+</div>

@@ -1,0 +1,86 @@
+@model Darwin.WebAdmin.ViewModels.Inventory.WarehouseLabelTemplateEditVm
+@inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
+@{
+    var isCreate = (bool?)ViewData["IsCreate"] ?? false;
+    ViewData["Title"] = isCreate ? T.T("CreateWarehouseLabelTemplate") : T.T("EditWarehouseLabelTemplate");
+}
+
+<h1 class="mb-3">@(isCreate ? T.T("CreateWarehouseLabelTemplate") : T.T("EditWarehouseLabelTemplate"))</h1>
+
+<form method="post" asp-action="@(isCreate ? "CreateLabelTemplate" : "EditLabelTemplate")" class="admin-editor-form" hx-post="@Url.Action(isCreate ? "CreateLabelTemplate" : "EditLabelTemplate")" hx-target="#main-content">
+    @Html.AntiForgeryToken()
+    <input asp-for="Id" type="hidden">
+    <input asp-for="RowVersion" type="hidden">
+
+    <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+    <div class="admin-form-section">
+        <h2 class="admin-form-section-title">@T.T("WarehouseLabelTemplateIdentity")</h2>
+        <div class="row g-3">
+            <div class="col-md-4">
+                <label asp-for="BusinessId" class="form-label">@T.T("Business")</label>
+                <select asp-for="BusinessId" asp-items="Model.BusinessOptions" class="form-select"></select>
+                <span asp-validation-for="BusinessId" class="text-danger"></span>
+            </div>
+            <div class="col-md-4">
+                <label asp-for="Name" class="form-label">@T.T("Name")</label>
+                <input asp-for="Name" class="form-control">
+                <span asp-validation-for="Name" class="text-danger"></span>
+            </div>
+            <div class="col-md-4">
+                <label asp-for="TemplateKey" class="form-label">@T.T("TemplateKey")</label>
+                <input asp-for="TemplateKey" class="form-control">
+                <span asp-validation-for="TemplateKey" class="text-danger"></span>
+            </div>
+            <div class="col-md-3">
+                <label asp-for="Status" class="form-label">@T.T("Status")</label>
+                <select asp-for="Status" asp-items="Model.StatusOptions" class="form-select"></select>
+            </div>
+            <div class="col-md-3">
+                <label asp-for="Format" class="form-label">@T.T("Format")</label>
+                <select asp-for="Format" asp-items="Model.FormatOptions" class="form-select"></select>
+            </div>
+            <div class="col-md-2">
+                <label asp-for="WidthMm" class="form-label">@T.T("WidthMm")</label>
+                <input asp-for="WidthMm" class="form-control" type="number" min="10" max="300">
+            </div>
+            <div class="col-md-2">
+                <label asp-for="HeightMm" class="form-label">@T.T("HeightMm")</label>
+                <input asp-for="HeightMm" class="form-control" type="number" min="10" max="300">
+            </div>
+            <div class="col-md-2 d-flex align-items-end">
+                <div class="form-check">
+                    <input asp-for="IsDefault" class="form-check-input">
+                    <label asp-for="IsDefault" class="form-check-label">@T.T("Default")</label>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="admin-form-section mt-3">
+        <h2 class="admin-form-section-title">@T.T("WarehouseLabelTemplateContent")</h2>
+        <textarea asp-for="ContentTemplate" class="form-control font-monospace" rows="8"></textarea>
+        <span asp-validation-for="ContentTemplate" class="text-danger"></span>
+    </div>
+
+    <div class="admin-form-section mt-3">
+        <h2 class="admin-form-section-title">@T.T("Metadata")</h2>
+        <textarea asp-for="Description" class="form-control mb-2" rows="2" placeholder="@T.T("Description")"></textarea>
+        <textarea asp-for="MetadataJson" class="form-control font-monospace" rows="4" placeholder="{}"></textarea>
+    </div>
+
+    <div class="d-flex gap-2 mt-3">
+        <button class="btn btn-primary" type="submit">@T.T("Save")</button>
+        <a class="btn btn-outline-secondary" asp-action="LabelTemplates" asp-route-businessId="@Model.BusinessId" hx-get="@Url.Action("LabelTemplates", new { businessId = Model.BusinessId })" hx-target="#main-content" hx-push-url="true">@T.T("Back")</a>
+    </div>
+</form>
+
+@if (!isCreate)
+{
+    <form method="post" asp-action="ArchiveLabelTemplate" class="mt-3" hx-post="@Url.Action("ArchiveLabelTemplate")" hx-target="#main-content">
+        @Html.AntiForgeryToken()
+        <input type="hidden" name="Id" value="@Model.Id">
+        <input type="hidden" name="RowVersion" value="@Convert.ToBase64String(Model.RowVersion ?? Array.Empty<byte>())">
+        <button type="submit" class="btn btn-outline-danger">@T.T("Archive")</button>
+    </form>
+}

@@ -347,6 +347,7 @@ public sealed class GetFinanceAccountMappingsPageHandler
             FinancePostingAccountRole.PurchaseExpense => AccountType.Expense.ToString(),
             FinancePostingAccountRole.InventoryClearing => AccountType.Asset.ToString(),
             FinancePostingAccountRole.TaxReceivable => AccountType.Asset.ToString(),
+            FinancePostingAccountRole.SupplierAdvance => AccountType.Asset.ToString(),
             _ => string.Empty
         };
 }

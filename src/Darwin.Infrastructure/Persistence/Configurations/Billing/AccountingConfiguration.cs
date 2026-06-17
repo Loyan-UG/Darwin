@@ -22,6 +22,8 @@ namespace Darwin.Infrastructure.Persistence.Configurations.Billing
         IEntityTypeConfiguration<SupplierPayment>,
         IEntityTypeConfiguration<SupplierPaymentAllocation>,
         IEntityTypeConfiguration<SupplierPaymentBankCorrection>,
+        IEntityTypeConfiguration<SupplierAdvance>,
+        IEntityTypeConfiguration<SupplierAdvanceApplication>,
         IEntityTypeConfiguration<JournalEntry>,
         IEntityTypeConfiguration<JournalEntryLine>,
         IEntityTypeConfiguration<Expense>
@@ -469,6 +471,67 @@ namespace Darwin.Infrastructure.Persistence.Configurations.Billing
             builder.HasOne<BankStatementLine>()
                 .WithMany()
                 .HasForeignKey(x => x.BankStatementLineId)
+                .OnDelete(DeleteBehavior.Restrict);
+        }
+
+        /// <inheritdoc />
+        public void Configure(EntityTypeBuilder<SupplierAdvance> builder)
+        {
+            builder.ToTable("SupplierAdvances", schema: "Billing");
+            builder.HasKey(x => x.Id);
+
+            builder.Property(x => x.AdvanceNumber).HasMaxLength(128);
+            builder.Property(x => x.Status).HasConversion<string>().HasMaxLength(64).IsRequired();
+            builder.Property(x => x.PaymentMethod).HasConversion<string>().HasMaxLength(64).IsRequired();
+            builder.Property(x => x.Currency).IsRequired().HasMaxLength(3);
+            builder.Property(x => x.Reference).HasMaxLength(256);
+            builder.Property(x => x.ReversalReason).HasMaxLength(1000);
+            builder.Property(x => x.InternalNotes).HasMaxLength(4000);
+            builder.Property(x => x.MetadataJson).IsRequired().HasMaxLength(4000);
+
+            builder.HasIndex(x => x.BusinessId);
+            builder.HasIndex(x => x.SupplierId);
+            builder.HasIndex(x => x.Status);
+            builder.HasIndex(x => x.AdvanceDateUtc);
+            builder.HasIndex(x => x.PostingJournalEntryId);
+            builder.HasIndex(x => x.ReversalJournalEntryId);
+            builder.HasIndex(x => x.PostedAtUtc);
+            builder.HasIndex(x => x.ReversedAtUtc);
+            builder.HasIndex(x => x.CancelledAtUtc);
+            builder.HasIndex(x => new { x.BusinessId, x.AdvanceNumber })
+                .IsUnique()
+                .HasDatabaseName("UX_SupplierAdvances_Business_Number_Active")
+                .HasFilter("[AdvanceNumber] IS NOT NULL AND [IsDeleted] = 0");
+
+            builder.HasMany(x => x.Applications)
+                .WithOne()
+                .HasForeignKey(x => x.SupplierAdvanceId)
+                .OnDelete(DeleteBehavior.Cascade);
+        }
+
+        /// <inheritdoc />
+        public void Configure(EntityTypeBuilder<SupplierAdvanceApplication> builder)
+        {
+            builder.ToTable("SupplierAdvanceApplications", schema: "Billing");
+            builder.HasKey(x => x.Id);
+
+            builder.Property(x => x.Memo).HasMaxLength(1000);
+            builder.Property(x => x.ReversalReason).HasMaxLength(1000);
+
+            builder.HasIndex(x => x.SupplierAdvanceId);
+            builder.HasIndex(x => x.SupplierInvoiceId);
+            builder.HasIndex(x => x.PostingJournalEntryId);
+            builder.HasIndex(x => x.ReversalJournalEntryId);
+            builder.HasIndex(x => x.AppliedAtUtc);
+            builder.HasIndex(x => x.ReversedAtUtc);
+            builder.HasIndex(x => new { x.SupplierAdvanceId, x.SupplierInvoiceId })
+                .IsUnique()
+                .HasDatabaseName("UX_SupplierAdvanceApplications_Advance_Invoice_Active")
+                .HasFilter("[IsDeleted] = 0");
+
+            builder.HasOne<SupplierInvoice>()
+                .WithMany()
+                .HasForeignKey(x => x.SupplierInvoiceId)
                 .OnDelete(DeleteBehavior.Restrict);
         }
 

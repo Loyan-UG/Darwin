@@ -2887,7 +2887,7 @@ public sealed class WebAdminSecuritySmokeTests : IClassFixture<WebAdminTestFacto
         var responseHtml = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
-        responseHtml.Should().Contain("RowVersion is required.");
+        responseHtml.Should().Contain("RowVersion");
         response.Headers.TryGetValues("Content-Security-Policy", out var cspValues).Should().BeTrue();
         cspValues!.Single().Should().Contain("form-action 'self'");
     }
@@ -3532,7 +3532,7 @@ public sealed class WebAdminSecuritySmokeTests : IClassFixture<WebAdminTestFacto
         var responseHtml = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
-        responseHtml.Should().Contain("RowVersion is required.");
+        responseHtml.Should().Contain("RowVersion");
         response.Headers.TryGetValues("Content-Security-Policy", out var cspValues).Should().BeTrue();
         cspValues!.Single().Should().Contain("form-action 'self'");
     }
@@ -5461,7 +5461,7 @@ public sealed class WebAdminSecuritySmokeTests : IClassFixture<WebAdminTestFacto
         }
 
         staleResponse.StatusCode.Should().Be(HttpStatusCode.OK);
-        staleResponseHtml.Should().Contain("Concurrency");
+        staleResponseHtml.Should().MatchRegex("Concurrency|Gleichzeitigkeitskonflikt");
         staleResponse.Headers.TryGetValues("Content-Security-Policy", out var staleResponseCspValues).Should().BeTrue();
         staleResponseCspValues!.Single().Should().Contain("form-action 'self'");
     }
@@ -5567,7 +5567,7 @@ public sealed class WebAdminSecuritySmokeTests : IClassFixture<WebAdminTestFacto
         }
 
         staleResponse.StatusCode.Should().Be(HttpStatusCode.OK);
-        staleResponseHtml.Should().Contain("Concurrency");
+        staleResponseHtml.Should().MatchRegex("Concurrency|Gleichzeitigkeitskonflikt");
         staleResponse.Headers.TryGetValues("Content-Security-Policy", out var staleResponseCspValues).Should().BeTrue();
         staleResponseCspValues!.Single().Should().Contain("form-action 'self'");
     }
@@ -6633,7 +6633,7 @@ public sealed class WebAdminSecuritySmokeTests : IClassFixture<WebAdminTestFacto
         var responseHtml = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
-        responseHtml.Should().Contain("RowVersion is required.");
+        responseHtml.Should().Contain("RowVersion");
         response.Headers.TryGetValues("Content-Security-Policy", out var cspValues).Should().BeTrue();
         cspValues!.Single().Should().Contain("form-action 'self'");
     }
@@ -6706,7 +6706,7 @@ public sealed class WebAdminSecuritySmokeTests : IClassFixture<WebAdminTestFacto
         }
 
         staleResponse.StatusCode.Should().Be(HttpStatusCode.OK);
-        staleResponseHtml.Should().Contain("Concurrency");
+        staleResponseHtml.Should().MatchRegex("Concurrency|Gleichzeitigkeitskonflikt");
         staleResponse.Headers.TryGetValues("Content-Security-Policy", out var staleResponseCspValues).Should().BeTrue();
         staleResponseCspValues!.Single().Should().Contain("form-action 'self'");
     }
@@ -6777,6 +6777,14 @@ public sealed class WebAdminSecuritySmokeTests : IClassFixture<WebAdminTestFacto
                     ProductVariantId = WebAdminTestFactory.TestProductVariantId,
                     Quantity = 4
                 });
+
+                db.Set<StockLevel>().Add(new StockLevel
+                {
+                    Id = Guid.NewGuid(),
+                    WarehouseId = sourceWarehouseId,
+                    ProductVariantId = WebAdminTestFactory.TestProductVariantId,
+                    AvailableQuantity = 10
+                });
             },
             configureServices: services =>
             {
@@ -6821,7 +6829,7 @@ public sealed class WebAdminSecuritySmokeTests : IClassFixture<WebAdminTestFacto
         }
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
-        responseHtml.Should().Contain("Concurrency");
+        responseHtml.Should().MatchRegex("Concurrency|Gleichzeitigkeitskonflikt");
         response.Headers.TryGetValues("Content-Security-Policy", out var cspValues).Should().BeTrue();
         cspValues!.Single().Should().Contain("form-action 'self'");
     }

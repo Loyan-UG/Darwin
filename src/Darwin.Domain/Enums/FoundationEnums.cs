@@ -45,6 +45,9 @@ public enum NumberSequenceDocumentType
     GoodsReceipt = 10,
     SupplierInvoice = 11,
     SupplierPayment = 12,
+    SupplierAdvance = 13,
+    WarehouseTask = 14,
+    StockCount = 15,
     Custom = 99
 }
 

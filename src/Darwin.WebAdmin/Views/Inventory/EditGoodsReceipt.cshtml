@@ -6,6 +6,7 @@
     var isDraft = string.Equals(Model.Status, "Draft", StringComparison.OrdinalIgnoreCase);
     var isReceived = string.Equals(Model.Status, "Received", StringComparison.OrdinalIgnoreCase);
     var isInspected = string.Equals(Model.Status, "Inspected", StringComparison.OrdinalIgnoreCase);
+    var isPosted = string.Equals(Model.Status, "Posted", StringComparison.OrdinalIgnoreCase);
     string UpdateUrl() => Url.Action("UpdateGoodsReceiptLifecycle", "Inventory") ?? string.Empty;
 }
 
@@ -132,4 +133,90 @@
             }
         </div>
     </form>
+
+    @if (isDraft || isReceived || isInspected || isPosted)
+    {
+        <div class="card mt-3">
+            <div class="card-header">@T.T("WarehouseTasks")</div>
+            <div class="card-body">
+                <div class="row g-3">
+                    @if (!isPosted)
+                    {
+                        <div class="col-lg-6">
+                            <form asp-action="CreateReceivingTaskFromGoodsReceipt" method="post"
+                                  hx-post="@Url.Action("CreateReceivingTaskFromGoodsReceipt", "Inventory")"
+                                  hx-target="#inventory-goods-receipt-detail-shell"
+                                  hx-swap="outerHTML">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" asp-for="WarehouseTaskAction.GoodsReceiptId" value="@Model.Id" />
+                                <input type="hidden" asp-for="WarehouseTaskAction.BusinessId" value="@Model.BusinessId" />
+                                <div class="row g-2 align-items-end">
+                                    <div class="col-md-4">
+                                        <label asp-for="WarehouseTaskAction.Priority" class="form-label">@T.T("Priority")</label>
+                                        <select asp-for="WarehouseTaskAction.Priority" class="form-select">
+                                            @foreach (var priority in Enum.GetValues<Darwin.Domain.Enums.WarehouseTaskPriority>())
+                                            {
+                                                <option value="@priority">@T.T(priority.ToString())</option>
+                                            }
+                                        </select>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label asp-for="WarehouseTaskAction.DueAtUtc" class="form-label">@T.T("DueAtUtc")</label>
+                                        <input asp-for="WarehouseTaskAction.DueAtUtc" class="form-control" />
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label asp-for="WarehouseTaskAction.InternalNotes" class="form-label">@T.T("InternalNotes")</label>
+                                        <input asp-for="WarehouseTaskAction.InternalNotes" class="form-control" />
+                                    </div>
+                                    <div class="col-12">
+                                        <button type="submit" class="btn btn-outline-primary">@T.T("CreateReceivingTask")</button>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                    }
+
+                    @if (isPosted)
+                    {
+                        <div class="col-lg-8">
+                            <form asp-action="CreatePutawayTaskFromGoodsReceipt" method="post"
+                                  hx-post="@Url.Action("CreatePutawayTaskFromGoodsReceipt", "Inventory")"
+                                  hx-target="#inventory-goods-receipt-detail-shell"
+                                  hx-swap="outerHTML">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" asp-for="WarehouseTaskAction.GoodsReceiptId" value="@Model.Id" />
+                                <input type="hidden" asp-for="WarehouseTaskAction.BusinessId" value="@Model.BusinessId" />
+                                <div class="row g-2 align-items-end">
+                                    <div class="col-md-4">
+                                        <label asp-for="WarehouseTaskAction.ToLocationId" class="form-label">@T.T("DestinationLocation")</label>
+                                        <select asp-for="WarehouseTaskAction.ToLocationId" asp-items="Model.PutawayLocationOptions" class="form-select"></select>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label asp-for="WarehouseTaskAction.Priority" class="form-label">@T.T("Priority")</label>
+                                        <select asp-for="WarehouseTaskAction.Priority" class="form-select">
+                                            @foreach (var priority in Enum.GetValues<Darwin.Domain.Enums.WarehouseTaskPriority>())
+                                            {
+                                                <option value="@priority">@T.T(priority.ToString())</option>
+                                            }
+                                        </select>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label asp-for="WarehouseTaskAction.DueAtUtc" class="form-label">@T.T("DueAtUtc")</label>
+                                        <input asp-for="WarehouseTaskAction.DueAtUtc" class="form-control" />
+                                    </div>
+                                    <div class="col-md-2 d-grid">
+                                        <button type="submit" class="btn btn-primary">@T.T("CreatePutawayTask")</button>
+                                    </div>
+                                    <div class="col-12">
+                                        <label asp-for="WarehouseTaskAction.InternalNotes" class="form-label">@T.T("InternalNotes")</label>
+                                        <input asp-for="WarehouseTaskAction.InternalNotes" class="form-control" />
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    }
 </div>

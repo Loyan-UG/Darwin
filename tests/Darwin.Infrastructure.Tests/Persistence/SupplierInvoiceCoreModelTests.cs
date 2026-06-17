@@ -198,6 +198,111 @@ public sealed class SupplierInvoiceCoreModelTests
         Enum.GetNames<NumberSequenceDocumentType>().Should().Contain(nameof(NumberSequenceDocumentType.SupplierPayment));
     }
 
+    [Theory]
+    [InlineData("SqlServer")]
+    [InlineData("PostgreSql")]
+    public void SupplierAdvance_Should_Map_To_Billing_Schema_With_Stable_Indexes(string provider)
+    {
+        using var context = CreateContext(provider);
+        var advance = GetEntity(context, typeof(SupplierAdvance));
+        var application = GetEntity(context, typeof(SupplierAdvanceApplication));
+
+        advance.GetSchema().Should().Be("Billing");
+        advance.GetTableName().Should().Be("SupplierAdvances");
+        advance.FindProperty(nameof(SupplierAdvance.AdvanceNumber))!.GetMaxLength().Should().Be(128);
+        advance.FindProperty(nameof(SupplierAdvance.Status))!.GetMaxLength().Should().Be(64);
+        advance.FindProperty(nameof(SupplierAdvance.PaymentMethod))!.GetMaxLength().Should().Be(64);
+        advance.FindProperty(nameof(SupplierAdvance.Currency))!.GetMaxLength().Should().Be(3);
+        advance.FindProperty(nameof(SupplierAdvance.Reference))!.GetMaxLength().Should().Be(256);
+        advance.FindProperty(nameof(SupplierAdvance.ReversalReason))!.GetMaxLength().Should().Be(1000);
+        advance.GetIndexes().Single(x => x.GetDatabaseName() == "UX_SupplierAdvances_Business_Number_Active").IsUnique.Should().BeTrue();
+        advance.GetIndexes().Single(x => x.GetDatabaseName() == "IX_SupplierAdvances_PostingJournalEntryId");
+        advance.GetIndexes().Single(x => x.GetDatabaseName() == "IX_SupplierAdvances_ReversalJournalEntryId");
+        advance.GetIndexes().Single(x => x.GetDatabaseName() == "IX_SupplierAdvances_PostedAtUtc");
+        advance.GetIndexes().Single(x => x.GetDatabaseName() == "IX_SupplierAdvances_ReversedAtUtc");
+
+        if (provider == "PostgreSql")
+        {
+            advance.FindProperty(nameof(SupplierAdvance.MetadataJson))!.GetColumnType().Should().Be("jsonb");
+        }
+
+        application.GetSchema().Should().Be("Billing");
+        application.GetTableName().Should().Be("SupplierAdvanceApplications");
+        application.FindProperty(nameof(SupplierAdvanceApplication.Memo))!.GetMaxLength().Should().Be(1000);
+        application.FindProperty(nameof(SupplierAdvanceApplication.ReversalReason))!.GetMaxLength().Should().Be(1000);
+        application.GetIndexes().Single(x => x.GetDatabaseName() == "UX_SupplierAdvanceApplications_Advance_Invoice_Active").IsUnique.Should().BeTrue();
+        application.GetIndexes().Single(x => x.GetDatabaseName() == "IX_SupplierAdvanceApplications_SupplierInvoiceId");
+        application.GetIndexes().Single(x => x.GetDatabaseName() == "IX_SupplierAdvanceApplications_PostingJournalEntryId");
+        application.GetIndexes().Single(x => x.GetDatabaseName() == "IX_SupplierAdvanceApplications_ReversalJournalEntryId");
+        application.GetIndexes().Single(x => x.GetDatabaseName() == "IX_SupplierAdvanceApplications_ReversedAtUtc");
+    }
+
+    [Fact]
+    public void SupplierAdvance_Migrations_Should_Create_OnlySupplierAdvanceObjects()
+    {
+        var root = FindRepositoryRoot();
+        var migrationFiles = Directory
+            .GetFiles(Path.Combine(root, "src"), "*SupplierAdvanceCoreModel.cs", SearchOption.AllDirectories)
+            .Where(x => !x.EndsWith(".Designer.cs", StringComparison.OrdinalIgnoreCase))
+            .OrderBy(x => x)
+            .ToArray();
+
+        migrationFiles.Should().HaveCount(2);
+        foreach (var file in migrationFiles)
+        {
+            var migration = File.ReadAllText(file);
+            migration.Should().Contain("SupplierAdvances");
+            migration.Should().Contain("SupplierAdvanceApplications");
+            migration.Should().Contain("UX_SupplierAdvances_Business_Number_Active");
+            migration.Should().Contain("UX_SupplierAdvanceApplications_Advance_Invoice_Active");
+            migration.Should().NotContain("BankAccount");
+            migration.Should().NotContain("SupplierCredit");
+            migration.Should().NotContain("SupplierOverpayment");
+            migration.Should().NotContain("Payments\"");
+            migration.Should().NotContain("Refunds");
+        }
+
+        File.ReadAllText(migrationFiles.Single(x => x.Contains("PostgreSql", StringComparison.OrdinalIgnoreCase))).Should().Contain("type: \"jsonb\"");
+    }
+
+    [Fact]
+    public void SupplierAdvanceReversal_Migrations_Should_Add_OnlyReversalFields()
+    {
+        var root = FindRepositoryRoot();
+        var migrationFiles = Directory
+            .GetFiles(Path.Combine(root, "src"), "*SupplierAdvanceReversalHardening.cs", SearchOption.AllDirectories)
+            .Where(x => !x.EndsWith(".Designer.cs", StringComparison.OrdinalIgnoreCase))
+            .OrderBy(x => x)
+            .ToArray();
+
+        migrationFiles.Should().HaveCount(2);
+        foreach (var file in migrationFiles)
+        {
+            var migration = File.ReadAllText(file);
+            migration.Should().Contain("SupplierAdvances");
+            migration.Should().Contain("SupplierAdvanceApplications");
+            migration.Should().Contain("ReversalJournalEntryId");
+            migration.Should().Contain("ReversalReason");
+            migration.Should().Contain("ReversedAtUtc");
+            migration.Should().Contain("IX_SupplierAdvances_ReversalJournalEntryId");
+            migration.Should().Contain("IX_SupplierAdvanceApplications_ReversalJournalEntryId");
+            migration.Should().NotContain("BankCredential");
+            migration.Should().NotContain("SupplierCredit");
+            migration.Should().NotContain("SupplierOverpayment");
+            migration.Should().NotContain("CustomerPayment");
+            migration.Should().NotContain("FinanceExport");
+        }
+    }
+
+    [Fact]
+    public void SupplierAdvance_Enums_Should_IncludeRolesKindsAndSequence()
+    {
+        Enum.GetNames<SupplierAdvanceStatus>().Should().Contain([nameof(SupplierAdvanceStatus.Draft), nameof(SupplierAdvanceStatus.Posted), nameof(SupplierAdvanceStatus.Applied), nameof(SupplierAdvanceStatus.Cancelled), nameof(SupplierAdvanceStatus.Reversed)]);
+        Enum.GetNames<FinancePostingAccountRole>().Should().Contain(nameof(FinancePostingAccountRole.SupplierAdvance));
+        Enum.GetNames<JournalEntryPostingKind>().Should().Contain([nameof(JournalEntryPostingKind.SupplierAdvancePosted), nameof(JournalEntryPostingKind.SupplierAdvanceApplied)]);
+        Enum.GetNames<NumberSequenceDocumentType>().Should().Contain(nameof(NumberSequenceDocumentType.SupplierAdvance));
+    }
+
     [Fact]
     public void SupplierPaymentReversal_Migrations_Should_AddOnlyReversalFields()
     {

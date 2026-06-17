@@ -710,6 +710,48 @@ namespace Darwin.Domain.Entities.Billing
     }
 
     /// <summary>
+    /// Represents a formal supplier advance asset that can later be applied to posted payables.
+    /// </summary>
+    public sealed class SupplierAdvance : BaseEntity
+    {
+        public Guid BusinessId { get; set; }
+        public Guid SupplierId { get; set; }
+        public string? AdvanceNumber { get; set; }
+        public SupplierAdvanceStatus Status { get; set; } = SupplierAdvanceStatus.Draft;
+        public SupplierPaymentMethod PaymentMethod { get; set; } = SupplierPaymentMethod.BankTransfer;
+        public DateTime AdvanceDateUtc { get; set; }
+        public string Currency { get; set; } = DomainDefaults.DefaultCurrency;
+        public long TotalAmountMinor { get; set; }
+        public long OpenAmountMinor { get; set; }
+        public string? Reference { get; set; }
+        public Guid? PostingJournalEntryId { get; set; }
+        public Guid? ReversalJournalEntryId { get; set; }
+        public DateTime? PostedAtUtc { get; set; }
+        public DateTime? CancelledAtUtc { get; set; }
+        public DateTime? ReversedAtUtc { get; set; }
+        public string? ReversalReason { get; set; }
+        public string? InternalNotes { get; set; }
+        public string MetadataJson { get; set; } = "{}";
+        public List<SupplierAdvanceApplication> Applications { get; set; } = new();
+    }
+
+    /// <summary>
+    /// Represents one formal application of a posted supplier advance to a posted supplier invoice.
+    /// </summary>
+    public sealed class SupplierAdvanceApplication : BaseEntity
+    {
+        public Guid SupplierAdvanceId { get; set; }
+        public Guid SupplierInvoiceId { get; set; }
+        public Guid? PostingJournalEntryId { get; set; }
+        public Guid? ReversalJournalEntryId { get; set; }
+        public DateTime AppliedAtUtc { get; set; }
+        public DateTime? ReversedAtUtc { get; set; }
+        public long AmountMinor { get; set; }
+        public string? Memo { get; set; }
+        public string? ReversalReason { get; set; }
+    }
+
+    /// <summary>
     /// Represents a journal entry that groups balanced debit and credit lines.
     /// </summary>
     public sealed class JournalEntry : BaseEntity

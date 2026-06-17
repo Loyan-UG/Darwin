@@ -1,0 +1,136 @@
+@model Darwin.WebAdmin.ViewModels.Inventory.WarehouseLocationEditVm
+@inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
+@{
+    var isCreate = (bool?)ViewData["IsCreate"] ?? Model.Id == Guid.Empty;
+    ViewData["Title"] = isCreate ? T.T("CreateWarehouseLocation") : T.T("EditWarehouseLocation");
+    string LocationsUrl(Guid? businessId, Guid? warehouseId) => Url.Action("Locations", "Inventory", new { businessId, warehouseId }) ?? string.Empty;
+    string PostUrl() => Url.Action(isCreate ? "CreateLocation" : "EditLocation", "Inventory") ?? string.Empty;
+}
+
+<div id="inventory-locations-workspace-shell">
+    <h1 class="mb-3">@(isCreate ? T.T("CreateWarehouseLocation") : T.T("EditWarehouseLocation"))</h1>
+
+    <form asp-action="@(isCreate ? "CreateLocation" : "EditLocation")"
+          method="post"
+          hx-post="@PostUrl()"
+          hx-target="#inventory-locations-workspace-shell"
+          hx-swap="outerHTML">
+        @Html.AntiForgeryToken()
+        <input asp-for="Id" type="hidden" />
+        <input asp-for="RowVersion" type="hidden" />
+
+        <section class="admin-form-section">
+            <h2 class="admin-form-section-title">@T.T("WarehouseLocationIdentitySection")</h2>
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <label asp-for="BusinessId" class="form-label"></label>
+                    <select asp-for="BusinessId" asp-items="Model.BusinessOptions" class="form-select"></select>
+                </div>
+                <div class="col-md-4">
+                    <label asp-for="WarehouseId" class="form-label"></label>
+                    <select asp-for="WarehouseId" asp-items="Model.WarehouseOptions" class="form-select"></select>
+                </div>
+                <div class="col-md-4">
+                    <label asp-for="ParentLocationId" class="form-label"></label>
+                    <select asp-for="ParentLocationId" asp-items="Model.ParentLocationOptions" class="form-select"></select>
+                </div>
+                <div class="col-md-4">
+                    <label asp-for="Code" class="form-label"></label>
+                    <input asp-for="Code" class="form-control" autocomplete="off" />
+                    <span asp-validation-for="Code" class="text-danger"></span>
+                </div>
+                <div class="col-md-8">
+                    <label asp-for="DisplayName" class="form-label"></label>
+                    <input asp-for="DisplayName" class="form-control" />
+                    <span asp-validation-for="DisplayName" class="text-danger"></span>
+                </div>
+            </div>
+        </section>
+
+        <section class="admin-form-section">
+            <h2 class="admin-form-section-title">@T.T("WarehouseLocationOperationsSection")</h2>
+            <div class="row g-3">
+                <div class="col-md-3">
+                    <label asp-for="LocationType" class="form-label"></label>
+                    <select asp-for="LocationType" asp-items="Model.LocationTypeOptions" class="form-select"></select>
+                </div>
+                <div class="col-md-3">
+                    <label asp-for="Status" class="form-label"></label>
+                    <select asp-for="Status" asp-items="Model.StatusOptions" class="form-select"></select>
+                </div>
+                <div class="col-md-3">
+                    <label asp-for="SortOrder" class="form-label"></label>
+                    <input asp-for="SortOrder" class="form-control" />
+                    <span asp-validation-for="SortOrder" class="text-danger"></span>
+                </div>
+                <div class="col-md-3">
+                    <label asp-for="Barcode" class="form-label"></label>
+                    <input asp-for="Barcode" class="form-control" autocomplete="off" />
+                    <span asp-validation-for="Barcode" class="text-danger"></span>
+                </div>
+                <div class="col-md-6">
+                    <label asp-for="Description" class="form-label"></label>
+                    <textarea asp-for="Description" class="form-control" rows="3"></textarea>
+                    <span asp-validation-for="Description" class="text-danger"></span>
+                </div>
+                <div class="col-md-6">
+                    <label asp-for="MetadataJson" class="form-label"></label>
+                    <textarea asp-for="MetadataJson" class="form-control font-monospace" rows="3"></textarea>
+                    <span asp-validation-for="MetadataJson" class="text-danger"></span>
+                </div>
+            </div>
+        </section>
+
+        @if (!isCreate)
+        {
+            <section class="admin-form-section">
+                <h2 class="admin-form-section-title">@T.T("WarehouseLocationChildren")</h2>
+                @if (Model.Children.Count == 0)
+                {
+                    <div class="text-muted">@T.T("NoChildLocations")</div>
+                }
+                else
+                {
+                    <div class="table-responsive">
+                        <table class="table table-sm align-middle mb-0">
+                            <thead><tr><th>@T.T("Code")</th><th>@T.T("DisplayName")</th><th>@T.T("Type")</th><th>@T.T("Status")</th></tr></thead>
+                            <tbody>
+                            @foreach (var child in Model.Children)
+                            {
+                                <tr><td>@child.Code</td><td>@child.DisplayName</td><td>@T.T(child.LocationType.ToString())</td><td>@T.T(child.Status.ToString())</td></tr>
+                            }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+            </section>
+        }
+
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <button type="submit" class="btn btn-primary">@(isCreate ? T.T("Create") : T.T("Save"))</button>
+                <a asp-action="Locations" asp-route-businessId="@Model.BusinessId" asp-route-warehouseId="@Model.WarehouseId" class="btn btn-outline-secondary"
+                   hx-get="@LocationsUrl(Model.BusinessId, Model.WarehouseId)"
+                   hx-target="#inventory-locations-workspace-shell"
+                   hx-swap="outerHTML"
+                   hx-push-url="true">@T.T("Back")</a>
+            </div>
+        </div>
+    </form>
+
+    @if (!isCreate)
+    {
+        <form asp-action="ArchiveLocation"
+              method="post"
+              class="mt-3"
+              hx-post="@Url.Action("ArchiveLocation", "Inventory")"
+              hx-target="#inventory-locations-workspace-shell"
+              hx-swap="outerHTML">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="Id" value="@Model.Id" />
+            <input type="hidden" name="RowVersion" value="@Convert.ToBase64String(Model.RowVersion ?? Array.Empty<byte>())" />
+            <button type="submit" class="btn btn-outline-danger">@T.T("Archive")</button>
+        </form>
+    }
+</div>
