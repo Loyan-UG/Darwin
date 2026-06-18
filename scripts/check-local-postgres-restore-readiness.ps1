@@ -62,6 +62,26 @@ function Resolve-PostgresContainerName {
     return ""
 }
 
+function Resolve-PostgresRestoreUser {
+    param([string]$ContainerName)
+
+    $fromEnvironment = [Environment]::GetEnvironmentVariable("DARWIN_POSTGRES_RESTORE_USER")
+    if (-not [string]::IsNullOrWhiteSpace($fromEnvironment)) {
+        return $fromEnvironment.Trim()
+    }
+
+    $containerEnvironment = @(docker inspect $ContainerName --format "{{range .Config.Env}}{{println .}}{{end}}" 2>$null)
+    $postgresUserEntry = @($containerEnvironment | Where-Object { $_ -like "POSTGRES_USER=*" } | Select-Object -First 1)
+    if ($postgresUserEntry.Count -gt 0) {
+        $postgresUser = ([string]$postgresUserEntry[0]).Substring("POSTGRES_USER=".Length).Trim()
+        if (-not [string]::IsNullOrWhiteSpace($postgresUser)) {
+            return $postgresUser
+        }
+    }
+
+    return "postgres"
+}
+
 function Invoke-DockerChecked {
     param(
         [Parameter(Mandatory = $true)][string[]]$Arguments,
@@ -122,6 +142,7 @@ $resolvedBackupDate = if ([string]::IsNullOrWhiteSpace($BackupDate)) { Get-Date 
 $backupDirectory = Join-Path $resolvedBackupRoot $resolvedBackupDate
 $dumpPath = Join-Path $backupDirectory "databases\postgres-darwin_dev.dump"
 $containerName = Resolve-PostgresContainerName -RequestedName $PostgresContainerName
+$postgresRestoreUser = if ([string]::IsNullOrWhiteSpace($containerName)) { "postgres" } else { Resolve-PostgresRestoreUser -ContainerName $containerName }
 $problems = [System.Collections.Generic.List[string]]::new()
 
 if ([string]::IsNullOrWhiteSpace($containerName)) {
@@ -151,18 +172,18 @@ $createdDatabase = $false
 try {
     Invoke-DockerChecked -Arguments @("cp", $dumpPath, "${containerName}:$containerDumpPath") -FailureMessage "Could not copy PostgreSQL dump into the restore container." | Out-Null
 
-    Invoke-DockerChecked -Arguments @("exec", $containerName, "createdb", "-U", "postgres", $restoreDatabaseName) -FailureMessage "Could not create temporary restore database." | Out-Null
+    Invoke-DockerChecked -Arguments @("exec", $containerName, "createdb", "-U", $postgresRestoreUser, $restoreDatabaseName) -FailureMessage "Could not create temporary restore database." | Out-Null
     $createdDatabase = $true
 
-    Invoke-DockerChecked -Arguments @("exec", $containerName, "pg_restore", "--exit-on-error", "--no-owner", "-U", "postgres", "-d", $restoreDatabaseName, $containerDumpPath) -FailureMessage "PostgreSQL restore failed. Use the private restore log or rerun manually in the deployment evidence environment." | Out-Null
+    Invoke-DockerChecked -Arguments @("exec", $containerName, "pg_restore", "--exit-on-error", "--no-owner", "-U", $postgresRestoreUser, "-d", $restoreDatabaseName, $containerDumpPath) -FailureMessage "PostgreSQL restore failed. Use the private restore log or rerun manually in the deployment evidence environment." | Out-Null
 
     $schemaCountQuery = "select count(*) from information_schema.schemata where schema_name not in ('pg_catalog','information_schema') and schema_name not like 'pg_toast%';"
     $tableCountQuery = "select count(*) from information_schema.tables where table_schema not in ('pg_catalog','information_schema') and table_schema not like 'pg_toast%';"
     $migrationTableCountQuery = "select count(*) from information_schema.tables where table_schema = 'public' and table_name = '__EFMigrationsHistory';"
 
-    $schemaCountOutput = Invoke-DockerChecked -Arguments @("exec", $containerName, "psql", "-U", "postgres", "-d", $restoreDatabaseName, "-A", "-t", "-c", $schemaCountQuery) -FailureMessage "Could not inspect restored schema count."
-    $tableCountOutput = Invoke-DockerChecked -Arguments @("exec", $containerName, "psql", "-U", "postgres", "-d", $restoreDatabaseName, "-A", "-t", "-c", $tableCountQuery) -FailureMessage "Could not inspect restored table count."
-    $migrationTableCountOutput = Invoke-DockerChecked -Arguments @("exec", $containerName, "psql", "-U", "postgres", "-d", $restoreDatabaseName, "-A", "-t", "-c", $migrationTableCountQuery) -FailureMessage "Could not inspect restored migration history table."
+    $schemaCountOutput = Invoke-DockerChecked -Arguments @("exec", $containerName, "psql", "-U", $postgresRestoreUser, "-d", $restoreDatabaseName, "-A", "-t", "-c", $schemaCountQuery) -FailureMessage "Could not inspect restored schema count."
+    $tableCountOutput = Invoke-DockerChecked -Arguments @("exec", $containerName, "psql", "-U", $postgresRestoreUser, "-d", $restoreDatabaseName, "-A", "-t", "-c", $tableCountQuery) -FailureMessage "Could not inspect restored table count."
+    $migrationTableCountOutput = Invoke-DockerChecked -Arguments @("exec", $containerName, "psql", "-U", $postgresRestoreUser, "-d", $restoreDatabaseName, "-A", "-t", "-c", $migrationTableCountQuery) -FailureMessage "Could not inspect restored migration history table."
 
     $schemaCount = [int]($schemaCountOutput | Select-Object -First 1)
     $tableCount = [int]($tableCountOutput | Select-Object -First 1)
@@ -196,7 +217,7 @@ catch {
 finally {
     if ($createdDatabase) {
         try {
-            Invoke-DockerChecked -Arguments @("exec", $containerName, "dropdb", "-U", "postgres", "--if-exists", $restoreDatabaseName) -TimeoutSeconds 60 | Out-Null
+            Invoke-DockerChecked -Arguments @("exec", $containerName, "dropdb", "-U", $postgresRestoreUser, "--if-exists", $restoreDatabaseName) -TimeoutSeconds 60 | Out-Null
         } catch {
             Write-Host "Local PostgreSQL restore readiness cleanup warning: temporary restore database cleanup could not be verified."
         }

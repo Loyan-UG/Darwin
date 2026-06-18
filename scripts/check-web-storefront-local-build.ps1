@@ -34,7 +34,11 @@ function Find-CommandPath {
 }
 
 function Test-ContainsSensitivePattern {
-    param([Parameter(Mandatory = $true)][string]$Value)
+    param([AllowEmptyString()][string]$Value)
+
+    if ([string]::IsNullOrWhiteSpace($Value)) {
+        return $false
+    }
 
     $blockedPatterns = @(
         "(?i)-----BEGIN (RSA |EC |OPENSSH |DSA |)PRIVATE KEY-----",
