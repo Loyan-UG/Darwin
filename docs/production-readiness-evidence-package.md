@@ -195,7 +195,7 @@ Darwin is not production-ready for a customer deployment until:
 
 ## Current Outcome
 
-The no-target production readiness hardening path is documented and now includes a reusable non-secret evidence package template, local generation and validation scripts, a readiness report bundle, an owner action-plan exporter, and an ignored evidence environment-template exporter. A local working package was generated on 2026-06-18 in the ignored `artifacts\production-readiness\` path and paired with a non-secret local execution summary. The package correctly remains blocked until deployment owners provide real staging, provider, storage, e-invoice, mobile, monitoring, rollback, and approval evidence.
+The no-target production readiness hardening path is documented and now includes a reusable non-secret evidence package template, local generation and validation scripts, a readiness report bundle, an owner action-plan exporter, a local execution summary exporter, and an ignored evidence environment-template exporter. A local working package is generated under the ignored `artifacts\production-readiness\` path and paired with a current-branch non-secret local execution summary from the same bundle run. The package correctly remains blocked until deployment owners provide real staging, provider, storage, e-invoice, mobile, monitoring, rollback, and approval evidence.
 
 This readiness path adds no entity, migration, route, DTO, WebAdmin mutation, public/mobile/storefront contract, provider credential UI, finance export format change, payment/refund change, supplier finance change, invoice archive/download behavior change, bank API, AI provider, or accounting API adapter.
 

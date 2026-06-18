@@ -120,6 +120,7 @@ $expectedHelpers = @(
     "production-readiness-action-plan.md",
     "production-readiness-owner-handoff.md",
     "production-readiness-env-template.ps1",
+    "local-execution-summary.md",
     "evidence-package-local-draft.md"
 )
 
@@ -165,7 +166,7 @@ foreach ($fileName in $expectedHelpers) {
         continue
     }
 
-    if ($fileName -in @("production-readiness-action-plan.md", "production-readiness-owner-handoff.md", "production-readiness-env-template.ps1")) {
+    if ($fileName -in @("production-readiness-action-plan.md", "production-readiness-owner-handoff.md", "production-readiness-env-template.ps1", "local-execution-summary.md")) {
         Assert-CurrentBranchAndCommit -Problems $problems -Content $content -FileName $fileName -Kind "Readiness helper"
     }
 
@@ -185,6 +186,14 @@ foreach ($fileName in $expectedHelpers) {
 
     if ($fileName -eq "production-readiness-env-template.ps1" -and $content.IndexOf("Go-live aggregate", [StringComparison]::OrdinalIgnoreCase) -ge 0) {
         Add-Problem $problems "Readiness environment template should use dedicated evidence sections instead of the aggregate go-live report: $fileName"
+    }
+
+    if ($fileName -eq "local-execution-summary.md" -and $content.IndexOf("Production Readiness Local Execution Summary", [StringComparison]::OrdinalIgnoreCase) -lt 0) {
+        Add-Problem $problems "Local execution summary does not contain the expected title: $fileName"
+    }
+
+    if ($fileName -eq "local-execution-summary.md" -and $content.IndexOf("Remaining Evidence Boundary", [StringComparison]::OrdinalIgnoreCase) -lt 0) {
+        Add-Problem $problems "Local execution summary does not preserve the deployment evidence boundary: $fileName"
     }
 
     if ($fileName -eq "production-readiness-action-plan.md" -and $content.IndexOf("| Go-live aggregate | Blocked | Darwin technical owner | See the dedicated readiness rows |", [StringComparison]::OrdinalIgnoreCase) -lt 0) {
@@ -213,6 +222,10 @@ foreach ($fileName in $expectedHelpers) {
 
     if ($fileName -eq "evidence-package-local-draft.md" -and $content.IndexOf("Local Supporting Evidence Snapshot", [StringComparison]::OrdinalIgnoreCase) -lt 0) {
         Add-Problem $problems "Local evidence package draft does not contain the local supporting evidence snapshot: $fileName"
+    }
+
+    if ($fileName -eq "evidence-package-local-draft.md" -and $content.IndexOf("local-execution-summary.md", [StringComparison]::OrdinalIgnoreCase) -lt 0) {
+        Add-Problem $problems "Local evidence package draft does not contain the local execution summary reference: $fileName"
     }
 
     if ($fileName -eq "evidence-package-local-draft.md" -and $content.IndexOf("local-backup-readiness-report.md", [StringComparison]::OrdinalIgnoreCase) -lt 0) {

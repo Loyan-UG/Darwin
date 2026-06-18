@@ -225,6 +225,7 @@ $lines.Add("| --- | --- |")
 $lines.Add("| production-readiness-action-plan.md | Owner action rows, missing evidence keys, and next actions derived from the readiness reports. |")
 $lines.Add("| production-readiness-owner-handoff.md | Per-owner handoff rows grouped from the readiness reports for deployment evidence follow-up. |")
 $lines.Add("| production-readiness-env-template.ps1 | De-duplicated local/session placeholder template for missing evidence variables. Filled copies must stay outside git. |")
+$lines.Add("| local-execution-summary.md | Current-branch local readiness execution summary copied from the generated report bundle. |")
 $lines.Add("| evidence-package-local-draft.md | Ignored evidence-package draft with local report/helper references marked ready and deployment-specific rows left blocked. |")
 $lines.Add("")
 $lines.Add("Use the listed report files as non-secret attachment references in the deployment evidence package. A `Blocked` bundle is valid current-state evidence, but it is not go-live approval and does not replace real staging, storage, provider, e-invoice, mobile, monitoring, rollback, or owner approval records.")
@@ -239,6 +240,7 @@ Set-Content -Path $bundlePath -Value $bundle -Encoding UTF8
 $actionPlanPath = Join-Path $resolvedOutputDirectory "production-readiness-action-plan.md"
 $ownerHandoffPath = Join-Path $resolvedOutputDirectory "production-readiness-owner-handoff.md"
 $envTemplatePath = Join-Path $resolvedOutputDirectory "production-readiness-env-template.ps1"
+$localExecutionSummaryPath = Join-Path $resolvedOutputDirectory "local-execution-summary.md"
 $localDraftPath = Join-Path $resolvedOutputDirectory "evidence-package-local-draft.md"
 Push-Location $repoRoot
 try {
@@ -253,6 +255,11 @@ try {
     }
 
     & powershell -NoProfile -ExecutionPolicy Bypass -File "scripts\export-production-readiness-env-template.ps1" -ReportDirectory $resolvedOutputDirectory -OutputPath $envTemplatePath -Force | Out-Host
+    if ($LASTEXITCODE -eq 1) {
+        exit 1
+    }
+
+    & powershell -NoProfile -ExecutionPolicy Bypass -File "scripts\export-production-readiness-local-execution-summary.ps1" -ReportDirectory $resolvedOutputDirectory -OutputPath $localExecutionSummaryPath -Force | Out-Host
     if ($LASTEXITCODE -eq 1) {
         exit 1
     }

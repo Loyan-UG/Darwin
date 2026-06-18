@@ -267,6 +267,7 @@ public sealed class SecurityAndPerformanceContractsAndPackagingSourceTests : Sec
             "check-production-readiness-report-bundle-clean-smoke.ps1",
             "check-production-readiness-evidence-package.ps1",
             "new-production-readiness-evidence-package.ps1",
+            "export-production-readiness-local-execution-summary.ps1",
             "check-go-live-readiness.ps1"
         };
 
@@ -328,6 +329,7 @@ public sealed class SecurityAndPerformanceContractsAndPackagingSourceTests : Sec
         goLiveReportExporterSource.Should().Contain("[switch]$SkipReportBundleCheck");
         reportBundleExporterSource.Should().Contain("-SkipReportBundleCheck");
         reportBundleExporterSource.Should().Contain("scripts\\export-go-live-readiness-report.ps1");
+        reportBundleExporterSource.Should().Contain("scripts\\export-production-readiness-local-execution-summary.ps1");
 
         minioComposeSource.Should().Contain("quay.io/minio/minio:latest");
         minioComposeSource.Should().Contain("quay.io/minio/mc:latest");
@@ -696,6 +698,28 @@ public sealed class SecurityAndPerformanceContractsAndPackagingSourceTests : Sec
         output.Should().Contain("Production readiness report bundle validation is blocked.");
         output.Should().Contain("Readiness helper commit");
         output.Should().Contain("production-readiness-action-plan.md");
+    }
+
+    [Fact]
+    public async Task ProductionReadinessReportBundleValidator_Should_BlockStaleLocalExecutionSummaryCommit()
+    {
+        var root = ResolveRepositoryPath();
+        var directory = EnsureReadyProductionReadinessReportBundle();
+        var staleHelper = Path.Combine(directory, "local-execution-summary.md");
+        var content = File.ReadAllText(staleHelper)
+            .Replace("Commit: " + ReadGitOutput(root, "rev-parse", "--short=12", "HEAD"), "Commit: 000000000000", StringComparison.Ordinal);
+        File.WriteAllText(staleHelper, content);
+
+        var (exitCode, output) = await RunPowerShellScriptAsync(
+            root,
+            "check-production-readiness-report-bundle.ps1",
+            new Dictionary<string, string>(),
+            ["-Directory", directory]);
+
+        exitCode.Should().Be(2);
+        output.Should().Contain("Production readiness report bundle validation is blocked.");
+        output.Should().Contain("Readiness helper commit");
+        output.Should().Contain("local-execution-summary.md");
     }
 
     [Fact]
@@ -2401,6 +2425,7 @@ public sealed class SecurityAndPerformanceContractsAndPackagingSourceTests : Sec
             "production-readiness-action-plan.md",
             "production-readiness-owner-handoff.md",
             "production-readiness-env-template.ps1",
+            "local-execution-summary.md",
             "evidence-package-local-draft.md"
         };
 
@@ -2470,6 +2495,24 @@ public sealed class SecurityAndPerformanceContractsAndPackagingSourceTests : Sec
             """);
 
         File.WriteAllText(
+            Path.Combine(directory, "local-execution-summary.md"),
+            $$"""
+            # Production Readiness Local Execution Summary
+
+            Branch: {{branch}}
+
+            Commit: {{commit}}
+
+            Overall result: Ready
+
+            Exit code: 0
+
+            ## Remaining Evidence Boundary
+
+            Ready local report rows are supporting evidence only.
+            """);
+
+        File.WriteAllText(
             Path.Combine(directory, "evidence-package-local-draft.md"),
             $$"""
             # Local Evidence Package Draft
@@ -2482,6 +2525,7 @@ public sealed class SecurityAndPerformanceContractsAndPackagingSourceTests : Sec
             | --- | --- |
             | Readiness report bundle | readiness-report-bundle.md |
             | Owner handoff | production-readiness-owner-handoff.md |
+            | Local execution summary | local-execution-summary.md |
             | Local backup | local-backup-readiness-report.md |
 
             ## Local Supporting Evidence Snapshot
