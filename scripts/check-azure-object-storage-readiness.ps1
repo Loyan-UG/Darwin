@@ -45,6 +45,25 @@ function Assert-AbsoluteHttpsEndpoint {
     }
 }
 
+function Assert-AzureContainerName {
+    param(
+        [Parameter(Mandatory = $true)][string]$Name,
+        [Parameter(Mandatory = $true)][string]$Value
+    )
+
+    if ($Value.Length -lt 3 -or $Value.Length -gt 63) {
+        Write-Host "Azure Blob object-storage readiness is blocked."
+        Write-Host "$Name must be between 3 and 63 characters."
+        exit 2
+    }
+
+    if ($Value -cnotmatch '^[a-z0-9][a-z0-9-]*[a-z0-9]$' -or $Value.Contains("--")) {
+        Write-Host "Azure Blob object-storage readiness is blocked."
+        Write-Host "$Name must use a valid Azure container label: lowercase letters, numbers, single hyphens, and alphanumeric start/end."
+        exit 2
+    }
+}
+
 $endpoint = Get-EnvValue "DARWIN_AZURE_BLOB_PRODUCTION_ENDPOINT"
 $container = Get-EnvValue "DARWIN_AZURE_BLOB_PRODUCTION_CONTAINER"
 $requiredConfirmations = @(
@@ -99,6 +118,7 @@ if ($missing.Count -gt 0) {
 }
 
 Assert-AbsoluteHttpsEndpoint -Name "DARWIN_AZURE_BLOB_PRODUCTION_ENDPOINT" -Value $endpoint
+Assert-AzureContainerName -Name "DARWIN_AZURE_BLOB_PRODUCTION_CONTAINER" -Value $container
 
 Write-Host "Azure Blob object-storage readiness prerequisites are present."
 Write-Host "No connection string, account key, SAS token, client secret, object payload, policy JSON, or provider response was accepted or printed."

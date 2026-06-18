@@ -1177,6 +1177,48 @@ public sealed class SecurityAndPerformanceContractsAndPackagingSourceTests : Sec
     }
 
     [Fact]
+    public async Task AzureObjectStorageReadiness_Should_BlockInvalidContainerLabel()
+    {
+        var root = ResolveRepositoryPath();
+        var startInfo = new ProcessStartInfo
+        {
+            FileName = "powershell",
+            WorkingDirectory = root,
+            RedirectStandardOutput = true,
+            RedirectStandardError = true,
+            UseShellExecute = false
+        };
+        startInfo.ArgumentList.Add("-NoProfile");
+        startInfo.ArgumentList.Add("-ExecutionPolicy");
+        startInfo.ArgumentList.Add("Bypass");
+        startInfo.ArgumentList.Add("-File");
+        startInfo.ArgumentList.Add(Path.Combine("scripts", "check-azure-object-storage-readiness.ps1"));
+
+        foreach (var key in startInfo.Environment.Keys.Cast<string>()
+                     .Where(key => key.StartsWith("DARWIN_", StringComparison.OrdinalIgnoreCase)).ToList())
+        {
+            startInfo.Environment.Remove(key);
+        }
+
+        foreach (var item in AzureReadinessEnvironment(container: "Invalid_Container"))
+        {
+            startInfo.Environment[item.Key] = item.Value;
+        }
+
+        using var process = Process.Start(startInfo) ?? throw new InvalidOperationException("Could not start check-azure-object-storage-readiness.ps1.");
+        var stdoutTask = process.StandardOutput.ReadToEndAsync(TestContext.Current.CancellationToken);
+        var stderrTask = process.StandardError.ReadToEndAsync(TestContext.Current.CancellationToken);
+
+        await process.WaitForExitAsync(TestContext.Current.CancellationToken);
+        var output = $"{await stdoutTask}{Environment.NewLine}{await stderrTask}";
+
+        process.ExitCode.Should().Be(2);
+        output.Should().Contain("Azure Blob object-storage readiness is blocked.");
+        output.Should().Contain("valid Azure container label");
+        output.Should().NotContain("System.Management.Automation.RemoteException");
+    }
+
+    [Fact]
     public async Task EInvoiceExternalCommandSmoke_Should_ExecuteThroughConfiguredAdapterWithLocalWrapper()
     {
         var root = ResolveRepositoryPath();
@@ -2142,6 +2184,35 @@ public sealed class SecurityAndPerformanceContractsAndPackagingSourceTests : Sec
             ["DARWIN_ANDROID_CERT_TRUST_GUARD_CONFIRMED"] = "true",
             ["DARWIN_ANDROID_ROUTE_COMPATIBILITY_CONFIRMED"] = "true",
             ["DARWIN_ANDROID_EVIDENCE_PACKAGE_CONFIRMED"] = "true"
+        };
+
+    private static IReadOnlyDictionary<string, string> AzureReadinessEnvironment(string container = "darwin-invoice-archive") =>
+        new Dictionary<string, string>
+        {
+            ["DARWIN_AZURE_BLOB_PRODUCTION_ENDPOINT"] = "https://storage.example.test",
+            ["DARWIN_AZURE_BLOB_PRODUCTION_CONTAINER"] = container,
+            ["DARWIN_AZURE_BLOB_PROVIDER_SELECTED_CONFIRMED"] = "true",
+            ["DARWIN_AZURE_BLOB_TLS_CONFIRMED"] = "true",
+            ["DARWIN_AZURE_BLOB_DEDICATED_IDENTITY_CONFIRMED"] = "true",
+            ["DARWIN_AZURE_BLOB_LEAST_PRIVILEGE_POLICY_CONFIRMED"] = "true",
+            ["DARWIN_AZURE_BLOB_VERSIONING_CONFIRMED"] = "true",
+            ["DARWIN_AZURE_BLOB_IMMUTABILITY_POLICY_CONFIRMED"] = "true",
+            ["DARWIN_AZURE_BLOB_LEGAL_HOLD_POLICY_CONFIRMED"] = "true",
+            ["DARWIN_AZURE_BLOB_BACKUP_CONFIGURED_CONFIRMED"] = "true",
+            ["DARWIN_AZURE_BLOB_RESTORE_TEST_CONFIRMED"] = "true",
+            ["DARWIN_AZURE_BLOB_MONITORING_CONFIRMED"] = "true",
+            ["DARWIN_AZURE_BLOB_ALERTING_CONFIRMED"] = "true",
+            ["DARWIN_AZURE_BLOB_DARWIN_PROFILE_CONFIGURED_CONFIRMED"] = "true",
+            ["DARWIN_AZURE_BLOB_INVOICE_ARCHIVE_PROFILE_CONFIRMED"] = "true",
+            ["DARWIN_AZURE_BLOB_SHIPMENT_LABELS_PROFILE_CONFIRMED"] = "true",
+            ["DARWIN_AZURE_BLOB_MEDIA_ASSETS_PROFILE_DECIDED_CONFIRMED"] = "true",
+            ["DARWIN_AZURE_BLOB_FINANCE_EXPORTS_PROFILE_CONFIRMED"] = "true",
+            ["DARWIN_AZURE_BLOB_FINANCE_EXPORT_OUTBOUND_PROFILE_CONFIRMED"] = "true",
+            ["DARWIN_AZURE_BLOB_PERSONNEL_DOCUMENTS_PROFILE_CONFIRMED"] = "true",
+            ["DARWIN_AZURE_BLOB_PAYROLL_PAYSLIPS_PROFILE_CONFIRMED"] = "true",
+            ["DARWIN_AZURE_BLOB_DISPOSABLE_SMOKE_PREFIX_CONFIRMED"] = "true",
+            ["DARWIN_AZURE_BLOB_RETENTION_DELETE_BEHAVIOR_CONFIRMED"] = "true",
+            ["DARWIN_AZURE_BLOB_OPERATOR_RUNBOOK_CONFIRMED"] = "true"
         };
 
     private static string EnsureFakeWebToolchainPath()

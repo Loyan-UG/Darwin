@@ -90,7 +90,7 @@ The preflight records only environment-level confirmations and refuses to print 
 | Variable | Purpose |
 | --- | --- |
 | `DARWIN_AZURE_BLOB_PRODUCTION_ENDPOINT` | Confirms the approved HTTPS Azure Blob endpoint for this deployment record. |
-| `DARWIN_AZURE_BLOB_PRODUCTION_CONTAINER` | Confirms the approved container label for this deployment record. |
+| `DARWIN_AZURE_BLOB_PRODUCTION_CONTAINER` | Confirms the approved container label for this deployment record. The value must be a valid Azure container name: 3 to 63 lowercase letters, numbers, and single hyphens, with an alphanumeric start and end. |
 | `DARWIN_AZURE_BLOB_PROVIDER_SELECTED_CONFIRMED` | Confirms Azure Blob is intentionally selected for this deployment or readiness lane. |
 | `DARWIN_AZURE_BLOB_TLS_CONFIRMED` | Confirms TLS is enforced. |
 | `DARWIN_AZURE_BLOB_DEDICATED_IDENTITY_CONFIRMED` | Confirms access uses deployment-owned identity, vault, or managed identity controls. |
