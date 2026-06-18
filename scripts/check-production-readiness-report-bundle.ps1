@@ -45,6 +45,25 @@ function Get-OverallResult {
     return ""
 }
 
+function Get-MetadataValue {
+    param(
+        [Parameter(Mandatory = $true)][string]$Content,
+        [Parameter(Mandatory = $true)][string]$Name
+    )
+
+    $pattern = "(?im)^$([regex]::Escape($Name)):\s*(?<value>.+?)\s*$"
+    $match = [regex]::Match($Content, $pattern)
+    if ($match.Success) {
+        return $match.Groups["value"].Value.Trim()
+    }
+
+    return ""
+}
+
+$repoRoot = Split-Path -Parent $PSScriptRoot
+$expectedBranch = (& git -C $repoRoot branch --show-current 2>$null)
+$expectedCommit = (& git -C $repoRoot rev-parse --short=12 HEAD 2>$null)
+
 $resolvedDirectory = $ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($Directory)
 $problems = [System.Collections.Generic.List[string]]::new()
 
@@ -89,6 +108,24 @@ foreach ($fileName in $expectedReports) {
     if (Test-ContainsSensitivePattern $content) {
         Add-Problem $problems "Readiness report appears to contain a secret assignment, private key, raw payload, private endpoint, provider response, or private evidence value: $fileName"
         continue
+    }
+
+    $branch = Get-MetadataValue -Content $content -Name "Branch"
+    if ([string]::IsNullOrWhiteSpace($branch)) {
+        Add-Problem $problems "Readiness report is missing a Branch line and may be stale: $fileName"
+    }
+    elseif (-not [string]::IsNullOrWhiteSpace($expectedBranch) -and
+        -not [string]::Equals($branch, $expectedBranch, [StringComparison]::Ordinal)) {
+        Add-Problem $problems "Readiness report branch '$branch' does not match current branch '$expectedBranch': $fileName"
+    }
+
+    $commit = Get-MetadataValue -Content $content -Name "Commit"
+    if ([string]::IsNullOrWhiteSpace($commit)) {
+        Add-Problem $problems "Readiness report is missing a Commit line and may be stale: $fileName"
+    }
+    elseif (-not [string]::IsNullOrWhiteSpace($expectedCommit) -and
+        -not [string]::Equals($commit, $expectedCommit, [StringComparison]::OrdinalIgnoreCase)) {
+        Add-Problem $problems "Readiness report commit '$commit' does not match current commit '$expectedCommit': $fileName"
     }
 
     $status = Get-OverallResult -Content $content

@@ -654,6 +654,28 @@ public sealed class SecurityAndPerformanceContractsAndPackagingSourceTests : Sec
         secretPattern.IsMatch(output).Should().BeFalse("readiness dry-run output must not print provider secrets");
     }
 
+    [Fact]
+    public async Task ProductionReadinessReportBundleValidator_Should_BlockStaleReportCommit()
+    {
+        var root = ResolveRepositoryPath();
+        var directory = EnsureReadyProductionReadinessReportBundle();
+        var staleReport = Path.Combine(directory, "web-mobile-readiness-report.md");
+        var content = File.ReadAllText(staleReport)
+            .Replace("Commit: " + ReadGitOutput(root, "rev-parse", "--short=12", "HEAD"), "Commit: 000000000000", StringComparison.Ordinal);
+        File.WriteAllText(staleReport, content);
+
+        var (exitCode, output) = await RunPowerShellScriptAsync(
+            root,
+            "check-production-readiness-report-bundle.ps1",
+            new Dictionary<string, string>(),
+            ["-Directory", directory]);
+
+        exitCode.Should().Be(2);
+        output.Should().Contain("Production readiness report bundle validation is blocked.");
+        output.Should().Contain("does not match current commit");
+        output.Should().Contain("web-mobile-readiness-report.md");
+    }
+
     [Theory]
     [InlineData("smoke-stripe-testmode.ps1", "Stripe test-mode smoke is blocked.")]
     [InlineData("check-stripe-webhook-forwarding.ps1", "Stripe webhook forwarding is blocked.")]
@@ -2262,7 +2284,8 @@ public sealed class SecurityAndPerformanceContractsAndPackagingSourceTests : Sec
     private static async Task<(int ExitCode, string Output)> RunPowerShellScriptAsync(
         string root,
         string scriptName,
-        IReadOnlyDictionary<string, string> environment)
+        IReadOnlyDictionary<string, string> environment,
+        IReadOnlyList<string>? arguments = null)
     {
         var startInfo = new ProcessStartInfo
         {
@@ -2277,6 +2300,13 @@ public sealed class SecurityAndPerformanceContractsAndPackagingSourceTests : Sec
         startInfo.ArgumentList.Add("Bypass");
         startInfo.ArgumentList.Add("-File");
         startInfo.ArgumentList.Add(Path.Combine("scripts", scriptName));
+        if (arguments is not null)
+        {
+            foreach (var argument in arguments)
+            {
+                startInfo.ArgumentList.Add(argument);
+            }
+        }
 
         foreach (var key in startInfo.Environment.Keys.Cast<string>()
                      .Where(key => key.StartsWith("DARWIN_", StringComparison.OrdinalIgnoreCase)).ToList())
@@ -2301,6 +2331,9 @@ public sealed class SecurityAndPerformanceContractsAndPackagingSourceTests : Sec
     {
         var directory = Path.Combine(Path.GetTempPath(), "darwin-production-readiness-report-bundle-ready");
         Directory.CreateDirectory(directory);
+        var root = ResolveRepositoryPath();
+        var branch = ReadGitOutput(root, "branch", "--show-current");
+        var commit = ReadGitOutput(root, "rev-parse", "--short=12", "HEAD");
 
         var reportNames = new[]
         {
@@ -2331,6 +2364,10 @@ public sealed class SecurityAndPerformanceContractsAndPackagingSourceTests : Sec
         {
             var content = $"""
                 # {reportName}
+
+                Branch: {branch}
+
+                Commit: {commit}
 
                 Overall result: Ready
 
@@ -2394,6 +2431,31 @@ public sealed class SecurityAndPerformanceContractsAndPackagingSourceTests : Sec
             """);
 
         return directory;
+    }
+
+    private static string ReadGitOutput(string root, params string[] arguments)
+    {
+        var startInfo = new ProcessStartInfo
+        {
+            FileName = "git",
+            WorkingDirectory = root,
+            RedirectStandardOutput = true,
+            RedirectStandardError = true,
+            UseShellExecute = false
+        };
+        startInfo.ArgumentList.Add("-C");
+        startInfo.ArgumentList.Add(root);
+        foreach (var argument in arguments)
+        {
+            startInfo.ArgumentList.Add(argument);
+        }
+
+        using var process = Process.Start(startInfo) ?? throw new InvalidOperationException("Could not start git.");
+        var output = process.StandardOutput.ReadToEnd();
+        var error = process.StandardError.ReadToEnd();
+        process.WaitForExit();
+        process.ExitCode.Should().Be(0, $"git {string.Join(" ", arguments)} should succeed: {error}");
+        return output.Trim();
     }
 
     private static string EnsureFilledProductionReadinessEvidencePackage()

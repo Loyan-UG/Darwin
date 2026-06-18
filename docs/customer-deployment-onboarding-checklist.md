@@ -201,7 +201,7 @@ Manual approvals:
 ## Phase 8: Final Verification
 
 - Create the deployment evidence package described in [docs/production-readiness-evidence-package.md](production-readiness-evidence-package.md), using `scripts\new-production-readiness-evidence-package.ps1` when a fresh non-secret working copy is needed.
-- Generate the non-secret readiness report bundle with `scripts\export-production-readiness-report-bundle.ps1 -Force`, then validate it with `scripts\check-production-readiness-report-bundle.ps1`.
+- Generate the non-secret readiness report bundle with `scripts\export-production-readiness-report-bundle.ps1 -Force`, then validate it with `scripts\check-production-readiness-report-bundle.ps1` so stale branch or commit metadata is blocked before attachment.
 - Generate the ignored local package draft with `scripts\export-production-readiness-local-package-draft.ps1 -Force` when operators need a pre-filled blocked draft from local report references and a local supporting-evidence snapshot. The bundle exporter also refreshes this draft. Do not treat it as final approval.
 - Generate the owner action plan with `scripts\export-production-readiness-action-plan.ps1 -Force` so blocked evidence rows have clear owners, missing evidence keys, and next actions.
 - Generate the owner handoff with `scripts\export-production-readiness-owner-handoff.ps1 -Force` when follow-up needs to be grouped by deployment owner before evidence collection starts.
