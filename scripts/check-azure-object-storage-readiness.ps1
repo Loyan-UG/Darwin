@@ -43,6 +43,15 @@ function Assert-AbsoluteHttpsEndpoint {
         Write-Host "$Name must point to the production or production-like Azure endpoint, not a loopback URL."
         exit 2
     }
+
+    if (-not [string]::IsNullOrWhiteSpace($parsed.UserInfo) -or
+        -not [string]::IsNullOrWhiteSpace($parsed.Query) -or
+        -not [string]::IsNullOrWhiteSpace($parsed.Fragment) -or
+        ($parsed.AbsolutePath -ne "/" -and -not [string]::IsNullOrWhiteSpace($parsed.AbsolutePath))) {
+        Write-Host "Azure Blob object-storage readiness is blocked."
+        Write-Host "$Name must be the base HTTPS endpoint only. Put container names in DARWIN_AZURE_BLOB_PRODUCTION_CONTAINER and keep SAS tokens, object keys, user info, query strings, and fragments out of readiness input."
+        exit 2
+    }
 }
 
 function Assert-AzureContainerName {
