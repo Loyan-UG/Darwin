@@ -69,6 +69,11 @@ $expectedReports = @(
     "provider-readiness-report.md"
 )
 
+$expectedHelpers = @(
+    "production-readiness-action-plan.md",
+    "production-readiness-env-template.ps1"
+)
+
 $statuses = @{}
 foreach ($fileName in $expectedReports) {
     $path = Join-Path $resolvedDirectory $fileName
@@ -96,12 +101,40 @@ foreach ($fileName in $expectedReports) {
     $statuses[$fileName] = $status
 }
 
+foreach ($fileName in $expectedHelpers) {
+    $path = Join-Path $resolvedDirectory $fileName
+    if (-not (Test-Path $path -PathType Leaf)) {
+        Add-Problem $problems "Missing readiness helper: $fileName"
+        continue
+    }
+
+    $content = Get-Content $path -Raw
+    if (Test-ContainsSensitivePattern $content) {
+        Add-Problem $problems "Readiness helper appears to contain a secret assignment, private key, raw payload, private endpoint, provider response, or private evidence value: $fileName"
+        continue
+    }
+
+    if ($fileName -eq "production-readiness-action-plan.md" -and $content.IndexOf("Owner Action Rows", [StringComparison]::OrdinalIgnoreCase) -lt 0) {
+        Add-Problem $problems "Readiness action plan does not contain owner action rows: $fileName"
+    }
+
+    if ($fileName -eq "production-readiness-env-template.ps1" -and $content.IndexOf("No template assignment is written", [StringComparison]::OrdinalIgnoreCase) -lt 0) {
+        Add-Problem $problems "Readiness helper does not document secret-like variable handling: $fileName"
+    }
+}
+
 $bundlePath = Join-Path $resolvedDirectory "readiness-report-bundle.md"
 if (Test-Path $bundlePath -PathType Leaf) {
     $bundleContent = Get-Content $bundlePath -Raw
     foreach ($fileName in $expectedReports | Where-Object { $_ -ne "readiness-report-bundle.md" }) {
         if ($bundleContent.IndexOf($fileName, [StringComparison]::OrdinalIgnoreCase) -lt 0) {
             Add-Problem $problems "Bundle index does not reference expected report: $fileName"
+        }
+    }
+
+    foreach ($fileName in $expectedHelpers) {
+        if ($bundleContent.IndexOf($fileName, [StringComparison]::OrdinalIgnoreCase) -lt 0) {
+            Add-Problem $problems "Bundle index does not reference expected helper: $fileName"
         }
     }
 }
@@ -120,5 +153,6 @@ $blockedCount = @($statuses.Values | Where-Object { $_ -eq "Blocked" }).Count
 
 Write-Host "Production readiness report bundle validation passed."
 Write-Host "Reports checked: $($expectedReports.Count)"
-Write-Host "Ready: $readyCount; Blocked: $blockedCount; Failed: 0; Missing/Unknown: 0"
+Write-Host "Helpers checked: $($expectedHelpers.Count)"
+Write-Host "Ready: $readyCount; Blocked: $blockedCount; Failed: 0; Missing/Unparseable: 0"
 Write-Host "This validates local non-secret report shape only; deployment owners remain responsible for real evidence and approvals behind each reference."

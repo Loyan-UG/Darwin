@@ -46,7 +46,7 @@ function Get-OverallResult {
         return $match.Groups["status"].Value
     }
 
-    return "Missing"
+    return "Unparseable"
 }
 
 function Get-MissingEvidenceKeys {
@@ -209,7 +209,7 @@ foreach ($report in $reports) {
 $readyCount = @($items | Where-Object { $_.Status -eq "Ready" }).Count
 $blockedCount = @($items | Where-Object { $_.Status -eq "Blocked" }).Count
 $failedCount = @($items | Where-Object { $_.Status -eq "Failed" }).Count
-$missingCount = @($items | Where-Object { $_.Status -eq "Missing" -or $_.Status -eq "Unknown" }).Count
+$missingCount = @($items | Where-Object { $_.Status -eq "Missing" -or $_.Status -eq "Unparseable" }).Count
 $overall = if ($failedCount -gt 0 -or $missingCount -gt 0) { "Failed" } elseif ($blockedCount -gt 0) { "Blocked" } else { "Ready" }
 $exitCode = if ($overall -eq "Failed") { 1 } elseif ($overall -eq "Blocked") { 2 } else { 0 }
 
@@ -266,7 +266,7 @@ Set-Content -Path $resolvedOutputPath -Value $report -Encoding UTF8
 Write-Host "Production readiness action plan created:"
 Write-Host $resolvedOutputPath
 Write-Host "Overall result: $overall"
-Write-Host "Ready: $readyCount; Blocked: $blockedCount; Failed: $failedCount; Missing/Unknown: $missingCount"
+Write-Host "Ready: $readyCount; Blocked: $blockedCount; Failed: $failedCount; Missing/Unparseable: $missingCount"
 
 if ($exitCode -eq 1) {
     exit 1

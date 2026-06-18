@@ -61,14 +61,14 @@ function New-Placeholder {
     }
 
     if ($Name -match '(?i)(URL|ENDPOINT|BASE_URL)$') {
-        return "<approved non-secret URL>"
+        return "<approved public-safe URL>"
     }
 
     if ($Name -match '(?i)(REFERENCE|LABEL|CHANNEL|PATH|BUCKET|CONTAINER|PREFIX|MODE|CODE|VERSION|ACCOUNT_NUMBER|EMAIL|PHONE|VAT_ID|NAME|STREET|POSTAL_CODE|CITY|COUNTRY)$') {
-        return "<non-secret evidence value or reference>"
+        return "<public-safe evidence value or reference>"
     }
 
-    return "<non-secret evidence reference>"
+    return "<public-safe evidence reference>"
 }
 
 $reports = @(
@@ -174,11 +174,13 @@ $lines.Add("")
 foreach ($item in $itemsByReport) {
     $lines.Add("# $($item.Name) - from $($item.FileName)")
     foreach ($key in $item.Keys) {
-        $placeholder = New-Placeholder -Name $key
         if (Test-SensitiveKeyName -Name $key) {
-            $lines.Add("# Secret-like setting. Prefer secure vault or current process environment; do not save a filled value.")
+            $lines.Add("# Secret-like setting required: $key")
+            $lines.Add("# Set this from secure vault or the current process environment only. No template assignment is written.")
+            continue
         }
 
+        $placeholder = New-Placeholder -Name $key
         $escapedPlaceholder = $placeholder.Replace('"', '\"')
         $lines.Add("`$env:$key = `"$escapedPlaceholder`"")
     }

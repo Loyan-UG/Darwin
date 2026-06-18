@@ -53,7 +53,7 @@ function Get-ReportStatus {
         return $match.Groups["status"].Value
     }
 
-    return "Unknown"
+    return "Unparseable"
 }
 
 $repoRoot = Split-Path -Parent $PSScriptRoot
@@ -168,7 +168,7 @@ finally {
 $readyCount = @($results | Where-Object { $_.Status -eq "Ready" }).Count
 $blockedCount = @($results | Where-Object { $_.Status -eq "Blocked" }).Count
 $failedCount = @($results | Where-Object { $_.Status -eq "Failed" }).Count
-$missingCount = @($results | Where-Object { $_.Status -eq "Missing" -or $_.Status -eq "Unknown" }).Count
+$missingCount = @($results | Where-Object { $_.Status -eq "Missing" -or $_.Status -eq "Unparseable" }).Count
 $overall = if ($failedCount -gt 0 -or $missingCount -gt 0) { "Failed" } elseif ($blockedCount -gt 0) { "Blocked" } else { "Ready" }
 $exitCode = if ($overall -eq "Failed") { 1 } elseif ($overall -eq "Blocked") { 2 } else { 0 }
 
@@ -199,7 +199,7 @@ $lines.Add("| --- | ---: |")
 $lines.Add("| Ready | $readyCount |")
 $lines.Add("| Blocked | $blockedCount |")
 $lines.Add("| Failed | $failedCount |")
-$lines.Add("| Missing or unknown | $missingCount |")
+$lines.Add("| Missing or unparseable | $missingCount |")
 $lines.Add("")
 $lines.Add("## Reports")
 $lines.Add("")
@@ -208,6 +208,13 @@ $lines.Add("| --- | --- | ---: | --- |")
 foreach ($result in $results) {
     $lines.Add("| $(Escape-MarkdownCell $result.Name) | $(Escape-MarkdownCell $result.Status) | $($result.ExitCode) | $(Escape-MarkdownCell $result.FileName) |")
 }
+$lines.Add("")
+$lines.Add("## Generated Follow-Up Artifacts")
+$lines.Add("")
+$lines.Add("| Artifact | Purpose |")
+$lines.Add("| --- | --- |")
+$lines.Add("| production-readiness-action-plan.md | Owner action rows, missing evidence keys, and next actions derived from the readiness reports. |")
+$lines.Add("| production-readiness-env-template.ps1 | De-duplicated local/session placeholder template for missing evidence variables. Filled copies must stay outside git. |")
 $lines.Add("")
 $lines.Add("Use the listed report files as non-secret attachment references in the deployment evidence package. A `Blocked` bundle is valid current-state evidence, but it is not go-live approval and does not replace real staging, storage, provider, e-invoice, mobile, monitoring, rollback, or owner approval records.")
 
@@ -218,10 +225,28 @@ if (Test-ContainsSensitivePattern $bundle) {
 
 Set-Content -Path $bundlePath -Value $bundle -Encoding UTF8
 
+$actionPlanPath = Join-Path $resolvedOutputDirectory "production-readiness-action-plan.md"
+$envTemplatePath = Join-Path $resolvedOutputDirectory "production-readiness-env-template.ps1"
+Push-Location $repoRoot
+try {
+    & powershell -NoProfile -ExecutionPolicy Bypass -File "scripts\export-production-readiness-action-plan.ps1" -ReportDirectory $resolvedOutputDirectory -OutputPath $actionPlanPath -Force | Out-Host
+    if ($LASTEXITCODE -eq 1) {
+        exit 1
+    }
+
+    & powershell -NoProfile -ExecutionPolicy Bypass -File "scripts\export-production-readiness-env-template.ps1" -ReportDirectory $resolvedOutputDirectory -OutputPath $envTemplatePath -Force | Out-Host
+    if ($LASTEXITCODE -eq 1) {
+        exit 1
+    }
+}
+finally {
+    Pop-Location
+}
+
 Write-Host "Production readiness report bundle created:"
 Write-Host $bundlePath
 Write-Host "Overall result: $overall"
-Write-Host "Ready: $readyCount; Blocked: $blockedCount; Failed: $failedCount; Missing/Unknown: $missingCount"
+Write-Host "Ready: $readyCount; Blocked: $blockedCount; Failed: $failedCount; Missing/Unparseable: $missingCount"
 
 if ($exitCode -eq 1) {
     exit 1
