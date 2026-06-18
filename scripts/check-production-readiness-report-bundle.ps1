@@ -124,6 +124,14 @@ foreach ($fileName in $expectedHelpers) {
         Add-Problem $problems "Readiness helper does not document secret-like variable handling: $fileName"
     }
 
+    if ($fileName -eq "production-readiness-env-template.ps1" -and $content.IndexOf("Go-live aggregate", [StringComparison]::OrdinalIgnoreCase) -ge 0) {
+        Add-Problem $problems "Readiness environment template should use dedicated evidence sections instead of the aggregate go-live report: $fileName"
+    }
+
+    if ($fileName -eq "production-readiness-action-plan.md" -and $content.IndexOf("| Go-live aggregate | Blocked | Darwin technical owner | See the dedicated readiness rows |", [StringComparison]::OrdinalIgnoreCase) -lt 0) {
+        Add-Problem $problems "Readiness action plan should keep the aggregate go-live row summarized: $fileName"
+    }
+
     if ($fileName -eq "production-readiness-owner-handoff.md" -and $content.IndexOf("Production Readiness Owner Handoff", [StringComparison]::OrdinalIgnoreCase) -lt 0) {
         Add-Problem $problems "Owner handoff helper does not contain the expected title: $fileName"
     }

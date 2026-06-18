@@ -195,12 +195,17 @@ foreach ($report in $reports) {
         throw "Readiness report appears to contain a sensitive assignment, private key, raw payload, private endpoint, provider response, or private evidence value: $($report.FileName)"
     }
 
-    $missingKeys = Get-MissingEvidenceKeys -Content $content
+    $missingEvidence = if ($report.Name -eq "Go-live aggregate") {
+        "See the dedicated readiness rows"
+    } else {
+        Format-MissingEvidenceKeys -Keys (Get-MissingEvidenceKeys -Content $content)
+    }
+
     $items.Add([pscustomobject]@{
         Name = $report.Name
         Status = Get-OverallResult -Content $content
         Owner = $report.Owner
-        MissingEvidence = Format-MissingEvidenceKeys -Keys $missingKeys
+        MissingEvidence = $missingEvidence
         NextAction = $report.NextAction
         FileName = $report.FileName
     })

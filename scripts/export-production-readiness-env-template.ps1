@@ -81,10 +81,6 @@ $reports = @(
         FileName = "web-mobile-readiness-report.md"
     },
     @{
-        Name = "Go-live aggregate"
-        FileName = "go-live-readiness-report.md"
-    },
-    @{
         Name = "MinIO production"
         FileName = "minio-production-readiness-report.md"
     },
@@ -103,6 +99,11 @@ $reports = @(
     @{
         Name = "Provider readiness"
         FileName = "provider-readiness-report.md"
+    },
+    @{
+        Name = "Go-live aggregate summary"
+        FileName = "go-live-readiness-report.md"
+        AggregateOnly = $true
     }
 )
 
@@ -129,6 +130,10 @@ foreach ($report in $reports) {
     $content = Get-Content $path -Raw
     if (Test-ContainsSensitivePattern $content) {
         throw "Readiness report appears to contain a sensitive assignment, private key, raw payload, private endpoint, provider response, or private evidence value: $($report.FileName)"
+    }
+
+    if ($report.AggregateOnly) {
+        continue
     }
 
     $keys = Get-MissingEvidenceKeys -Content $content
