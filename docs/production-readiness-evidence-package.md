@@ -14,6 +14,15 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts\new-production-readi
 
 The generated package belongs in the deployment evidence repository or ignored local `artifacts` folder. Do not commit filled customer evidence, provider reports, legal approvals, private artifacts, or generated e-invoice files to source control.
 
+Generate and validate the non-secret local readiness report bundle before final package validation:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\export-production-readiness-report-bundle.ps1 -Force
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\check-production-readiness-report-bundle.ps1
+```
+
+The bundle gathers current-state local readiness reports under the ignored `artifacts\production-readiness\` path. It is attachment evidence for operators and reviewers; it does not replace production-like staging proof, private provider dashboards, customer approvals, or the filled evidence package.
+
 Validate the filled package before go-live:
 
 ```powershell

@@ -200,6 +200,7 @@ Manual approvals:
 ## Phase 8: Final Verification
 
 - Create the deployment evidence package described in [docs/production-readiness-evidence-package.md](production-readiness-evidence-package.md), using `scripts\new-production-readiness-evidence-package.ps1` when a fresh non-secret working copy is needed.
+- Generate the non-secret readiness report bundle with `scripts\export-production-readiness-report-bundle.ps1 -Force`, then validate it with `scripts\check-production-readiness-report-bundle.ps1`.
 - Complete the production-like staging rehearsal from [docs/production-go-live-evidence-execution-plan.md](production-go-live-evidence-execution-plan.md) before any production execution.
 - Run `scripts\check-production-like-staging-readiness.ps1` after staging build/test, migration, rollback, storage, provider, e-invoice, Android, monitoring, and owner sign-off evidence exists.
 - Validate the filled package with `scripts\check-production-readiness-evidence-package.ps1` before go-live approval.
