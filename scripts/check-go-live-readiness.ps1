@@ -133,6 +133,9 @@ foreach ($result in $results) {
 }
 
 $failed = @($results | Where-Object { $_.Status -eq "Failed" })
+$blocked = @($results | Where-Object { $_.Status -eq "Blocked" })
+$finalExitCode = 0
+
 if ($failed.Count -gt 0) {
     Write-Host ""
     Write-Host "Failed checks:"
@@ -141,11 +144,10 @@ if ($failed.Count -gt 0) {
         Write-Host $result.Detail
     }
 
-    exit 1
+    $finalExitCode = 1
 }
 
-$blocked = @($results | Where-Object { $_.Status -eq "Blocked" })
-if ($blocked.Count -gt 0) {
+if ($failed.Count -eq 0 -and $blocked.Count -gt 0) {
     Write-Host ""
     Write-Host "Blocked go-live prerequisites:"
     foreach ($result in $blocked) {
@@ -153,7 +155,11 @@ if ($blocked.Count -gt 0) {
         Write-Host $result.Detail
     }
 
-    exit 2
+    $finalExitCode = 2
 }
 
-Write-Host "All local readiness checks are ready. External smoke execution still requires explicit operator approval."
+if ($failed.Count -eq 0 -and $blocked.Count -eq 0) {
+    Write-Host "All local readiness checks are ready. External smoke execution still requires explicit operator approval."
+}
+
+exit $finalExitCode

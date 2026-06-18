@@ -207,6 +207,7 @@ $requiredMarkers = @(
     "Owner action plan",
     "Owner handoff",
     "Evidence environment template",
+    "Local execution summary",
     "MinIO production readiness preflight",
     "Azure Blob readiness preflight",
     "ZUGFeRD/Factur-X",

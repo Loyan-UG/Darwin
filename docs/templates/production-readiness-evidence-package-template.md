@@ -39,6 +39,7 @@ This package records non-secret go-live evidence for one Darwin deployment. Do n
 | Owner action plan | Pending operator entry | Darwin technical owner | Pending |
 | Owner handoff | Pending operator entry | Darwin technical owner | Pending |
 | Evidence environment template | Pending operator entry | Darwin technical owner | Pending |
+| Local execution summary | Pending operator entry | Darwin technical owner | Pending |
 | Migration plan | Pending operator entry | Migration owner | Pending |
 | Backup checkpoint before migration | Pending operator entry | System admin or DevOps owner | Pending |
 | Rollback plan | Pending operator entry | Darwin technical owner | Pending |

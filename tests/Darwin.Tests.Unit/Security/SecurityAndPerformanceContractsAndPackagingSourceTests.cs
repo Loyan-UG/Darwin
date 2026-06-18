@@ -344,6 +344,10 @@ public sealed class SecurityAndPerformanceContractsAndPackagingSourceTests : Sec
             .Should()
             .Contain("Get-BundleReportRows")
             .And.Contain("does not include report exit codes");
+        ReadRepositoryFile(Path.Combine("scripts", "export-production-readiness-local-package-draft.ps1"))
+            .Should()
+            .Contain("-RowName \"Local execution summary\"")
+            .And.Contain("$localExecutionSummaryPath");
 
         minioComposeSource.Should().Contain("quay.io/minio/minio:latest");
         minioComposeSource.Should().Contain("quay.io/minio/mc:latest");
@@ -415,7 +419,9 @@ public sealed class SecurityAndPerformanceContractsAndPackagingSourceTests : Sec
         executionPlanSource.Should().Contain("file-delivery remains the production-safe path");
         executionPlanSource.Should().Contain("SyncState and SyncConflict are foundation only");
         evidenceTemplateSource.Should().Contain("Production-like staging rehearsal");
+        evidenceTemplateSource.Should().Contain("Local execution summary");
         evidenceValidatorSource.Should().Contain("Production-like staging rehearsal");
+        evidenceValidatorSource.Should().Contain("Local execution summary");
 
         ReadRepositoryFile(Path.Combine("scripts", "smoke-stripe-testmode.ps1"))
             .Should()

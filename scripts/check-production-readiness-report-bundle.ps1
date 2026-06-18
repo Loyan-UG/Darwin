@@ -285,6 +285,10 @@ foreach ($fileName in $expectedHelpers) {
         Add-Problem $problems "Local evidence package draft does not contain the local execution summary reference: $fileName"
     }
 
+    if ($fileName -eq "evidence-package-local-draft.md" -and $content.IndexOf("| Local execution summary |", [StringComparison]::OrdinalIgnoreCase) -lt 0) {
+        Add-Problem $problems "Local evidence package draft does not contain the local execution summary evidence row: $fileName"
+    }
+
     if ($fileName -eq "evidence-package-local-draft.md" -and $content.IndexOf("local-backup-readiness-report.md", [StringComparison]::OrdinalIgnoreCase) -lt 0) {
         Add-Problem $problems "Local evidence package draft does not contain the local backup report reference: $fileName"
     }

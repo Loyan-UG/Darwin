@@ -175,6 +175,7 @@ $content = Set-ResultRow -Content $content -RowName "Readiness report bundle" -R
 $content = Set-ResultRow -Content $content -RowName "Owner action plan" -Reference $actionPlanPath -Result "Ready"
 $content = Set-ResultRow -Content $content -RowName "Owner handoff" -Reference $ownerHandoffPath -Result "Ready"
 $content = Set-ResultRow -Content $content -RowName "Evidence environment template" -Reference $envTemplatePath -Result "Ready"
+$content = Set-ResultRow -Content $content -RowName "Local execution summary" -Reference $localExecutionSummaryPath -Result "Ready"
 $content = Add-LocalSupportingEvidenceSnapshot -Content $content -BundlePath $resolvedBundlePath
 
 $content += @"
