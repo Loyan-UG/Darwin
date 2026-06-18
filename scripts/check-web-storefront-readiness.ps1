@@ -44,6 +44,13 @@ function Assert-SafeUrl {
         exit 2
     }
 
+    if (-not [string]::IsNullOrWhiteSpace($uri.Query) -or
+        -not [string]::IsNullOrWhiteSpace($uri.Fragment)) {
+        Write-Host "Web storefront readiness is blocked."
+        Write-Host "$Name must be a base deployment URL without query strings or fragments. Keep API keys, auth tokens, route state, and provider payloads out of readiness input."
+        exit 2
+    }
+
     $isLocal = $uri.Host -in @("localhost", "127.0.0.1", "::1")
     if (-not $isLocal -and $uri.Scheme -ne "https") {
         Write-Host "Web storefront readiness is blocked."

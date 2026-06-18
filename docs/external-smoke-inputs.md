@@ -467,6 +467,8 @@ Required non-secret URLs:
 - `DARWIN_WEB_SITE_URL`
 - `DARWIN_WEB_ROUTE_SMOKE_PATHS`, optional comma-separated public route override. Defaults to `/`, `/catalog`, `/help`, and `/cart`.
 
+`DARWIN_WEBAPI_BASE_URL` and `DARWIN_WEB_SITE_URL` must be base deployment URLs. Do not include embedded credentials, query strings, fragments, API keys, auth tokens, route state, environment file values, customer data, or provider payloads in these readiness inputs.
+
 Required confirmations:
 
 - `DARWIN_WEB_STOREFRONT_BUILD_CONFIRMED=true`

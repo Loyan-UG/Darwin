@@ -1183,6 +1183,54 @@ public sealed class SecurityAndPerformanceContractsAndPackagingSourceTests : Sec
         output.Should().NotContain("System.Management.Automation.RemoteException");
     }
 
+    [Theory]
+    [InlineData("https://api.staging.example.test?token=secret", "https://web.staging.example.test")]
+    [InlineData("https://api.staging.example.test", "https://web.staging.example.test#secret")]
+    [InlineData("https://api.staging.example.test#fragment", "https://web.staging.example.test")]
+    [InlineData("https://api.staging.example.test", "https://web.staging.example.test?state=secret")]
+    public async Task WebStorefrontReadiness_Should_BlockBaseUrlsWithQueryOrFragment(string webApiBaseUrl, string webSiteUrl)
+    {
+        var root = ResolveRepositoryPath();
+        var startInfo = new ProcessStartInfo
+        {
+            FileName = "powershell",
+            WorkingDirectory = root,
+            RedirectStandardOutput = true,
+            RedirectStandardError = true,
+            UseShellExecute = false
+        };
+        startInfo.ArgumentList.Add("-NoProfile");
+        startInfo.ArgumentList.Add("-ExecutionPolicy");
+        startInfo.ArgumentList.Add("Bypass");
+        startInfo.ArgumentList.Add("-File");
+        startInfo.ArgumentList.Add(Path.Combine("scripts", "check-web-storefront-readiness.ps1"));
+
+        foreach (var key in startInfo.Environment.Keys.Cast<string>()
+                     .Where(key => key.StartsWith("DARWIN_", StringComparison.OrdinalIgnoreCase)).ToList())
+        {
+            startInfo.Environment.Remove(key);
+        }
+
+        foreach (var item in WebStorefrontReadinessEnvironment(webApiBaseUrl, webSiteUrl))
+        {
+            startInfo.Environment[item.Key] = item.Value;
+        }
+
+        using var process = Process.Start(startInfo) ?? throw new InvalidOperationException("Could not start check-web-storefront-readiness.ps1.");
+        var stdoutTask = process.StandardOutput.ReadToEndAsync(TestContext.Current.CancellationToken);
+        var stderrTask = process.StandardError.ReadToEndAsync(TestContext.Current.CancellationToken);
+
+        await process.WaitForExitAsync(TestContext.Current.CancellationToken);
+        var output = $"{await stdoutTask}{Environment.NewLine}{await stderrTask}";
+
+        process.ExitCode.Should().Be(2);
+        output.Should().Contain("Web storefront readiness is blocked.");
+        output.Should().Contain("base deployment URL without query strings or fragments");
+        output.Should().NotContain(webApiBaseUrl);
+        output.Should().NotContain(webSiteUrl);
+        output.Should().NotContain("System.Management.Automation.RemoteException");
+    }
+
     [Fact]
     public async Task StripeSubscriptionCheckoutSmoke_Should_BlockWhenCheckoutPrerequisitesMissing()
     {
@@ -2573,6 +2621,22 @@ public sealed class SecurityAndPerformanceContractsAndPackagingSourceTests : Sec
             ["DARWIN_STRIPE_MONITORING_CONFIRMED"] = "true",
             ["DARWIN_STRIPE_ALERTING_CONFIRMED"] = "true",
             ["DARWIN_STRIPE_REFUND_DISPUTE_PLAYBOOK_CONFIRMED"] = "true"
+        };
+
+    private static IReadOnlyDictionary<string, string> WebStorefrontReadinessEnvironment(
+        string webApiBaseUrl,
+        string webSiteUrl) =>
+        new Dictionary<string, string>
+        {
+            ["DARWIN_WEBAPI_BASE_URL"] = webApiBaseUrl,
+            ["DARWIN_WEB_SITE_URL"] = webSiteUrl,
+            ["DARWIN_WEB_STOREFRONT_BUILD_CONFIRMED"] = "true",
+            ["DARWIN_WEB_RUNTIME_CONFIG_SMOKE_CONFIRMED"] = "true",
+            ["DARWIN_WEB_PUBLIC_DISCOVERY_SMOKE_CONFIRMED"] = "true",
+            ["DARWIN_WEB_MEMBER_PORTAL_ROUTE_SMOKE_CONFIRMED"] = "true",
+            ["DARWIN_WEB_CHECKOUT_ROUTE_SMOKE_CONFIRMED"] = "true",
+            ["DARWIN_WEB_DEGRADED_API_LOG_REVIEWED_CONFIRMED"] = "true",
+            ["DARWIN_WEB_STAGING_OWNER_SIGNOFF_CONFIRMED"] = "true"
         };
 
     private static IReadOnlyDictionary<string, string> AllProviderReadyDryRunEnvironment() =>
