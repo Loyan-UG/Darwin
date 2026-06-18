@@ -80,6 +80,116 @@ function Invoke-ProviderCheck {
     }
 }
 
+function Get-EnvValue {
+    param([Parameter(Mandatory = $true)][string]$Name)
+
+    $value = [Environment]::GetEnvironmentVariable($Name)
+    if ($null -eq $value) {
+        return ""
+    }
+
+    return $value.Trim()
+}
+
+function Test-SafeProviderEvidenceReference {
+    param([Parameter(Mandatory = $true)][string]$Value)
+
+    $blocked = @(
+        "secret",
+        "token",
+        "password",
+        "private key",
+        "webhook secret",
+        "api key",
+        "raw payload",
+        "provider payload",
+        "provider response",
+        "checkout url",
+        "label payload",
+        "tracking payload",
+        "customer data",
+        "private approval"
+    )
+
+    foreach ($term in $blocked) {
+        if ($Value.IndexOf($term, [StringComparison]::OrdinalIgnoreCase) -ge 0) {
+            return $false
+        }
+    }
+
+    return $true
+}
+
+function Invoke-ProviderEvidenceReferenceCheck {
+    $requiredReferences = @(
+        "DARWIN_STRIPE_TESTMODE_SMOKE_REFERENCE",
+        "DARWIN_STRIPE_RUNTIME_PIPELINE_REFERENCE",
+        "DARWIN_STRIPE_WEBHOOK_FORWARDING_REFERENCE",
+        "DARWIN_STRIPE_LIVE_KEYS_REFERENCE",
+        "DARWIN_STRIPE_LIVE_WEBHOOK_ENDPOINT_REFERENCE",
+        "DARWIN_STRIPE_LIVE_WEBHOOK_EVENTS_REFERENCE",
+        "DARWIN_STRIPE_PROVIDER_CALLBACK_WORKER_REFERENCE",
+        "DARWIN_STRIPE_WEBADMIN_VISIBILITY_REFERENCE",
+        "DARWIN_STRIPE_MONITORING_REFERENCE",
+        "DARWIN_STRIPE_ALERTING_REFERENCE",
+        "DARWIN_STRIPE_REFUND_DISPUTE_PLAYBOOK_REFERENCE",
+        "DARWIN_DHL_LIVE_SMOKE_REFERENCE",
+        "DARWIN_DHL_PROVIDER_OPERATION_WORKER_REFERENCE",
+        "DARWIN_DHL_PROVIDER_CALLBACK_WORKER_REFERENCE",
+        "DARWIN_DHL_SHIPMENT_LABELS_STORAGE_REFERENCE",
+        "DARWIN_BREVO_READINESS_SMOKE_REFERENCE",
+        "DARWIN_BREVO_WEBHOOK_REFERENCE",
+        "DARWIN_BREVO_TRANSACTIONAL_EVENTS_REFERENCE",
+        "DARWIN_BREVO_PROVIDER_CALLBACK_WORKER_REFERENCE",
+        "DARWIN_BREVO_EMAIL_DISPATCH_WORKER_REFERENCE",
+        "DARWIN_VIES_VALID_SMOKE_REFERENCE",
+        "DARWIN_VIES_INVALID_SMOKE_REFERENCE"
+    )
+
+    $missing = New-Object System.Collections.Generic.List[string]
+    $unsafe = New-Object System.Collections.Generic.List[string]
+
+    foreach ($name in $requiredReferences) {
+        $value = Get-EnvValue $name
+        if ([string]::IsNullOrWhiteSpace($value)) {
+            $missing.Add($name)
+            continue
+        }
+
+        if (-not (Test-SafeProviderEvidenceReference $value)) {
+            $unsafe.Add($name)
+        }
+    }
+
+    if ($missing.Count -eq 0 -and $unsafe.Count -eq 0) {
+        return [pscustomobject]@{
+            Name = "Provider evidence references"
+            Status = "Ready"
+            ExitCode = 0
+            Output = "Provider evidence references are present. Values were validated for sensitive wording and were not printed."
+        }
+    }
+
+    $lines = New-Object System.Collections.Generic.List[string]
+    $lines.Add("Provider evidence references are blocked. Configure these environment variables first:")
+    foreach ($name in $missing) {
+        $lines.Add(" - $name")
+    }
+
+    foreach ($name in $unsafe) {
+        $lines.Add(" - $name contains sensitive wording; replace it with a non-secret report id, run label, ticket, or evidence-package row id.")
+    }
+
+    $lines.Add("Do not paste checkout URLs, provider responses, labels, tracking payloads, VAT result payloads, secrets, API keys, webhook secrets, customer data, or private approval records.")
+
+    return [pscustomobject]@{
+        Name = "Provider evidence references"
+        Status = "Blocked"
+        ExitCode = 2
+        Output = ($lines -join "`n")
+    }
+}
+
 $repoRoot = Split-Path -Parent $PSScriptRoot
 $resolvedOutputPath = $ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($OutputPath)
 if ((Test-Path $resolvedOutputPath -PathType Leaf) -and -not $Force) {
@@ -116,6 +226,7 @@ $checks = @(
 Push-Location $repoRoot
 try {
     $results = New-Object System.Collections.Generic.List[object]
+    $results.Add((Invoke-ProviderEvidenceReferenceCheck))
     foreach ($check in $checks) {
         $results.Add((Invoke-ProviderCheck -Name $check.Name -Command $check.Command))
     }

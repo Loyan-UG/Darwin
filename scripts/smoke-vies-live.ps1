@@ -7,6 +7,77 @@ $ErrorActionPreference = "Stop"
 
 Add-Type -AssemblyName System.Net.Http
 
+function Get-EnvValue {
+    param([Parameter(Mandatory = $true)][string]$Name)
+
+    $value = [Environment]::GetEnvironmentVariable($Name)
+    if ($null -eq $value) {
+        return ""
+    }
+
+    return $value.Trim()
+}
+
+function Assert-SafeEvidenceReference {
+    param(
+        [Parameter(Mandatory = $true)][string]$Name,
+        [Parameter(Mandatory = $true)][string]$Value
+    )
+
+    $blocked = @(
+        "secret",
+        "token",
+        "password",
+        "private key",
+        "api key",
+        "raw payload",
+        "provider payload",
+        "provider response",
+        "customer data",
+        "private approval"
+    )
+
+    foreach ($term in $blocked) {
+        if ($Value.IndexOf($term, [StringComparison]::OrdinalIgnoreCase) -ge 0) {
+            Write-Host "VIES live smoke is blocked."
+            Write-Host "$Name contains sensitive wording. Use a non-secret VIES smoke report id, run label, ticket, or evidence-package row id."
+            exit 2
+        }
+    }
+}
+
+function Assert-ReadinessEvidenceReferences {
+    $requiredReferences = @(
+        "DARWIN_VIES_VALID_SMOKE_REFERENCE",
+        "DARWIN_VIES_INVALID_SMOKE_REFERENCE"
+    )
+
+    if ($CheckProviderFailure) {
+        $requiredReferences += "DARWIN_VIES_PROVIDER_FAILURE_SMOKE_REFERENCE"
+    }
+
+    $missingReferences = @()
+    foreach ($name in $requiredReferences) {
+        if ([string]::IsNullOrWhiteSpace((Get-EnvValue $name))) {
+            $missingReferences += $name
+        }
+    }
+
+    if ($missingReferences.Count -gt 0) {
+        Write-Host "VIES live smoke is blocked. Configure these environment variables first:"
+        foreach ($name in $missingReferences) {
+            Write-Host " - $name"
+        }
+
+        Write-Host "Use non-secret VIES smoke report ids, run labels, tickets, or evidence-package row ids. Do not paste VAT result payloads, provider responses, secrets, or customer data."
+        exit 2
+    }
+
+    foreach ($name in $requiredReferences) {
+        Assert-SafeEvidenceReference -Name $name -Value (Get-EnvValue $name)
+    }
+}
+
 $endpoint = [Environment]::GetEnvironmentVariable("DARWIN_VIES_ENDPOINT_URL")
 if ([string]::IsNullOrWhiteSpace($endpoint)) {
     $endpoint = "https://ec.europa.eu/taxation_customs/vies/services/checkVatService"
@@ -66,21 +137,12 @@ if ($invalid.Count -gt 0) {
 }
 
 if (-not $Execute) {
+    Assert-ReadinessEvidenceReferences
+
     Write-Host "VIES live smoke configuration is present."
     Write-Host "Run with -Execute to call VIES for the configured valid and invalid VAT IDs."
     Write-Host "Run with -Execute -CheckProviderFailure to also verify provider-failure handling expectation."
     exit 0
-}
-
-function Get-EnvValue {
-    param([Parameter(Mandatory = $true)][string]$Name)
-
-    $value = [Environment]::GetEnvironmentVariable($Name)
-    if ($null -eq $value) {
-        return ""
-    }
-
-    return $value.Trim()
 }
 
 function Split-VatId {

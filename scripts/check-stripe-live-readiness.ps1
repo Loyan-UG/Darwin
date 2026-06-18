@@ -17,6 +17,36 @@ function Test-Truthy {
     return $Value -in @("1", "true", "yes", "y")
 }
 
+function Assert-SafeEvidenceReference {
+    param(
+        [Parameter(Mandatory = $true)][string]$Name,
+        [Parameter(Mandatory = $true)][string]$Value
+    )
+
+    $blocked = @(
+        "secret",
+        "token",
+        "password",
+        "private key",
+        "webhook secret",
+        "api key",
+        "raw payload",
+        "provider payload",
+        "provider response",
+        "live payment",
+        "customer data",
+        "private approval"
+    )
+
+    foreach ($term in $blocked) {
+        if ($Value.IndexOf($term, [StringComparison]::OrdinalIgnoreCase) -ge 0) {
+            Write-Host "Stripe live readiness is blocked."
+            Write-Host "$Name contains sensitive wording. Use a non-secret approval ticket, smoke report id, run label, checklist row, or evidence-package row id."
+            exit 2
+        }
+    }
+}
+
 function Assert-AbsoluteHttpsEndpoint {
     param(
         [Parameter(Mandatory = $true)][string]$Name,
@@ -60,6 +90,17 @@ function Assert-AbsoluteHttpsEndpoint {
 
 $endpointPath = "/api/v1/public/billing/stripe/webhooks"
 $webhookUrl = Get-EnvValue "DARWIN_STRIPE_LIVE_WEBHOOK_PUBLIC_URL"
+$requiredReferences = @(
+    "DARWIN_STRIPE_LIVE_KEYS_REFERENCE",
+    "DARWIN_STRIPE_LIVE_WEBHOOK_ENDPOINT_REFERENCE",
+    "DARWIN_STRIPE_LIVE_WEBHOOK_EVENTS_REFERENCE",
+    "DARWIN_STRIPE_PROVIDER_CALLBACK_WORKER_REFERENCE",
+    "DARWIN_STRIPE_WEBADMIN_VISIBILITY_REFERENCE",
+    "DARWIN_STRIPE_MONITORING_REFERENCE",
+    "DARWIN_STRIPE_ALERTING_REFERENCE",
+    "DARWIN_STRIPE_REFUND_DISPUTE_PLAYBOOK_REFERENCE"
+)
+
 $required = @(
     "DARWIN_STRIPE_LIVE_KEYS_CONFIGURED_CONFIRMED",
     "DARWIN_STRIPE_LIVE_WEBHOOK_ENDPOINT_CONFIRMED",
@@ -82,6 +123,12 @@ foreach ($name in $required) {
     }
 }
 
+foreach ($name in $requiredReferences) {
+    if ([string]::IsNullOrWhiteSpace((Get-EnvValue $name))) {
+        $missing += $name
+    }
+}
+
 if ($missing.Count -gt 0) {
     Write-Host "Stripe live readiness is blocked. Configure these environment variables first:"
     foreach ($name in $missing) {
@@ -94,6 +141,9 @@ if ($missing.Count -gt 0) {
 }
 
 Assert-AbsoluteHttpsEndpoint -Name "DARWIN_STRIPE_LIVE_WEBHOOK_PUBLIC_URL" -Value $webhookUrl -RequiredPath $endpointPath
+foreach ($name in $requiredReferences) {
+    Assert-SafeEvidenceReference -Name $name -Value (Get-EnvValue $name)
+}
 
 Write-Host "Stripe live readiness prerequisites are present."
 Write-Host "No live Stripe API call, Checkout Session, charge, refund, dispute, or webhook secret validation was executed."

@@ -381,11 +381,17 @@ public sealed class SecurityAndPerformanceContractsAndPackagingSourceTests : Sec
         externalSmokeInputsSource.Should().Contain("scripts\\check-go-live-readiness.ps1");
         externalSmokeInputsSource.Should().Contain("DARWIN_WEBAPI_BASE_URL");
         externalSmokeInputsSource.Should().Contain("DARWIN_STRIPE_WEBHOOK_PUBLIC_URL");
+        externalSmokeInputsSource.Should().Contain("DARWIN_STRIPE_WEBHOOK_FORWARDING_REFERENCE");
+        externalSmokeInputsSource.Should().Contain("DARWIN_STRIPE_TESTMODE_SMOKE_REFERENCE");
         externalSmokeInputsSource.Should().Contain("DARWIN_STRIPE_LIVE_WEBHOOK_PUBLIC_URL");
+        externalSmokeInputsSource.Should().Contain("DARWIN_STRIPE_LIVE_KEYS_REFERENCE");
         externalSmokeInputsSource.Should().Contain("DARWIN_STRIPE_MONITORING_CONFIRMED");
         externalSmokeInputsSource.Should().Contain("DARWIN_DHL_API_BASE_URL");
+        externalSmokeInputsSource.Should().Contain("DARWIN_DHL_LIVE_SMOKE_REFERENCE");
         externalSmokeInputsSource.Should().Contain("DARWIN_BREVO_API_KEY");
+        externalSmokeInputsSource.Should().Contain("DARWIN_BREVO_READINESS_SMOKE_REFERENCE");
         externalSmokeInputsSource.Should().Contain("DARWIN_VIES_VALID_VAT_ID");
+        externalSmokeInputsSource.Should().Contain("DARWIN_VIES_VALID_SMOKE_REFERENCE");
         externalSmokeInputsSource.Should().Contain("DARWIN_OBJECT_STORAGE_PROVIDER");
         externalSmokeInputsSource.Should().Contain("DARWIN_OBJECT_STORAGE_S3_BUCKET");
         externalSmokeInputsSource.Should().Contain("DARWIN_OBJECT_STORAGE_AZURE_CONTAINER");
@@ -465,6 +471,8 @@ public sealed class SecurityAndPerformanceContractsAndPackagingSourceTests : Sec
             .And.Contain("function Invoke-BusinessSubscriptionCheckoutSmoke",
                 "the subscription checkout smoke function must be declared")
             .And.Contain("DARWIN_STRIPE_PROVIDER_CALLBACK_WORKER_CONFIRMED")
+            .And.Contain("DARWIN_STRIPE_TESTMODE_SMOKE_REFERENCE")
+            .And.Contain("DARWIN_STRIPE_RUNTIME_PIPELINE_REFERENCE")
             .And.Contain("WebhookWaitSeconds")
             .And.Contain("Creating a public storefront smoke order before Stripe handoff.")
             .And.Contain("Start-Process -FilePath $checkoutUri.AbsoluteUri | Out-Null")
@@ -481,6 +489,7 @@ public sealed class SecurityAndPerformanceContractsAndPackagingSourceTests : Sec
         ReadRepositoryFile(Path.Combine("scripts", "check-stripe-webhook-forwarding.ps1"))
             .Should()
             .Contain("DARWIN_STRIPE_WEBHOOK_PUBLIC_URL")
+            .And.Contain("DARWIN_STRIPE_WEBHOOK_FORWARDING_REFERENCE")
             .And.Contain("DARWIN_STRIPE_WEBHOOK_FORWARDING_CONFIRMED")
             .And.Contain("/api/v1/public/billing/stripe/webhooks")
             .And.Contain("No webhook signing secret is accepted or printed")
@@ -490,6 +499,8 @@ public sealed class SecurityAndPerformanceContractsAndPackagingSourceTests : Sec
         ReadRepositoryFile(Path.Combine("scripts", "check-stripe-live-readiness.ps1"))
             .Should()
             .Contain("DARWIN_STRIPE_LIVE_WEBHOOK_PUBLIC_URL")
+            .And.Contain("DARWIN_STRIPE_LIVE_KEYS_REFERENCE")
+            .And.Contain("DARWIN_STRIPE_LIVE_WEBHOOK_EVENTS_REFERENCE")
             .And.Contain("DARWIN_STRIPE_LIVE_KEYS_CONFIGURED_CONFIRMED")
             .And.Contain("DARWIN_STRIPE_LIVE_WEBHOOK_ENDPOINT_CONFIRMED")
             .And.Contain("DARWIN_STRIPE_LIVE_WEBHOOK_EVENTS_CONFIRMED")
@@ -515,6 +526,8 @@ public sealed class SecurityAndPerformanceContractsAndPackagingSourceTests : Sec
             .And.Contain("Assert-DhlRuntimePipelineReady")
             .And.Contain("DHL runtime pipeline readiness is blocked.")
             .And.Contain("DARWIN_DHL_SHIPMENT_PROVIDER_OPERATION_WORKER_CONFIRMED=true")
+            .And.Contain("DARWIN_DHL_LIVE_SMOKE_REFERENCE")
+            .And.Contain("DARWIN_DHL_PROVIDER_CALLBACK_WORKER_REFERENCE")
             .And.Contain("DARWIN_DHL_PROVIDER_CALLBACK_WORKER_CONFIRMED=true")
             .And.Contain("DARWIN_DHL_SHIPMENT_LABELS_STORAGE_CONFIRMED=true")
             .And.Contain("DHL runtime pipeline readiness is confirmed.")
@@ -527,13 +540,17 @@ public sealed class SecurityAndPerformanceContractsAndPackagingSourceTests : Sec
             .And.Contain("DARWIN_BREVO_BASE_URL must be an absolute URL.")
             .And.Contain("DARWIN_BREVO_BASE_URL must use HTTPS for non-local endpoints.")
             .And.Contain("[switch]$RequireDeliveryPipeline")
+            .And.Contain("DARWIN_BREVO_READINESS_SMOKE_REFERENCE")
+            .And.Contain("DARWIN_BREVO_WEBHOOK_REFERENCE")
             .And.Contain("DARWIN_BREVO_WEBHOOK_PUBLIC_URL must end with /api/v1/public/notifications/brevo/webhooks.")
             .And.Contain("DARWIN_BREVO_PROVIDER_CALLBACK_WORKER_CONFIRMED=true")
             .And.Contain("DARWIN_BREVO_EMAIL_DISPATCH_WORKER_CONFIRMED=true");
 
         ReadRepositoryFile(Path.Combine("scripts", "smoke-vies-live.ps1"))
             .Should()
-            .Contain("DARWIN_VIES_ENDPOINT_URL must be an absolute URL.")
+            .Contain("DARWIN_VIES_VALID_SMOKE_REFERENCE")
+            .And.Contain("DARWIN_VIES_INVALID_SMOKE_REFERENCE")
+            .And.Contain("DARWIN_VIES_ENDPOINT_URL must be an absolute URL.")
             .And.Contain("DARWIN_VIES_ENDPOINT_URL must use HTTPS for non-local endpoints.")
             .And.Contain("DARWIN_VIES_TIMEOUT_SECONDS must be between 1 and 120.");
 
@@ -1457,6 +1474,7 @@ public sealed class SecurityAndPerformanceContractsAndPackagingSourceTests : Sec
         startInfo.Environment["DARWIN_WEBAPI_BASE_URL"] = "http://127.0.0.1:5134";
         startInfo.Environment["DARWIN_BUSINESS_API_BEARER_TOKEN"] = "fake-bearer-token-for-unit-test";
         startInfo.Environment["DARWIN_STRIPE_SMOKE_BILLING_PLAN_ID"] = "22222222-2222-2222-2222-222222222222";
+        startInfo.Environment["DARWIN_STRIPE_TESTMODE_SMOKE_REFERENCE"] = "stripe-testmode-smoke-ref-001";
 
         using var process = Process.Start(startInfo) ?? throw new InvalidOperationException("Could not start smoke-stripe-testmode.ps1.");
         var stdoutTask = process.StandardOutput.ReadToEndAsync(TestContext.Current.CancellationToken);
@@ -1558,6 +1576,11 @@ public sealed class SecurityAndPerformanceContractsAndPackagingSourceTests : Sec
         startInfo.Environment["DARWIN_BREVO_SENDER_EMAIL"] = "sender@example.test";
         startInfo.Environment["DARWIN_BREVO_TEST_RECIPIENT_EMAIL"] = "recipient@example.test";
         startInfo.Environment["DARWIN_BREVO_WEBHOOK_PUBLIC_URL"] = "https://brevo-webhook.example.test/api/v1/public/notifications/brevo/webhooks";
+        startInfo.Environment["DARWIN_BREVO_READINESS_SMOKE_REFERENCE"] = "brevo-readiness-smoke-ref-001";
+        startInfo.Environment["DARWIN_BREVO_WEBHOOK_REFERENCE"] = "brevo-webhook-ref-001";
+        startInfo.Environment["DARWIN_BREVO_TRANSACTIONAL_EVENTS_REFERENCE"] = "brevo-events-ref-001";
+        startInfo.Environment["DARWIN_BREVO_PROVIDER_CALLBACK_WORKER_REFERENCE"] = "brevo-callback-worker-ref-001";
+        startInfo.Environment["DARWIN_BREVO_EMAIL_DISPATCH_WORKER_REFERENCE"] = "brevo-email-dispatch-worker-ref-001";
         startInfo.Environment["DARWIN_BREVO_WEBHOOK_CONFIGURED_CONFIRMED"] = "true";
         startInfo.Environment["DARWIN_BREVO_TRANSACTIONAL_EVENTS_CONFIRMED"] = "true";
         startInfo.Environment["DARWIN_BREVO_PROVIDER_CALLBACK_WORKER_CONFIRMED"] = "true";
@@ -2468,7 +2491,8 @@ public sealed class SecurityAndPerformanceContractsAndPackagingSourceTests : Sec
             {
                 ["DARWIN_WEBAPI_BASE_URL"] = "http://127.0.0.1:5134",
                 ["DARWIN_STRIPE_SMOKE_ORDER_ID"] = "11111111-1111-1111-1111-111111111111",
-                ["DARWIN_STRIPE_SMOKE_ORDER_NUMBER"] = "SMOKE-STRIPE-001"
+                ["DARWIN_STRIPE_SMOKE_ORDER_NUMBER"] = "SMOKE-STRIPE-001",
+                ["DARWIN_STRIPE_TESTMODE_SMOKE_REFERENCE"] = "stripe-testmode-smoke-ref-001"
             }
         };
 
@@ -2479,6 +2503,7 @@ public sealed class SecurityAndPerformanceContractsAndPackagingSourceTests : Sec
             new Dictionary<string, string>
             {
                 ["DARWIN_STRIPE_WEBHOOK_PUBLIC_URL"] = "https://stripe-webhook.example.test/api/v1/public/billing/stripe/webhooks",
+                ["DARWIN_STRIPE_WEBHOOK_FORWARDING_REFERENCE"] = "stripe-webhook-forwarding-ref-001",
                 ["DARWIN_STRIPE_WEBHOOK_FORWARDING_CONFIRMED"] = "true"
             }
         };
@@ -2490,6 +2515,14 @@ public sealed class SecurityAndPerformanceContractsAndPackagingSourceTests : Sec
             new Dictionary<string, string>
             {
                 ["DARWIN_STRIPE_LIVE_WEBHOOK_PUBLIC_URL"] = "https://stripe-webhook.example.test/api/v1/public/billing/stripe/webhooks",
+                ["DARWIN_STRIPE_LIVE_KEYS_REFERENCE"] = "stripe-live-keys-ref-001",
+                ["DARWIN_STRIPE_LIVE_WEBHOOK_ENDPOINT_REFERENCE"] = "stripe-live-webhook-endpoint-ref-001",
+                ["DARWIN_STRIPE_LIVE_WEBHOOK_EVENTS_REFERENCE"] = "stripe-live-webhook-events-ref-001",
+                ["DARWIN_STRIPE_PROVIDER_CALLBACK_WORKER_REFERENCE"] = "stripe-callback-worker-ref-001",
+                ["DARWIN_STRIPE_WEBADMIN_VISIBILITY_REFERENCE"] = "stripe-webadmin-visibility-ref-001",
+                ["DARWIN_STRIPE_MONITORING_REFERENCE"] = "stripe-monitoring-ref-001",
+                ["DARWIN_STRIPE_ALERTING_REFERENCE"] = "stripe-alerting-ref-001",
+                ["DARWIN_STRIPE_REFUND_DISPUTE_PLAYBOOK_REFERENCE"] = "stripe-refund-dispute-playbook-ref-001",
                 ["DARWIN_STRIPE_LIVE_KEYS_CONFIGURED_CONFIRMED"] = "true",
                 ["DARWIN_STRIPE_LIVE_WEBHOOK_ENDPOINT_CONFIRMED"] = "true",
                 ["DARWIN_STRIPE_LIVE_WEBHOOK_EVENTS_CONFIRMED"] = "true",
@@ -2522,7 +2555,8 @@ public sealed class SecurityAndPerformanceContractsAndPackagingSourceTests : Sec
                 ["DARWIN_DHL_TEST_RECEIVER_STREET"] = "Receiver Street 2",
                 ["DARWIN_DHL_TEST_RECEIVER_POSTAL_CODE"] = "10115",
                 ["DARWIN_DHL_TEST_RECEIVER_CITY"] = "Berlin",
-                ["DARWIN_DHL_TEST_RECEIVER_COUNTRY"] = "DE"
+                ["DARWIN_DHL_TEST_RECEIVER_COUNTRY"] = "DE",
+                ["DARWIN_DHL_LIVE_SMOKE_REFERENCE"] = "dhl-live-smoke-ref-001"
             }
         };
 
@@ -2534,7 +2568,8 @@ public sealed class SecurityAndPerformanceContractsAndPackagingSourceTests : Sec
             {
                 ["DARWIN_BREVO_API_KEY"] = "local-api-key",
                 ["DARWIN_BREVO_SENDER_EMAIL"] = "sender@example.test",
-                ["DARWIN_BREVO_TEST_RECIPIENT_EMAIL"] = "recipient@example.test"
+                ["DARWIN_BREVO_TEST_RECIPIENT_EMAIL"] = "recipient@example.test",
+                ["DARWIN_BREVO_READINESS_SMOKE_REFERENCE"] = "brevo-readiness-smoke-ref-001"
             }
         };
 
@@ -2546,7 +2581,9 @@ public sealed class SecurityAndPerformanceContractsAndPackagingSourceTests : Sec
             {
                 ["DARWIN_VIES_VALID_VAT_ID"] = "DE123456789",
                 ["DARWIN_VIES_INVALID_VAT_ID"] = "DE000000000",
-                ["DARWIN_VIES_ENDPOINT_URL"] = "http://127.0.0.1:5135/vies"
+                ["DARWIN_VIES_ENDPOINT_URL"] = "http://127.0.0.1:5135/vies",
+                ["DARWIN_VIES_VALID_SMOKE_REFERENCE"] = "vies-valid-smoke-ref-001",
+                ["DARWIN_VIES_INVALID_SMOKE_REFERENCE"] = "vies-invalid-smoke-ref-001"
             }
         };
 
@@ -2791,6 +2828,14 @@ public sealed class SecurityAndPerformanceContractsAndPackagingSourceTests : Sec
         new Dictionary<string, string>
         {
             ["DARWIN_STRIPE_LIVE_WEBHOOK_PUBLIC_URL"] = webhookUrl,
+            ["DARWIN_STRIPE_LIVE_KEYS_REFERENCE"] = "stripe-live-keys-ref-001",
+            ["DARWIN_STRIPE_LIVE_WEBHOOK_ENDPOINT_REFERENCE"] = "stripe-live-webhook-endpoint-ref-001",
+            ["DARWIN_STRIPE_LIVE_WEBHOOK_EVENTS_REFERENCE"] = "stripe-live-webhook-events-ref-001",
+            ["DARWIN_STRIPE_PROVIDER_CALLBACK_WORKER_REFERENCE"] = "stripe-callback-worker-ref-001",
+            ["DARWIN_STRIPE_WEBADMIN_VISIBILITY_REFERENCE"] = "stripe-webadmin-visibility-ref-001",
+            ["DARWIN_STRIPE_MONITORING_REFERENCE"] = "stripe-monitoring-ref-001",
+            ["DARWIN_STRIPE_ALERTING_REFERENCE"] = "stripe-alerting-ref-001",
+            ["DARWIN_STRIPE_REFUND_DISPUTE_PLAYBOOK_REFERENCE"] = "stripe-refund-dispute-playbook-ref-001",
             ["DARWIN_STRIPE_LIVE_KEYS_CONFIGURED_CONFIRMED"] = "true",
             ["DARWIN_STRIPE_LIVE_WEBHOOK_ENDPOINT_CONFIRMED"] = "true",
             ["DARWIN_STRIPE_LIVE_WEBHOOK_EVENTS_CONFIRMED"] = "true",
@@ -2824,6 +2869,11 @@ public sealed class SecurityAndPerformanceContractsAndPackagingSourceTests : Sec
             ["DARWIN_BREVO_SENDER_EMAIL"] = "sender@example.test",
             ["DARWIN_BREVO_TEST_RECIPIENT_EMAIL"] = "recipient@example.test",
             ["DARWIN_BREVO_WEBHOOK_PUBLIC_URL"] = webhookUrl,
+            ["DARWIN_BREVO_READINESS_SMOKE_REFERENCE"] = "brevo-readiness-smoke-ref-001",
+            ["DARWIN_BREVO_WEBHOOK_REFERENCE"] = "brevo-webhook-ref-001",
+            ["DARWIN_BREVO_TRANSACTIONAL_EVENTS_REFERENCE"] = "brevo-events-ref-001",
+            ["DARWIN_BREVO_PROVIDER_CALLBACK_WORKER_REFERENCE"] = "brevo-callback-worker-ref-001",
+            ["DARWIN_BREVO_EMAIL_DISPATCH_WORKER_REFERENCE"] = "brevo-email-dispatch-worker-ref-001",
             ["DARWIN_BREVO_WEBHOOK_CONFIGURED_CONFIRMED"] = "true",
             ["DARWIN_BREVO_TRANSACTIONAL_EVENTS_CONFIRMED"] = "true",
             ["DARWIN_BREVO_PROVIDER_CALLBACK_WORKER_CONFIRMED"] = "true",
@@ -2836,10 +2886,21 @@ public sealed class SecurityAndPerformanceContractsAndPackagingSourceTests : Sec
             ["DARWIN_WEBAPI_BASE_URL"] = "http://127.0.0.1:5134",
             ["DARWIN_STRIPE_SMOKE_ORDER_ID"] = "11111111-1111-1111-1111-111111111111",
             ["DARWIN_STRIPE_SMOKE_ORDER_NUMBER"] = "SMOKE-STRIPE-001",
+            ["DARWIN_STRIPE_TESTMODE_SMOKE_REFERENCE"] = "stripe-testmode-smoke-ref-001",
+            ["DARWIN_STRIPE_RUNTIME_PIPELINE_REFERENCE"] = "stripe-runtime-pipeline-ref-001",
             ["DARWIN_STRIPE_WEBHOOK_PUBLIC_URL"] = "https://stripe-webhook.example.test/api/v1/public/billing/stripe/webhooks",
+            ["DARWIN_STRIPE_WEBHOOK_FORWARDING_REFERENCE"] = "stripe-webhook-forwarding-ref-001",
             ["DARWIN_STRIPE_WEBHOOK_FORWARDING_CONFIRMED"] = "true",
             ["DARWIN_STRIPE_PROVIDER_CALLBACK_WORKER_CONFIRMED"] = "true",
             ["DARWIN_STRIPE_LIVE_WEBHOOK_PUBLIC_URL"] = "https://stripe-webhook.example.test/api/v1/public/billing/stripe/webhooks",
+            ["DARWIN_STRIPE_LIVE_KEYS_REFERENCE"] = "stripe-live-keys-ref-001",
+            ["DARWIN_STRIPE_LIVE_WEBHOOK_ENDPOINT_REFERENCE"] = "stripe-live-webhook-endpoint-ref-001",
+            ["DARWIN_STRIPE_LIVE_WEBHOOK_EVENTS_REFERENCE"] = "stripe-live-webhook-events-ref-001",
+            ["DARWIN_STRIPE_PROVIDER_CALLBACK_WORKER_REFERENCE"] = "stripe-callback-worker-ref-001",
+            ["DARWIN_STRIPE_WEBADMIN_VISIBILITY_REFERENCE"] = "stripe-webadmin-visibility-ref-001",
+            ["DARWIN_STRIPE_MONITORING_REFERENCE"] = "stripe-monitoring-ref-001",
+            ["DARWIN_STRIPE_ALERTING_REFERENCE"] = "stripe-alerting-ref-001",
+            ["DARWIN_STRIPE_REFUND_DISPUTE_PLAYBOOK_REFERENCE"] = "stripe-refund-dispute-playbook-ref-001",
             ["DARWIN_STRIPE_LIVE_KEYS_CONFIGURED_CONFIRMED"] = "true",
             ["DARWIN_STRIPE_LIVE_WEBHOOK_ENDPOINT_CONFIRMED"] = "true",
             ["DARWIN_STRIPE_LIVE_WEBHOOK_EVENTS_CONFIRMED"] = "true",
@@ -2866,10 +2927,19 @@ public sealed class SecurityAndPerformanceContractsAndPackagingSourceTests : Sec
             ["DARWIN_DHL_SHIPMENT_PROVIDER_OPERATION_WORKER_CONFIRMED"] = "true",
             ["DARWIN_DHL_PROVIDER_CALLBACK_WORKER_CONFIRMED"] = "true",
             ["DARWIN_DHL_SHIPMENT_LABELS_STORAGE_CONFIRMED"] = "true",
+            ["DARWIN_DHL_LIVE_SMOKE_REFERENCE"] = "dhl-live-smoke-ref-001",
+            ["DARWIN_DHL_PROVIDER_OPERATION_WORKER_REFERENCE"] = "dhl-operation-worker-ref-001",
+            ["DARWIN_DHL_PROVIDER_CALLBACK_WORKER_REFERENCE"] = "dhl-callback-worker-ref-001",
+            ["DARWIN_DHL_SHIPMENT_LABELS_STORAGE_REFERENCE"] = "dhl-label-storage-ref-001",
             ["DARWIN_BREVO_API_KEY"] = "local-api-key",
             ["DARWIN_BREVO_SENDER_EMAIL"] = "sender@example.test",
             ["DARWIN_BREVO_TEST_RECIPIENT_EMAIL"] = "recipient@example.test",
             ["DARWIN_BREVO_WEBHOOK_PUBLIC_URL"] = "https://brevo-webhook.example.test/api/v1/public/notifications/brevo/webhooks",
+            ["DARWIN_BREVO_READINESS_SMOKE_REFERENCE"] = "brevo-readiness-smoke-ref-001",
+            ["DARWIN_BREVO_WEBHOOK_REFERENCE"] = "brevo-webhook-ref-001",
+            ["DARWIN_BREVO_TRANSACTIONAL_EVENTS_REFERENCE"] = "brevo-events-ref-001",
+            ["DARWIN_BREVO_PROVIDER_CALLBACK_WORKER_REFERENCE"] = "brevo-callback-worker-ref-001",
+            ["DARWIN_BREVO_EMAIL_DISPATCH_WORKER_REFERENCE"] = "brevo-email-dispatch-worker-ref-001",
             ["DARWIN_BREVO_WEBHOOK_CONFIGURED_CONFIRMED"] = "true",
             ["DARWIN_BREVO_TRANSACTIONAL_EVENTS_CONFIRMED"] = "true",
             ["DARWIN_BREVO_PROVIDER_CALLBACK_WORKER_CONFIRMED"] = "true",
@@ -2877,6 +2947,8 @@ public sealed class SecurityAndPerformanceContractsAndPackagingSourceTests : Sec
             ["DARWIN_VIES_VALID_VAT_ID"] = "DE123456789",
             ["DARWIN_VIES_INVALID_VAT_ID"] = "DE000000000",
             ["DARWIN_VIES_ENDPOINT_URL"] = "http://127.0.0.1:5135/vies",
+            ["DARWIN_VIES_VALID_SMOKE_REFERENCE"] = "vies-valid-smoke-ref-001",
+            ["DARWIN_VIES_INVALID_SMOKE_REFERENCE"] = "vies-invalid-smoke-ref-001",
             ["DARWIN_OBJECT_STORAGE_PROVIDER"] = "FileSystem",
             ["DARWIN_OBJECT_STORAGE_CONTAINER"] = "smoke",
             ["DARWIN_OBJECT_STORAGE_FILE_ROOT"] = Path.Combine(Path.GetTempPath(), "darwin-object-storage-ready-dry-run"),

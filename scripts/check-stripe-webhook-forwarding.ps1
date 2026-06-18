@@ -17,8 +17,38 @@ function Test-Truthy {
     return $Value -in @("1", "true", "yes", "y")
 }
 
+function Assert-SafeEvidenceReference {
+    param(
+        [Parameter(Mandatory = $true)][string]$Name,
+        [Parameter(Mandatory = $true)][string]$Value
+    )
+
+    $blocked = @(
+        "secret",
+        "token",
+        "password",
+        "private key",
+        "webhook secret",
+        "api key",
+        "raw payload",
+        "provider payload",
+        "provider response",
+        "customer data",
+        "private approval"
+    )
+
+    foreach ($term in $blocked) {
+        if ($Value.IndexOf($term, [StringComparison]::OrdinalIgnoreCase) -ge 0) {
+            Write-Host "Stripe webhook forwarding is blocked."
+            Write-Host "$Name contains sensitive wording. Use a non-secret forwarding report id, ticket, run label, or evidence-package row id."
+            exit 2
+        }
+    }
+}
+
 $endpointPath = "/api/v1/public/billing/stripe/webhooks"
 $publicUrl = Get-EnvValue "DARWIN_STRIPE_WEBHOOK_PUBLIC_URL"
+$forwardingReference = Get-EnvValue "DARWIN_STRIPE_WEBHOOK_FORWARDING_REFERENCE"
 $forwardingConfirmed = Test-Truthy (Get-EnvValue "DARWIN_STRIPE_WEBHOOK_FORWARDING_CONFIRMED").ToLowerInvariant()
 $stripeCommand = Get-Command stripe -ErrorAction SilentlyContinue
 
@@ -26,6 +56,7 @@ if ([string]::IsNullOrWhiteSpace($publicUrl) -and $null -eq $stripeCommand) {
     Write-Host "Stripe webhook forwarding is blocked."
     Write-Host "Configure these environment variables first:"
     Write-Host " - DARWIN_STRIPE_WEBHOOK_PUBLIC_URL, or install Stripe CLI"
+    Write-Host " - DARWIN_STRIPE_WEBHOOK_FORWARDING_REFERENCE"
     Write-Host " - DARWIN_STRIPE_WEBHOOK_FORWARDING_CONFIRMED"
     Write-Host "Configure either DARWIN_STRIPE_WEBHOOK_PUBLIC_URL with a public HTTPS endpoint, or install Stripe CLI for local forwarding."
     Write-Host "The endpoint path must be $endpointPath."
@@ -60,6 +91,14 @@ if (-not [string]::IsNullOrWhiteSpace($publicUrl)) {
     }
 }
 
+if ([string]::IsNullOrWhiteSpace($forwardingReference)) {
+    Write-Host "Stripe webhook forwarding is blocked."
+    Write-Host "Configure these environment variables first:"
+    Write-Host " - DARWIN_STRIPE_WEBHOOK_FORWARDING_REFERENCE"
+    Write-Host "Use a non-secret Stripe Dashboard delivery record, CLI forwarding run label, ticket, or evidence-package row id."
+    exit 2
+}
+
 if (-not $forwardingConfirmed) {
     Write-Host "Stripe webhook forwarding is blocked."
     Write-Host "Configure these environment variables first:"
@@ -68,6 +107,8 @@ if (-not $forwardingConfirmed) {
     Write-Host "No webhook signing secret is accepted or printed by this check."
     exit 2
 }
+
+Assert-SafeEvidenceReference -Name "DARWIN_STRIPE_WEBHOOK_FORWARDING_REFERENCE" -Value $forwardingReference
 
 Write-Host "Stripe webhook forwarding prerequisites are present."
 Write-Host "Use scripts\smoke-stripe-testmode.ps1 -Execute -CreateSmokeOrder -CheckReturnRoute -OpenCheckout -WaitForWebhookFinalization after starting the forwarder."

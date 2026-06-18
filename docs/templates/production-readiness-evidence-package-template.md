@@ -100,12 +100,17 @@ JSON, HTML, CSV, and source-model exports are not compliant e-invoice output by 
 | Provider area | Smoke or preflight | Non-secret reference | Owner | Result |
 | --- | --- | --- | --- | --- |
 | Stripe test mode | Pending operator entry | Pending operator entry | Darwin technical owner | Pending |
+| Stripe runtime pipeline | Pending operator entry | Pending operator entry | Darwin technical owner | Pending |
+| Stripe webhook finalization | Pending operator entry | Pending operator entry | Darwin technical owner | Pending |
 | Stripe live readiness | Pending operator entry | Pending operator entry | Customer business owner | Pending |
 | Stripe webhook forwarding | Pending operator entry | Pending operator entry | Darwin technical owner | Pending |
 | DHL live/account product | Pending operator entry | Pending operator entry | Operations owner | Pending |
+| DHL runtime pipeline and label storage | Pending operator entry | Pending operator entry | Operations owner | Pending |
+| DHL return shipment smoke when in scope | Pending operator entry | Pending operator entry | Operations owner | Pending |
 | Brevo transactional delivery | Pending operator entry | Pending operator entry | Operations owner | Pending |
 | Brevo callback monitoring | Pending operator entry | Pending operator entry | Operations owner | Pending |
 | VIES VAT validation | Pending operator entry | Pending operator entry | Accounting/tax owner | Pending |
+| VIES provider-failure handling | Pending operator entry | Pending operator entry | Accounting/tax owner | Pending |
 | Object storage smoke | Pending operator entry | Pending operator entry | System admin or DevOps owner | Pending |
 
 No fake labels, fake tracking values, fake provider references, fake delivered exports, fake filing submissions, or fake provider success may be recorded as production evidence.

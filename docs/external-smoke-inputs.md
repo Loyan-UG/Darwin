@@ -101,7 +101,11 @@ Smoke variables:
 - `DARWIN_BUSINESS_API_BEARER_TOKEN`, when using `-CheckBusinessSubscriptionCheckout`
 - `DARWIN_STRIPE_SMOKE_BILLING_PLAN_ID`, when using `-CheckBusinessSubscriptionCheckout`
 - `DARWIN_STRIPE_WEBHOOK_PUBLIC_URL`, when using a public HTTPS endpoint for webhook delivery
+- `DARWIN_STRIPE_WEBHOOK_FORWARDING_REFERENCE`
 - `DARWIN_STRIPE_WEBHOOK_FORWARDING_CONFIRMED=true`, after Dashboard delivery or Stripe CLI forwarding is confirmed
+- `DARWIN_STRIPE_TESTMODE_SMOKE_REFERENCE`
+- `DARWIN_STRIPE_RUNTIME_PIPELINE_REFERENCE`, when requiring runtime-pipeline evidence
+- `DARWIN_STRIPE_WEBHOOK_FINALIZATION_REFERENCE`, when waiting for webhook-finalized payment/subscription state
 - `DARWIN_STRIPE_PROVIDER_CALLBACK_WORKER_CONFIRMED=true`, after callback processing is enabled
 
 Commands:
@@ -128,6 +132,14 @@ This is a checklist before approved live-mode execution. It does not call Stripe
 Required confirmations:
 
 - `DARWIN_STRIPE_LIVE_WEBHOOK_PUBLIC_URL`
+- `DARWIN_STRIPE_LIVE_KEYS_REFERENCE`
+- `DARWIN_STRIPE_LIVE_WEBHOOK_ENDPOINT_REFERENCE`
+- `DARWIN_STRIPE_LIVE_WEBHOOK_EVENTS_REFERENCE`
+- `DARWIN_STRIPE_PROVIDER_CALLBACK_WORKER_REFERENCE`
+- `DARWIN_STRIPE_WEBADMIN_VISIBILITY_REFERENCE`
+- `DARWIN_STRIPE_MONITORING_REFERENCE`
+- `DARWIN_STRIPE_ALERTING_REFERENCE`
+- `DARWIN_STRIPE_REFUND_DISPUTE_PLAYBOOK_REFERENCE`
 - `DARWIN_STRIPE_LIVE_KEYS_CONFIGURED_CONFIRMED=true`
 - `DARWIN_STRIPE_LIVE_WEBHOOK_ENDPOINT_CONFIRMED=true`
 - `DARWIN_STRIPE_LIVE_WEBHOOK_EVENTS_CONFIRMED=true`
@@ -138,6 +150,8 @@ Required confirmations:
 - `DARWIN_STRIPE_REFUND_DISPUTE_PLAYBOOK_CONFIRMED=true`
 
 `DARWIN_STRIPE_LIVE_WEBHOOK_PUBLIC_URL` must be the public HTTPS webhook URL ending in `/api/v1/public/billing/stripe/webhooks`. Do not include embedded credentials, query strings, fragments, webhook signing secrets, tokens, provider payloads, or live payment details in the URL or readiness inputs.
+
+Stripe evidence references must be non-secret report ids, run labels, tickets, checklist rows, or evidence-package row ids. Do not use checkout URLs, provider responses, webhook secrets, API keys, live payment details, customer data, or private approval records.
 
 Command:
 
@@ -166,12 +180,19 @@ Optional variables:
 Delivery-pipeline confirmations:
 
 - `DARWIN_BREVO_WEBHOOK_PUBLIC_URL`
+- `DARWIN_BREVO_READINESS_SMOKE_REFERENCE`
+- `DARWIN_BREVO_WEBHOOK_REFERENCE`
+- `DARWIN_BREVO_TRANSACTIONAL_EVENTS_REFERENCE`
+- `DARWIN_BREVO_PROVIDER_CALLBACK_WORKER_REFERENCE`
+- `DARWIN_BREVO_EMAIL_DISPATCH_WORKER_REFERENCE`
 - `DARWIN_BREVO_WEBHOOK_CONFIGURED_CONFIRMED=true`
 - `DARWIN_BREVO_TRANSACTIONAL_EVENTS_CONFIRMED=true`
 - `DARWIN_BREVO_PROVIDER_CALLBACK_WORKER_CONFIRMED=true`
 - `DARWIN_BREVO_EMAIL_DISPATCH_WORKER_CONFIRMED=true`
 
 `DARWIN_BREVO_WEBHOOK_PUBLIC_URL` must be the public HTTPS webhook URL ending in `/api/v1/public/notifications/brevo/webhooks`. Do not use a loopback URL, and do not include embedded credentials, query strings, fragments, tokens, provider payloads, or private delivery details in the URL or readiness inputs.
+
+Brevo evidence references must be non-secret delivery report ids, run labels, tickets, or evidence-package row ids. Do not use provider responses, delivery payloads, tokens, secrets, customer data, or private approval records.
 
 Commands:
 
@@ -218,6 +239,11 @@ Required variables:
 
 Runtime confirmations:
 
+- `DARWIN_DHL_LIVE_SMOKE_REFERENCE`
+- `DARWIN_DHL_PROVIDER_OPERATION_WORKER_REFERENCE`
+- `DARWIN_DHL_PROVIDER_CALLBACK_WORKER_REFERENCE`
+- `DARWIN_DHL_SHIPMENT_LABELS_STORAGE_REFERENCE`
+- `DARWIN_DHL_RETURN_SMOKE_REFERENCE`, when return-label smoke is in scope
 - `DARWIN_DHL_SHIPMENT_PROVIDER_OPERATION_WORKER_CONFIRMED=true`
 - `DARWIN_DHL_PROVIDER_CALLBACK_WORKER_CONFIRMED=true`
 - `DARWIN_DHL_SHIPMENT_LABELS_STORAGE_CONFIRMED=true`
@@ -237,6 +263,7 @@ Acceptance:
 - No fake labels, references, or tracking URLs are generated.
 - Labels are stored through configured storage.
 - WebAdmin can inspect and recover failed/stale provider operations.
+- DHL evidence references must be non-secret validation report ids, run labels, tickets, or evidence-package row ids. Do not use labels, tracking payloads, provider responses, API credentials, customer data, or private approval records.
 
 ## VIES
 
@@ -244,6 +271,9 @@ Required variables:
 
 - `DARWIN_VIES_VALID_VAT_ID`
 - `DARWIN_VIES_INVALID_VAT_ID`
+- `DARWIN_VIES_VALID_SMOKE_REFERENCE`
+- `DARWIN_VIES_INVALID_SMOKE_REFERENCE`
+- `DARWIN_VIES_PROVIDER_FAILURE_SMOKE_REFERENCE`, when provider-failure handling is in scope
 
 Optional variables:
 
@@ -266,6 +296,7 @@ Acceptance:
 - Provider failures must remain `Unknown` and require manual review.
 - Scheduled retry may retry provider-generated `Unknown` outcomes, but operator decisions remain authoritative.
 - WebAdmin may show format hints during manual review; format hints are not official VIES confirmation and must not mark a VAT ID valid.
+- VIES evidence references must be non-secret report ids, run labels, tickets, or evidence-package row ids. Do not use VAT result payloads, provider responses, customer data, or private approval records.
 
 ## Object Storage And MinIO
 

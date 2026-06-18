@@ -18,6 +18,79 @@ function Test-Truthy {
     return @("1", "true", "yes", "y") -contains $Value.Trim().ToLowerInvariant()
 }
 
+function Get-EnvValue {
+    param([Parameter(Mandatory = $true)][string]$Name)
+
+    $value = [Environment]::GetEnvironmentVariable($Name)
+    if ($null -eq $value) {
+        return ""
+    }
+
+    return $value.Trim()
+}
+
+function Assert-SafeEvidenceReference {
+    param(
+        [Parameter(Mandatory = $true)][string]$Name,
+        [Parameter(Mandatory = $true)][string]$Value
+    )
+
+    $blocked = @(
+        "secret",
+        "token",
+        "password",
+        "private key",
+        "api key",
+        "raw payload",
+        "provider payload",
+        "provider response",
+        "customer data",
+        "private delivery",
+        "private approval"
+    )
+
+    foreach ($term in $blocked) {
+        if ($Value.IndexOf($term, [StringComparison]::OrdinalIgnoreCase) -ge 0) {
+            Write-Host "Brevo readiness smoke is blocked."
+            Write-Host "$Name contains sensitive wording. Use a non-secret Brevo smoke report id, delivery run label, ticket, or evidence-package row id."
+            exit 2
+        }
+    }
+}
+
+function Assert-ReadinessEvidenceReferences {
+    $requiredReferences = @("DARWIN_BREVO_READINESS_SMOKE_REFERENCE")
+    if ($RequireDeliveryPipeline) {
+        $requiredReferences += @(
+            "DARWIN_BREVO_WEBHOOK_REFERENCE",
+            "DARWIN_BREVO_TRANSACTIONAL_EVENTS_REFERENCE",
+            "DARWIN_BREVO_PROVIDER_CALLBACK_WORKER_REFERENCE",
+            "DARWIN_BREVO_EMAIL_DISPATCH_WORKER_REFERENCE"
+        )
+    }
+
+    $missingReferences = @()
+    foreach ($name in $requiredReferences) {
+        if ([string]::IsNullOrWhiteSpace((Get-EnvValue $name))) {
+            $missingReferences += $name
+        }
+    }
+
+    if ($missingReferences.Count -gt 0) {
+        Write-Host "Brevo readiness smoke is blocked. Configure these environment variables first:"
+        foreach ($name in $missingReferences) {
+            Write-Host " - $name"
+        }
+
+        Write-Host "Use non-secret Brevo smoke report ids, run labels, tickets, or evidence-package row ids. Do not paste provider responses, tokens, delivery payloads, secrets, or customer data."
+        exit 2
+    }
+
+    foreach ($name in $requiredReferences) {
+        Assert-SafeEvidenceReference -Name $name -Value (Get-EnvValue $name)
+    }
+}
+
 function Set-EnvIfMissing {
     param(
         [Parameter(Mandatory = $true)][string]$Name,
@@ -184,6 +257,8 @@ if ($RequireDeliveryPipeline -or ($Execute -and -not $Sandbox)) {
 }
 
 if (-not $Execute) {
+    Assert-ReadinessEvidenceReferences
+
     Write-Host "Brevo readiness smoke configuration is present."
     if ($RequireDeliveryPipeline) {
         Write-Host "Brevo delivery pipeline readiness is confirmed."
@@ -192,17 +267,6 @@ if (-not $Execute) {
     Write-Host "Run with -Execute -Sandbox to call Brevo in sandbox/drop mode."
     Write-Host "Run with -Execute only after a controlled inbox send is approved. No secrets are printed."
     exit 0
-}
-
-function Get-EnvValue {
-    param([Parameter(Mandatory = $true)][string]$Name)
-
-    $value = [Environment]::GetEnvironmentVariable($Name)
-    if ($null -eq $value) {
-        return ""
-    }
-
-    return $value.Trim()
 }
 
 function Get-OptionalEnvValue {
