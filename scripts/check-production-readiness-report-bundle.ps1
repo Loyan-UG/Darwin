@@ -130,6 +130,14 @@ foreach ($fileName in $expectedHelpers) {
     if ($fileName -eq "evidence-package-local-draft.md" -and $content.IndexOf("| Readiness report bundle |", [StringComparison]::OrdinalIgnoreCase) -lt 0) {
         Add-Problem $problems "Local evidence package draft does not contain readiness report bundle reference row: $fileName"
     }
+
+    if ($fileName -eq "evidence-package-local-draft.md" -and $content.IndexOf("Local Supporting Evidence Snapshot", [StringComparison]::OrdinalIgnoreCase) -lt 0) {
+        Add-Problem $problems "Local evidence package draft does not contain the local supporting evidence snapshot: $fileName"
+    }
+
+    if ($fileName -eq "evidence-package-local-draft.md" -and $content.IndexOf("local-backup-readiness-report.md", [StringComparison]::OrdinalIgnoreCase) -lt 0) {
+        Add-Problem $problems "Local evidence package draft does not contain the local backup report reference: $fileName"
+    }
 }
 
 $bundlePath = Join-Path $resolvedDirectory "readiness-report-bundle.md"

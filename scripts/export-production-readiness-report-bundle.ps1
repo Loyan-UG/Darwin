@@ -241,7 +241,7 @@ try {
         exit 1
     }
 
-    & powershell -NoProfile -ExecutionPolicy Bypass -File "scripts\export-production-readiness-local-package-draft.ps1" -OutputPath $localDraftPath -Force | Out-Host
+    & powershell -NoProfile -ExecutionPolicy Bypass -File "scripts\export-production-readiness-local-package-draft.ps1" -OutputPath $localDraftPath -ReportDirectory $resolvedOutputDirectory -Force | Out-Host
     if ($LASTEXITCODE -eq 1) {
         exit 1
     }

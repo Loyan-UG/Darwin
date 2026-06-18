@@ -1,5 +1,6 @@
 param(
     [string]$OutputPath = "artifacts\production-readiness\evidence-package-local-draft.md",
+    [string]$ReportDirectory = "artifacts\production-readiness",
     [string]$DeploymentLabel = "local-production-like-readiness-draft",
     [string]$ReleaseReference = "",
     [string]$PreparedBy = "Darwin technical owner",
@@ -74,6 +75,64 @@ function Set-ResultRow {
     return $lines -join "`r`n"
 }
 
+function Get-LocalReportRows {
+    param([Parameter(Mandatory = $true)][string]$BundlePath)
+
+    if (-not (Test-Path $BundlePath -PathType Leaf)) {
+        return @()
+    }
+
+    $rows = @()
+    $lines = Get-Content $BundlePath
+    foreach ($line in $lines) {
+        $match = [regex]::Match([string]$line, '^\|\s*(?<name>[^|]+?)\s*\|\s*(?<status>Ready|Blocked|Failed|Missing|Unparseable)\s*\|\s*(?<exit>-?\d+)\s*\|\s*(?<file>[^|]+?)\s*\|$')
+        if (-not $match.Success) {
+            continue
+        }
+
+        $rows += [pscustomobject]@{
+            Name = $match.Groups["name"].Value.Trim()
+            Status = $match.Groups["status"].Value.Trim()
+            FileName = $match.Groups["file"].Value.Trim()
+        }
+    }
+
+    return $rows
+}
+
+function Add-LocalSupportingEvidenceSnapshot {
+    param(
+        [Parameter(Mandatory = $true)][string]$Content,
+        [Parameter(Mandatory = $true)][string]$BundlePath
+    )
+
+    $rows = Get-LocalReportRows -BundlePath $BundlePath
+    if ($rows.Count -eq 0) {
+        return $Content
+    }
+
+    $lines = New-Object System.Collections.Generic.List[string]
+    $lines.Add($Content.TrimEnd())
+    $lines.Add("")
+    $lines.Add("## Local Supporting Evidence Snapshot")
+    $lines.Add("")
+    $lines.Add("These rows are copied from the local readiness report bundle for owner handoff. Ready local rows are supporting evidence only and do not replace production-like staging proof, provider evidence, deployment approvals, or the final filled evidence-package validation.")
+    $lines.Add("")
+    $lines.Add("| Evidence area | Local report | Local result | Package use |")
+    $lines.Add("| --- | --- | --- | --- |")
+    foreach ($row in $rows) {
+        $packageUse = if ($row.Status -eq "Ready") {
+            "Attach as local supporting evidence; deployment owner approval can still be required."
+        } else {
+            "Use the action plan and environment template to collect the missing deployment evidence."
+        }
+
+        $lines.Add("| $($row.Name) | $($row.FileName) | $($row.Status) | $packageUse |")
+    }
+
+    return $lines -join "`r`n"
+}
+
 if ([string]::IsNullOrWhiteSpace($ReleaseReference)) {
     $ReleaseReference = "git-$((& git rev-parse --short=12 HEAD 2>$null).Trim())"
 }
@@ -97,6 +156,8 @@ $bundlePath = "artifacts\production-readiness\readiness-report-bundle.md"
 $actionPlanPath = "artifacts\production-readiness\production-readiness-action-plan.md"
 $envTemplatePath = "artifacts\production-readiness\production-readiness-env-template.ps1"
 $localExecutionSummaryPath = "artifacts\production-readiness\local-execution-summary.md"
+$resolvedReportDirectory = $ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($ReportDirectory)
+$resolvedBundlePath = Join-Path $resolvedReportDirectory "readiness-report-bundle.md"
 
 $content = Get-Content $templatePath -Raw
 $content = $content.Replace("{{DEPLOYMENT_LABEL}}", $DeploymentLabel.Trim())
@@ -112,6 +173,7 @@ $content = $content.Replace(" Pending |", " Blocked |")
 $content = Set-ResultRow -Content $content -RowName "Readiness report bundle" -Reference $bundlePath -Result "Ready"
 $content = Set-ResultRow -Content $content -RowName "Owner action plan" -Reference $actionPlanPath -Result "Ready"
 $content = Set-ResultRow -Content $content -RowName "Evidence environment template" -Reference $envTemplatePath -Result "Ready"
+$content = Add-LocalSupportingEvidenceSnapshot -Content $content -BundlePath $resolvedBundlePath
 
 $content += @"
 
