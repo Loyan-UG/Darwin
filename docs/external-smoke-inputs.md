@@ -36,6 +36,7 @@ Production-like staging rehearsal preflight:
 
 ```powershell
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\check-production-like-staging-readiness.ps1
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\export-production-like-staging-readiness-report.ps1 -Force
 ```
 
 Required non-secret references:

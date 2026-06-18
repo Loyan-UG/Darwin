@@ -43,6 +43,7 @@ This plan turns the current production-readiness decisions into an execution ord
 ```powershell
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\new-production-readiness-evidence-package.ps1 -OutputPath artifacts\production-readiness\evidence-package.md -DeploymentLabel "production-like-staging" -ReleaseReference "release-artifact-id" -PreparedBy "Darwin technical owner"
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\check-production-like-staging-readiness.ps1
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\export-production-like-staging-readiness-report.ps1 -Force
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\check-web-toolchain-readiness.ps1
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\check-web-storefront-readiness.ps1
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\check-mobile-resource-names.ps1
@@ -58,6 +59,8 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts\check-go-live-readin
 ```
 
 The central go-live report includes separate MinIO and Azure Blob readiness rows. The dedicated MinIO and Azure reports remain useful as non-secret attachment references for the object-storage evidence rows.
+
+The dedicated production-like staging report is a non-secret attachment reference for the staging rehearsal row. It does not replace the real build/test, migration, rollback, backup/restore, monitoring, provider, mobile, e-invoice, or owner sign-off records.
 
 The dedicated e-invoice report is a non-secret attachment reference for accounting or tax evidence. It does not replace the real ZUGFeRD/Factur-X and XRechnung artifact, validation-report, storage/download-smoke, and sign-off records.
 
