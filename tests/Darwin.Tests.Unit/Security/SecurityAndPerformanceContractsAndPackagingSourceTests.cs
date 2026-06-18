@@ -241,6 +241,7 @@ public sealed class SecurityAndPerformanceContractsAndPackagingSourceTests : Sec
         var evidenceValidatorSource = ReadRepositoryFile(Path.Combine("scripts", "check-production-readiness-evidence-package.ps1"));
         var goLiveReportExporterSource = ReadRepositoryFile(Path.Combine("scripts", "export-go-live-readiness-report.ps1"));
         var reportBundleExporterSource = ReadRepositoryFile(Path.Combine("scripts", "export-production-readiness-report-bundle.ps1"));
+        var minioComposeSource = ReadRepositoryFile("docker-compose.minio.yml");
         var scripts = new[]
         {
             "smoke-stripe-testmode.ps1",
@@ -322,6 +323,15 @@ public sealed class SecurityAndPerformanceContractsAndPackagingSourceTests : Sec
         goLiveReportExporterSource.Should().Contain("[switch]$SkipReportBundleCheck");
         reportBundleExporterSource.Should().Contain("-SkipReportBundleCheck");
         reportBundleExporterSource.Should().Contain("scripts\\export-go-live-readiness-report.ps1");
+
+        minioComposeSource.Should().Contain("quay.io/minio/minio:latest");
+        minioComposeSource.Should().Contain("quay.io/minio/mc:latest");
+        minioComposeSource.Should().Contain("mc mb --ignore-existing --with-lock");
+        minioComposeSource.Should().Contain("mc version enable");
+        minioComposeSource.Should().Contain("mc retention set --default compliance 1d");
+        minioComposeSource.Should().NotContain("aistor");
+        minioComposeSource.Should().NotContain("minio.license");
+        minioComposeSource.Should().NotContain("MINIO_LICENSE");
 
         externalSmokeInputsSource.Should().Contain("Do not store real secret values");
         externalSmokeInputsSource.Should().Contain("scripts\\check-go-live-readiness.ps1");

@@ -22,7 +22,7 @@ Default local endpoints:
 - MinIO Console: `http://localhost:9001`
 - Default smoke bucket: `darwin-invoice-archive-smoke`
 
-The compose init container creates the smoke bucket with Object Lock enabled from the start and enables versioning. Object Lock must be enabled when a bucket is created; it cannot be added later to an existing bucket.
+The compose file uses the public MinIO server and client images and does not require a local license file or private bind mount. The compose init container creates the smoke bucket with Object Lock enabled from the start and enables versioning. Object Lock must be enabled when a bucket is created; it cannot be added later to an existing bucket.
 
 If the bucket must be recreated manually, delete the local development bucket only after confirming it contains no needed smoke artifacts, then create it with Object Lock enabled at creation time. Use local development credentials only:
 
@@ -118,6 +118,15 @@ Latest local recheck:
 - Provider smoke result: save/read/metadata checks completed through the S3-compatible provider path; temporary URL generation was available; cleanup was skipped because retention smoke was enabled.
 - Guarded smoke behavior: local loopback MinIO smoke can execute without production confirmation; production-like endpoints are blocked unless `DARWIN_OBJECT_STORAGE_PRODUCTION_SMOKE_CONFIRMED=true` or `-AllowProductionEndpoint` is supplied.
 - Production readiness preflight result: blocked until the real production endpoint, bucket, TLS, dedicated least-privilege keys, Object Lock, versioning, retention, legal-hold policy, backup, restore, monitoring, alerting, and all required Darwin object-storage profile confirmations are supplied. This includes `InvoiceArchive`, `ShipmentLabels`, `MediaAssets`, `FinanceExports`, `FinanceExportOutbound`, `PersonnelDocuments`, and `PayrollPayslips`. This is expected and prevents claiming production immutability from local smoke alone.
+
+Latest local recheck:
+
+- Date: 2026-06-18
+- Compose validation: `docker-compose.minio.yml` uses public `quay.io/minio/minio` and `quay.io/minio/mc` images without a private license file, so a fresh local machine can repeat the smoke path from source plus Docker Desktop.
+- Docker validation: `darwin-minio` was healthy; init logs showed the smoke bucket created with Object Lock, versioning enabled, and default `COMPLIANCE` retention for `1DAYS`.
+- Provider smoke command: `powershell -NoProfile -ExecutionPolicy Bypass -File scripts\smoke-object-storage.ps1 -Execute -SmokeRetention`
+- Provider smoke result: save/read/metadata checks completed through the S3-compatible provider path; temporary URL generation was available; cleanup was skipped because retention smoke was enabled.
+- Local backup and restore evidence: the 2026-06-18 local backup package under `D:\Backup\2026-06-18` passed structural backup readiness and restored its PostgreSQL dump into an isolated temporary local PostgreSQL database. This is local evidence only and does not replace production backup, restore, retention, monitoring, or owner approval evidence.
 
 ## WebAdmin Local Smoke Action
 

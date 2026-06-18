@@ -1,19 +1,17 @@
 services:
   minio:
-    image: quay.io/minio/aistor/minio:latest
+    image: quay.io/minio/minio:latest
     container_name: darwin-minio
     restart: unless-stopped
-    command: minio server /data --console-address ":9001" --license /minio.license
+    command: server /data --console-address ":9001"
     environment:
       MINIO_ROOT_USER: ${DARWIN_MINIO_ROOT_USER:-darwin-local-minio}
       MINIO_ROOT_PASSWORD: ${DARWIN_MINIO_ROOT_PASSWORD:-change-this-local-minio-password}
-      MINIO_LICENSE: /minio.license
     ports:
       - "9000:9000"
       - "9001:9001"
     volumes:
       - darwin-minio-data:/data
-      - D:/_Projects/minio.license:/minio.license:ro
     healthcheck:
       test: ["CMD", "mc", "ready", "local"]
       interval: 10s
@@ -21,7 +19,7 @@ services:
       retries: 20
 
   minio-init:
-    image: quay.io/minio/aistor/mc:latest
+    image: quay.io/minio/mc:latest
     container_name: darwin-minio-init
     depends_on:
       minio:
