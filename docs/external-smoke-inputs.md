@@ -43,11 +43,15 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts\check-local-backup-r
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\export-local-backup-readiness-report.ps1 -Force
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\check-local-postgres-restore-readiness.ps1
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\export-local-postgres-restore-readiness-report.ps1 -Force
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\check-local-release-candidate-readiness.ps1
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\export-local-release-candidate-readiness-report.ps1 -Force
 ```
 
 The local backup report inspects only non-secret backup structure: manifest presence, PostgreSQL dump integrity, MinIO mirror presence, private local configuration group presence, and Docker container inventory. It does not print private file names from the sensitive backup area, credentials, provider payloads, or backup file contents. Use `DARWIN_LOCAL_BACKUP_ROOT` or the `-BackupRoot` parameter when the backup root is not the default local path.
 
 The local PostgreSQL restore report performs a temporary restore from the daily dump using `pg_restore --no-owner`, verifies restored application schema/table presence and the EF migration history table, then removes the temporary database. Use `DARWIN_POSTGRES_CONTAINER` or the `-PostgresContainerName` parameter when the running container name is not auto-detected.
+
+The local release-candidate report runs focused .NET build/test lanes for WebAdmin, WebApi, Worker, Contracts compatibility, and Mobile Shared compatibility. Web storefront npm/toolchain evidence remains in the Web/Mobile readiness report so missing `npm` blocks the correct surface instead of hiding inside a backend build summary.
 
 Required non-secret references:
 

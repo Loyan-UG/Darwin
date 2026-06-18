@@ -59,6 +59,7 @@ $expectedReports = @(
     "production-like-staging-readiness-report.md",
     "local-backup-readiness-report.md",
     "local-postgres-restore-readiness-report.md",
+    "local-release-candidate-readiness-report.md",
     "web-mobile-readiness-report.md",
     "go-live-readiness-report.md",
     "minio-production-readiness-report.md",
