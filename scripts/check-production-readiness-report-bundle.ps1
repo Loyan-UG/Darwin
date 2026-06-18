@@ -71,7 +71,8 @@ $expectedReports = @(
 
 $expectedHelpers = @(
     "production-readiness-action-plan.md",
-    "production-readiness-env-template.ps1"
+    "production-readiness-env-template.ps1",
+    "evidence-package-local-draft.md"
 )
 
 $statuses = @{}
@@ -120,6 +121,14 @@ foreach ($fileName in $expectedHelpers) {
 
     if ($fileName -eq "production-readiness-env-template.ps1" -and $content.IndexOf("No template assignment is written", [StringComparison]::OrdinalIgnoreCase) -lt 0) {
         Add-Problem $problems "Readiness helper does not document secret-like variable handling: $fileName"
+    }
+
+    if ($fileName -eq "evidence-package-local-draft.md" -and $content.IndexOf("Local Draft Notice", [StringComparison]::OrdinalIgnoreCase) -lt 0) {
+        Add-Problem $problems "Local evidence package draft does not contain the local draft notice: $fileName"
+    }
+
+    if ($fileName -eq "evidence-package-local-draft.md" -and $content.IndexOf("| Readiness report bundle |", [StringComparison]::OrdinalIgnoreCase) -lt 0) {
+        Add-Problem $problems "Local evidence package draft does not contain readiness report bundle reference row: $fileName"
     }
 }
 
