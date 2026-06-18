@@ -332,6 +332,9 @@ public sealed class SecurityAndPerformanceContractsAndPackagingSourceTests : Sec
         reportBundleExporterSource.Should().Contain("scripts\\export-production-readiness-local-execution-summary.ps1");
         reportBundleExporterSource.Should().Contain("Get-ReportExitCode");
         reportBundleExporterSource.Should().Contain("ExporterExitCode");
+        ReadRepositoryFile(Path.Combine("scripts", "check-production-readiness-report-bundle.ps1"))
+            .Should()
+            .Contain("Get-BundleReportRows");
 
         minioComposeSource.Should().Contain("quay.io/minio/minio:latest");
         minioComposeSource.Should().Contain("quay.io/minio/mc:latest");
@@ -771,6 +774,31 @@ public sealed class SecurityAndPerformanceContractsAndPackagingSourceTests : Sec
         exitCode.Should().Be(2);
         output.Should().Contain("Production readiness report bundle validation is blocked.");
         output.Should().Contain("Blocked readiness report should have exit code 2");
+        output.Should().Contain("android-launch-readiness-report.md");
+    }
+
+    [Fact]
+    public async Task ProductionReadinessReportBundleValidator_Should_BlockMismatchedBundleIndexRow()
+    {
+        var root = ResolveRepositoryPath();
+        var directory = EnsureReadyProductionReadinessReportBundle();
+        var bundle = Path.Combine(directory, "readiness-report-bundle.md");
+        var content = File.ReadAllText(bundle)
+            .Replace(
+                "| Android launch | Ready | 0 | android-launch-readiness-report.md |",
+                "| Android launch | Blocked | 2 | android-launch-readiness-report.md |",
+                StringComparison.Ordinal);
+        File.WriteAllText(bundle, content);
+
+        var (exitCode, output) = await RunPowerShellScriptAsync(
+            root,
+            "check-production-readiness-report-bundle.ps1",
+            new Dictionary<string, string>(),
+            ["-Directory", directory]);
+
+        exitCode.Should().Be(2);
+        output.Should().Contain("Production readiness report bundle validation is blocked.");
+        output.Should().Contain("Bundle index status");
         output.Should().Contain("android-launch-readiness-report.md");
     }
 
@@ -2475,7 +2503,27 @@ public sealed class SecurityAndPerformanceContractsAndPackagingSourceTests : Sec
 
             if (reportName == "readiness-report-bundle.md")
             {
-                content += Environment.NewLine + string.Join(Environment.NewLine, reportNames.Concat(helperNames));
+                content += Environment.NewLine + """
+
+                    ## Reports
+
+                    | Report | Result | Exit code | File |
+                    | --- | --- | ---: | --- |
+                    | Production-like staging | Ready | 0 | production-like-staging-readiness-report.md |
+                    | Local backup package | Ready | 0 | local-backup-readiness-report.md |
+                    | Local PostgreSQL restore | Ready | 0 | local-postgres-restore-readiness-report.md |
+                    | Local release candidate | Ready | 0 | local-release-candidate-readiness-report.md |
+                    | Evidence package validator tooling | Ready | 0 | evidence-package-validator-smoke.md |
+                    | Web and mobile | Ready | 0 | web-mobile-readiness-report.md |
+                    | Go-live aggregate | Ready | 0 | go-live-readiness-report.md |
+                    | MinIO production | Ready | 0 | minio-production-readiness-report.md |
+                    | Azure Blob object storage | Ready | 0 | azure-object-storage-readiness-report.md |
+                    | E-invoice production | Ready | 0 | einvoice-production-readiness-report.md |
+                    | Android launch | Ready | 0 | android-launch-readiness-report.md |
+                    | Provider readiness | Ready | 0 | provider-readiness-report.md |
+
+                    ## Generated Follow-Up Artifacts
+                    """ + Environment.NewLine + string.Join(Environment.NewLine, helperNames);
             }
 
             File.WriteAllText(Path.Combine(directory, reportName), content);

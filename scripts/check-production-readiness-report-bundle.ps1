@@ -71,6 +71,28 @@ function Get-MetadataValue {
     return ""
 }
 
+function Get-BundleReportRows {
+    param([Parameter(Mandatory = $true)][string]$Content)
+
+    $rows = @{}
+    foreach ($line in ($Content -split "`r?`n")) {
+        $match = [regex]::Match([string]$line, '^\|\s*(?<name>[^|]+?)\s*\|\s*(?<status>Ready|Blocked|Failed|Missing|Unparseable)\s*\|\s*(?<exit>-?\d+)\s*\|\s*(?<file>[^|]+?)\s*\|$')
+        if (-not $match.Success) {
+            continue
+        }
+
+        $fileName = $match.Groups["file"].Value.Trim()
+        $rows[$fileName] = [pscustomobject]@{
+            Name = $match.Groups["name"].Value.Trim()
+            Status = $match.Groups["status"].Value.Trim()
+            ExitCode = [int]$match.Groups["exit"].Value
+            FileName = $fileName
+        }
+    }
+
+    return $rows
+}
+
 function Assert-CurrentBranchAndCommit {
     param(
         [AllowEmptyCollection()][System.Collections.Generic.List[string]]$Problems,
@@ -136,6 +158,7 @@ $expectedHelpers = @(
 )
 
 $statuses = @{}
+$reportExitCodes = @{}
 foreach ($fileName in $expectedReports) {
     $path = Join-Path $resolvedDirectory $fileName
     if (-not (Test-Path $path -PathType Leaf)) {
@@ -176,6 +199,7 @@ foreach ($fileName in $expectedReports) {
     }
 
     $statuses[$fileName] = $status
+    $reportExitCodes[$fileName] = $reportExitCode
 }
 
 foreach ($fileName in $expectedHelpers) {
@@ -261,9 +285,26 @@ foreach ($fileName in $expectedHelpers) {
 $bundlePath = Join-Path $resolvedDirectory "readiness-report-bundle.md"
 if (Test-Path $bundlePath -PathType Leaf) {
     $bundleContent = Get-Content $bundlePath -Raw
+    $bundleRows = Get-BundleReportRows -Content $bundleContent
     foreach ($fileName in $expectedReports | Where-Object { $_ -ne "readiness-report-bundle.md" }) {
         if ($bundleContent.IndexOf($fileName, [StringComparison]::OrdinalIgnoreCase) -lt 0) {
             Add-Problem $problems "Bundle index does not reference expected report: $fileName"
+            continue
+        }
+
+        if (-not $bundleRows.ContainsKey($fileName)) {
+            Add-Problem $problems "Bundle index does not contain a parseable report row for expected report: $fileName"
+            continue
+        }
+
+        $bundleRow = $bundleRows[$fileName]
+        if ($statuses.ContainsKey($fileName) -and
+            -not [string]::Equals($bundleRow.Status, $statuses[$fileName], [StringComparison]::Ordinal)) {
+            Add-Problem $problems "Bundle index status '$($bundleRow.Status)' does not match report status '$($statuses[$fileName])': $fileName"
+        }
+
+        if ($reportExitCodes.ContainsKey($fileName) -and $bundleRow.ExitCode -ne $reportExitCodes[$fileName]) {
+            Add-Problem $problems "Bundle index exit code '$($bundleRow.ExitCode)' does not match report exit code '$($reportExitCodes[$fileName])': $fileName"
         }
     }
 
