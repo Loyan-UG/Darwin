@@ -50,10 +50,28 @@ function Assert-SafeText {
             exit 2
         }
     }
+
+    if ($Value -match '(?i)(password|secret|token|access[_ -]?key|connection[_ -]?string|private[_ -]?key|provider payload|raw payload|customer invoice|generated pdf|generated xml|raw xml|raw pdf)\s*[:=]' -or
+        $Value -match '-----BEGIN .*PRIVATE KEY-----' -or
+        $Value -match '[{}]') {
+        Write-Host "E-invoice production readiness is blocked."
+        Write-Host "$Name must be a non-secret evidence reference, not a credential, generated artifact payload, validator output dump, legal document content, provider payload, or private approval content."
+        exit 2
+    }
 }
 
 $toolingReference = Get-EnvValue "DARWIN_EINVOICE_TOOLING_REFERENCE"
 $evidenceReference = Get-EnvValue "DARWIN_EINVOICE_EVIDENCE_PACKAGE_REFERENCE"
+$zugferdFixtureReference = Get-EnvValue "DARWIN_EINVOICE_ZUGFERD_FIXTURE_REFERENCE"
+$zugferdArtifactReference = Get-EnvValue "DARWIN_EINVOICE_ZUGFERD_ARTIFACT_REFERENCE"
+$zugferdValidationReportReference = Get-EnvValue "DARWIN_EINVOICE_ZUGFERD_VALIDATION_REPORT_REFERENCE"
+$zugferdStorageDownloadSmokeReference = Get-EnvValue "DARWIN_EINVOICE_ZUGFERD_STORAGE_DOWNLOAD_SMOKE_REFERENCE"
+$zugferdAccountingSignoffReference = Get-EnvValue "DARWIN_EINVOICE_ZUGFERD_ACCOUNTING_SIGNOFF_REFERENCE"
+$xrechnungFixtureReference = Get-EnvValue "DARWIN_EINVOICE_XRECHNUNG_FIXTURE_REFERENCE"
+$xrechnungArtifactReference = Get-EnvValue "DARWIN_EINVOICE_XRECHNUNG_ARTIFACT_REFERENCE"
+$xrechnungValidationReportReference = Get-EnvValue "DARWIN_EINVOICE_XRECHNUNG_VALIDATION_REPORT_REFERENCE"
+$xrechnungStorageDownloadSmokeReference = Get-EnvValue "DARWIN_EINVOICE_XRECHNUNG_STORAGE_DOWNLOAD_SMOKE_REFERENCE"
+$xrechnungAccountingSignoffReference = Get-EnvValue "DARWIN_EINVOICE_XRECHNUNG_ACCOUNTING_SIGNOFF_REFERENCE"
 
 $requiredConfirmations = @(
     "DARWIN_EINVOICE_TOOLING_PINNED_CONFIRMED",
@@ -80,6 +98,25 @@ if ([string]::IsNullOrWhiteSpace($evidenceReference)) {
     $missing += "DARWIN_EINVOICE_EVIDENCE_PACKAGE_REFERENCE"
 }
 
+$referenceVariables = [ordered]@{
+    "DARWIN_EINVOICE_ZUGFERD_FIXTURE_REFERENCE" = $zugferdFixtureReference
+    "DARWIN_EINVOICE_ZUGFERD_ARTIFACT_REFERENCE" = $zugferdArtifactReference
+    "DARWIN_EINVOICE_ZUGFERD_VALIDATION_REPORT_REFERENCE" = $zugferdValidationReportReference
+    "DARWIN_EINVOICE_ZUGFERD_STORAGE_DOWNLOAD_SMOKE_REFERENCE" = $zugferdStorageDownloadSmokeReference
+    "DARWIN_EINVOICE_ZUGFERD_ACCOUNTING_SIGNOFF_REFERENCE" = $zugferdAccountingSignoffReference
+    "DARWIN_EINVOICE_XRECHNUNG_FIXTURE_REFERENCE" = $xrechnungFixtureReference
+    "DARWIN_EINVOICE_XRECHNUNG_ARTIFACT_REFERENCE" = $xrechnungArtifactReference
+    "DARWIN_EINVOICE_XRECHNUNG_VALIDATION_REPORT_REFERENCE" = $xrechnungValidationReportReference
+    "DARWIN_EINVOICE_XRECHNUNG_STORAGE_DOWNLOAD_SMOKE_REFERENCE" = $xrechnungStorageDownloadSmokeReference
+    "DARWIN_EINVOICE_XRECHNUNG_ACCOUNTING_SIGNOFF_REFERENCE" = $xrechnungAccountingSignoffReference
+}
+
+foreach ($item in $referenceVariables.GetEnumerator()) {
+    if ([string]::IsNullOrWhiteSpace($item.Value)) {
+        $missing += $item.Key
+    }
+}
+
 foreach ($name in $requiredConfirmations) {
     if (-not (Test-Truthy (Get-EnvValue $name).ToLowerInvariant())) {
         $missing += $name
@@ -99,7 +136,11 @@ if ($missing.Count -gt 0) {
 
 Assert-SafeText -Name "DARWIN_EINVOICE_TOOLING_REFERENCE" -Value $toolingReference
 Assert-SafeText -Name "DARWIN_EINVOICE_EVIDENCE_PACKAGE_REFERENCE" -Value $evidenceReference
+foreach ($item in $referenceVariables.GetEnumerator()) {
+    Assert-SafeText -Name $item.Key -Value $item.Value
+}
 
 Write-Host "E-invoice production readiness prerequisites are present for ZUGFeRD/Factur-X and XRechnung."
 Write-Host "No customer invoice, generated PDF/XML artifact, validator credential, provider response, legal document, or private approval record was accepted or printed."
+Write-Host "Per-format fixture, artifact, validation-report, storage/download-smoke, and accounting/tax sign-off evidence references are present and were not printed."
 Write-Host "After this preflight passes, keep the real artifacts, validation reports, and sign-offs in the approved evidence repository or object storage."

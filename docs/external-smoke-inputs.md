@@ -390,6 +390,16 @@ Production readiness variables:
 
 - `DARWIN_EINVOICE_TOOLING_REFERENCE`
 - `DARWIN_EINVOICE_EVIDENCE_PACKAGE_REFERENCE`
+- `DARWIN_EINVOICE_ZUGFERD_FIXTURE_REFERENCE`
+- `DARWIN_EINVOICE_ZUGFERD_ARTIFACT_REFERENCE`
+- `DARWIN_EINVOICE_ZUGFERD_VALIDATION_REPORT_REFERENCE`
+- `DARWIN_EINVOICE_ZUGFERD_STORAGE_DOWNLOAD_SMOKE_REFERENCE`
+- `DARWIN_EINVOICE_ZUGFERD_ACCOUNTING_SIGNOFF_REFERENCE`
+- `DARWIN_EINVOICE_XRECHNUNG_FIXTURE_REFERENCE`
+- `DARWIN_EINVOICE_XRECHNUNG_ARTIFACT_REFERENCE`
+- `DARWIN_EINVOICE_XRECHNUNG_VALIDATION_REPORT_REFERENCE`
+- `DARWIN_EINVOICE_XRECHNUNG_STORAGE_DOWNLOAD_SMOKE_REFERENCE`
+- `DARWIN_EINVOICE_XRECHNUNG_ACCOUNTING_SIGNOFF_REFERENCE`
 
 Production readiness confirmations:
 
@@ -424,6 +434,7 @@ For the repository-local Mustangproject wrapper, set `DARWIN_EINVOICE_COMMAND_PA
 Acceptance:
 
 - The production preflight confirms non-secret evidence references for both selected formats.
+- Per-format references point to approved evidence records, not generated PDF/XML contents, validation-report dumps, customer invoices, provider payloads, or private approval documents.
 - The adapter can call the approved wrapper.
 - Output shape and validation-report handling pass.
 - ZUGFeRD/Factur-X and XRechnung both have fixture, validation-report, storage/download, and reviewer evidence before compliant rollout is claimed.

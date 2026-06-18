@@ -78,7 +78,7 @@ $lines.Add('```text')
 $lines.Add($outputText)
 $lines.Add('```')
 $lines.Add("")
-$lines.Add("Use this report as a non-secret attachment reference for e-invoice readiness evidence. A `Blocked` result is expected until the accounting or tax owner provides real ZUGFeRD/Factur-X and XRechnung fixture, generated artifact, validation-report, storage/download-smoke, and sign-off evidence.")
+$lines.Add("Use this report as a non-secret attachment reference for e-invoice readiness evidence. A `Blocked` result is expected until the accounting or tax owner provides non-secret references to real ZUGFeRD/Factur-X and XRechnung fixture, generated artifact, validation-report, storage/download-smoke, and sign-off evidence.")
 
 $report = $lines -join "`r`n"
 if (Test-ContainsSensitivePattern $report) {

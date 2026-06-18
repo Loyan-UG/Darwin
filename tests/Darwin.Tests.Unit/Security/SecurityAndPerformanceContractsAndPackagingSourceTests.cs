@@ -390,6 +390,8 @@ public sealed class SecurityAndPerformanceContractsAndPackagingSourceTests : Sec
         externalSmokeInputsSource.Should().Contain("DARWIN_AZURE_BLOB_PRODUCTION_ENDPOINT");
         externalSmokeInputsSource.Should().Contain("DARWIN_EINVOICE_COMMAND_PATH");
         externalSmokeInputsSource.Should().Contain("DARWIN_EINVOICE_EVIDENCE_PACKAGE_REFERENCE");
+        externalSmokeInputsSource.Should().Contain("DARWIN_EINVOICE_ZUGFERD_VALIDATION_REPORT_REFERENCE");
+        externalSmokeInputsSource.Should().Contain("DARWIN_EINVOICE_XRECHNUNG_VALIDATION_REPORT_REFERENCE");
         externalSmokeInputsSource.Should().Contain("scripts\\check-web-toolchain-readiness.ps1");
         externalSmokeInputsSource.Should().Contain("Web storefront toolchain preflight");
         externalSmokeInputsSource.Should().Contain("scripts\\check-web-storefront-local-build.ps1");
@@ -589,6 +591,22 @@ public sealed class SecurityAndPerformanceContractsAndPackagingSourceTests : Sec
             .And.Contain("DARWIN_EINVOICE_COMMAND_PATH")
             .And.Contain("not a substitute for ZUGFeRD/Factur-X, XRechnung, PDF/A-3, EN16931, or legal validation")
             .And.NotContain("Write-Host $resolvedExecutable");
+
+        ReadRepositoryFile(Path.Combine("scripts", "check-einvoice-production-readiness.ps1"))
+            .Should()
+            .Contain("DARWIN_EINVOICE_ZUGFERD_FIXTURE_REFERENCE")
+            .And.Contain("DARWIN_EINVOICE_ZUGFERD_ARTIFACT_REFERENCE")
+            .And.Contain("DARWIN_EINVOICE_ZUGFERD_VALIDATION_REPORT_REFERENCE")
+            .And.Contain("DARWIN_EINVOICE_ZUGFERD_STORAGE_DOWNLOAD_SMOKE_REFERENCE")
+            .And.Contain("DARWIN_EINVOICE_ZUGFERD_ACCOUNTING_SIGNOFF_REFERENCE")
+            .And.Contain("DARWIN_EINVOICE_XRECHNUNG_FIXTURE_REFERENCE")
+            .And.Contain("DARWIN_EINVOICE_XRECHNUNG_ARTIFACT_REFERENCE")
+            .And.Contain("DARWIN_EINVOICE_XRECHNUNG_VALIDATION_REPORT_REFERENCE")
+            .And.Contain("DARWIN_EINVOICE_XRECHNUNG_STORAGE_DOWNLOAD_SMOKE_REFERENCE")
+            .And.Contain("DARWIN_EINVOICE_XRECHNUNG_ACCOUNTING_SIGNOFF_REFERENCE")
+            .And.Contain("Per-format fixture, artifact, validation-report, storage/download-smoke, and accounting/tax sign-off evidence references are present and were not printed.")
+            .And.NotContain("Write-Host $zugferdArtifactReference")
+            .And.NotContain("Write-Host $xrechnungArtifactReference");
     }
 
     [Fact]
@@ -2645,6 +2663,16 @@ public sealed class SecurityAndPerformanceContractsAndPackagingSourceTests : Sec
             {
                 ["DARWIN_EINVOICE_TOOLING_REFERENCE"] = "tooling-checksum-ref-001",
                 ["DARWIN_EINVOICE_EVIDENCE_PACKAGE_REFERENCE"] = "evidence-package-ref-001",
+                ["DARWIN_EINVOICE_ZUGFERD_FIXTURE_REFERENCE"] = "zugferd-fixture-ref-001",
+                ["DARWIN_EINVOICE_ZUGFERD_ARTIFACT_REFERENCE"] = "zugferd-artifact-ref-001",
+                ["DARWIN_EINVOICE_ZUGFERD_VALIDATION_REPORT_REFERENCE"] = "zugferd-validation-ref-001",
+                ["DARWIN_EINVOICE_ZUGFERD_STORAGE_DOWNLOAD_SMOKE_REFERENCE"] = "zugferd-storage-smoke-ref-001",
+                ["DARWIN_EINVOICE_ZUGFERD_ACCOUNTING_SIGNOFF_REFERENCE"] = "zugferd-signoff-ref-001",
+                ["DARWIN_EINVOICE_XRECHNUNG_FIXTURE_REFERENCE"] = "xrechnung-fixture-ref-001",
+                ["DARWIN_EINVOICE_XRECHNUNG_ARTIFACT_REFERENCE"] = "xrechnung-artifact-ref-001",
+                ["DARWIN_EINVOICE_XRECHNUNG_VALIDATION_REPORT_REFERENCE"] = "xrechnung-validation-ref-001",
+                ["DARWIN_EINVOICE_XRECHNUNG_STORAGE_DOWNLOAD_SMOKE_REFERENCE"] = "xrechnung-storage-smoke-ref-001",
+                ["DARWIN_EINVOICE_XRECHNUNG_ACCOUNTING_SIGNOFF_REFERENCE"] = "xrechnung-signoff-ref-001",
                 ["DARWIN_EINVOICE_TOOLING_PINNED_CONFIRMED"] = "true",
                 ["DARWIN_EINVOICE_REQUIRE_VALIDATION_REPORT_CONFIRMED"] = "true",
                 ["DARWIN_EINVOICE_ARCHIVE_RETENTION_CONFIRMED"] = "true",
@@ -2907,6 +2935,16 @@ public sealed class SecurityAndPerformanceContractsAndPackagingSourceTests : Sec
             ["DARWIN_AZURE_BLOB_OPERATOR_RUNBOOK_CONFIRMED"] = "true",
             ["DARWIN_EINVOICE_TOOLING_REFERENCE"] = "tooling-checksum-ref-001",
             ["DARWIN_EINVOICE_EVIDENCE_PACKAGE_REFERENCE"] = "evidence-package-ref-001",
+            ["DARWIN_EINVOICE_ZUGFERD_FIXTURE_REFERENCE"] = "zugferd-fixture-ref-001",
+            ["DARWIN_EINVOICE_ZUGFERD_ARTIFACT_REFERENCE"] = "zugferd-artifact-ref-001",
+            ["DARWIN_EINVOICE_ZUGFERD_VALIDATION_REPORT_REFERENCE"] = "zugferd-validation-ref-001",
+            ["DARWIN_EINVOICE_ZUGFERD_STORAGE_DOWNLOAD_SMOKE_REFERENCE"] = "zugferd-storage-smoke-ref-001",
+            ["DARWIN_EINVOICE_ZUGFERD_ACCOUNTING_SIGNOFF_REFERENCE"] = "zugferd-signoff-ref-001",
+            ["DARWIN_EINVOICE_XRECHNUNG_FIXTURE_REFERENCE"] = "xrechnung-fixture-ref-001",
+            ["DARWIN_EINVOICE_XRECHNUNG_ARTIFACT_REFERENCE"] = "xrechnung-artifact-ref-001",
+            ["DARWIN_EINVOICE_XRECHNUNG_VALIDATION_REPORT_REFERENCE"] = "xrechnung-validation-ref-001",
+            ["DARWIN_EINVOICE_XRECHNUNG_STORAGE_DOWNLOAD_SMOKE_REFERENCE"] = "xrechnung-storage-smoke-ref-001",
+            ["DARWIN_EINVOICE_XRECHNUNG_ACCOUNTING_SIGNOFF_REFERENCE"] = "xrechnung-signoff-ref-001",
             ["DARWIN_EINVOICE_TOOLING_PINNED_CONFIRMED"] = "true",
             ["DARWIN_EINVOICE_REQUIRE_VALIDATION_REPORT_CONFIRMED"] = "true",
             ["DARWIN_EINVOICE_ARCHIVE_RETENTION_CONFIRMED"] = "true",
