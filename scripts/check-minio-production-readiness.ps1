@@ -52,6 +52,25 @@ function Assert-AbsoluteHttpsEndpoint {
     }
 }
 
+function Assert-S3BucketName {
+    param(
+        [Parameter(Mandatory = $true)][string]$Name,
+        [Parameter(Mandatory = $true)][string]$Value
+    )
+
+    if ($Value.Length -lt 3 -or $Value.Length -gt 63) {
+        Write-Host "MinIO production readiness is blocked."
+        Write-Host "$Name must be between 3 and 63 characters."
+        exit 2
+    }
+
+    if ($Value -cnotmatch '^[a-z0-9][a-z0-9-]*[a-z0-9]$' -or $Value.Contains("--")) {
+        Write-Host "MinIO production readiness is blocked."
+        Write-Host "$Name must use a valid MinIO/S3 bucket label: lowercase letters, numbers, single hyphens, and alphanumeric start/end."
+        exit 2
+    }
+}
+
 $endpoint = Get-EnvValue "DARWIN_MINIO_PRODUCTION_ENDPOINT"
 $bucket = Get-EnvValue "DARWIN_MINIO_PRODUCTION_BUCKET"
 $requiredConfirmations = @(
@@ -108,6 +127,7 @@ if ($missing.Count -gt 0) {
 }
 
 Assert-AbsoluteHttpsEndpoint -Name "DARWIN_MINIO_PRODUCTION_ENDPOINT" -Value $endpoint
+Assert-S3BucketName -Name "DARWIN_MINIO_PRODUCTION_BUCKET" -Value $bucket
 
 Write-Host "MinIO production readiness prerequisites are present."
 Write-Host "No MinIO access key, secret key, object payload, bucket policy, or provider response was accepted or printed."

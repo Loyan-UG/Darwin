@@ -1555,6 +1555,53 @@ public sealed class SecurityAndPerformanceContractsAndPackagingSourceTests : Sec
     }
 
     [Theory]
+    [InlineData("Invalid_Bucket")]
+    [InlineData("bucket/path")]
+    [InlineData("bucket?access_key=secret")]
+    [InlineData("bucket--name")]
+    public async Task MinioProductionReadiness_Should_BlockInvalidBucketLabel(string bucket)
+    {
+        var root = ResolveRepositoryPath();
+        var startInfo = new ProcessStartInfo
+        {
+            FileName = "powershell",
+            WorkingDirectory = root,
+            RedirectStandardOutput = true,
+            RedirectStandardError = true,
+            UseShellExecute = false
+        };
+        startInfo.ArgumentList.Add("-NoProfile");
+        startInfo.ArgumentList.Add("-ExecutionPolicy");
+        startInfo.ArgumentList.Add("Bypass");
+        startInfo.ArgumentList.Add("-File");
+        startInfo.ArgumentList.Add(Path.Combine("scripts", "check-minio-production-readiness.ps1"));
+
+        foreach (var key in startInfo.Environment.Keys.Cast<string>()
+                     .Where(key => key.StartsWith("DARWIN_", StringComparison.OrdinalIgnoreCase)).ToList())
+        {
+            startInfo.Environment.Remove(key);
+        }
+
+        foreach (var item in MinioReadinessEnvironment(bucket: bucket))
+        {
+            startInfo.Environment[item.Key] = item.Value;
+        }
+
+        using var process = Process.Start(startInfo) ?? throw new InvalidOperationException("Could not start check-minio-production-readiness.ps1.");
+        var stdoutTask = process.StandardOutput.ReadToEndAsync(TestContext.Current.CancellationToken);
+        var stderrTask = process.StandardError.ReadToEndAsync(TestContext.Current.CancellationToken);
+
+        await process.WaitForExitAsync(TestContext.Current.CancellationToken);
+        var output = $"{await stdoutTask}{Environment.NewLine}{await stderrTask}";
+
+        process.ExitCode.Should().Be(2);
+        output.Should().Contain("MinIO production readiness is blocked.");
+        output.Should().Contain("valid MinIO/S3 bucket label");
+        output.Should().NotContain(bucket);
+        output.Should().NotContain("System.Management.Automation.RemoteException");
+    }
+
+    [Theory]
     [InlineData("https://minio.example.test/bucket")]
     [InlineData("https://minio.example.test?access_key=secret")]
     [InlineData("https://user:secret@minio.example.test")]
