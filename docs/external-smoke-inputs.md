@@ -21,10 +21,11 @@ To keep a non-secret readiness attachment for the evidence package, export the s
 ```powershell
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\export-production-readiness-report-bundle.ps1 -Force
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\check-production-readiness-report-bundle.ps1
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\check-production-readiness-report-bundle-clean-smoke.ps1
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\export-go-live-readiness-report.ps1 -Force
 ```
 
-The bundle and aggregate reports are written under `artifacts\production-readiness\` by default. They summarize ready, blocked, and failed checks and include non-secret output only. The bundle validator confirms the expected report set exists and is non-secret. A blocked report is valid evidence of current gating; it is not go-live approval.
+The bundle and aggregate reports are written under `artifacts\production-readiness\` by default. They summarize ready, blocked, and failed checks and include non-secret output only. The bundle validator confirms the expected report set exists and is non-secret. The clean smoke proves a new bundle can be generated and validated from an empty temporary directory without relying on a previous bundle artifact. A blocked report is valid evidence of current gating; it is not go-live approval.
 
 When a filled production evidence package exists, validate its shape before go-live approval:
 
