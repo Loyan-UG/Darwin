@@ -45,6 +45,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts\new-production-readi
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\export-production-readiness-report-bundle.ps1 -Force
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\check-production-readiness-report-bundle.ps1
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\export-production-readiness-action-plan.ps1 -Force
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\export-production-readiness-env-template.ps1 -Force
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\check-production-like-staging-readiness.ps1
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\export-production-like-staging-readiness-report.ps1 -Force
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\check-local-backup-readiness.ps1
@@ -68,7 +69,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts\check-production-rea
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\check-go-live-readiness.ps1
 ```
 
-The bundle exporter runs every dedicated non-secret readiness report exporter and writes `readiness-report-bundle.md` under `artifacts\production-readiness\`. The bundle validator confirms every expected report exists, has a parseable non-failed result, and does not contain sensitive assignment patterns. The action-plan exporter reads those report files and writes `production-readiness-action-plan.md` with owner rows, missing evidence keys, and next actions. The individual report commands remain useful when one evidence area needs to be rerun or debugged.
+The bundle exporter runs every dedicated non-secret readiness report exporter and writes `readiness-report-bundle.md` under `artifacts\production-readiness\`. The bundle validator confirms every expected report exists, has a parseable non-failed result, and does not contain sensitive assignment patterns. The action-plan exporter reads those report files and writes `production-readiness-action-plan.md` with owner rows, missing evidence keys, and next actions. The environment-template exporter writes an ignored helper script with placeholder assignments for missing evidence variables, de-duplicated across reports; filled copies must stay outside git and secret-like values must come from secure deployment configuration or the current process environment. The individual report commands remain useful when one evidence area needs to be rerun or debugged.
 
 The central go-live report includes separate MinIO and Azure Blob readiness rows. The dedicated MinIO and Azure reports remain useful as non-secret attachment references for the object-storage evidence rows.
 

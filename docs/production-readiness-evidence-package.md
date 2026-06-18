@@ -20,9 +20,10 @@ Generate and validate the non-secret local readiness report bundle before final 
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\export-production-readiness-report-bundle.ps1 -Force
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\check-production-readiness-report-bundle.ps1
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\export-production-readiness-action-plan.ps1 -Force
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\export-production-readiness-env-template.ps1 -Force
 ```
 
-The bundle gathers current-state local readiness reports under the ignored `artifacts\production-readiness\` path, including local release-candidate build/test, local backup package structure, and local PostgreSQL restore rehearsal reports when their prerequisites are present. The action-plan exporter turns those report results into owner rows and missing evidence keys for operator follow-up. These reports are attachment evidence for operators and reviewers; they do not replace production-like staging proof, private provider dashboards, customer approvals, or the filled evidence package.
+The bundle gathers current-state local readiness reports under the ignored `artifacts\production-readiness\` path, including local release-candidate build/test, local backup package structure, and local PostgreSQL restore rehearsal reports when their prerequisites are present. The action-plan exporter turns those report results into owner rows and missing evidence keys for operator follow-up. The environment-template exporter creates an ignored placeholder script for missing evidence variables so operators can prepare a local/session environment without storing values in source control. These reports are attachment evidence for operators and reviewers; they do not replace production-like staging proof, private provider dashboards, customer approvals, or the filled evidence package.
 
 Validate the filled package before go-live:
 
@@ -186,7 +187,7 @@ Darwin is not production-ready for a customer deployment until:
 
 ## Current Outcome
 
-The no-target production readiness hardening path is documented and now includes a reusable non-secret evidence package template, local generation and validation scripts, a readiness report bundle, and an owner action-plan exporter. A local working package was generated on 2026-06-18 in the ignored `artifacts\production-readiness\` path and paired with a non-secret local execution summary. The package correctly remains blocked until deployment owners provide real staging, provider, storage, e-invoice, mobile, monitoring, rollback, and approval evidence.
+The no-target production readiness hardening path is documented and now includes a reusable non-secret evidence package template, local generation and validation scripts, a readiness report bundle, an owner action-plan exporter, and an ignored evidence environment-template exporter. A local working package was generated on 2026-06-18 in the ignored `artifacts\production-readiness\` path and paired with a non-secret local execution summary. The package correctly remains blocked until deployment owners provide real staging, provider, storage, e-invoice, mobile, monitoring, rollback, and approval evidence.
 
 This readiness path adds no entity, migration, route, DTO, WebAdmin mutation, public/mobile/storefront contract, provider credential UI, finance export format change, payment/refund change, supplier finance change, invoice archive/download behavior change, bank API, AI provider, or accounting API adapter.
 
