@@ -433,6 +433,7 @@ Android readiness preflight:
 
 ```powershell
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\check-android-launch-readiness.ps1
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\export-android-launch-readiness-report.ps1 -Force
 ```
 
 Mobile resource naming readiness:
