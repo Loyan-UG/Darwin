@@ -46,6 +46,8 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts\export-production-re
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\check-production-readiness-report-bundle.ps1
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\check-production-like-staging-readiness.ps1
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\export-production-like-staging-readiness-report.ps1 -Force
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\check-local-backup-readiness.ps1
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\export-local-backup-readiness-report.ps1 -Force
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\check-web-toolchain-readiness.ps1
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\check-web-storefront-readiness.ps1
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\check-mobile-resource-names.ps1
@@ -66,6 +68,8 @@ The bundle exporter runs every dedicated non-secret readiness report exporter an
 The central go-live report includes separate MinIO and Azure Blob readiness rows. The dedicated MinIO and Azure reports remain useful as non-secret attachment references for the object-storage evidence rows.
 
 The dedicated production-like staging report is a non-secret attachment reference for the staging rehearsal row. It does not replace the real build/test, migration, rollback, backup/restore, monitoring, provider, mobile, e-invoice, or owner sign-off records.
+
+The dedicated local backup report verifies the local backup manifest, PostgreSQL dump integrity, MinIO mirror presence, private local configuration group presence, and Docker container inventory without printing private backup contents. It supports the staging backup/restore evidence row, but it does not replace a real restore rehearsal, production backup policy, monitoring owner, or deployment owner approval.
 
 The dedicated e-invoice report is a non-secret attachment reference for accounting or tax evidence. It does not replace the real ZUGFeRD/Factur-X and XRechnung artifact, validation-report, storage/download-smoke, and sign-off records.
 

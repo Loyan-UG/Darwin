@@ -21,7 +21,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts\export-production-re
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\check-production-readiness-report-bundle.ps1
 ```
 
-The bundle gathers current-state local readiness reports under the ignored `artifacts\production-readiness\` path. It is attachment evidence for operators and reviewers; it does not replace production-like staging proof, private provider dashboards, customer approvals, or the filled evidence package.
+The bundle gathers current-state local readiness reports under the ignored `artifacts\production-readiness\` path, including the local backup package structure report when a daily backup is present. It is attachment evidence for operators and reviewers; it does not replace production-like staging proof, private provider dashboards, customer approvals, or the filled evidence package.
 
 Validate the filled package before go-live:
 

@@ -39,7 +39,11 @@ Production-like staging rehearsal preflight:
 ```powershell
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\check-production-like-staging-readiness.ps1
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\export-production-like-staging-readiness-report.ps1 -Force
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\check-local-backup-readiness.ps1
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\export-local-backup-readiness-report.ps1 -Force
 ```
+
+The local backup report inspects only non-secret backup structure: manifest presence, PostgreSQL dump integrity, MinIO mirror presence, private local configuration group presence, and Docker container inventory. It does not print private file names from the sensitive backup area, credentials, provider payloads, or backup file contents. Use `DARWIN_LOCAL_BACKUP_ROOT` or the `-BackupRoot` parameter when the backup root is not the default local path.
 
 Required non-secret references:
 

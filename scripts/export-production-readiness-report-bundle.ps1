@@ -69,6 +69,11 @@ $reports = @(
         FileName = "production-like-staging-readiness-report.md"
     },
     @{
+        Name = "Local backup package"
+        Script = "scripts\export-local-backup-readiness-report.ps1"
+        FileName = "local-backup-readiness-report.md"
+    },
+    @{
         Name = "Web and mobile"
         Script = "scripts\export-web-mobile-readiness-report.ps1"
         FileName = "web-mobile-readiness-report.md"
