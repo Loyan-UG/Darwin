@@ -328,6 +328,7 @@ Command:
 
 ```powershell
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\check-azure-object-storage-readiness.ps1
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\export-azure-object-storage-readiness-report.ps1 -Force
 ```
 
 Acceptance:

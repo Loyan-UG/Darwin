@@ -1,6 +1,6 @@
 # Azure Blob Object Storage Readiness Runbook
 
-Reviewed: 2026-06-17
+Reviewed: 2026-06-18
 
 This runbook prepares Azure Blob Storage as the next object-storage hardening target after MinIO production evidence is complete. It is deployment-neutral and must not contain tenant names, account names, connection strings, access keys, SAS tokens, private endpoints, customer data, object payloads, or provider responses.
 
@@ -76,6 +76,14 @@ Run the non-secret readiness preflight before any smoke that writes to Azure:
 ```powershell
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\check-azure-object-storage-readiness.ps1
 ```
+
+To create an ignored, non-secret report for the production readiness evidence package:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\export-azure-object-storage-readiness-report.ps1 -Force
+```
+
+The report is written under `artifacts\production-readiness\` by default. It is valid as current-state evidence even when it is blocked; it does not replace real Azure policy validation, disposable-prefix smoke, or owner approval.
 
 The preflight records only environment-level confirmations and refuses to print connection strings, account keys, SAS tokens, client secrets, private endpoint details, object keys, provider payloads, or policy JSON. Configure these non-secret confirmation variables in the operator shell or deployment runbook before running it:
 
