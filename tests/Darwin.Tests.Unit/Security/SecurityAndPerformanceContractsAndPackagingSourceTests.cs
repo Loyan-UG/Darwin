@@ -1231,6 +1231,49 @@ public sealed class SecurityAndPerformanceContractsAndPackagingSourceTests : Sec
         output.Should().NotContain("System.Management.Automation.RemoteException");
     }
 
+    [Theory]
+    [InlineData("https://web.staging.example.test?state=secret")]
+    [InlineData("https://web.staging.example.test#secret")]
+    public async Task WebStorefrontRouteSmoke_Should_BlockBaseUrlWithQueryOrFragment(string webSiteUrl)
+    {
+        var root = ResolveRepositoryPath();
+        var startInfo = new ProcessStartInfo
+        {
+            FileName = "powershell",
+            WorkingDirectory = root,
+            RedirectStandardOutput = true,
+            RedirectStandardError = true,
+            UseShellExecute = false
+        };
+        startInfo.ArgumentList.Add("-NoProfile");
+        startInfo.ArgumentList.Add("-ExecutionPolicy");
+        startInfo.ArgumentList.Add("Bypass");
+        startInfo.ArgumentList.Add("-File");
+        startInfo.ArgumentList.Add(Path.Combine("scripts", "smoke-web-storefront-routes.ps1"));
+
+        foreach (var key in startInfo.Environment.Keys.Cast<string>()
+                     .Where(key => key.StartsWith("DARWIN_", StringComparison.OrdinalIgnoreCase)).ToList())
+        {
+            startInfo.Environment.Remove(key);
+        }
+
+        startInfo.Environment["DARWIN_WEB_SITE_URL"] = webSiteUrl;
+        startInfo.Environment["DARWIN_WEB_ROUTE_SMOKE_PATHS"] = "/,/catalog";
+
+        using var process = Process.Start(startInfo) ?? throw new InvalidOperationException("Could not start smoke-web-storefront-routes.ps1.");
+        var stdoutTask = process.StandardOutput.ReadToEndAsync(TestContext.Current.CancellationToken);
+        var stderrTask = process.StandardError.ReadToEndAsync(TestContext.Current.CancellationToken);
+
+        await process.WaitForExitAsync(TestContext.Current.CancellationToken);
+        var output = $"{await stdoutTask}{Environment.NewLine}{await stderrTask}";
+
+        process.ExitCode.Should().Be(2);
+        output.Should().Contain("Web storefront route smoke is blocked.");
+        output.Should().Contain("base deployment URL without query strings or fragments");
+        output.Should().NotContain(webSiteUrl);
+        output.Should().NotContain("System.Management.Automation.RemoteException");
+    }
+
     [Fact]
     public async Task StripeSubscriptionCheckoutSmoke_Should_BlockWhenCheckoutPrerequisitesMissing()
     {

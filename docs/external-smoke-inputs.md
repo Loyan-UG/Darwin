@@ -451,7 +451,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts\smoke-web-storefront
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\check-web-storefront-readiness.ps1
 ```
 
-The route smoke sends public GET requests only to configured storefront paths. It prints route status codes only, never response bodies, cookies, customer data, or provider payloads. Non-local endpoints require `DARWIN_WEB_ROUTE_SMOKE_CONFIRMED=true` or `-AllowProductionEndpoint` after the deployment owner approves smoke traffic. Use `DARWIN_WEB_ROUTE_SMOKE_PATHS` to override the default public route list.
+The route smoke sends public GET requests only to configured storefront paths. `DARWIN_WEB_SITE_URL` must be a base deployment URL without embedded credentials, query strings, fragments, API keys, auth tokens, route state, or provider payloads. It prints route status codes only, never response bodies, cookies, customer data, or provider payloads. Non-local endpoints require `DARWIN_WEB_ROUTE_SMOKE_CONFIRMED=true` or `-AllowProductionEndpoint` after the deployment owner approves smoke traffic. Use `DARWIN_WEB_ROUTE_SMOKE_PATHS` to override the default public route list.
 
 Web and mobile readiness summary:
 
