@@ -242,6 +242,8 @@ public sealed class SecurityAndPerformanceContractsAndPackagingSourceTests : Sec
         var goLiveReportExporterSource = ReadRepositoryFile(Path.Combine("scripts", "export-go-live-readiness-report.ps1"));
         var reportBundleExporterSource = ReadRepositoryFile(Path.Combine("scripts", "export-production-readiness-report-bundle.ps1"));
         var minioComposeSource = ReadRepositoryFile("docker-compose.minio.yml");
+        var localPostgresRestoreSource = ReadRepositoryFile(Path.Combine("scripts", "check-local-postgres-restore-readiness.ps1"));
+        var localPostgresRestoreExporterSource = ReadRepositoryFile(Path.Combine("scripts", "export-local-postgres-restore-readiness-report.ps1"));
         var scripts = new[]
         {
             "smoke-stripe-testmode.ps1",
@@ -348,6 +350,15 @@ public sealed class SecurityAndPerformanceContractsAndPackagingSourceTests : Sec
             .Should()
             .Contain("-RowName \"Local execution summary\"")
             .And.Contain("$localExecutionSummaryPath");
+        localPostgresRestoreSource.Should().Contain("[int]$DockerCommandTimeoutSeconds = 900");
+        localPostgresRestoreSource.Should().Contain("Start-Job -ScriptBlock");
+        localPostgresRestoreSource.Should().Contain("& docker @DockerArguments");
+        localPostgresRestoreSource.Should().Contain("Wait-Job -Job $job -Timeout $TimeoutSeconds");
+        localPostgresRestoreSource.Should().Contain("The Docker command timed out");
+        localPostgresRestoreSource.Should().Contain("DockerCommandTimeoutSeconds must be between 30 and 3600");
+        localPostgresRestoreSource.Should().Contain("Local PostgreSQL restore readiness cleanup warning");
+        localPostgresRestoreExporterSource.Should().Contain("[int]$DockerCommandTimeoutSeconds = 900");
+        localPostgresRestoreExporterSource.Should().Contain("-DockerCommandTimeoutSeconds");
 
         minioComposeSource.Should().Contain("quay.io/minio/minio:latest");
         minioComposeSource.Should().Contain("quay.io/minio/mc:latest");
@@ -396,6 +407,7 @@ public sealed class SecurityAndPerformanceContractsAndPackagingSourceTests : Sec
         externalSmokeInputsSource.Should().Contain("production-like staging rehearsal");
         externalSmokeInputsSource.Should().Contain("local execution summary");
         externalSmokeInputsSource.Should().Contain("release reference");
+        externalSmokeInputsSource.Should().Contain("-DockerCommandTimeoutSeconds");
         externalSmokeInputsSource.Should().Contain("Provider failures must remain `Unknown`");
         externalSmokeInputsSource.Should().NotContain("sk_live_");
         externalSmokeInputsSource.Should().NotContain("sk_test_");

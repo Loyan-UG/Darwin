@@ -3,6 +3,7 @@ param(
     [string]$BackupRoot = "",
     [string]$BackupDate = "",
     [string]$PostgresContainerName = "",
+    [int]$DockerCommandTimeoutSeconds = 900,
     [switch]$Force
 )
 
@@ -56,6 +57,8 @@ if (-not [string]::IsNullOrWhiteSpace($BackupDate)) {
 if (-not [string]::IsNullOrWhiteSpace($PostgresContainerName)) {
     $command += @("-PostgresContainerName", $PostgresContainerName)
 }
+
+$command += @("-DockerCommandTimeoutSeconds", $DockerCommandTimeoutSeconds.ToString())
 
 Push-Location $repoRoot
 try {

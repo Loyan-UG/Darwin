@@ -1,7 +1,8 @@
 param(
     [string]$BackupRoot = "",
     [string]$BackupDate = "",
-    [string]$PostgresContainerName = ""
+    [string]$PostgresContainerName = "",
+    [int]$DockerCommandTimeoutSeconds = 900
 )
 
 $ErrorActionPreference = "Stop"
@@ -64,16 +65,56 @@ function Resolve-PostgresContainerName {
 function Invoke-DockerChecked {
     param(
         [Parameter(Mandatory = $true)][string[]]$Arguments,
-        [string]$FailureMessage = "Docker command failed."
+        [string]$FailureMessage = "Docker command failed.",
+        [int]$TimeoutSeconds = $DockerCommandTimeoutSeconds
     )
 
-    $output = & docker @Arguments 2>&1
-    $exitCode = $LASTEXITCODE
+    $job = $null
+    try {
+        $job = Start-Job -ScriptBlock {
+            param([string[]]$DockerArguments)
+
+            & docker @DockerArguments 2>&1
+            $global:LASTEXITCODE
+        } -ArgumentList (, $Arguments)
+
+        if (-not (Wait-Job -Job $job -Timeout $TimeoutSeconds)) {
+            Stop-Job -Job $job -ErrorAction SilentlyContinue | Out-Null
+            throw "$FailureMessage The Docker command timed out."
+        }
+
+        $jobOutput = @(Receive-Job -Job $job)
+        $exitCode = 0
+        if ($jobOutput.Count -gt 0) {
+            $lastItem = $jobOutput[$jobOutput.Count - 1]
+            if ($lastItem -is [int]) {
+                $exitCode = [int]$lastItem
+                $jobOutput = @($jobOutput | Select-Object -First ($jobOutput.Count - 1))
+            }
+        }
+    }
+    finally {
+        if ($null -ne $job) {
+            if ($job.State -eq "Running") {
+                Stop-Job -Job $job -ErrorAction SilentlyContinue | Out-Null
+            }
+
+            Remove-Job -Job $job -Force -ErrorAction SilentlyContinue
+        }
+    }
+
     if ($exitCode -ne 0) {
         throw $FailureMessage
     }
 
-    return @($output | ForEach-Object { $_.ToString() })
+    return @($jobOutput | ForEach-Object { $_.ToString() })
+}
+
+if ($DockerCommandTimeoutSeconds -lt 30 -or $DockerCommandTimeoutSeconds -gt 3600) {
+    Write-Host "Local PostgreSQL restore readiness is blocked."
+    Write-Host " - DockerCommandTimeoutSeconds must be between 30 and 3600."
+    Write-Host "No credentials, private operational files, provider payloads, dump contents, or restored data were printed."
+    exit 2
 }
 
 $resolvedBackupRoot = Resolve-BackupRoot -RequestedRoot $BackupRoot
@@ -154,10 +195,18 @@ catch {
 }
 finally {
     if ($createdDatabase) {
-        & docker exec $containerName dropdb -U postgres --if-exists $restoreDatabaseName 2>$null | Out-Null
+        try {
+            Invoke-DockerChecked -Arguments @("exec", $containerName, "dropdb", "-U", "postgres", "--if-exists", $restoreDatabaseName) -TimeoutSeconds 60 | Out-Null
+        } catch {
+            Write-Host "Local PostgreSQL restore readiness cleanup warning: temporary restore database cleanup could not be verified."
+        }
     }
 
     if (-not [string]::IsNullOrWhiteSpace($containerDumpPath) -and -not [string]::IsNullOrWhiteSpace($containerName)) {
-        & docker exec $containerName rm -f $containerDumpPath 2>$null | Out-Null
+        try {
+            Invoke-DockerChecked -Arguments @("exec", $containerName, "rm", "-f", $containerDumpPath) -TimeoutSeconds 60 | Out-Null
+        } catch {
+            Write-Host "Local PostgreSQL restore readiness cleanup warning: temporary dump cleanup could not be verified."
+        }
     }
 }
