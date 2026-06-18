@@ -47,6 +47,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts\export-production-li
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\check-web-toolchain-readiness.ps1
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\check-web-storefront-readiness.ps1
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\check-mobile-resource-names.ps1
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\export-web-mobile-readiness-report.ps1 -Force
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\export-go-live-readiness-report.ps1 -Force
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\export-minio-production-readiness-report.ps1 -Force
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\export-azure-object-storage-readiness-report.ps1 -Force
@@ -65,6 +66,8 @@ The dedicated production-like staging report is a non-secret attachment referenc
 The dedicated e-invoice report is a non-secret attachment reference for accounting or tax evidence. It does not replace the real ZUGFeRD/Factur-X and XRechnung artifact, validation-report, storage/download-smoke, and sign-off records.
 
 The dedicated Android report is a non-secret attachment reference for Android-first launch evidence. It does not replace the signed artifact, push/maps configuration smoke, physical device/camera smoke, route compatibility, or owner approval records.
+
+The dedicated Web/Mobile report is a non-secret attachment reference for Web storefront toolchain/runtime readiness and deterministic mobile resource-name checks. It does not replace the real storefront build, route smoke, mobile package, device smoke, or owner approval records.
 
 The dedicated provider report is a non-secret attachment reference for Stripe, DHL, Brevo, and VIES evidence. It does not replace approved live execution, controlled provider smoke results, monitoring evidence, callback processing evidence, or operational playbook approvals.
 

@@ -421,6 +421,14 @@ Web storefront runtime/readiness preflight:
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\check-web-storefront-readiness.ps1
 ```
 
+Web and mobile readiness summary:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\export-web-mobile-readiness-report.ps1 -Force
+```
+
+The Web/Mobile readiness report runs Web toolchain, Web storefront runtime, and mobile resource-name prerequisite checks and writes a non-secret summary under `artifacts\production-readiness\`. It does not build packages, run provider calls, store npm tokens, store environment files, or replace route/device smoke evidence.
+
 Required non-secret URLs:
 
 - `DARWIN_WEBAPI_BASE_URL`
