@@ -3364,6 +3364,7 @@ public sealed class SecurityAndPerformanceContractsAndPackagingSourceTests : Sec
         var readinessValidatorSource = ReadApplicationFile(Path.Combine("CRM", "Services", "EInvoiceSourceReadinessValidator.cs"));
         var applicationCompositionSource = ReadApplicationFile(Path.Combine("Extensions", "ServiceCollectionExtensions.Application.cs"));
         var mustangWrapperSource = ReadRepositoryFile(Path.Combine("scripts", "mustang-einvoice-wrapper.ps1"));
+        var externalCommandSmokeSource = ReadRepositoryFile(Path.Combine("scripts", "smoke-einvoice-external-command.ps1"));
 
         complianceDecisionSource.Should().Contain("Primary target: ZUGFeRD/Factur-X");
         complianceDecisionSource.Should().Contain("Secondary target: XRechnung export");
@@ -3473,6 +3474,14 @@ public sealed class SecurityAndPerformanceContractsAndPackagingSourceTests : Sec
         mustangWrapperSource.Should().Contain("Darwin Smoke Seller");
         mustangWrapperSource.Should().NotContain("Loyan");
         mustangWrapperSource.Should().NotContain("loyan.de");
+        externalCommandSmokeSource.Should().Contain("Invoke-DotnetRunWithTimeout");
+        externalCommandSmokeSource.Should().Contain("Start-Job -ScriptBlock");
+        externalCommandSmokeSource.Should().Contain("dotnet run --project $SmokeProjectPath");
+        externalCommandSmokeSource.Should().Contain("Wait-Job -Job $job -Timeout $hostTimeoutSeconds");
+        externalCommandSmokeSource.Should().Contain("Stop-Job -Job $job");
+        externalCommandSmokeSource.Should().Contain("taskkill /PID $childProcess.ProcessId /T /F");
+        externalCommandSmokeSource.Should().Contain("The temporary dotnet run host timed out");
+        externalCommandSmokeSource.Should().NotContain("Write-Error $_");
 
         var guardedSources = new[]
         {
