@@ -328,6 +328,14 @@ public sealed class SecurityAndPerformanceContractsAndPackagingSourceTests : Sec
             .And.Contain("No option is selected yet\\.")
             .And.Contain("E-invoice tooling decision");
 
+        ReadRepositoryFile(Path.Combine("scripts", "check-android-launch-readiness.ps1"))
+            .Should()
+            .Contain("DARWIN_ANDROID_SIGNED_ARTIFACT_REFERENCE")
+            .And.Contain("DARWIN_ANDROID_PUSH_SMOKE_REFERENCE")
+            .And.Contain("DARWIN_ANDROID_ROUTE_COMPATIBILITY_REFERENCE")
+            .And.Contain("DARWIN_ANDROID_EVIDENCE_PACKAGE_REFERENCE")
+            .And.Contain("device log");
+
         goLiveReportExporterSource.Should().Contain("[switch]$SkipReportBundleCheck");
         reportBundleExporterSource.Should().Contain("-SkipReportBundleCheck");
         reportBundleExporterSource.Should().Contain("scripts\\export-go-live-readiness-report.ps1");
@@ -402,6 +410,9 @@ public sealed class SecurityAndPerformanceContractsAndPackagingSourceTests : Sec
         externalSmokeInputsSource.Should().Contain("DARWIN_WEB_RUNTIME_CONFIG_SMOKE_CONFIRMED");
         externalSmokeInputsSource.Should().Contain("DARWIN_WEB_DEFAULT_PRODUCTION_API_CONFIRMED");
         externalSmokeInputsSource.Should().Contain("DARWIN_ANDROID_RELEASE_ARTIFACT_REFERENCE");
+        externalSmokeInputsSource.Should().Contain("DARWIN_ANDROID_SIGNED_ARTIFACT_REFERENCE");
+        externalSmokeInputsSource.Should().Contain("DARWIN_ANDROID_PUSH_SMOKE_REFERENCE");
+        externalSmokeInputsSource.Should().Contain("DARWIN_ANDROID_ROUTE_COMPATIBILITY_REFERENCE");
         externalSmokeInputsSource.Should().Contain("scripts\\check-mobile-resource-names.ps1");
         externalSmokeInputsSource.Should().Contain("Mobile resource naming readiness");
         externalSmokeInputsSource.Should().Contain("scripts\\check-android-project-readiness.ps1");
@@ -2744,6 +2755,20 @@ public sealed class SecurityAndPerformanceContractsAndPackagingSourceTests : Sec
                 ["DARWIN_ANDROID_RELEASE_ARTIFACT_REFERENCE"] = "android-artifact-ref-001",
                 ["DARWIN_ANDROID_VERSION_NAME"] = "1.0.0",
                 ["DARWIN_ANDROID_VERSION_CODE"] = "100",
+                ["DARWIN_ANDROID_RELEASE_CHANNEL_REFERENCE"] = "android-release-channel-ref-001",
+                ["DARWIN_ANDROID_SIGNING_PROFILE_REFERENCE"] = "android-signing-profile-ref-001",
+                ["DARWIN_ANDROID_SIGNED_ARTIFACT_REFERENCE"] = "android-signed-artifact-ref-001",
+                ["DARWIN_ANDROID_MAPS_CONFIG_REFERENCE"] = "android-maps-config-ref-001",
+                ["DARWIN_ANDROID_MAPS_KEY_RESTRICTIONS_REFERENCE"] = "android-maps-restrictions-ref-001",
+                ["DARWIN_ANDROID_FIREBASE_CONFIG_REFERENCE"] = "android-firebase-config-ref-001",
+                ["DARWIN_ANDROID_PUSH_SMOKE_REFERENCE"] = "android-push-smoke-ref-001",
+                ["DARWIN_ANDROID_CONSUMER_SMOKE_REFERENCE"] = "android-consumer-smoke-ref-001",
+                ["DARWIN_ANDROID_BUSINESS_SMOKE_REFERENCE"] = "android-business-smoke-ref-001",
+                ["DARWIN_ANDROID_CAMERA_QR_SMOKE_REFERENCE"] = "android-camera-qr-smoke-ref-001",
+                ["DARWIN_ANDROID_CLEAR_TEXT_GUARD_REFERENCE"] = "android-cleartext-guard-ref-001",
+                ["DARWIN_ANDROID_CERT_TRUST_GUARD_REFERENCE"] = "android-cert-trust-guard-ref-001",
+                ["DARWIN_ANDROID_ROUTE_COMPATIBILITY_REFERENCE"] = "android-route-compatibility-ref-001",
+                ["DARWIN_ANDROID_EVIDENCE_PACKAGE_REFERENCE"] = "android-evidence-package-ref-001",
                 ["DARWIN_ANDROID_RELEASE_CHANNEL_CONFIRMED"] = "true",
                 ["DARWIN_ANDROID_SIGNING_PROFILE_CONFIRMED"] = "true",
                 ["DARWIN_ANDROID_SIGNED_ARTIFACT_CONFIRMED"] = "true",
@@ -2962,6 +2987,20 @@ public sealed class SecurityAndPerformanceContractsAndPackagingSourceTests : Sec
             ["DARWIN_ANDROID_RELEASE_ARTIFACT_REFERENCE"] = "android-artifact-ref-001",
             ["DARWIN_ANDROID_VERSION_NAME"] = "1.0.0",
             ["DARWIN_ANDROID_VERSION_CODE"] = "100",
+            ["DARWIN_ANDROID_RELEASE_CHANNEL_REFERENCE"] = "android-release-channel-ref-001",
+            ["DARWIN_ANDROID_SIGNING_PROFILE_REFERENCE"] = "android-signing-profile-ref-001",
+            ["DARWIN_ANDROID_SIGNED_ARTIFACT_REFERENCE"] = "android-signed-artifact-ref-001",
+            ["DARWIN_ANDROID_MAPS_CONFIG_REFERENCE"] = "android-maps-config-ref-001",
+            ["DARWIN_ANDROID_MAPS_KEY_RESTRICTIONS_REFERENCE"] = "android-maps-restrictions-ref-001",
+            ["DARWIN_ANDROID_FIREBASE_CONFIG_REFERENCE"] = "android-firebase-config-ref-001",
+            ["DARWIN_ANDROID_PUSH_SMOKE_REFERENCE"] = "android-push-smoke-ref-001",
+            ["DARWIN_ANDROID_CONSUMER_SMOKE_REFERENCE"] = "android-consumer-smoke-ref-001",
+            ["DARWIN_ANDROID_BUSINESS_SMOKE_REFERENCE"] = "android-business-smoke-ref-001",
+            ["DARWIN_ANDROID_CAMERA_QR_SMOKE_REFERENCE"] = "android-camera-qr-smoke-ref-001",
+            ["DARWIN_ANDROID_CLEAR_TEXT_GUARD_REFERENCE"] = "android-cleartext-guard-ref-001",
+            ["DARWIN_ANDROID_CERT_TRUST_GUARD_REFERENCE"] = "android-cert-trust-guard-ref-001",
+            ["DARWIN_ANDROID_ROUTE_COMPATIBILITY_REFERENCE"] = "android-route-compatibility-ref-001",
+            ["DARWIN_ANDROID_EVIDENCE_PACKAGE_REFERENCE"] = "android-evidence-package-ref-001",
             ["DARWIN_ANDROID_RELEASE_CHANNEL_CONFIRMED"] = "true",
             ["DARWIN_ANDROID_SIGNING_PROFILE_CONFIRMED"] = "true",
             ["DARWIN_ANDROID_SIGNED_ARTIFACT_CONFIRMED"] = "true",

@@ -526,6 +526,20 @@ Required non-secret references:
 - `DARWIN_ANDROID_RELEASE_ARTIFACT_REFERENCE`
 - `DARWIN_ANDROID_VERSION_NAME`
 - `DARWIN_ANDROID_VERSION_CODE`
+- `DARWIN_ANDROID_RELEASE_CHANNEL_REFERENCE`
+- `DARWIN_ANDROID_SIGNING_PROFILE_REFERENCE`
+- `DARWIN_ANDROID_SIGNED_ARTIFACT_REFERENCE`
+- `DARWIN_ANDROID_MAPS_CONFIG_REFERENCE`
+- `DARWIN_ANDROID_MAPS_KEY_RESTRICTIONS_REFERENCE`
+- `DARWIN_ANDROID_FIREBASE_CONFIG_REFERENCE`
+- `DARWIN_ANDROID_PUSH_SMOKE_REFERENCE`
+- `DARWIN_ANDROID_CONSUMER_SMOKE_REFERENCE`
+- `DARWIN_ANDROID_BUSINESS_SMOKE_REFERENCE`
+- `DARWIN_ANDROID_CAMERA_QR_SMOKE_REFERENCE`
+- `DARWIN_ANDROID_CLEAR_TEXT_GUARD_REFERENCE`
+- `DARWIN_ANDROID_CERT_TRUST_GUARD_REFERENCE`
+- `DARWIN_ANDROID_ROUTE_COMPATIBILITY_REFERENCE`
+- `DARWIN_ANDROID_EVIDENCE_PACKAGE_REFERENCE`
 
 Required confirmations:
 
@@ -544,7 +558,9 @@ Required confirmations:
 - `DARWIN_ANDROID_ROUTE_COMPATIBILITY_CONFIRMED`
 - `DARWIN_ANDROID_EVIDENCE_PACKAGE_CONFIRMED`
 
-When native Google sign-in is enabled, also set `DARWIN_ANDROID_GOOGLE_SIGN_IN_ENABLED=true` and require `DARWIN_ANDROID_GOOGLE_SIGN_IN_SMOKE_CONFIRMED=true`.
+When native Google sign-in is enabled, also set `DARWIN_ANDROID_GOOGLE_SIGN_IN_ENABLED=true` and require `DARWIN_ANDROID_GOOGLE_SIGN_IN_SMOKE_REFERENCE` plus `DARWIN_ANDROID_GOOGLE_SIGN_IN_SMOKE_CONFIRMED=true`.
+
+Android launch references must be non-secret evidence labels such as release artifact ids, checksums, approval tickets, signed build records, device-smoke report ids, or evidence-package row ids. Do not use signing keys, keystore paths, Firebase service-account values, API keys, OAuth secrets, private package artifact contents, provider payloads, customer data, raw logs, or device logs.
 
 Android maps:
 

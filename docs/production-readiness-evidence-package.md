@@ -150,6 +150,7 @@ Required proof:
 - signed release artifacts;
 - production push/maps configuration;
 - Android readiness preflight result from `scripts\check-android-launch-readiness.ps1`;
+- non-secret Android release channel, signing profile, signed artifact, maps restriction, Firebase, push, Consumer/Business device-smoke, camera QR, transport/certificate guard, route compatibility, and evidence-package references;
 - native Google sign-in configuration when enabled;
 - physical camera QR validation with approved devices or camera feed;
 - public/mobile route compatibility test evidence.

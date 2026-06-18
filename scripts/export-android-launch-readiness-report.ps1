@@ -76,7 +76,7 @@ $lines.Add('```text')
 $lines.Add($outputText)
 $lines.Add('```')
 $lines.Add("")
-$lines.Add("Use this report as a non-secret attachment reference for Android-first launch evidence. A `Blocked` result is expected until the deployment owner provides real signed artifact, version, channel, maps, Firebase, push, Consumer and Business app, camera QR, route compatibility, and owner approval evidence.")
+$lines.Add("Use this report as a non-secret attachment reference for Android-first launch evidence. A `Blocked` result is expected until the deployment owner provides real signed artifact, version, release channel, signing profile, maps, Firebase, push, Consumer and Business app, camera QR, transport/certificate guard, route compatibility, evidence-package, and owner approval references.")
 
 $report = $lines -join "`r`n"
 if (Test-ContainsSensitivePattern $report) {

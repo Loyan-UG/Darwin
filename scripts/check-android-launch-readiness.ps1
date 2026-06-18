@@ -58,6 +58,11 @@ function Assert-SafeText {
         "service account",
         "google-services.json",
         "keystore",
+        "private artifact",
+        "private package artifact",
+        "customer data",
+        "device log",
+        "raw log",
         "raw payload",
         "provider payload"
     )
@@ -75,6 +80,23 @@ $artifactReference = Get-EnvValue "DARWIN_ANDROID_RELEASE_ARTIFACT_REFERENCE"
 $versionName = Get-EnvValue "DARWIN_ANDROID_VERSION_NAME"
 $versionCode = Get-EnvValue "DARWIN_ANDROID_VERSION_CODE"
 $googleSignInEnabled = Test-Truthy (Get-EnvValue "DARWIN_ANDROID_GOOGLE_SIGN_IN_ENABLED").ToLowerInvariant()
+
+$requiredReferences = @(
+    "DARWIN_ANDROID_RELEASE_CHANNEL_REFERENCE",
+    "DARWIN_ANDROID_SIGNING_PROFILE_REFERENCE",
+    "DARWIN_ANDROID_SIGNED_ARTIFACT_REFERENCE",
+    "DARWIN_ANDROID_MAPS_CONFIG_REFERENCE",
+    "DARWIN_ANDROID_MAPS_KEY_RESTRICTIONS_REFERENCE",
+    "DARWIN_ANDROID_FIREBASE_CONFIG_REFERENCE",
+    "DARWIN_ANDROID_PUSH_SMOKE_REFERENCE",
+    "DARWIN_ANDROID_CONSUMER_SMOKE_REFERENCE",
+    "DARWIN_ANDROID_BUSINESS_SMOKE_REFERENCE",
+    "DARWIN_ANDROID_CAMERA_QR_SMOKE_REFERENCE",
+    "DARWIN_ANDROID_CLEAR_TEXT_GUARD_REFERENCE",
+    "DARWIN_ANDROID_CERT_TRUST_GUARD_REFERENCE",
+    "DARWIN_ANDROID_ROUTE_COMPATIBILITY_REFERENCE",
+    "DARWIN_ANDROID_EVIDENCE_PACKAGE_REFERENCE"
+)
 
 $requiredConfirmations = @(
     "DARWIN_ANDROID_RELEASE_CHANNEL_CONFIRMED",
@@ -94,6 +116,7 @@ $requiredConfirmations = @(
 )
 
 if ($googleSignInEnabled) {
+    $requiredReferences += "DARWIN_ANDROID_GOOGLE_SIGN_IN_SMOKE_REFERENCE"
     $requiredConfirmations += "DARWIN_ANDROID_GOOGLE_SIGN_IN_SMOKE_CONFIRMED"
 }
 
@@ -108,6 +131,12 @@ if ([string]::IsNullOrWhiteSpace($versionName)) {
 
 if ([string]::IsNullOrWhiteSpace($versionCode)) {
     $missing += "DARWIN_ANDROID_VERSION_CODE"
+}
+
+foreach ($name in $requiredReferences) {
+    if ([string]::IsNullOrWhiteSpace((Get-EnvValue $name))) {
+        $missing += $name
+    }
 }
 
 foreach ($name in $requiredConfirmations) {
@@ -130,6 +159,9 @@ if ($missing.Count -gt 0) {
 Assert-SafeText -Name "DARWIN_ANDROID_RELEASE_ARTIFACT_REFERENCE" -Value $artifactReference
 Assert-SafeText -Name "DARWIN_ANDROID_VERSION_NAME" -Value $versionName
 Assert-SafeText -Name "DARWIN_ANDROID_VERSION_CODE" -Value $versionCode
+foreach ($name in $requiredReferences) {
+    Assert-SafeText -Name $name -Value (Get-EnvValue $name)
+}
 
 $parsedVersionCode = 0
 if (-not [int]::TryParse($versionCode, [ref]$parsedVersionCode) -or $parsedVersionCode -le 0) {

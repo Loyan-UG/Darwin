@@ -116,11 +116,19 @@ No fake labels, fake tracking values, fake provider references, fake delivered e
 | --- | --- | --- | --- |
 | Android signed release artifact | Pending operator entry | Darwin technical owner | Pending |
 | Android release channel decision | Pending operator entry | Customer business owner | Pending |
+| Android signing profile review | Pending operator entry | Darwin technical owner | Pending |
+| Android maps key restriction review | Pending operator entry | Darwin technical owner | Pending |
+| Android Firebase configuration review | Pending operator entry | Darwin technical owner | Pending |
 | Push configuration smoke | Pending operator entry | Darwin technical owner | Pending |
 | Maps configuration smoke | Pending operator entry | Darwin technical owner | Pending |
 | Native Google sign-in configuration when enabled | Pending operator entry | Darwin technical owner | Pending |
+| Consumer app device smoke | Pending operator entry | Darwin technical owner | Pending |
+| Business app device smoke | Pending operator entry | Darwin technical owner | Pending |
 | Physical camera QR validation | Pending operator entry | Operations owner | Pending |
+| Cleartext transport guard review | Pending operator entry | Darwin technical owner | Pending |
+| Certificate trust guard review | Pending operator entry | Darwin technical owner | Pending |
 | Public/mobile route compatibility tests | Pending operator entry | Darwin technical owner | Pending |
+| Android evidence package row set | Pending operator entry | Darwin technical owner | Pending |
 | Android readiness preflight | Pending operator entry | Darwin technical owner | Pending |
 
 Android is the first launch target. Later platform launch evidence must be added by a separate approved deployment record.
