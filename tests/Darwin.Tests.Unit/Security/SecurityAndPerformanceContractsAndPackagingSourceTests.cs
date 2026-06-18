@@ -396,6 +396,10 @@ public sealed class SecurityAndPerformanceContractsAndPackagingSourceTests : Sec
         externalSmokeInputsSource.Should().Contain("DARWIN_OBJECT_STORAGE_S3_BUCKET");
         externalSmokeInputsSource.Should().Contain("DARWIN_OBJECT_STORAGE_AZURE_CONTAINER");
         externalSmokeInputsSource.Should().Contain("DARWIN_STAGING_REHEARSAL_LABEL");
+        externalSmokeInputsSource.Should().Contain("DARWIN_STAGING_BUILD_TESTS_REFERENCE");
+        externalSmokeInputsSource.Should().Contain("DARWIN_STAGING_PROVIDER_PREFLIGHTS_REFERENCE");
+        externalSmokeInputsSource.Should().Contain("DARWIN_STAGING_MONITORING_ALERTING_REFERENCE");
+        externalSmokeInputsSource.Should().Contain("DARWIN_STAGING_OWNER_SIGNOFF_REFERENCE");
         externalSmokeInputsSource.Should().Contain("DARWIN_STAGING_OWNER_SIGNOFF_CONFIRMED");
         externalSmokeInputsSource.Should().Contain("DARWIN_PRODUCTION_READINESS_REPORT_BUNDLE_DIRECTORY");
         externalSmokeInputsSource.Should().Contain("DARWIN_PRODUCTION_READINESS_EVIDENCE_PACKAGE_PATH");
@@ -2691,6 +2695,16 @@ public sealed class SecurityAndPerformanceContractsAndPackagingSourceTests : Sec
                 ["DARWIN_STAGING_REHEARSAL_LABEL"] = "production-like-staging",
                 ["DARWIN_STAGING_RELEASE_REFERENCE"] = "release-ref-001",
                 ["DARWIN_STAGING_EVIDENCE_REFERENCE"] = "staging-evidence-ref-001",
+                ["DARWIN_STAGING_BUILD_TESTS_REFERENCE"] = "staging-build-tests-ref-001",
+                ["DARWIN_STAGING_MIGRATION_REHEARSAL_REFERENCE"] = "staging-migration-rehearsal-ref-001",
+                ["DARWIN_STAGING_ROLLBACK_REHEARSAL_REFERENCE"] = "staging-rollback-rehearsal-ref-001",
+                ["DARWIN_STAGING_DATABASE_BACKUP_RESTORE_REFERENCE"] = "staging-database-backup-restore-ref-001",
+                ["DARWIN_STAGING_OBJECT_STORAGE_PREFLIGHTS_REFERENCE"] = "staging-object-storage-preflights-ref-001",
+                ["DARWIN_STAGING_PROVIDER_PREFLIGHTS_REFERENCE"] = "staging-provider-preflights-ref-001",
+                ["DARWIN_STAGING_EINVOICE_EVIDENCE_REFERENCE"] = "staging-einvoice-evidence-ref-001",
+                ["DARWIN_STAGING_ANDROID_EVIDENCE_REFERENCE"] = "staging-android-evidence-ref-001",
+                ["DARWIN_STAGING_MONITORING_ALERTING_REFERENCE"] = "staging-monitoring-alerting-ref-001",
+                ["DARWIN_STAGING_OWNER_SIGNOFF_REFERENCE"] = "staging-owner-signoff-ref-001",
                 ["DARWIN_STAGING_BUILD_TESTS_CONFIRMED"] = "true",
                 ["DARWIN_STAGING_MIGRATION_REHEARSAL_CONFIRMED"] = "true",
                 ["DARWIN_STAGING_ROLLBACK_REHEARSAL_CONFIRMED"] = "true",
@@ -2980,6 +2994,16 @@ public sealed class SecurityAndPerformanceContractsAndPackagingSourceTests : Sec
             ["DARWIN_STAGING_REHEARSAL_LABEL"] = "production-like-staging",
             ["DARWIN_STAGING_RELEASE_REFERENCE"] = "release-ref-001",
             ["DARWIN_STAGING_EVIDENCE_REFERENCE"] = "staging-evidence-ref-001",
+            ["DARWIN_STAGING_BUILD_TESTS_REFERENCE"] = "staging-build-tests-ref-001",
+            ["DARWIN_STAGING_MIGRATION_REHEARSAL_REFERENCE"] = "staging-migration-rehearsal-ref-001",
+            ["DARWIN_STAGING_ROLLBACK_REHEARSAL_REFERENCE"] = "staging-rollback-rehearsal-ref-001",
+            ["DARWIN_STAGING_DATABASE_BACKUP_RESTORE_REFERENCE"] = "staging-database-backup-restore-ref-001",
+            ["DARWIN_STAGING_OBJECT_STORAGE_PREFLIGHTS_REFERENCE"] = "staging-object-storage-preflights-ref-001",
+            ["DARWIN_STAGING_PROVIDER_PREFLIGHTS_REFERENCE"] = "staging-provider-preflights-ref-001",
+            ["DARWIN_STAGING_EINVOICE_EVIDENCE_REFERENCE"] = "staging-einvoice-evidence-ref-001",
+            ["DARWIN_STAGING_ANDROID_EVIDENCE_REFERENCE"] = "staging-android-evidence-ref-001",
+            ["DARWIN_STAGING_MONITORING_ALERTING_REFERENCE"] = "staging-monitoring-alerting-ref-001",
+            ["DARWIN_STAGING_OWNER_SIGNOFF_REFERENCE"] = "staging-owner-signoff-ref-001",
             ["DARWIN_STAGING_BUILD_TESTS_CONFIRMED"] = "true",
             ["DARWIN_STAGING_MIGRATION_REHEARSAL_CONFIRMED"] = "true",
             ["DARWIN_STAGING_ROLLBACK_REHEARSAL_CONFIRMED"] = "true",

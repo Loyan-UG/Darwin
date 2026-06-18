@@ -73,6 +73,19 @@ $requiredConfirmations = @(
     "DARWIN_STAGING_OWNER_SIGNOFF_CONFIRMED"
 )
 
+$requiredReferences = @(
+    "DARWIN_STAGING_BUILD_TESTS_REFERENCE",
+    "DARWIN_STAGING_MIGRATION_REHEARSAL_REFERENCE",
+    "DARWIN_STAGING_ROLLBACK_REHEARSAL_REFERENCE",
+    "DARWIN_STAGING_DATABASE_BACKUP_RESTORE_REFERENCE",
+    "DARWIN_STAGING_OBJECT_STORAGE_PREFLIGHTS_REFERENCE",
+    "DARWIN_STAGING_PROVIDER_PREFLIGHTS_REFERENCE",
+    "DARWIN_STAGING_EINVOICE_EVIDENCE_REFERENCE",
+    "DARWIN_STAGING_ANDROID_EVIDENCE_REFERENCE",
+    "DARWIN_STAGING_MONITORING_ALERTING_REFERENCE",
+    "DARWIN_STAGING_OWNER_SIGNOFF_REFERENCE"
+)
+
 $missing = @()
 if ([string]::IsNullOrWhiteSpace($stagingLabel)) {
     $missing += "DARWIN_STAGING_REHEARSAL_LABEL"
@@ -84,6 +97,12 @@ if ([string]::IsNullOrWhiteSpace($releaseReference)) {
 
 if ([string]::IsNullOrWhiteSpace($evidenceReference)) {
     $missing += "DARWIN_STAGING_EVIDENCE_REFERENCE"
+}
+
+foreach ($name in $requiredReferences) {
+    if ([string]::IsNullOrWhiteSpace((Get-EnvValue $name))) {
+        $missing += $name
+    }
 }
 
 foreach ($name in $requiredConfirmations) {
@@ -106,6 +125,9 @@ if ($missing.Count -gt 0) {
 Assert-SafeText -Name "DARWIN_STAGING_REHEARSAL_LABEL" -Value $stagingLabel
 Assert-SafeText -Name "DARWIN_STAGING_RELEASE_REFERENCE" -Value $releaseReference
 Assert-SafeText -Name "DARWIN_STAGING_EVIDENCE_REFERENCE" -Value $evidenceReference
+foreach ($name in $requiredReferences) {
+    Assert-SafeText -Name $name -Value (Get-EnvValue $name)
+}
 
 Write-Host "Production-like staging readiness prerequisites are present."
 Write-Host "No credentials, private endpoints, raw provider payloads, private artifacts, customer data, bank identifiers, payroll contents, generated e-invoice payloads, or private approval documents were accepted or printed."
