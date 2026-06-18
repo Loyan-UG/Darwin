@@ -239,6 +239,8 @@ public sealed class SecurityAndPerformanceContractsAndPackagingSourceTests : Sec
         var executionPlanSource = ReadRepositoryFile(Path.Combine("docs", "production-go-live-evidence-execution-plan.md"));
         var evidenceTemplateSource = ReadRepositoryFile(Path.Combine("docs", "templates", "production-readiness-evidence-package-template.md"));
         var evidenceValidatorSource = ReadRepositoryFile(Path.Combine("scripts", "check-production-readiness-evidence-package.ps1"));
+        var goLiveReportExporterSource = ReadRepositoryFile(Path.Combine("scripts", "export-go-live-readiness-report.ps1"));
+        var reportBundleExporterSource = ReadRepositoryFile(Path.Combine("scripts", "export-production-readiness-report-bundle.ps1"));
         var scripts = new[]
         {
             "smoke-stripe-testmode.ps1",
@@ -315,6 +317,10 @@ public sealed class SecurityAndPerformanceContractsAndPackagingSourceTests : Sec
             .And.Contain("docs\\e-invoice-tooling-decision.md")
             .And.Contain("No option is selected yet\\.")
             .And.Contain("E-invoice tooling decision");
+
+        goLiveReportExporterSource.Should().Contain("[switch]$SkipReportBundleCheck");
+        reportBundleExporterSource.Should().Contain("-SkipReportBundleCheck");
+        reportBundleExporterSource.Should().Contain("scripts\\export-go-live-readiness-report.ps1");
 
         externalSmokeInputsSource.Should().Contain("Do not store real secret values");
         externalSmokeInputsSource.Should().Contain("scripts\\check-go-live-readiness.ps1");

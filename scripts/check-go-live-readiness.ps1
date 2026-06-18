@@ -1,3 +1,7 @@
+param(
+    [switch]$SkipReportBundleCheck
+)
+
 $ErrorActionPreference = "Stop"
 
 function New-ObjectStorageProfileCommand {
@@ -37,7 +41,6 @@ $checks = @(
     @{ Name = "Brevo readiness smoke prerequisites"; Command = @("powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", "scripts\smoke-brevo-readiness.ps1", "-UseSiteSettings", "-RequireDeliveryPipeline"); ExpectedBlockedExitCode = 2 },
     @{ Name = "VIES live smoke prerequisites"; Command = @("powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", "scripts\smoke-vies-live.ps1"); ExpectedBlockedExitCode = 2 },
     @{ Name = "Production-like staging readiness prerequisites"; Command = @("powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", "scripts\check-production-like-staging-readiness.ps1"); ExpectedBlockedExitCode = 2 },
-    @{ Name = "Production readiness report bundle"; Command = New-ProductionReadinessReportBundleCommand; ExpectedBlockedExitCode = $null },
     @{ Name = "Production readiness evidence package"; Command = @("powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", "scripts\check-production-readiness-evidence-package.ps1"); ExpectedBlockedExitCode = 2 },
     @{ Name = "Object storage smoke prerequisites"; Command = @("powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", "scripts\smoke-object-storage.ps1"); ExpectedBlockedExitCode = 2 },
     @{ Name = "Object storage MediaAssets profile prerequisites"; Command = New-ObjectStorageProfileCommand -ProfileName "MediaAssets" -ContainerName $env:DARWIN_OBJECT_STORAGE_MEDIA_CONTAINER -Prefix $env:DARWIN_OBJECT_STORAGE_MEDIA_PREFIX; ExpectedBlockedExitCode = 2 },
@@ -51,6 +54,13 @@ $checks = @(
     @{ Name = "Mobile resource naming readiness prerequisites"; Command = @("powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", "scripts\check-mobile-resource-names.ps1"); ExpectedBlockedExitCode = 2 },
     @{ Name = "Android launch readiness prerequisites"; Command = @("powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", "scripts\check-android-launch-readiness.ps1"); ExpectedBlockedExitCode = 2 }
 )
+
+if (-not $SkipReportBundleCheck) {
+    $insertAt = 8
+    $checks = @($checks[0..($insertAt - 1)]) +
+        @{ Name = "Production readiness report bundle"; Command = New-ProductionReadinessReportBundleCommand; ExpectedBlockedExitCode = $null } +
+        @($checks[$insertAt..($checks.Count - 1)])
+}
 
 $results = New-Object System.Collections.Generic.List[object]
 

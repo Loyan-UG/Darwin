@@ -146,6 +146,10 @@ try {
             $command += "-Force"
         }
 
+        if ($report.Script -eq "scripts\export-go-live-readiness-report.ps1") {
+            $command += "-SkipReportBundleCheck"
+        }
+
         $rawOutput = & $command[0] $command[1..($command.Count - 1)] 2>&1
         $exitCode = $LASTEXITCODE
         $outputText = ($rawOutput | ForEach-Object { $_.ToString() }) -join "`n"

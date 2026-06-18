@@ -1,5 +1,6 @@
 param(
     [string]$OutputPath = "artifacts\production-readiness\go-live-readiness-report.md",
+    [switch]$SkipReportBundleCheck,
     [switch]$Force
 )
 
@@ -44,7 +45,12 @@ if ((Test-Path $resolvedOutputPath -PathType Leaf) -and -not $Force) {
 
 Push-Location $repoRoot
 try {
-    $rawOutput = & powershell -NoProfile -ExecutionPolicy Bypass -File "scripts\check-go-live-readiness.ps1" 2>&1
+    $checkCommand = @("powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", "scripts\check-go-live-readiness.ps1")
+    if ($SkipReportBundleCheck) {
+        $checkCommand += "-SkipReportBundleCheck"
+    }
+
+    $rawOutput = & $checkCommand[0] $checkCommand[1..($checkCommand.Count - 1)] 2>&1
     $exitCode = $LASTEXITCODE
 }
 finally {
