@@ -96,6 +96,10 @@ $checks = @(
         Command = @("powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", "scripts\check-web-storefront-local-build.ps1")
     },
     @{
+        Name = "Web storefront route smoke prerequisites"
+        Command = @("powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", "scripts\smoke-web-storefront-routes.ps1")
+    },
+    @{
         Name = "Web storefront readiness prerequisites"
         Command = @("powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", "scripts\check-web-storefront-readiness.ps1")
     },
@@ -139,7 +143,7 @@ $lines.Add("Overall result: $status")
 $lines.Add("")
 $lines.Add("Exit code: $exitCode")
 $lines.Add("")
-$lines.Add("This report is a non-secret readiness summary for Web storefront and mobile resource prerequisites. It runs the local storefront production build only when dependencies are already present from the lockfile. It does not run npm install, build mobile packages, execute external provider calls, store npm tokens, registry credentials, environment files, API keys, auth cookies, private package artifacts, customer data, provider payloads, or device logs.")
+$lines.Add("This report is a non-secret readiness summary for Web storefront and mobile resource prerequisites. It runs the local storefront production build only when dependencies are already present from the lockfile and checks whether route-smoke configuration is present. It does not run npm install, build mobile packages, execute external provider calls by default, store npm tokens, registry credentials, environment files, API keys, auth cookies, private package artifacts, customer data, provider payloads, or device logs.")
 $lines.Add("")
 $lines.Add("## Summary")
 $lines.Add("")
@@ -171,7 +175,7 @@ foreach ($result in $results) {
 }
 
 $lines.Add("")
-$lines.Add("Use this report as a non-secret attachment reference for production-like staging and Android-first launch evidence. A `Blocked` result is expected until the deployment owner provides approved storefront runtime, route smoke, degraded API log review, staging owner sign-off, and mobile resource-name evidence. A Ready local build row proves only that the checked-out storefront builds locally; it does not replace deployment runtime smoke or owner approval.")
+$lines.Add("Use this report as a non-secret attachment reference for production-like staging and Android-first launch evidence. A `Blocked` result is expected until the deployment owner provides approved storefront runtime, executed route smoke, degraded API log review, staging owner sign-off, and mobile resource-name evidence. A Ready local build row proves only that the checked-out storefront builds locally; a Ready route-smoke prerequisite row proves only that the smoke can be executed against the configured public routes.")
 
 $report = $lines -join "`r`n"
 if (Test-ContainsSensitivePattern $report) {

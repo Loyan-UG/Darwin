@@ -442,8 +442,12 @@ This local build check runs `npm run build` only when `node_modules` is already 
 Web storefront runtime/readiness preflight:
 
 ```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\smoke-web-storefront-routes.ps1
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\smoke-web-storefront-routes.ps1 -Execute
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\check-web-storefront-readiness.ps1
 ```
+
+The route smoke sends public GET requests only to configured storefront paths. It prints route status codes only, never response bodies, cookies, customer data, or provider payloads. Non-local endpoints require `DARWIN_WEB_ROUTE_SMOKE_CONFIRMED=true` or `-AllowProductionEndpoint` after the deployment owner approves smoke traffic. Use `DARWIN_WEB_ROUTE_SMOKE_PATHS` to override the default public route list.
 
 Web and mobile readiness summary:
 
@@ -451,12 +455,13 @@ Web and mobile readiness summary:
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\export-web-mobile-readiness-report.ps1 -Force
 ```
 
-The Web/Mobile readiness report runs Web toolchain, local storefront build, Web storefront runtime, and mobile resource-name prerequisite checks and writes a non-secret summary under `artifacts\production-readiness\`. It does not run package installation, run provider calls, store npm tokens, store environment files, or replace route/device smoke evidence.
+The Web/Mobile readiness report runs Web toolchain, local storefront build, Web storefront route-smoke configuration, Web storefront runtime, and mobile resource-name prerequisite checks and writes a non-secret summary under `artifacts\production-readiness\`. It does not run package installation, execute route smoke by default, run provider calls, store npm tokens, store environment files, or replace route/device smoke evidence.
 
 Required non-secret URLs:
 
 - `DARWIN_WEBAPI_BASE_URL`
 - `DARWIN_WEB_SITE_URL`
+- `DARWIN_WEB_ROUTE_SMOKE_PATHS`, optional comma-separated public route override. Defaults to `/`, `/catalog`, `/help`, and `/cart`.
 
 Required confirmations:
 

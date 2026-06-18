@@ -258,6 +258,7 @@ public sealed class SecurityAndPerformanceContractsAndPackagingSourceTests : Sec
             "check-einvoice-production-readiness.ps1",
             "check-web-toolchain-readiness.ps1",
             "check-web-storefront-local-build.ps1",
+            "smoke-web-storefront-routes.ps1",
             "check-web-storefront-readiness.ps1",
             "check-mobile-resource-names.ps1",
             "check-android-launch-readiness.ps1",
@@ -313,6 +314,7 @@ public sealed class SecurityAndPerformanceContractsAndPackagingSourceTests : Sec
             .And.Contain("scripts\\check-einvoice-production-readiness.ps1")
             .And.Contain("scripts\\smoke-einvoice-external-command.ps1")
             .And.Contain("scripts\\check-web-toolchain-readiness.ps1")
+            .And.Contain("scripts\\smoke-web-storefront-routes.ps1")
             .And.Contain("scripts\\check-web-storefront-readiness.ps1")
             .And.Contain("scripts\\check-mobile-resource-names.ps1")
             .And.Contain("scripts\\check-android-launch-readiness.ps1")
@@ -359,6 +361,8 @@ public sealed class SecurityAndPerformanceContractsAndPackagingSourceTests : Sec
         externalSmokeInputsSource.Should().Contain("Web storefront toolchain preflight");
         externalSmokeInputsSource.Should().Contain("scripts\\check-web-storefront-local-build.ps1");
         externalSmokeInputsSource.Should().Contain("Web storefront local build preflight");
+        externalSmokeInputsSource.Should().Contain("scripts\\smoke-web-storefront-routes.ps1");
+        externalSmokeInputsSource.Should().Contain("DARWIN_WEB_ROUTE_SMOKE_CONFIRMED");
         externalSmokeInputsSource.Should().Contain("scripts\\check-web-storefront-readiness.ps1");
         externalSmokeInputsSource.Should().Contain("DARWIN_WEB_RUNTIME_CONFIG_SMOKE_CONFIRMED");
         externalSmokeInputsSource.Should().Contain("DARWIN_WEB_DEFAULT_PRODUCTION_API_CONFIRMED");
@@ -568,6 +572,7 @@ public sealed class SecurityAndPerformanceContractsAndPackagingSourceTests : Sec
         output.Should().Contain("E-invoice production readiness prerequisites");
         output.Should().Contain("E-invoice external-command smoke prerequisites");
         output.Should().Contain("Web toolchain readiness prerequisites");
+        output.Should().Contain("Web storefront route smoke prerequisites");
         output.Should().Contain("Web storefront readiness prerequisites");
         output.Should().Contain("Mobile resource naming readiness prerequisites");
         output.Should().Contain("Android launch readiness prerequisites");
@@ -632,6 +637,7 @@ public sealed class SecurityAndPerformanceContractsAndPackagingSourceTests : Sec
         output.Should().Contain("E-invoice production readiness prerequisites: Ready");
         output.Should().Contain("E-invoice external-command smoke prerequisites: Ready");
         output.Should().Contain("Web toolchain readiness prerequisites: Ready");
+        output.Should().Contain("Web storefront route smoke prerequisites: Ready");
         output.Should().Contain("Web storefront readiness prerequisites: Ready");
         output.Should().Contain("Mobile resource naming readiness prerequisites: Ready");
         output.Should().Contain("Android launch readiness prerequisites: Ready");
@@ -657,6 +663,7 @@ public sealed class SecurityAndPerformanceContractsAndPackagingSourceTests : Sec
     [InlineData("check-production-like-staging-readiness.ps1", "Production-like staging readiness is blocked.")]
     [InlineData("smoke-einvoice-external-command.ps1", "E-invoice external-command smoke is blocked.")]
     [InlineData("check-einvoice-production-readiness.ps1", "E-invoice production readiness is blocked.")]
+    [InlineData("smoke-web-storefront-routes.ps1", "Web storefront route smoke is blocked.")]
     [InlineData("check-web-storefront-readiness.ps1", "Web storefront readiness is blocked.")]
     [InlineData("check-android-launch-readiness.ps1", "Android launch readiness is blocked.")]
     public async Task ProviderSmokeScripts_Should_BlockDryRunWhenPrerequisitesAreMissing(
@@ -1985,6 +1992,17 @@ public sealed class SecurityAndPerformanceContractsAndPackagingSourceTests : Sec
             new Dictionary<string, string>
             {
                 ["PATH"] = $"{EnsureFakeWebToolchainPath()}{Path.PathSeparator}{Environment.GetEnvironmentVariable("PATH")}"
+            }
+        };
+
+        yield return new object[]
+        {
+            "smoke-web-storefront-routes.ps1",
+            "Web storefront route smoke configuration is present.",
+            new Dictionary<string, string>
+            {
+                ["DARWIN_WEB_SITE_URL"] = "https://web.staging.example.test",
+                ["DARWIN_WEB_ROUTE_SMOKE_PATHS"] = "/,/catalog,/help,/cart"
             }
         };
 
