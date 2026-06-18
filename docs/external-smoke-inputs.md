@@ -295,6 +295,7 @@ dotnet test tests\Darwin.Infrastructure.Tests\Darwin.Infrastructure.Tests.csproj
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\smoke-object-storage.ps1
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\smoke-object-storage.ps1 -Execute
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\check-minio-production-readiness.ps1
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\export-minio-production-readiness-report.ps1 -Force
 ```
 
 Azure Blob readiness confirmations:

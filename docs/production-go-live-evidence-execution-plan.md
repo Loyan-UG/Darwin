@@ -47,6 +47,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts\check-web-toolchain-
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\check-web-storefront-readiness.ps1
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\check-mobile-resource-names.ps1
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\export-go-live-readiness-report.ps1 -Force
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\export-minio-production-readiness-report.ps1 -Force
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\export-azure-object-storage-readiness-report.ps1 -Force
 $env:DARWIN_PRODUCTION_READINESS_EVIDENCE_PACKAGE_PATH = "artifacts\production-readiness\evidence-package.md"
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\check-production-readiness-evidence-package.ps1

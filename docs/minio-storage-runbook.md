@@ -1,6 +1,6 @@
 # Local MinIO Object Storage Runbook
 
-Reviewed: 2026-06-17
+Reviewed: 2026-06-18
 
 This runbook describes the optional local MinIO smoke path for Darwin object storage. It is for development and validation only. Production credentials, access keys, secret keys, and bucket policy values must come from secure configuration and must never be committed.
 
@@ -223,6 +223,14 @@ Run the production readiness preflight after the operator has confirmed the fina
 ```powershell
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\check-minio-production-readiness.ps1
 ```
+
+To create an ignored, non-secret report for the production readiness evidence package:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\export-minio-production-readiness-report.ps1 -Force
+```
+
+The report is written under `artifacts\production-readiness\` by default. It is valid as current-state evidence even when it is blocked; it does not replace real MinIO policy validation, selected-provider smoke, or owner approval.
 
 The preflight checks only non-secret confirmations. It does not accept MinIO access keys, secret keys, bucket policy JSON, object payloads, object keys, or provider responses. A passing preflight means the deployment checklist is complete enough to run the selected-provider smoke and WebAdmin smoke against the production bucket; it is not a production immutability claim by itself.
 
