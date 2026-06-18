@@ -229,6 +229,10 @@ foreach ($fileName in $expectedHelpers) {
         Add-Problem $problems "Readiness action plan does not contain owner action rows: $fileName"
     }
 
+    if ($fileName -eq "production-readiness-action-plan.md" -and $content.IndexOf("| Evidence area | Result | Exit code | Owner |", [StringComparison]::OrdinalIgnoreCase) -lt 0) {
+        Add-Problem $problems "Readiness action plan does not include report exit codes in owner action rows: $fileName"
+    }
+
     if ($fileName -eq "production-readiness-env-template.ps1" -and $content.IndexOf("No template assignment is written", [StringComparison]::OrdinalIgnoreCase) -lt 0) {
         Add-Problem $problems "Readiness helper does not document secret-like variable handling: $fileName"
     }
@@ -245,7 +249,7 @@ foreach ($fileName in $expectedHelpers) {
         Add-Problem $problems "Local execution summary does not preserve the deployment evidence boundary: $fileName"
     }
 
-    if ($fileName -eq "production-readiness-action-plan.md" -and $content.IndexOf("| Go-live aggregate | Blocked | Darwin technical owner | See the dedicated readiness rows |", [StringComparison]::OrdinalIgnoreCase) -lt 0) {
+    if ($fileName -eq "production-readiness-action-plan.md" -and $content.IndexOf("| Go-live aggregate | Blocked | 2 | Darwin technical owner | See the dedicated readiness rows |", [StringComparison]::OrdinalIgnoreCase) -lt 0) {
         Add-Problem $problems "Readiness action plan should keep the aggregate go-live row summarized: $fileName"
     }
 
@@ -255,6 +259,10 @@ foreach ($fileName in $expectedHelpers) {
 
     if ($fileName -eq "production-readiness-owner-handoff.md" -and $content.IndexOf("System administrator or DevOps owner", [StringComparison]::OrdinalIgnoreCase) -lt 0) {
         Add-Problem $problems "Owner handoff helper does not contain system administration ownership rows: $fileName"
+    }
+
+    if ($fileName -eq "production-readiness-owner-handoff.md" -and $content.IndexOf("| Evidence area | Result | Exit code | Missing evidence keys |", [StringComparison]::OrdinalIgnoreCase) -lt 0) {
+        Add-Problem $problems "Owner handoff helper does not include report exit codes in owner rows: $fileName"
     }
 
     if ($fileName -eq "evidence-package-local-draft.md" -and $content.IndexOf("Local Draft Notice", [StringComparison]::OrdinalIgnoreCase) -lt 0) {

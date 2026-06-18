@@ -49,6 +49,17 @@ function Get-OverallResult {
     return "Unparseable"
 }
 
+function Get-ReportExitCode {
+    param([Parameter(Mandatory = $true)][string]$Content)
+
+    $match = [regex]::Match($Content, '(?im)^Exit code:\s*(?<exit>-?\d+)\s*$')
+    if ($match.Success) {
+        return [int]$match.Groups["exit"].Value
+    }
+
+    return -999
+}
+
 function Get-MissingEvidenceKeys {
     param([Parameter(Mandatory = $true)][string]$Content)
 
@@ -188,6 +199,7 @@ foreach ($report in $reports) {
         $items.Add([pscustomobject]@{
             Name = $report.Name
             Status = "Missing"
+            ExitCode = -999
             Owner = $report.Owner
             MissingEvidence = "Report file missing"
             NextAction = $report.NextAction
@@ -210,6 +222,7 @@ foreach ($report in $reports) {
     $items.Add([pscustomobject]@{
         Name = $report.Name
         Status = Get-OverallResult -Content $content
+        ExitCode = Get-ReportExitCode -Content $content
         Owner = $report.Owner
         MissingEvidence = $missingEvidence
         NextAction = $report.NextAction
@@ -254,13 +267,13 @@ $lines.Add("| Missing or unparseable | $missingCount |")
 $lines.Add("")
 $lines.Add("## Owner Action Rows")
 $lines.Add("")
-$lines.Add("| Evidence area | Result | Owner | Missing evidence keys | Next action | Source report |")
-$lines.Add("| --- | --- | --- | --- | --- | --- |")
+$lines.Add("| Evidence area | Result | Exit code | Owner | Missing evidence keys | Next action | Source report |")
+$lines.Add("| --- | --- | ---: | --- | --- | --- | --- |")
 foreach ($item in $items) {
-    $lines.Add("| $(Escape-MarkdownCell $item.Name) | $(Escape-MarkdownCell $item.Status) | $(Escape-MarkdownCell $item.Owner) | $(Escape-MarkdownCell $item.MissingEvidence) | $(Escape-MarkdownCell $item.NextAction) | $(Escape-MarkdownCell $item.FileName) |")
+    $lines.Add("| $(Escape-MarkdownCell $item.Name) | $(Escape-MarkdownCell $item.Status) | $($item.ExitCode) | $(Escape-MarkdownCell $item.Owner) | $(Escape-MarkdownCell $item.MissingEvidence) | $(Escape-MarkdownCell $item.NextAction) | $(Escape-MarkdownCell $item.FileName) |")
 }
 $lines.Add("")
-$lines.Add("A Ready row means the local non-secret preflight report is ready to attach. It does not replace private deployment evidence or owner approval. A Blocked row names the next evidence keys or owner action required before go-live can be approved.")
+$lines.Add("A Ready row with exit code ``0`` means the local non-secret preflight report is ready to attach. It does not replace private deployment evidence or owner approval. A Blocked row with exit code ``2`` names the next evidence keys or owner action required before go-live can be approved. A Failed or missing row requires technical remediation before owner approval can rely on the artifact.")
 
 $report = $lines -join "`r`n"
 if (Test-ContainsSensitivePattern $report) {

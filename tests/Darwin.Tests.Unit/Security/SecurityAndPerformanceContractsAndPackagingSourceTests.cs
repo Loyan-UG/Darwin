@@ -332,9 +332,18 @@ public sealed class SecurityAndPerformanceContractsAndPackagingSourceTests : Sec
         reportBundleExporterSource.Should().Contain("scripts\\export-production-readiness-local-execution-summary.ps1");
         reportBundleExporterSource.Should().Contain("Get-ReportExitCode");
         reportBundleExporterSource.Should().Contain("ExporterExitCode");
+        ReadRepositoryFile(Path.Combine("scripts", "export-production-readiness-action-plan.ps1"))
+            .Should()
+            .Contain("Get-ReportExitCode")
+            .And.Contain("| Evidence area | Result | Exit code | Owner |");
+        ReadRepositoryFile(Path.Combine("scripts", "export-production-readiness-owner-handoff.ps1"))
+            .Should()
+            .Contain("Get-ReportExitCode")
+            .And.Contain("| Evidence area | Result | Exit code | Missing evidence keys |");
         ReadRepositoryFile(Path.Combine("scripts", "check-production-readiness-report-bundle.ps1"))
             .Should()
-            .Contain("Get-BundleReportRows");
+            .Contain("Get-BundleReportRows")
+            .And.Contain("does not include report exit codes");
 
         minioComposeSource.Should().Contain("quay.io/minio/minio:latest");
         minioComposeSource.Should().Contain("quay.io/minio/mc:latest");
@@ -2631,9 +2640,9 @@ public sealed class SecurityAndPerformanceContractsAndPackagingSourceTests : Sec
 
             ## Owner Action Rows
 
-            | Area | Result | Owner | Next action |
-            | --- | --- | --- | --- |
-            | Go-live aggregate | Blocked | Darwin technical owner | See the dedicated readiness rows |
+            | Evidence area | Result | Exit code | Owner | Missing evidence keys | Next action | Source report |
+            | --- | --- | ---: | --- | --- | --- | --- |
+            | Go-live aggregate | Blocked | 2 | Darwin technical owner | See the dedicated readiness rows | Resolve every blocked dedicated readiness row, then rerun the aggregate go-live dry run. | go-live-readiness-report.md |
             """);
 
         File.WriteAllText(
@@ -2647,9 +2656,9 @@ public sealed class SecurityAndPerformanceContractsAndPackagingSourceTests : Sec
 
             ## System administrator or DevOps owner
 
-            | Area | Result | Next action |
-            | --- | --- | --- |
-            | Storage | Ready | Evidence attached |
+            | Evidence area | Result | Exit code | Missing evidence keys | Next action | Source report |
+            | --- | --- | ---: | --- | --- | --- |
+            | Storage | Ready | 0 | None listed by preflight | Evidence attached | storage-readiness-report.md |
             """);
 
         File.WriteAllText(
