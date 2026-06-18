@@ -376,6 +376,8 @@ public sealed class SecurityAndPerformanceContractsAndPackagingSourceTests : Sec
         externalSmokeInputsSource.Should().Contain("scripts\\check-android-project-readiness.ps1");
         externalSmokeInputsSource.Should().Contain("Android project readiness");
         externalSmokeInputsSource.Should().Contain("production-like staging rehearsal");
+        externalSmokeInputsSource.Should().Contain("local execution summary");
+        externalSmokeInputsSource.Should().Contain("release reference");
         externalSmokeInputsSource.Should().Contain("Provider failures must remain `Unknown`");
         externalSmokeInputsSource.Should().NotContain("sk_live_");
         externalSmokeInputsSource.Should().NotContain("sk_test_");

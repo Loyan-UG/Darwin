@@ -14,7 +14,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts\check-go-live-readin
 
 Exit code `2` means one or more checks are blocked by missing operator inputs. That is expected before a provider is fully configured.
 The aggregate dry-run loads Brevo Site Settings from the local PostgreSQL Docker container when available, but still requires non-secret delivery-pipeline confirmations before marking Brevo production-readiness prerequisites complete.
-The aggregate dry-run also runs the production readiness report-bundle validator, so the top-level go-live gate fails fast if the local non-secret report/helper set is missing, unparseable, failed, or unsafe before the filled deployment evidence package is reviewed. Set `DARWIN_PRODUCTION_READINESS_REPORT_BUNDLE_DIRECTORY` only when the bundle lives outside the default ignored `artifacts\production-readiness\` directory.
+The aggregate dry-run also runs the production readiness report-bundle validator, so the top-level go-live gate fails fast if the local non-secret report/helper set is missing, unparseable, failed, stale, or unsafe before the filled deployment evidence package is reviewed. Set `DARWIN_PRODUCTION_READINESS_REPORT_BUNDLE_DIRECTORY` only when the bundle lives outside the default ignored `artifacts\production-readiness\` directory.
 
 To keep a non-secret readiness attachment for the evidence package, export the same dry-run to an ignored markdown report:
 
@@ -25,7 +25,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts\check-production-rea
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\export-go-live-readiness-report.ps1 -Force
 ```
 
-The bundle and aggregate reports are written under `artifacts\production-readiness\` by default. They summarize ready, blocked, and failed checks and include non-secret output only. The bundle validator confirms the expected report set exists and is non-secret. The clean smoke proves a new bundle can be generated and validated from an empty temporary directory without relying on a previous bundle artifact. A blocked report is valid evidence of current gating; it is not go-live approval.
+The bundle and aggregate reports are written under `artifacts\production-readiness\` by default. They summarize ready, blocked, and failed checks and include non-secret output only. The bundle exporter also refreshes the owner action plan, owner handoff, environment template, local execution summary, and local evidence-package draft. The bundle validator confirms the expected reports and helpers exist, are non-secret, and match the current branch, commit, or release reference where applicable. The clean smoke proves a new bundle can be generated and validated from an empty temporary directory without relying on a previous bundle artifact. A blocked report is valid evidence of current gating; it is not go-live approval.
 
 When a filled production evidence package exists, validate its shape before go-live approval:
 
