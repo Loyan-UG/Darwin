@@ -71,7 +71,27 @@ function Resolve-LocalEvidencePath {
 function Get-ReadyLocalEvidenceReferences {
     param([Parameter(Mandatory = $true)][string]$Content)
 
-    $artifactPattern = '(?<path>(?:[A-Za-z]:[\\/]|\.{1,2}[\\/]|artifacts[\\/])?[^\s|,;]+(?:readiness-report-bundle\.md|production-readiness-action-plan\.md|production-readiness-owner-handoff\.md|production-readiness-env-template\.ps1|local-execution-summary\.md))'
+    $localEvidenceFileNames = @(
+        "production-like-staging-readiness-report.md",
+        "local-backup-readiness-report.md",
+        "local-postgres-restore-readiness-report.md",
+        "local-release-candidate-readiness-report.md",
+        "evidence-package-validator-smoke.md",
+        "web-mobile-readiness-report.md",
+        "go-live-readiness-report.md",
+        "minio-production-readiness-report.md",
+        "azure-object-storage-readiness-report.md",
+        "einvoice-production-readiness-report.md",
+        "android-launch-readiness-report.md",
+        "provider-readiness-report.md",
+        "readiness-report-bundle.md",
+        "production-readiness-action-plan.md",
+        "production-readiness-owner-handoff.md",
+        "production-readiness-env-template.ps1",
+        "local-execution-summary.md"
+    )
+    $artifactFileAlternation = ($localEvidenceFileNames | ForEach-Object { [regex]::Escape($_) }) -join "|"
+    $artifactPattern = "(?<path>(?:[A-Za-z]:[\\/]|\.{1,2}[\\/]|artifacts[\\/])?[^\s|,;]+(?:$artifactFileAlternation))"
     $references = [System.Collections.Generic.List[string]]::new()
 
     foreach ($line in ($Content -split "`r?`n")) {
@@ -143,13 +163,13 @@ function Assert-LocalEvidenceReferences {
             Add-Problem $Problems "Ready local evidence reference commit '$commit' does not match current commit '$currentCommit': $reference"
         }
 
-        if ($fileName -in @("readiness-report-bundle.md", "production-readiness-action-plan.md", "local-execution-summary.md")) {
-            $overall = Get-MetadataValue -Content $artifactContent -Name "Overall result"
+        $overall = Get-MetadataValue -Content $artifactContent -Name "Overall result"
+        $exitCode = Get-MetadataValue -Content $artifactContent -Name "Exit code"
+        if (-not [string]::IsNullOrWhiteSpace($overall) -or -not [string]::IsNullOrWhiteSpace($exitCode)) {
             if (-not [string]::Equals($overall, "Ready", [StringComparison]::Ordinal)) {
                 Add-Problem $Problems "Ready local evidence reference must have Overall result Ready: $reference"
             }
 
-            $exitCode = Get-MetadataValue -Content $artifactContent -Name "Exit code"
             if (-not [string]::Equals($exitCode, "0", [StringComparison]::Ordinal)) {
                 Add-Problem $Problems "Ready local evidence reference must have Exit code 0: $reference"
             }

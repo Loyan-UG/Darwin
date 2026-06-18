@@ -935,6 +935,64 @@ public sealed class SecurityAndPerformanceContractsAndPackagingSourceTests : Sec
     }
 
     [Fact]
+    public async Task ProductionReadinessEvidencePackageScript_Should_ValidateDirectReadyLocalReportReferences()
+    {
+        var root = ResolveRepositoryPath();
+        var directory = EnsureReadyProductionReadinessReportBundle();
+        var filledPackagePath = EnsureFilledProductionReadinessEvidencePackage();
+        var reportPath = Path.Combine(directory, "local-release-candidate-readiness-report.md");
+        var packageContent = File.ReadAllText(filledPackagePath)
+            .Replace(
+                "| Build lane | Evidence reference REF-001 | Darwin technical owner | Ready |",
+                $"| Build lane | {reportPath} | Darwin technical owner | Ready |",
+                StringComparison.Ordinal);
+        File.WriteAllText(filledPackagePath, packageContent);
+
+        var output = await RunPowerShellScriptAsync(
+            root,
+            "check-production-readiness-evidence-package.ps1",
+            new Dictionary<string, string>
+            {
+                ["DARWIN_PRODUCTION_READINESS_EVIDENCE_PACKAGE_PATH"] = filledPackagePath
+            });
+
+        output.ExitCode.Should().Be(0);
+        output.Output.Should().Contain("Production readiness evidence package validation passed.");
+    }
+
+    [Fact]
+    public async Task ProductionReadinessEvidencePackageScript_Should_BlockStaleDirectReadyLocalReportReference()
+    {
+        var root = ResolveRepositoryPath();
+        var directory = EnsureReadyProductionReadinessReportBundle();
+        var filledPackagePath = EnsureFilledProductionReadinessEvidencePackage();
+        var reportPath = Path.Combine(directory, "local-release-candidate-readiness-report.md");
+        var packageContent = File.ReadAllText(filledPackagePath)
+            .Replace(
+                "| Build lane | Evidence reference REF-001 | Darwin technical owner | Ready |",
+                $"| Build lane | {reportPath} | Darwin technical owner | Ready |",
+                StringComparison.Ordinal);
+        File.WriteAllText(filledPackagePath, packageContent);
+
+        var reportContent = File.ReadAllText(reportPath)
+            .Replace("Commit: " + ReadGitOutput(root, "rev-parse", "--short=12", "HEAD"), "Commit: 000000000000", StringComparison.Ordinal);
+        File.WriteAllText(reportPath, reportContent);
+
+        var output = await RunPowerShellScriptAsync(
+            root,
+            "check-production-readiness-evidence-package.ps1",
+            new Dictionary<string, string>
+            {
+                ["DARWIN_PRODUCTION_READINESS_EVIDENCE_PACKAGE_PATH"] = filledPackagePath
+            });
+
+        output.ExitCode.Should().Be(2);
+        output.Output.Should().Contain("Production readiness evidence package validation is blocked.");
+        output.Output.Should().Contain("Ready local evidence reference commit");
+        output.Output.Should().Contain("local-release-candidate-readiness-report.md");
+    }
+
+    [Fact]
     public async Task ProductionReadinessEvidencePackageScript_Should_BlockStaleReadyLocalArtifactReference()
     {
         var root = ResolveRepositoryPath();
