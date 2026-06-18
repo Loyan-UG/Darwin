@@ -43,6 +43,7 @@ This plan turns the current production-readiness decisions into an execution ord
 ```powershell
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\new-production-readiness-evidence-package.ps1 -OutputPath artifacts\production-readiness\evidence-package.md -DeploymentLabel "production-like-staging" -ReleaseReference "release-artifact-id" -PreparedBy "Darwin technical owner"
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\export-production-readiness-report-bundle.ps1 -Force
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\check-production-readiness-report-bundle.ps1
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\check-production-like-staging-readiness.ps1
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\export-production-like-staging-readiness-report.ps1 -Force
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\check-web-toolchain-readiness.ps1
@@ -60,7 +61,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts\check-production-rea
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\check-go-live-readiness.ps1
 ```
 
-The bundle exporter runs every dedicated non-secret readiness report exporter and writes `readiness-report-bundle.md` under `artifacts\production-readiness\`. The individual report commands remain useful when one evidence area needs to be rerun or debugged.
+The bundle exporter runs every dedicated non-secret readiness report exporter and writes `readiness-report-bundle.md` under `artifacts\production-readiness\`. The bundle validator confirms every expected report exists, has a parseable non-failed result, and does not contain sensitive assignment patterns. The individual report commands remain useful when one evidence area needs to be rerun or debugged.
 
 The central go-live report includes separate MinIO and Azure Blob readiness rows. The dedicated MinIO and Azure reports remain useful as non-secret attachment references for the object-storage evidence rows.
 
