@@ -18,10 +18,11 @@ The aggregate dry-run loads Brevo Site Settings from the local PostgreSQL Docker
 To keep a non-secret readiness attachment for the evidence package, export the same dry-run to an ignored markdown report:
 
 ```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\export-production-readiness-report-bundle.ps1 -Force
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\export-go-live-readiness-report.ps1 -Force
 ```
 
-The report is written under `artifacts\production-readiness\` by default. It summarizes ready, blocked, and failed checks and includes the full non-secret dry-run output. A blocked report is valid evidence of current gating; it is not go-live approval.
+The bundle and aggregate reports are written under `artifacts\production-readiness\` by default. They summarize ready, blocked, and failed checks and include non-secret output only. A blocked report is valid evidence of current gating; it is not go-live approval.
 
 When a filled production evidence package exists, validate its shape before go-live approval:
 
