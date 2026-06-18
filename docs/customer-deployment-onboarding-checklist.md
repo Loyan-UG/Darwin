@@ -203,6 +203,7 @@ Manual approvals:
 - Generate the non-secret readiness report bundle with `scripts\export-production-readiness-report-bundle.ps1 -Force`, then validate it with `scripts\check-production-readiness-report-bundle.ps1`.
 - Generate the ignored local package draft with `scripts\export-production-readiness-local-package-draft.ps1 -Force` when operators need a pre-filled blocked draft from local report references and a local supporting-evidence snapshot. The bundle exporter also refreshes this draft. Do not treat it as final approval.
 - Generate the owner action plan with `scripts\export-production-readiness-action-plan.ps1 -Force` so blocked evidence rows have clear owners, missing evidence keys, and next actions.
+- Generate the owner handoff with `scripts\export-production-readiness-owner-handoff.ps1 -Force` when follow-up needs to be grouped by deployment owner before evidence collection starts.
 - Generate the ignored environment helper with `scripts\export-production-readiness-env-template.ps1 -Force` when operators need a de-duplicated local/session template for missing evidence variables. Keep filled copies outside git.
 - Complete the production-like staging rehearsal from [docs/production-go-live-evidence-execution-plan.md](production-go-live-evidence-execution-plan.md) before any production execution.
 - Run `scripts\check-production-like-staging-readiness.ps1` after staging build/test, migration, rollback, storage, provider, e-invoice, Android, monitoring, and owner sign-off evidence exists.

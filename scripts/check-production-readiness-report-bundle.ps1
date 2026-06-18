@@ -71,6 +71,7 @@ $expectedReports = @(
 
 $expectedHelpers = @(
     "production-readiness-action-plan.md",
+    "production-readiness-owner-handoff.md",
     "production-readiness-env-template.ps1",
     "evidence-package-local-draft.md"
 )
@@ -121,6 +122,14 @@ foreach ($fileName in $expectedHelpers) {
 
     if ($fileName -eq "production-readiness-env-template.ps1" -and $content.IndexOf("No template assignment is written", [StringComparison]::OrdinalIgnoreCase) -lt 0) {
         Add-Problem $problems "Readiness helper does not document secret-like variable handling: $fileName"
+    }
+
+    if ($fileName -eq "production-readiness-owner-handoff.md" -and $content.IndexOf("Production Readiness Owner Handoff", [StringComparison]::OrdinalIgnoreCase) -lt 0) {
+        Add-Problem $problems "Owner handoff helper does not contain the expected title: $fileName"
+    }
+
+    if ($fileName -eq "production-readiness-owner-handoff.md" -and $content.IndexOf("System administrator or DevOps owner", [StringComparison]::OrdinalIgnoreCase) -lt 0) {
+        Add-Problem $problems "Owner handoff helper does not contain system administration ownership rows: $fileName"
     }
 
     if ($fileName -eq "evidence-package-local-draft.md" -and $content.IndexOf("Local Draft Notice", [StringComparison]::OrdinalIgnoreCase) -lt 0) {

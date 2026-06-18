@@ -214,6 +214,7 @@ $lines.Add("")
 $lines.Add("| Artifact | Purpose |")
 $lines.Add("| --- | --- |")
 $lines.Add("| production-readiness-action-plan.md | Owner action rows, missing evidence keys, and next actions derived from the readiness reports. |")
+$lines.Add("| production-readiness-owner-handoff.md | Per-owner handoff rows grouped from the readiness reports for deployment evidence follow-up. |")
 $lines.Add("| production-readiness-env-template.ps1 | De-duplicated local/session placeholder template for missing evidence variables. Filled copies must stay outside git. |")
 $lines.Add("| evidence-package-local-draft.md | Ignored evidence-package draft with local report/helper references marked ready and deployment-specific rows left blocked. |")
 $lines.Add("")
@@ -227,11 +228,17 @@ if (Test-ContainsSensitivePattern $bundle) {
 Set-Content -Path $bundlePath -Value $bundle -Encoding UTF8
 
 $actionPlanPath = Join-Path $resolvedOutputDirectory "production-readiness-action-plan.md"
+$ownerHandoffPath = Join-Path $resolvedOutputDirectory "production-readiness-owner-handoff.md"
 $envTemplatePath = Join-Path $resolvedOutputDirectory "production-readiness-env-template.ps1"
 $localDraftPath = Join-Path $resolvedOutputDirectory "evidence-package-local-draft.md"
 Push-Location $repoRoot
 try {
     & powershell -NoProfile -ExecutionPolicy Bypass -File "scripts\export-production-readiness-action-plan.ps1" -ReportDirectory $resolvedOutputDirectory -OutputPath $actionPlanPath -Force | Out-Host
+    if ($LASTEXITCODE -eq 1) {
+        exit 1
+    }
+
+    & powershell -NoProfile -ExecutionPolicy Bypass -File "scripts\export-production-readiness-owner-handoff.ps1" -ReportDirectory $resolvedOutputDirectory -OutputPath $ownerHandoffPath -Force | Out-Host
     if ($LASTEXITCODE -eq 1) {
         exit 1
     }
