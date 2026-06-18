@@ -676,6 +676,50 @@ public sealed class SecurityAndPerformanceContractsAndPackagingSourceTests : Sec
         output.Should().Contain("web-mobile-readiness-report.md");
     }
 
+    [Fact]
+    public async Task ProductionReadinessReportBundleValidator_Should_BlockStaleHelperCommit()
+    {
+        var root = ResolveRepositoryPath();
+        var directory = EnsureReadyProductionReadinessReportBundle();
+        var staleHelper = Path.Combine(directory, "production-readiness-action-plan.md");
+        var content = File.ReadAllText(staleHelper)
+            .Replace("Commit: " + ReadGitOutput(root, "rev-parse", "--short=12", "HEAD"), "Commit: 000000000000", StringComparison.Ordinal);
+        File.WriteAllText(staleHelper, content);
+
+        var (exitCode, output) = await RunPowerShellScriptAsync(
+            root,
+            "check-production-readiness-report-bundle.ps1",
+            new Dictionary<string, string>(),
+            ["-Directory", directory]);
+
+        exitCode.Should().Be(2);
+        output.Should().Contain("Production readiness report bundle validation is blocked.");
+        output.Should().Contain("Readiness helper commit");
+        output.Should().Contain("production-readiness-action-plan.md");
+    }
+
+    [Fact]
+    public async Task ProductionReadinessReportBundleValidator_Should_BlockStaleLocalDraftReleaseReference()
+    {
+        var root = ResolveRepositoryPath();
+        var directory = EnsureReadyProductionReadinessReportBundle();
+        var staleDraft = Path.Combine(directory, "evidence-package-local-draft.md");
+        var content = File.ReadAllText(staleDraft)
+            .Replace("Release reference: git-" + ReadGitOutput(root, "rev-parse", "--short=12", "HEAD"), "Release reference: git-000000000000", StringComparison.Ordinal);
+        File.WriteAllText(staleDraft, content);
+
+        var (exitCode, output) = await RunPowerShellScriptAsync(
+            root,
+            "check-production-readiness-report-bundle.ps1",
+            new Dictionary<string, string>(),
+            ["-Directory", directory]);
+
+        exitCode.Should().Be(2);
+        output.Should().Contain("Production readiness report bundle validation is blocked.");
+        output.Should().Contain("Local evidence package draft release reference does not match current commit");
+        output.Should().Contain("evidence-package-local-draft.md");
+    }
+
     [Theory]
     [InlineData("smoke-stripe-testmode.ps1", "Stripe test-mode smoke is blocked.")]
     [InlineData("check-stripe-webhook-forwarding.ps1", "Stripe webhook forwarding is blocked.")]
@@ -2384,8 +2428,12 @@ public sealed class SecurityAndPerformanceContractsAndPackagingSourceTests : Sec
 
         File.WriteAllText(
             Path.Combine(directory, "production-readiness-action-plan.md"),
-            """
+            $$"""
             # Production Readiness Action Plan
+
+            Branch: {{branch}}
+
+            Commit: {{commit}}
 
             ## Owner Action Rows
 
@@ -2396,8 +2444,12 @@ public sealed class SecurityAndPerformanceContractsAndPackagingSourceTests : Sec
 
         File.WriteAllText(
             Path.Combine(directory, "production-readiness-owner-handoff.md"),
-            """
+            $$"""
             # Production Readiness Owner Handoff
+
+            Branch: {{branch}}
+
+            Commit: {{commit}}
 
             ## System administrator or DevOps owner
 
@@ -2408,16 +2460,21 @@ public sealed class SecurityAndPerformanceContractsAndPackagingSourceTests : Sec
 
         File.WriteAllText(
             Path.Combine(directory, "production-readiness-env-template.ps1"),
-            """
+            $$"""
             # Production readiness environment template
+
+            # Branch: {{branch}}
+            # Commit: {{commit}}
 
             # No template assignment is written for secret-like variables.
             """);
 
         File.WriteAllText(
             Path.Combine(directory, "evidence-package-local-draft.md"),
-            """
+            $$"""
             # Local Evidence Package Draft
+
+            Release reference: git-{{commit}}
 
             ## Local Draft Notice
 
