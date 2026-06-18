@@ -45,6 +45,17 @@ function Get-OverallResult {
     return ""
 }
 
+function Get-ReportExitCode {
+    param([Parameter(Mandatory = $true)][string]$Content)
+
+    $match = [regex]::Match($Content, '(?im)^Exit code:\s*(?<exit>-?\d+)\s*$')
+    if ($match.Success) {
+        return [int]$match.Groups["exit"].Value
+    }
+
+    return $null
+}
+
 function Get-MetadataValue {
     param(
         [Parameter(Mandatory = $true)][string]$Content,
@@ -148,6 +159,20 @@ foreach ($fileName in $expectedReports) {
 
     if ($status -eq "Failed") {
         Add-Problem $problems "Readiness report result is Failed and must be rerun or investigated before attachment: $fileName"
+    }
+
+    $reportExitCode = Get-ReportExitCode -Content $content
+    if ($null -eq $reportExitCode) {
+        Add-Problem $problems "Readiness report is missing an Exit code line: $fileName"
+    }
+    elseif ($status -eq "Ready" -and $reportExitCode -ne 0) {
+        Add-Problem $problems "Ready readiness report should have exit code 0 but has $reportExitCode`: $fileName"
+    }
+    elseif ($status -eq "Blocked" -and $reportExitCode -ne 2) {
+        Add-Problem $problems "Blocked readiness report should have exit code 2 but has $reportExitCode`: $fileName"
+    }
+    elseif ($status -eq "Failed" -and $reportExitCode -eq 0) {
+        Add-Problem $problems "Failed readiness report should not have exit code 0: $fileName"
     }
 
     $statuses[$fileName] = $status

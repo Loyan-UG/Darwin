@@ -56,6 +56,22 @@ function Get-ReportStatus {
     return "Unparseable"
 }
 
+function Get-ReportExitCode {
+    param([Parameter(Mandatory = $true)][string]$Path)
+
+    if (-not (Test-Path $Path -PathType Leaf)) {
+        return $null
+    }
+
+    $content = Get-Content $Path -Raw
+    $match = [regex]::Match($content, '(?im)^Exit code:\s*(?<exit>-?\d+)\s*$')
+    if ($match.Success) {
+        return [int]$match.Groups["exit"].Value
+    }
+
+    return $null
+}
+
 $repoRoot = Split-Path -Parent $PSScriptRoot
 $resolvedOutputDirectory = $ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($OutputDirectory)
 if (-not (Test-Path $resolvedOutputDirectory -PathType Container)) {
@@ -162,10 +178,17 @@ try {
             $status = "Failed"
         }
 
+        $reportExitCode = Get-ReportExitCode -Path $outputPath
+        if ($null -eq $reportExitCode) {
+            $status = "Unparseable"
+            $reportExitCode = -1
+        }
+
         $results.Add([pscustomobject]@{
             Name = $report.Name
             Status = $status
-            ExitCode = $exitCode
+            ExitCode = $reportExitCode
+            ExporterExitCode = $exitCode
             FileName = $report.FileName
         })
     }

@@ -330,6 +330,8 @@ public sealed class SecurityAndPerformanceContractsAndPackagingSourceTests : Sec
         reportBundleExporterSource.Should().Contain("-SkipReportBundleCheck");
         reportBundleExporterSource.Should().Contain("scripts\\export-go-live-readiness-report.ps1");
         reportBundleExporterSource.Should().Contain("scripts\\export-production-readiness-local-execution-summary.ps1");
+        reportBundleExporterSource.Should().Contain("Get-ReportExitCode");
+        reportBundleExporterSource.Should().Contain("ExporterExitCode");
 
         minioComposeSource.Should().Contain("quay.io/minio/minio:latest");
         minioComposeSource.Should().Contain("quay.io/minio/mc:latest");
@@ -748,6 +750,28 @@ public sealed class SecurityAndPerformanceContractsAndPackagingSourceTests : Sec
         output.Should().Contain("Production readiness report bundle validation is blocked.");
         output.Should().Contain("Local evidence package draft release reference does not match current commit");
         output.Should().Contain("evidence-package-local-draft.md");
+    }
+
+    [Fact]
+    public async Task ProductionReadinessReportBundleValidator_Should_BlockMismatchedReportExitCode()
+    {
+        var root = ResolveRepositoryPath();
+        var directory = EnsureReadyProductionReadinessReportBundle();
+        var blockedReport = Path.Combine(directory, "android-launch-readiness-report.md");
+        var content = File.ReadAllText(blockedReport)
+            .Replace("Overall result: Ready", "Overall result: Blocked", StringComparison.Ordinal);
+        File.WriteAllText(blockedReport, content);
+
+        var (exitCode, output) = await RunPowerShellScriptAsync(
+            root,
+            "check-production-readiness-report-bundle.ps1",
+            new Dictionary<string, string>(),
+            ["-Directory", directory]);
+
+        exitCode.Should().Be(2);
+        output.Should().Contain("Production readiness report bundle validation is blocked.");
+        output.Should().Contain("Blocked readiness report should have exit code 2");
+        output.Should().Contain("android-launch-readiness-report.md");
     }
 
     [Theory]
