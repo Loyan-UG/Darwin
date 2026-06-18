@@ -66,7 +66,7 @@ In progress:
 
 Next gate:
 
-1. `Production go-live evidence execution`: execute the production-like staging rehearsal first, then populate deployment-specific evidence for MinIO, dual-format e-invoice, Android-first mobile launch, and provider smoke ownership. Use [docs/production-go-live-evidence-execution-plan.md](docs/production-go-live-evidence-execution-plan.md), the readiness report bundle exporter/validator, the local backup readiness report, and the evidence package validator. A local ignored evidence package, local execution summary, and non-secret readiness report bundle were generated on 2026-06-18, but go-live remains blocked until real deployment evidence and owner approvals exist. Code-backed `SyncState`/`SyncConflict` foundation is complete; target-specific inbound sync still waits for a concrete integration target.
+1. `Production go-live evidence execution`: execute the production-like staging rehearsal first, then populate deployment-specific evidence for MinIO, dual-format e-invoice, Android-first mobile launch, and provider smoke ownership. Use [docs/production-go-live-evidence-execution-plan.md](docs/production-go-live-evidence-execution-plan.md), the readiness report bundle exporter/validator, the local backup and PostgreSQL restore readiness reports, and the evidence package validator. A local ignored evidence package, local execution summary, and non-secret readiness report bundle were generated on 2026-06-18, but go-live remains blocked until real deployment evidence and owner approvals exist. Code-backed `SyncState`/`SyncConflict` foundation is complete; target-specific inbound sync still waits for a concrete integration target.
 
 Remaining ERP expansion order:
 

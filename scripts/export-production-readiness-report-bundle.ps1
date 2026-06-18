@@ -74,6 +74,11 @@ $reports = @(
         FileName = "local-backup-readiness-report.md"
     },
     @{
+        Name = "Local PostgreSQL restore"
+        Script = "scripts\export-local-postgres-restore-readiness-report.ps1"
+        FileName = "local-postgres-restore-readiness-report.md"
+    },
+    @{
         Name = "Web and mobile"
         Script = "scripts\export-web-mobile-readiness-report.ps1"
         FileName = "web-mobile-readiness-report.md"
