@@ -79,6 +79,7 @@ $requiredMarkers = @(
     "PayrollPayslips",
     "Readiness report bundle",
     "Owner action plan",
+    "Owner handoff",
     "Evidence environment template",
     "MinIO production readiness preflight",
     "Azure Blob readiness preflight",

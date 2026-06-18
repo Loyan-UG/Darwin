@@ -78,6 +78,7 @@ Required proof:
 - compatibility smoke lanes for public/mobile/storefront-sensitive areas;
 - readiness report bundle reference;
 - owner action plan reference;
+- owner handoff reference;
 - evidence environment template reference;
 - migration command plan for PostgreSQL or SQL Server;
 - rollback plan for app binaries and database migration failure;

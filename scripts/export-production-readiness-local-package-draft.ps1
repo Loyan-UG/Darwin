@@ -154,6 +154,7 @@ if ((Test-Path $resolvedOutputPath -PathType Leaf) -and -not $Force) {
 
 $bundlePath = "artifacts\production-readiness\readiness-report-bundle.md"
 $actionPlanPath = "artifacts\production-readiness\production-readiness-action-plan.md"
+$ownerHandoffPath = "artifacts\production-readiness\production-readiness-owner-handoff.md"
 $envTemplatePath = "artifacts\production-readiness\production-readiness-env-template.ps1"
 $localExecutionSummaryPath = "artifacts\production-readiness\local-execution-summary.md"
 $resolvedReportDirectory = $ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($ReportDirectory)
@@ -172,6 +173,7 @@ $content = $content.Replace(" Pending |", " Blocked |")
 
 $content = Set-ResultRow -Content $content -RowName "Readiness report bundle" -Reference $bundlePath -Result "Ready"
 $content = Set-ResultRow -Content $content -RowName "Owner action plan" -Reference $actionPlanPath -Result "Ready"
+$content = Set-ResultRow -Content $content -RowName "Owner handoff" -Reference $ownerHandoffPath -Result "Ready"
 $content = Set-ResultRow -Content $content -RowName "Evidence environment template" -Reference $envTemplatePath -Result "Ready"
 $content = Add-LocalSupportingEvidenceSnapshot -Content $content -BundlePath $resolvedBundlePath
 

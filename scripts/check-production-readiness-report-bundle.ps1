@@ -148,6 +148,10 @@ foreach ($fileName in $expectedHelpers) {
         Add-Problem $problems "Local evidence package draft does not contain readiness report bundle reference row: $fileName"
     }
 
+    if ($fileName -eq "evidence-package-local-draft.md" -and $content.IndexOf("| Owner handoff |", [StringComparison]::OrdinalIgnoreCase) -lt 0) {
+        Add-Problem $problems "Local evidence package draft does not contain owner handoff reference row: $fileName"
+    }
+
     if ($fileName -eq "evidence-package-local-draft.md" -and $content.IndexOf("Local Supporting Evidence Snapshot", [StringComparison]::OrdinalIgnoreCase) -lt 0) {
         Add-Problem $problems "Local evidence package draft does not contain the local supporting evidence snapshot: $fileName"
     }
