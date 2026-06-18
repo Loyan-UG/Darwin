@@ -59,6 +59,14 @@ Required confirmations:
 
 ## Stripe Test Mode
 
+Provider readiness summary:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\export-provider-readiness-report.ps1 -Force
+```
+
+The provider readiness report runs non-executing Stripe, DHL, Brevo, and VIES prerequisite checks and writes a non-secret summary under `artifacts\production-readiness\`. It does not execute live charges, create DHL validation requests, send Brevo messages, call VIES, or replace provider-specific smoke evidence.
+
 Secrets must be entered through Site Settings or secure deployment configuration:
 
 - Test publishable key.

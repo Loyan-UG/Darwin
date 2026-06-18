@@ -51,6 +51,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts\export-minio-product
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\export-azure-object-storage-readiness-report.ps1 -Force
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\export-einvoice-production-readiness-report.ps1 -Force
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\export-android-launch-readiness-report.ps1 -Force
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\export-provider-readiness-report.ps1 -Force
 $env:DARWIN_PRODUCTION_READINESS_EVIDENCE_PACKAGE_PATH = "artifacts\production-readiness\evidence-package.md"
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\check-production-readiness-evidence-package.ps1
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\check-go-live-readiness.ps1
@@ -61,6 +62,8 @@ The central go-live report includes separate MinIO and Azure Blob readiness rows
 The dedicated e-invoice report is a non-secret attachment reference for accounting or tax evidence. It does not replace the real ZUGFeRD/Factur-X and XRechnung artifact, validation-report, storage/download-smoke, and sign-off records.
 
 The dedicated Android report is a non-secret attachment reference for Android-first launch evidence. It does not replace the signed artifact, push/maps configuration smoke, physical device/camera smoke, route compatibility, or owner approval records.
+
+The dedicated provider report is a non-secret attachment reference for Stripe, DHL, Brevo, and VIES evidence. It does not replace approved live execution, controlled provider smoke results, monitoring evidence, callback processing evidence, or operational playbook approvals.
 
 ## Current Outcome
 
