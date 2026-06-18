@@ -257,6 +257,7 @@ public sealed class SecurityAndPerformanceContractsAndPackagingSourceTests : Sec
             "check-web-storefront-readiness.ps1",
             "check-mobile-resource-names.ps1",
             "check-android-launch-readiness.ps1",
+            "check-production-readiness-report-bundle.ps1",
             "check-production-readiness-evidence-package.ps1",
             "new-production-readiness-evidence-package.ps1",
             "check-go-live-readiness.ps1"
@@ -299,6 +300,8 @@ public sealed class SecurityAndPerformanceContractsAndPackagingSourceTests : Sec
             .And.Contain("\"-RequireDeliveryPipeline\"")
             .And.Contain("scripts\\smoke-vies-live.ps1")
             .And.Contain("scripts\\check-production-like-staging-readiness.ps1")
+            .And.Contain("scripts\\check-production-readiness-report-bundle.ps1")
+            .And.Contain("DARWIN_PRODUCTION_READINESS_REPORT_BUNDLE_DIRECTORY")
             .And.Contain("scripts\\check-production-readiness-evidence-package.ps1")
             .And.Contain("scripts\\smoke-object-storage.ps1")
             .And.Contain("scripts\\check-minio-production-readiness.ps1")
@@ -327,6 +330,7 @@ public sealed class SecurityAndPerformanceContractsAndPackagingSourceTests : Sec
         externalSmokeInputsSource.Should().Contain("DARWIN_OBJECT_STORAGE_AZURE_CONTAINER");
         externalSmokeInputsSource.Should().Contain("DARWIN_STAGING_REHEARSAL_LABEL");
         externalSmokeInputsSource.Should().Contain("DARWIN_STAGING_OWNER_SIGNOFF_CONFIRMED");
+        externalSmokeInputsSource.Should().Contain("DARWIN_PRODUCTION_READINESS_REPORT_BUNDLE_DIRECTORY");
         externalSmokeInputsSource.Should().Contain("DARWIN_PRODUCTION_READINESS_EVIDENCE_PACKAGE_PATH");
         externalSmokeInputsSource.Should().Contain("DARWIN_MINIO_PRODUCTION_ENDPOINT");
         externalSmokeInputsSource.Should().Contain("DARWIN_MINIO_BACKUP_CONFIGURED_CONFIRMED");
@@ -533,10 +537,12 @@ public sealed class SecurityAndPerformanceContractsAndPackagingSourceTests : Sec
         output.Should().Contain("Brevo readiness smoke prerequisites");
         output.Should().Contain("VIES live smoke prerequisites");
         output.Should().Contain("Production-like staging readiness prerequisites");
+        output.Should().Contain("Production readiness report bundle");
         output.Should().Contain("Production readiness evidence package");
         output.Should().Contain("Object storage MediaAssets profile prerequisites");
         output.Should().Contain("Object storage ShipmentLabels profile prerequisites");
         output.Should().Contain("MinIO production readiness prerequisites");
+        output.Should().Contain("Azure Blob object-storage readiness prerequisites");
         output.Should().Contain("E-invoice production readiness prerequisites");
         output.Should().Contain("E-invoice external-command smoke prerequisites");
         output.Should().Contain("Web toolchain readiness prerequisites");
@@ -594,11 +600,13 @@ public sealed class SecurityAndPerformanceContractsAndPackagingSourceTests : Sec
         output.Should().Contain("Brevo readiness smoke prerequisites: Ready");
         output.Should().Contain("VIES live smoke prerequisites: Ready");
         output.Should().Contain("Production-like staging readiness prerequisites: Ready");
+        output.Should().Contain("Production readiness report bundle: Ready");
         output.Should().Contain("Production readiness evidence package: Ready");
         output.Should().Contain("Object storage smoke prerequisites: Ready");
         output.Should().Contain("Object storage MediaAssets profile prerequisites: Ready");
         output.Should().Contain("Object storage ShipmentLabels profile prerequisites: Ready");
         output.Should().Contain("MinIO production readiness prerequisites: Ready");
+        output.Should().Contain("Azure Blob object-storage readiness prerequisites: Ready");
         output.Should().Contain("E-invoice production readiness prerequisites: Ready");
         output.Should().Contain("E-invoice external-command smoke prerequisites: Ready");
         output.Should().Contain("Web toolchain readiness prerequisites: Ready");
@@ -2031,6 +2039,7 @@ public sealed class SecurityAndPerformanceContractsAndPackagingSourceTests : Sec
             ["DARWIN_STAGING_ANDROID_EVIDENCE_CONFIRMED"] = "true",
             ["DARWIN_STAGING_MONITORING_ALERTING_CONFIRMED"] = "true",
             ["DARWIN_STAGING_OWNER_SIGNOFF_CONFIRMED"] = "true",
+            ["DARWIN_PRODUCTION_READINESS_REPORT_BUNDLE_DIRECTORY"] = EnsureReadyProductionReadinessReportBundle(),
             ["DARWIN_WEBAPI_BASE_URL"] = "https://api.staging.example.test",
             ["DARWIN_WEB_SITE_URL"] = "https://web.staging.example.test",
             ["DARWIN_WEB_STOREFRONT_BUILD_CONFIRMED"] = "true",
@@ -2067,6 +2076,30 @@ public sealed class SecurityAndPerformanceContractsAndPackagingSourceTests : Sec
             ["DARWIN_MINIO_DISPOSABLE_SMOKE_PREFIX_CONFIRMED"] = "true",
             ["DARWIN_MINIO_RETENTION_DELETE_BEHAVIOR_CONFIRMED"] = "true",
             ["DARWIN_MINIO_OPERATOR_RUNBOOK_CONFIRMED"] = "true",
+            ["DARWIN_AZURE_BLOB_PRODUCTION_ENDPOINT"] = "https://storage.example.test",
+            ["DARWIN_AZURE_BLOB_PRODUCTION_CONTAINER"] = "darwin-invoice-archive",
+            ["DARWIN_AZURE_BLOB_PROVIDER_SELECTED_CONFIRMED"] = "true",
+            ["DARWIN_AZURE_BLOB_TLS_CONFIRMED"] = "true",
+            ["DARWIN_AZURE_BLOB_DEDICATED_IDENTITY_CONFIRMED"] = "true",
+            ["DARWIN_AZURE_BLOB_LEAST_PRIVILEGE_POLICY_CONFIRMED"] = "true",
+            ["DARWIN_AZURE_BLOB_VERSIONING_CONFIRMED"] = "true",
+            ["DARWIN_AZURE_BLOB_IMMUTABILITY_POLICY_CONFIRMED"] = "true",
+            ["DARWIN_AZURE_BLOB_LEGAL_HOLD_POLICY_CONFIRMED"] = "true",
+            ["DARWIN_AZURE_BLOB_BACKUP_CONFIGURED_CONFIRMED"] = "true",
+            ["DARWIN_AZURE_BLOB_RESTORE_TEST_CONFIRMED"] = "true",
+            ["DARWIN_AZURE_BLOB_MONITORING_CONFIRMED"] = "true",
+            ["DARWIN_AZURE_BLOB_ALERTING_CONFIRMED"] = "true",
+            ["DARWIN_AZURE_BLOB_DARWIN_PROFILE_CONFIGURED_CONFIRMED"] = "true",
+            ["DARWIN_AZURE_BLOB_INVOICE_ARCHIVE_PROFILE_CONFIRMED"] = "true",
+            ["DARWIN_AZURE_BLOB_SHIPMENT_LABELS_PROFILE_CONFIRMED"] = "true",
+            ["DARWIN_AZURE_BLOB_MEDIA_ASSETS_PROFILE_DECIDED_CONFIRMED"] = "true",
+            ["DARWIN_AZURE_BLOB_FINANCE_EXPORTS_PROFILE_CONFIRMED"] = "true",
+            ["DARWIN_AZURE_BLOB_FINANCE_EXPORT_OUTBOUND_PROFILE_CONFIRMED"] = "true",
+            ["DARWIN_AZURE_BLOB_PERSONNEL_DOCUMENTS_PROFILE_CONFIRMED"] = "true",
+            ["DARWIN_AZURE_BLOB_PAYROLL_PAYSLIPS_PROFILE_CONFIRMED"] = "true",
+            ["DARWIN_AZURE_BLOB_DISPOSABLE_SMOKE_PREFIX_CONFIRMED"] = "true",
+            ["DARWIN_AZURE_BLOB_RETENTION_DELETE_BEHAVIOR_CONFIRMED"] = "true",
+            ["DARWIN_AZURE_BLOB_OPERATOR_RUNBOOK_CONFIRMED"] = "true",
             ["DARWIN_EINVOICE_TOOLING_REFERENCE"] = "tooling-checksum-ref-001",
             ["DARWIN_EINVOICE_EVIDENCE_PACKAGE_REFERENCE"] = "evidence-package-ref-001",
             ["DARWIN_EINVOICE_TOOLING_PINNED_CONFIRMED"] = "true",
@@ -2147,6 +2180,105 @@ public sealed class SecurityAndPerformanceContractsAndPackagingSourceTests : Sec
 
         await process.WaitForExitAsync(TestContext.Current.CancellationToken);
         return (process.ExitCode, $"{await stdoutTask}{Environment.NewLine}{await stderrTask}");
+    }
+
+    private static string EnsureReadyProductionReadinessReportBundle()
+    {
+        var directory = Path.Combine(Path.GetTempPath(), "darwin-production-readiness-report-bundle-ready");
+        Directory.CreateDirectory(directory);
+
+        var reportNames = new[]
+        {
+            "readiness-report-bundle.md",
+            "production-like-staging-readiness-report.md",
+            "local-backup-readiness-report.md",
+            "local-postgres-restore-readiness-report.md",
+            "local-release-candidate-readiness-report.md",
+            "evidence-package-validator-smoke.md",
+            "web-mobile-readiness-report.md",
+            "go-live-readiness-report.md",
+            "minio-production-readiness-report.md",
+            "azure-object-storage-readiness-report.md",
+            "einvoice-production-readiness-report.md",
+            "android-launch-readiness-report.md",
+            "provider-readiness-report.md"
+        };
+
+        var helperNames = new[]
+        {
+            "production-readiness-action-plan.md",
+            "production-readiness-owner-handoff.md",
+            "production-readiness-env-template.ps1",
+            "evidence-package-local-draft.md"
+        };
+
+        foreach (var reportName in reportNames)
+        {
+            var content = $"""
+                # {reportName}
+
+                Overall result: Ready
+
+                Exit code: 0
+                """;
+
+            if (reportName == "readiness-report-bundle.md")
+            {
+                content += Environment.NewLine + string.Join(Environment.NewLine, reportNames.Concat(helperNames));
+            }
+
+            File.WriteAllText(Path.Combine(directory, reportName), content);
+        }
+
+        File.WriteAllText(
+            Path.Combine(directory, "production-readiness-action-plan.md"),
+            """
+            # Production Readiness Action Plan
+
+            ## Owner Action Rows
+
+            | Area | Result | Owner | Next action |
+            | --- | --- | --- | --- |
+            | Go-live aggregate | Blocked | Darwin technical owner | See the dedicated readiness rows |
+            """);
+
+        File.WriteAllText(
+            Path.Combine(directory, "production-readiness-owner-handoff.md"),
+            """
+            # Production Readiness Owner Handoff
+
+            ## System administrator or DevOps owner
+
+            | Area | Result | Next action |
+            | --- | --- | --- |
+            | Storage | Ready | Evidence attached |
+            """);
+
+        File.WriteAllText(
+            Path.Combine(directory, "production-readiness-env-template.ps1"),
+            """
+            # Production readiness environment template
+
+            # No template assignment is written for secret-like variables.
+            """);
+
+        File.WriteAllText(
+            Path.Combine(directory, "evidence-package-local-draft.md"),
+            """
+            # Local Evidence Package Draft
+
+            ## Local Draft Notice
+
+            | Evidence | Reference |
+            | --- | --- |
+            | Readiness report bundle | readiness-report-bundle.md |
+            | Owner handoff | production-readiness-owner-handoff.md |
+            | Local backup | local-backup-readiness-report.md |
+
+            ## Local Supporting Evidence Snapshot
+            """);
+
+        return directory;
     }
 
     private static string EnsureFilledProductionReadinessEvidencePackage()

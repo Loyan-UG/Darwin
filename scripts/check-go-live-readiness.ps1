@@ -19,6 +19,15 @@ function New-ObjectStorageProfileCommand {
     return $command
 }
 
+function New-ProductionReadinessReportBundleCommand {
+    $command = @("powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", "scripts\check-production-readiness-report-bundle.ps1")
+    if (-not [string]::IsNullOrWhiteSpace($env:DARWIN_PRODUCTION_READINESS_REPORT_BUNDLE_DIRECTORY)) {
+        $command += @("-Directory", $env:DARWIN_PRODUCTION_READINESS_REPORT_BUNDLE_DIRECTORY)
+    }
+
+    return $command
+}
+
 $checks = @(
     @{ Name = "Secrets scan"; Command = @("powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", "scripts\check-secrets.ps1"); ExpectedBlockedExitCode = $null },
     @{ Name = "Stripe test-mode smoke prerequisites"; Command = @("powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", "scripts\smoke-stripe-testmode.ps1", "-CreateSmokeOrder", "-RequireRuntimePipeline"); ExpectedBlockedExitCode = 2 },
@@ -28,7 +37,7 @@ $checks = @(
     @{ Name = "Brevo readiness smoke prerequisites"; Command = @("powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", "scripts\smoke-brevo-readiness.ps1", "-UseSiteSettings", "-RequireDeliveryPipeline"); ExpectedBlockedExitCode = 2 },
     @{ Name = "VIES live smoke prerequisites"; Command = @("powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", "scripts\smoke-vies-live.ps1"); ExpectedBlockedExitCode = 2 },
     @{ Name = "Production-like staging readiness prerequisites"; Command = @("powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", "scripts\check-production-like-staging-readiness.ps1"); ExpectedBlockedExitCode = 2 },
-    @{ Name = "Production readiness report bundle"; Command = @("powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", "scripts\check-production-readiness-report-bundle.ps1"); ExpectedBlockedExitCode = $null },
+    @{ Name = "Production readiness report bundle"; Command = New-ProductionReadinessReportBundleCommand; ExpectedBlockedExitCode = $null },
     @{ Name = "Production readiness evidence package"; Command = @("powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", "scripts\check-production-readiness-evidence-package.ps1"); ExpectedBlockedExitCode = 2 },
     @{ Name = "Object storage smoke prerequisites"; Command = @("powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", "scripts\smoke-object-storage.ps1"); ExpectedBlockedExitCode = 2 },
     @{ Name = "Object storage MediaAssets profile prerequisites"; Command = New-ObjectStorageProfileCommand -ProfileName "MediaAssets" -ContainerName $env:DARWIN_OBJECT_STORAGE_MEDIA_CONTAINER -Prefix $env:DARWIN_OBJECT_STORAGE_MEDIA_PREFIX; ExpectedBlockedExitCode = 2 },

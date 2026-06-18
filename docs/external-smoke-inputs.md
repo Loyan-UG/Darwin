@@ -14,7 +14,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts\check-go-live-readin
 
 Exit code `2` means one or more checks are blocked by missing operator inputs. That is expected before a provider is fully configured.
 The aggregate dry-run loads Brevo Site Settings from the local PostgreSQL Docker container when available, but still requires non-secret delivery-pipeline confirmations before marking Brevo production-readiness prerequisites complete.
-The aggregate dry-run also runs the production readiness report-bundle validator, so the top-level go-live gate fails fast if the local non-secret report/helper set is missing, unparseable, failed, or unsafe before the filled deployment evidence package is reviewed.
+The aggregate dry-run also runs the production readiness report-bundle validator, so the top-level go-live gate fails fast if the local non-secret report/helper set is missing, unparseable, failed, or unsafe before the filled deployment evidence package is reviewed. Set `DARWIN_PRODUCTION_READINESS_REPORT_BUNDLE_DIRECTORY` only when the bundle lives outside the default ignored `artifacts\production-readiness\` directory.
 
 To keep a non-secret readiness attachment for the evidence package, export the same dry-run to an ignored markdown report:
 
