@@ -44,6 +44,7 @@ This plan turns the current production-readiness decisions into an execution ord
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\new-production-readiness-evidence-package.ps1 -OutputPath artifacts\production-readiness\evidence-package.md -DeploymentLabel "production-like-staging" -ReleaseReference "release-artifact-id" -PreparedBy "Darwin technical owner"
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\export-production-readiness-report-bundle.ps1 -Force
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\check-production-readiness-report-bundle.ps1
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\export-production-readiness-action-plan.ps1 -Force
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\check-production-like-staging-readiness.ps1
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\export-production-like-staging-readiness-report.ps1 -Force
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\check-local-backup-readiness.ps1
@@ -67,7 +68,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts\check-production-rea
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\check-go-live-readiness.ps1
 ```
 
-The bundle exporter runs every dedicated non-secret readiness report exporter and writes `readiness-report-bundle.md` under `artifacts\production-readiness\`. The bundle validator confirms every expected report exists, has a parseable non-failed result, and does not contain sensitive assignment patterns. The individual report commands remain useful when one evidence area needs to be rerun or debugged.
+The bundle exporter runs every dedicated non-secret readiness report exporter and writes `readiness-report-bundle.md` under `artifacts\production-readiness\`. The bundle validator confirms every expected report exists, has a parseable non-failed result, and does not contain sensitive assignment patterns. The action-plan exporter reads those report files and writes `production-readiness-action-plan.md` with owner rows, missing evidence keys, and next actions. The individual report commands remain useful when one evidence area needs to be rerun or debugged.
 
 The central go-live report includes separate MinIO and Azure Blob readiness rows. The dedicated MinIO and Azure reports remain useful as non-secret attachment references for the object-storage evidence rows.
 
@@ -91,4 +92,4 @@ The dedicated provider report is a non-secret attachment reference for Stripe, D
 
 The execution plan is local and target-neutral. A local production-like evidence working copy was generated on 2026-06-18 under the ignored `artifacts\production-readiness\` path, with a non-secret summary covering the current branch, restored local PostgreSQL backup, build, focused test lanes, mobile resource-name preflight, and web toolchain preflight. That working copy is not committed because deployment evidence must remain outside source control.
 
-Real completion still requires deployment-specific evidence from the selected staging and production environments. The remaining blockers are external owner evidence for production-like staging sign-off, selected-provider MinIO controls and smoke, Azure readiness when in scope, dual-format e-invoice validation and accounting/tax sign-off, Android signed artifact and device/provider smoke, Stripe, DHL, Brevo, VIES, monitoring, rollback, and final owner approvals.
+Real completion still requires deployment-specific evidence from the selected staging and production environments. The generated action plan can assign those blockers to owners, but it cannot approve them. The remaining blockers are external owner evidence for production-like staging sign-off, selected-provider MinIO controls and smoke, Azure readiness when in scope, dual-format e-invoice validation and accounting/tax sign-off, Android signed artifact and device/provider smoke, Stripe, DHL, Brevo, VIES, monitoring, rollback, and final owner approvals.
