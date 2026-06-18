@@ -43,6 +43,14 @@ function Assert-AbsoluteHttpsEndpoint {
         exit 2
     }
 
+    if (-not [string]::IsNullOrWhiteSpace($parsed.UserInfo) -or
+        -not [string]::IsNullOrWhiteSpace($parsed.Query) -or
+        -not [string]::IsNullOrWhiteSpace($parsed.Fragment)) {
+        Write-Host "Stripe live readiness is blocked."
+        Write-Host "$Name must be the public HTTPS webhook URL without embedded credentials, query strings, or fragments. Keep webhook signing secrets, tokens, and provider payloads out of readiness input."
+        exit 2
+    }
+
     if (-not $parsed.AbsolutePath.EndsWith($RequiredPath, [StringComparison]::OrdinalIgnoreCase)) {
         Write-Host "Stripe live readiness is blocked."
         Write-Host "$Name must end with $RequiredPath."

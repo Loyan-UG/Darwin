@@ -137,6 +137,8 @@ Required confirmations:
 - `DARWIN_STRIPE_ALERTING_CONFIRMED=true`
 - `DARWIN_STRIPE_REFUND_DISPUTE_PLAYBOOK_CONFIRMED=true`
 
+`DARWIN_STRIPE_LIVE_WEBHOOK_PUBLIC_URL` must be the public HTTPS webhook URL ending in `/api/v1/public/billing/stripe/webhooks`. Do not include embedded credentials, query strings, fragments, webhook signing secrets, tokens, provider payloads, or live payment details in the URL or readiness inputs.
+
 Command:
 
 ```powershell

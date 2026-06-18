@@ -1137,6 +1137,52 @@ public sealed class SecurityAndPerformanceContractsAndPackagingSourceTests : Sec
         secretPattern.IsMatch(output).Should().BeFalse($"{scriptName} ready dry-run output must not print provider secrets");
     }
 
+    [Theory]
+    [InlineData("https://stripe-webhook.example.test/api/v1/public/billing/stripe/webhooks?token=secret")]
+    [InlineData("https://user:secret@stripe-webhook.example.test/api/v1/public/billing/stripe/webhooks")]
+    [InlineData("https://stripe-webhook.example.test/api/v1/public/billing/stripe/webhooks#secret")]
+    public async Task StripeLiveReadiness_Should_BlockWebhookUrlWithUserInfoQueryOrFragment(string webhookUrl)
+    {
+        var root = ResolveRepositoryPath();
+        var startInfo = new ProcessStartInfo
+        {
+            FileName = "powershell",
+            WorkingDirectory = root,
+            RedirectStandardOutput = true,
+            RedirectStandardError = true,
+            UseShellExecute = false
+        };
+        startInfo.ArgumentList.Add("-NoProfile");
+        startInfo.ArgumentList.Add("-ExecutionPolicy");
+        startInfo.ArgumentList.Add("Bypass");
+        startInfo.ArgumentList.Add("-File");
+        startInfo.ArgumentList.Add(Path.Combine("scripts", "check-stripe-live-readiness.ps1"));
+
+        foreach (var key in startInfo.Environment.Keys.Cast<string>()
+                     .Where(key => key.StartsWith("DARWIN_", StringComparison.OrdinalIgnoreCase)).ToList())
+        {
+            startInfo.Environment.Remove(key);
+        }
+
+        foreach (var item in StripeLiveReadinessEnvironment(webhookUrl))
+        {
+            startInfo.Environment[item.Key] = item.Value;
+        }
+
+        using var process = Process.Start(startInfo) ?? throw new InvalidOperationException("Could not start check-stripe-live-readiness.ps1.");
+        var stdoutTask = process.StandardOutput.ReadToEndAsync(TestContext.Current.CancellationToken);
+        var stderrTask = process.StandardError.ReadToEndAsync(TestContext.Current.CancellationToken);
+
+        await process.WaitForExitAsync(TestContext.Current.CancellationToken);
+        var output = $"{await stdoutTask}{Environment.NewLine}{await stderrTask}";
+
+        process.ExitCode.Should().Be(2);
+        output.Should().Contain("Stripe live readiness is blocked.");
+        output.Should().Contain("without embedded credentials, query strings, or fragments");
+        output.Should().NotContain(webhookUrl);
+        output.Should().NotContain("System.Management.Automation.RemoteException");
+    }
+
     [Fact]
     public async Task StripeSubscriptionCheckoutSmoke_Should_BlockWhenCheckoutPrerequisitesMissing()
     {
@@ -2514,6 +2560,20 @@ public sealed class SecurityAndPerformanceContractsAndPackagingSourceTests : Sec
             }
         };
     }
+
+    private static IReadOnlyDictionary<string, string> StripeLiveReadinessEnvironment(string webhookUrl) =>
+        new Dictionary<string, string>
+        {
+            ["DARWIN_STRIPE_LIVE_WEBHOOK_PUBLIC_URL"] = webhookUrl,
+            ["DARWIN_STRIPE_LIVE_KEYS_CONFIGURED_CONFIRMED"] = "true",
+            ["DARWIN_STRIPE_LIVE_WEBHOOK_ENDPOINT_CONFIRMED"] = "true",
+            ["DARWIN_STRIPE_LIVE_WEBHOOK_EVENTS_CONFIRMED"] = "true",
+            ["DARWIN_STRIPE_PROVIDER_CALLBACK_WORKER_CONFIRMED"] = "true",
+            ["DARWIN_STRIPE_WEBADMIN_VISIBILITY_CONFIRMED"] = "true",
+            ["DARWIN_STRIPE_MONITORING_CONFIRMED"] = "true",
+            ["DARWIN_STRIPE_ALERTING_CONFIRMED"] = "true",
+            ["DARWIN_STRIPE_REFUND_DISPUTE_PLAYBOOK_CONFIRMED"] = "true"
+        };
 
     private static IReadOnlyDictionary<string, string> AllProviderReadyDryRunEnvironment() =>
         new Dictionary<string, string>
