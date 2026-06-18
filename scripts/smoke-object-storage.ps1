@@ -6,7 +6,8 @@ param(
     [string]$ContainerName = $env:DARWIN_OBJECT_STORAGE_CONTAINER,
     [string]$Prefix = $env:DARWIN_OBJECT_STORAGE_PREFIX,
     [string]$FileRoot = $env:DARWIN_OBJECT_STORAGE_FILE_ROOT,
-    [switch]$SmokeRetention
+    [switch]$SmokeRetention,
+    [int]$HostTimeoutSeconds = 300
 )
 
 $ErrorActionPreference = "Stop"
@@ -145,6 +146,68 @@ if (-not $Execute) {
     Write-Host "Object storage smoke configuration is present for provider '$providerName'."
     Write-Host "Run with -Execute to create, read, inspect, optionally generate a temporary URL for, and delete a disposable smoke object through the selected profile. Add -SmokeRetention to write a retained smoke object and skip cleanup for provider-level retention inspection. Production-like endpoints also require DARWIN_OBJECT_STORAGE_PRODUCTION_SMOKE_CONFIRMED=true or -AllowProductionEndpoint. No secrets, object payloads, object keys, or provider credentials are printed."
     exit 0
+}
+
+if ($HostTimeoutSeconds -lt 60 -or $HostTimeoutSeconds -gt 900) {
+    Write-Host "Object storage smoke is blocked. HostTimeoutSeconds must be between 60 and 900."
+    exit 2
+}
+
+function Invoke-DotnetRunWithTimeout {
+    param(
+        [Parameter(Mandatory = $true)][string]$ProjectPath,
+        [Parameter(Mandatory = $true)][int]$TimeoutSeconds
+    )
+
+    $job = $null
+
+    try {
+        $job = Start-Job -ScriptBlock {
+            param([string]$SmokeProjectPath)
+
+            dotnet run --project $SmokeProjectPath 2>&1
+            $global:LASTEXITCODE
+        } -ArgumentList $ProjectPath
+
+        if (-not (Wait-Job -Job $job -Timeout $TimeoutSeconds)) {
+            Stop-Job -Job $job -ErrorAction SilentlyContinue | Out-Null
+            $childProcesses = @(Get-CimInstance Win32_Process -Filter "name = 'dotnet.exe'" |
+                Where-Object { ([string]$_.CommandLine).IndexOf($ProjectPath, [StringComparison]::OrdinalIgnoreCase) -ge 0 })
+            foreach ($childProcess in $childProcesses) {
+                & taskkill /PID $childProcess.ProcessId /T /F 2>$null | Out-Null
+            }
+
+            Write-Host "Object storage smoke failed. The temporary dotnet run host timed out."
+            return 124
+        }
+
+        $jobOutput = @(Receive-Job -Job $job)
+        $exitCode = 0
+        if ($jobOutput.Count -gt 0) {
+            $lastItem = $jobOutput[$jobOutput.Count - 1]
+            if ($lastItem -is [int]) {
+                $exitCode = [int]$lastItem
+                $jobOutput = @($jobOutput | Select-Object -First ($jobOutput.Count - 1))
+            }
+        }
+
+        $jobOutput | ForEach-Object { Write-Host $_ }
+        return $exitCode
+    }
+    finally {
+        if ($null -ne $job) {
+            if ($job.State -eq "Running") {
+                Stop-Job -Job $job -ErrorAction SilentlyContinue | Out-Null
+                $childProcesses = @(Get-CimInstance Win32_Process -Filter "name = 'dotnet.exe'" |
+                    Where-Object { ([string]$_.CommandLine).IndexOf($ProjectPath, [StringComparison]::OrdinalIgnoreCase) -ge 0 })
+                foreach ($childProcess in $childProcesses) {
+                    & taskkill /PID $childProcess.ProcessId /T /F 2>$null | Out-Null
+                }
+            }
+
+            Remove-Job -Job $job -Force -ErrorAction SilentlyContinue
+        }
+    }
 }
 
 switch ($providerName.ToLowerInvariant()) {
@@ -320,9 +383,9 @@ Console.WriteLine("Provider: " + write.Provider);
 Console.WriteLine("Temporary URL available: " + (tempUrl is not null));
 '@ | Set-Content -Path $programPath -Encoding UTF8
 
-    dotnet run --project $projectPath
-    if ($LASTEXITCODE -ne 0) {
-        exit $LASTEXITCODE
+    $dotnetExitCode = Invoke-DotnetRunWithTimeout -ProjectPath $projectPath -TimeoutSeconds $HostTimeoutSeconds
+    if ($dotnetExitCode -ne 0) {
+        exit $dotnetExitCode
     }
 }
 finally {

@@ -520,13 +520,22 @@ public sealed class SecurityAndPerformanceContractsAndPackagingSourceTests : Sec
             .And.Contain("[string]$FileRoot")
             .And.Contain("[switch]$SmokeRetention")
             .And.Contain("[switch]$AllowProductionEndpoint")
+            .And.Contain("[int]$HostTimeoutSeconds")
             .And.Contain("DARWIN_OBJECT_STORAGE_SMOKE_RETENTION")
             .And.Contain("DARWIN_OBJECT_STORAGE_PRODUCTION_SMOKE_CONFIRMED")
             .And.Contain("Add -SmokeRetention")
             .And.Contain("ObjectStorageKeyBuilder.Build")
             .And.Contain("ObjectStorage:AzureBlob:ConnectionString")
+            .And.Contain("Invoke-DotnetRunWithTimeout")
+            .And.Contain("Start-Job -ScriptBlock")
+            .And.Contain("dotnet run --project $SmokeProjectPath")
+            .And.Contain("Wait-Job -Job $job -Timeout $TimeoutSeconds")
+            .And.Contain("taskkill /PID $childProcess.ProcessId /T /F")
+            .And.Contain("The temporary dotnet run host timed out")
+            .And.Contain("HostTimeoutSeconds must be between 60 and 900")
             .And.NotContain("Write-Host $env:DARWIN_OBJECT_STORAGE_S3_SECRET_KEY")
-            .And.NotContain("Write-Host $env:DARWIN_OBJECT_STORAGE_AZURE_CONNECTION_STRING");
+            .And.NotContain("Write-Host $env:DARWIN_OBJECT_STORAGE_AZURE_CONNECTION_STRING")
+            .And.NotContain("dotnet run --project $projectPath");
 
         ReadRepositoryFile(Path.Combine("scripts", "check-minio-production-readiness.ps1"))
             .Should()
