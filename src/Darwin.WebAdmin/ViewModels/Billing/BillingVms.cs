@@ -317,6 +317,10 @@ namespace Darwin.WebAdmin.ViewModels.Billing
         public int? TrialDays { get; set; }
         public bool IsActive { get; set; }
         public bool HasFeatures { get; set; }
+        public int MonthlyPushCampaigns { get; set; }
+        public bool CampaignsInApp { get; set; }
+        public bool CampaignsPush { get; set; }
+        public bool AdvancedTargeting { get; set; }
         public int ActiveSubscriptionCount { get; set; }
         public DateTime? ModifiedAtUtc { get; set; }
         public byte[] RowVersion { get; set; } = Array.Empty<byte>();
@@ -546,6 +550,21 @@ namespace Darwin.WebAdmin.ViewModels.Billing
         [Required]
         [StringLength(4000)]
         public string FeaturesJson { get; set; } = "{}";
+
+        [Range(0, 100000)]
+        public int MaxStaff { get; set; } = 3;
+
+        [Range(0, 100000)]
+        public int MaxRewardTiers { get; set; } = 5;
+
+        [Range(0, 100000)]
+        public int MonthlyPushCampaigns { get; set; }
+
+        public bool CampaignsInApp { get; set; } = true;
+        public bool CampaignsPush { get; set; }
+        public bool AdvancedTargeting { get; set; }
+        public bool Exports { get; set; }
+        public bool Sla { get; set; }
 
         public int ActiveSubscriptionCount { get; set; }
         public IEnumerable<SelectListItem> IntervalItems { get; set; } = Array.Empty<SelectListItem>();

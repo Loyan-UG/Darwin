@@ -35,6 +35,24 @@ public sealed class ConsumerLaunchReadinessGuardsTests
     }
 
     [Fact]
+    public void ConsumerAndroidPush_Should_HandleForegroundMessagesAndNotificationTapDeepLinks()
+    {
+        var root = FindRepositoryRoot();
+        var firebaseService = File.ReadAllText(root.Combine("src", "Darwin.Mobile.Consumer", "Platforms", "Android", "Notifications", "ConsumerFirebaseMessagingService.cs"));
+        var mainActivity = File.ReadAllText(root.Combine("src", "Darwin.Mobile.Consumer", "Platforms", "Android", "MainActivity.cs"));
+        var navigator = File.ReadAllText(root.Combine("src", "Darwin.Mobile.Consumer", "Services", "Notifications", "NotificationDeepLinkNavigator.cs"));
+
+        firebaseService.Should().Contain("OnMessageReceived");
+        firebaseService.Should().Contain("NotificationChannel");
+        firebaseService.Should().Contain("deepLink");
+        firebaseService.Should().Contain("notificationId");
+        mainActivity.Should().Contain("OnNewIntent");
+        mainActivity.Should().Contain("HandleNotificationIntent");
+        navigator.Should().Contain("TryNavigatePendingAsync");
+        navigator.Should().Contain("Routes.Notifications");
+    }
+
+    [Fact]
     public void AppleReleaseEntitlements_Should_UseProductionPushEnvironment()
     {
         var root = FindRepositoryRoot();

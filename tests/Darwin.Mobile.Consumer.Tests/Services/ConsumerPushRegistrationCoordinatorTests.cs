@@ -46,11 +46,13 @@ public sealed class ConsumerPushRegistrationCoordinatorTests
     {
         var stateStore = new FakeRegistrationStateStore();
         var pushService = new FakePushRegistrationService();
-        var coordinator = CreateCoordinator(pushService, stateStore: stateStore);
+        var permissionService = new FakeNotificationPermissionService();
+        var coordinator = CreateCoordinator(pushService, notificationPermissionService: permissionService, stateStore: stateStore);
 
         var result = await coordinator.TryRegisterCurrentDeviceAsync(CancellationToken.None);
 
         result.Succeeded.Should().BeTrue();
+        permissionService.CallCount.Should().Be(1);
         pushService.CallCount.Should().Be(1);
         pushService.LastDeviceId.Should().Be("device-1");
         pushService.LastPlatform.Should().Be(MobileDevicePlatform.Android);
@@ -66,11 +68,13 @@ public sealed class ConsumerPushRegistrationCoordinatorTests
     {
         var stateStore = new FakeRegistrationStateStore();
         var pushService = new FakePushRegistrationService();
-        var coordinator = CreateCoordinator(pushService, stateStore: stateStore);
+        var permissionService = new FakeNotificationPermissionService();
+        var coordinator = CreateCoordinator(pushService, notificationPermissionService: permissionService, stateStore: stateStore);
 
         (await coordinator.TryRegisterCurrentDeviceAsync(CancellationToken.None)).Succeeded.Should().BeTrue();
         (await coordinator.TryRegisterCurrentDeviceAsync(CancellationToken.None)).Succeeded.Should().BeTrue();
 
+        permissionService.CallCount.Should().Be(1);
         pushService.CallCount.Should().Be(1);
     }
 
@@ -89,11 +93,13 @@ public sealed class ConsumerPushRegistrationCoordinatorTests
         FakePushRegistrationService pushRegistrationService,
         string? accessToken = "access-token",
         Result<ConsumerPushTokenState>? tokenStateResult = null,
+        FakeNotificationPermissionService? notificationPermissionService = null,
         FakeRegistrationStateStore? stateStore = null)
     {
         return new ConsumerPushRegistrationCoordinator(
             pushRegistrationService,
             new FakeTokenStore(accessToken),
+            notificationPermissionService ?? new FakeNotificationPermissionService(),
             new FakePushTokenProvider(tokenStateResult ?? Result<ConsumerPushTokenState>.Ok(new ConsumerPushTokenState
             {
                 PushToken = "push-token",
@@ -102,6 +108,17 @@ public sealed class ConsumerPushRegistrationCoordinatorTests
             new FakeDeviceIdProvider(),
             new FakeRuntimeInfo(),
             stateStore ?? new FakeRegistrationStateStore());
+    }
+
+    private sealed class FakeNotificationPermissionService : IConsumerNotificationPermissionService
+    {
+        public int CallCount { get; private set; }
+
+        public Task<Result<bool>> EnsurePermissionAsync(CancellationToken cancellationToken)
+        {
+            CallCount++;
+            return Task.FromResult(Result<bool>.Ok(true));
+        }
     }
 
     private sealed class FakePushRegistrationService : IPushRegistrationService

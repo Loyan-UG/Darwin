@@ -36,6 +36,13 @@
     <SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'tizen'">6.5</SupportedOSPlatformVersion>
     <DefaultLanguage>de-DE</DefaultLanguage>
   </PropertyGroup>
+  <PropertyGroup>
+    <NoWarn>$(NoWarn);NU1608</NoWarn>
+  </PropertyGroup>
+  <Target Name="ValidateAndroidPushFirebaseConfig" BeforeTargets="Build" Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'android'">
+    <Warning Condition="!Exists('google-services.json') and '$(Configuration)' != 'Release'" Text="google-services.json is missing. FCM token/bootstrap can fail at runtime. Add src/Darwin.Mobile.Business/google-services.json for your Firebase project." />
+    <Error Condition="!Exists('google-services.json') and '$(Configuration)' == 'Release'" Text="google-services.json is required for Android Release builds with FCM push integration." />
+  </Target>
   <ItemGroup>
     <!-- App Icon -->
     <MauiIcon Include="Resources\AppIcon\appicon.svg" Color="#F4B223" />
@@ -65,6 +72,10 @@
   </ItemGroup>
   <ItemGroup Condition="'$(TargetFramework)' == 'net10.0-windows10.0.19041.0'">
     <PackageReference Include="Microsoft.Extensions.Diagnostics.Abstractions" Version="10.0.7" />
+  </ItemGroup>
+  <ItemGroup Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'android'">
+    <PackageReference Include="Xamarin.Firebase.Messaging" Version="125.0.1.2" />
+    <GoogleServicesJson Include="google-services.json" Condition="Exists('google-services.json')" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Darwin.Contracts\Darwin.Contracts.csproj" />

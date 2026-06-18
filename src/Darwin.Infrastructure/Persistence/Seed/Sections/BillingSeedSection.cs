@@ -5,6 +5,7 @@ using System.Text.Json;
 using System.Text.Json.Nodes;
 using System.Threading;
 using System.Threading.Tasks;
+using Darwin.Application.Billing;
 using Darwin.Domain.Common;
 using Darwin.Domain.Entities.Billing;
 using Darwin.Domain.Entities.Businesses;
@@ -27,6 +28,22 @@ namespace Darwin.Infrastructure.Persistence.Seed.Sections
 
         private sealed record FinancialAccountSeed(string Code, string Name, AccountType Type);
         private sealed record BillingPlanLocalizedSeed(string DeName, string DeDescription, string EnName, string EnDescription);
+        private sealed record BillingPlanSeed(
+            string Code,
+            string Name,
+            string Description,
+            long PriceMinor,
+            BillingInterval Interval,
+            int IntervalCount,
+            int TrialDays,
+            int MaxStaff,
+            int MaxRewardTiers,
+            int MonthlyPushCampaigns,
+            bool CampaignsInApp,
+            bool CampaignsPush,
+            bool AdvancedTargeting,
+            bool Exports,
+            bool Sla);
 
         public BillingSeedSection(ILogger<BillingSeedSection> logger)
         {
@@ -37,11 +54,7 @@ namespace Darwin.Infrastructure.Persistence.Seed.Sections
         {
             _logger.LogInformation("Seeding Billing (plans/subscriptions/invoices/accounting) ...");
 
-            if (!await db.BillingPlans.AnyAsync(ct))
-            {
-                await SeedPlansAsync(db, ct);
-            }
-
+            await EnsurePlanCatalogAsync(db, ct);
             await EnsureBillingPlanLocalizedFeaturesAsync(db, ct);
 
             if (!await db.BusinessSubscriptions.AnyAsync(ct))
@@ -89,6 +102,68 @@ namespace Darwin.Infrastructure.Persistence.Seed.Sections
             };
 
             db.AddRange(plans);
+            await db.SaveChangesAsync(ct);
+        }
+
+        private static async Task EnsurePlanCatalogAsync(DarwinDbContext db, CancellationToken ct)
+        {
+            var seeds = new List<BillingPlanSeed>
+            {
+                new("starter-month", "Starter (monthly)", "Base plan for small teams: in-app campaigns only.", 1900, BillingInterval.Month, 1, 14, 3, 5, 0, true, false, false, false, false),
+                new("starter-year", "Starter (annual)", "Base plan with annual discount: in-app campaigns only.", 19000, BillingInterval.Year, 1, 14, 3, 5, 0, true, false, false, false, false),
+                new("growth-month", "Growth (monthly)", "Growth plan with limited push campaigns.", 4900, BillingInterval.Month, 1, 14, 10, 15, 5, true, true, false, true, false),
+                new("growth-year", "Growth (annual)", "Growth plan with annual discount and limited push campaigns.", 49000, BillingInterval.Year, 1, 14, 10, 15, 5, true, true, false, true, false),
+                new("pro-month", "Pro (monthly)", "Advanced loyalty tools with more push campaigns.", 9900, BillingInterval.Month, 1, 14, 25, 50, 20, true, true, true, true, false),
+                new("pro-year", "Pro (annual)", "Pro with annual discount and advanced targeting.", 99000, BillingInterval.Year, 1, 14, 25, 50, 20, true, true, true, true, false),
+                new("enterprise-month", "Enterprise (monthly)", "Large teams with high push limits and SLA.", 19900, BillingInterval.Month, 1, 0, 100, 200, 100, true, true, true, true, true),
+                new("enterprise-year", "Enterprise (annual)", "Enterprise with annual discount, high push limits and SLA.", 199000, BillingInterval.Year, 1, 0, 100, 200, 100, true, true, true, true, true)
+            };
+
+            var existingPlans = await db.BillingPlans
+                .Where(x => !x.IsDeleted)
+                .ToListAsync(ct);
+
+            foreach (var seed in seeds)
+            {
+                var plan = existingPlans.FirstOrDefault(x => string.Equals(x.Code, seed.Code, StringComparison.OrdinalIgnoreCase));
+                var featuresJson = BillingPlanFeaturesJson.Build(
+                    seed.MaxStaff,
+                    seed.MaxRewardTiers,
+                    seed.MonthlyPushCampaigns,
+                    seed.CampaignsInApp,
+                    seed.CampaignsPush,
+                    seed.AdvancedTargeting,
+                    seed.Exports,
+                    seed.Sla,
+                    plan?.FeaturesJson);
+
+                if (plan is null)
+                {
+                    db.BillingPlans.Add(new BillingPlan
+                    {
+                        Code = seed.Code,
+                        Name = seed.Name,
+                        Description = seed.Description,
+                        PriceMinor = seed.PriceMinor,
+                        Interval = seed.Interval,
+                        IntervalCount = seed.IntervalCount,
+                        TrialDays = seed.TrialDays,
+                        IsActive = true,
+                        FeaturesJson = featuresJson
+                    });
+                    continue;
+                }
+
+                plan.Name = seed.Name;
+                plan.Description = seed.Description;
+                plan.PriceMinor = seed.PriceMinor;
+                plan.Interval = seed.Interval;
+                plan.IntervalCount = seed.IntervalCount;
+                plan.TrialDays = seed.TrialDays;
+                plan.IsActive = true;
+                plan.FeaturesJson = featuresJson;
+            }
+
             await db.SaveChangesAsync(ct);
         }
 
@@ -159,14 +234,16 @@ namespace Darwin.Infrastructure.Persistence.Seed.Sections
         private static readonly IReadOnlyDictionary<string, BillingPlanLocalizedSeed> BillingPlanLocalizedSeeds =
             new Dictionary<string, BillingPlanLocalizedSeed>(StringComparer.OrdinalIgnoreCase)
             {
-                ["starter-month"] = new("Starter (Monat)", "Basisplan f\u00fcr kleine Teams", "Starter (monthly)", "Base plan for small teams"),
-                ["starter-year"] = new("Starter (Jahr)", "Basisplan mit Jahresrabatt", "Starter (annual)", "Base plan with annual discount"),
-                ["pro-month"] = new("Pro (Monat)", "Erweiterte Funktionen", "Pro (monthly)", "Advanced features"),
-                ["pro-year"] = new("Pro (Jahr)", "Pro mit Jahresrabatt", "Pro (annual)", "Pro with annual discount"),
+                ["starter-month"] = new("Starter (Monat)", "Basisplan f\u00fcr kleine Teams: nur In-App-Kampagnen", "Starter (monthly)", "Base plan for small teams: in-app campaigns only"),
+                ["starter-year"] = new("Starter (Jahr)", "Basisplan mit Jahresrabatt: nur In-App-Kampagnen", "Starter (annual)", "Base plan with annual discount: in-app campaigns only"),
+                ["growth-month"] = new("Growth (Monat)", "Wachstumsplan mit begrenzten Push-Kampagnen", "Growth (monthly)", "Growth plan with limited push campaigns"),
+                ["growth-year"] = new("Growth (Jahr)", "Growth mit Jahresrabatt und begrenzten Push-Kampagnen", "Growth (annual)", "Growth plan with annual discount and limited push campaigns"),
+                ["pro-month"] = new("Pro (Monat)", "Erweiterte Loyalty-Funktionen mit mehr Push-Kampagnen", "Pro (monthly)", "Advanced loyalty tools with more push campaigns"),
+                ["pro-year"] = new("Pro (Jahr)", "Pro mit Jahresrabatt und erweitertem Targeting", "Pro (annual)", "Pro with annual discount and advanced targeting"),
                 ["plus-month"] = new("Plus (Monat)", "Mittleres Paket", "Plus (monthly)", "Mid-tier package"),
                 ["plus-year"] = new("Plus (Jahr)", "Plus mit Jahresrabatt", "Plus (annual)", "Plus with annual discount"),
-                ["enterprise-month"] = new("Enterprise (Monat)", "Gro\u00dfe Teams mit SLA", "Enterprise (monthly)", "Large teams with SLA"),
-                ["enterprise-year"] = new("Enterprise (Jahr)", "Enterprise mit Jahresrabatt", "Enterprise (annual)", "Enterprise with annual discount"),
+                ["enterprise-month"] = new("Enterprise (Monat)", "Gro\u00dfe Teams mit hohem Push-Limit und SLA", "Enterprise (monthly)", "Large teams with high push limits and SLA"),
+                ["enterprise-year"] = new("Enterprise (Jahr)", "Enterprise mit Jahresrabatt, hohem Push-Limit und SLA", "Enterprise (annual)", "Enterprise with annual discount, high push limits and SLA"),
                 ["basic-quarter"] = new("Basic (Quartal)", "Quartalsplan", "Basic (quarterly)", "Quarterly plan"),
                 ["trial-month"] = new("Test (Monat)", "Kurzfristiger Testplan", "Trial (monthly)", "Short trial plan")
             };

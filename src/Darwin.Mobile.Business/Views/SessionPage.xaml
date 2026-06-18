@@ -12,14 +12,14 @@
 
     <ScrollView x:Name="RootScrollView">
         <VerticalStackLayout Padding="20,16,20,24" Spacing="14">
-            <Border Style="{StaticResource CardBorderStyle}">
+            <Border Style="{StaticResource InternalPageHeaderBorderStyle}">
                 <VerticalStackLayout Spacing="10">
                     <Label Text="{Binding OperatorRole, StringFormat='{x:Static res:AppResources.OperatorRoleFormat}'}"
                            Style="{StaticResource CaptionLabelStyle}" />
                     <Grid ColumnDefinitions="*,*"
                           ColumnSpacing="10">
                         <Border Grid.Column="0"
-                                Style="{StaticResource MutedCardBorderStyle}">
+                                Style="{StaticResource HeaderStatTileBorderStyle}">
                             <VerticalStackLayout Spacing="4">
                                 <Label Text="{x:Static res:AppResources.PointsLabel}"
                                        Style="{StaticResource CaptionLabelStyle}" />
@@ -29,7 +29,7 @@
                         </Border>
 
                         <Border Grid.Column="1"
-                                Style="{StaticResource MutedCardBorderStyle}">
+                                Style="{StaticResource HeaderStatTileBorderStyle}">
                             <VerticalStackLayout Spacing="4">
                                 <Label Text="{x:Static res:AppResources.CustomerLabel}"
                                        Style="{StaticResource CaptionLabelStyle}" />

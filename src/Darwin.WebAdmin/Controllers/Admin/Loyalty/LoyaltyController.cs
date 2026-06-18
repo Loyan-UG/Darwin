@@ -40,6 +40,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Loyalty
         private readonly CreateBusinessCampaignHandler _createCampaign;
         private readonly UpdateBusinessCampaignHandler _updateCampaign;
         private readonly SetCampaignActivationHandler _setCampaignActivation;
+        private readonly BusinessCampaignEntitlementService _campaignEntitlementService;
         private readonly GetCampaignDeliveriesPageHandler _getCampaignDeliveriesPage;
         private readonly UpdateCampaignDeliveryStatusHandler _updateCampaignDeliveryStatus;
         private readonly AdminReferenceDataService _referenceData;
@@ -71,6 +72,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Loyalty
             CreateBusinessCampaignHandler createCampaign,
             UpdateBusinessCampaignHandler updateCampaign,
             SetCampaignActivationHandler setCampaignActivation,
+            BusinessCampaignEntitlementService campaignEntitlementService,
             GetCampaignDeliveriesPageHandler getCampaignDeliveriesPage,
             UpdateCampaignDeliveryStatusHandler updateCampaignDeliveryStatus,
             AdminReferenceDataService referenceData)
@@ -101,6 +103,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Loyalty
             _createCampaign = createCampaign ?? throw new ArgumentNullException(nameof(createCampaign));
             _updateCampaign = updateCampaign ?? throw new ArgumentNullException(nameof(updateCampaign));
             _setCampaignActivation = setCampaignActivation ?? throw new ArgumentNullException(nameof(setCampaignActivation));
+            _campaignEntitlementService = campaignEntitlementService ?? throw new ArgumentNullException(nameof(campaignEntitlementService));
             _getCampaignDeliveriesPage = getCampaignDeliveriesPage ?? throw new ArgumentNullException(nameof(getCampaignDeliveriesPage));
             _updateCampaignDeliveryStatus = updateCampaignDeliveryStatus ?? throw new ArgumentNullException(nameof(updateCampaignDeliveryStatus));
             _referenceData = referenceData ?? throw new ArgumentNullException(nameof(referenceData));
@@ -631,8 +634,19 @@ namespace Darwin.WebAdmin.Controllers.Admin.Loyalty
             var items = Array.Empty<BusinessCampaignItemDto>();
             var total = 0;
             var summary = new LoyaltyCampaignOpsSummaryVm();
+            var entitlementSummary = string.Empty;
             if (businessId.HasValue)
             {
+                var entitlement = await _campaignEntitlementService.GetAsync(businessId.Value, ct: ct).ConfigureAwait(false);
+                entitlementSummary = string.Format(
+                    System.Globalization.CultureInfo.CurrentCulture,
+                    "{0}: {1} · {2}: {3}/{4}",
+                    T("BillingPlan"),
+                    entitlement.PlanName,
+                    T("LoyaltyPushRemaining"),
+                    entitlement.MonthlyPushRemaining,
+                    entitlement.MonthlyPushQuota);
+
                 var result = await _getCampaigns.HandleAsync(businessId.Value, page, pageSize, filter, ct).ConfigureAwait(false);
                 if (!result.Succeeded || result.Value is null)
                 {
@@ -661,6 +675,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Loyalty
                 Filter = filter,
                 FilterItems = BuildCampaignFilterItems(filter),
                 Summary = summary,
+                CampaignEntitlementSummary = entitlementSummary,
                 Playbooks = BuildCampaignPlaybooks(),
                 BusinessOptions = await _referenceData.GetBusinessOptionsAsync(businessId, ct).ConfigureAwait(false),
                 Page = page,
@@ -1545,6 +1560,22 @@ namespace Darwin.WebAdmin.Controllers.Admin.Loyalty
         private async Task PopulateCampaignOptionsAsync(LoyaltyCampaignEditVm vm, CancellationToken ct)
         {
             vm.BusinessOptions = await _referenceData.GetBusinessOptionsAsync(vm.BusinessId, ct).ConfigureAwait(false);
+            var entitlement = await _campaignEntitlementService.GetAsync(vm.BusinessId, ct: ct).ConfigureAwait(false);
+            vm.CampaignEntitlementSummary = string.Format(
+                System.Globalization.CultureInfo.CurrentCulture,
+                "{0}: {1} · {2}: {3}/{4}",
+                T("BillingPlan"),
+                entitlement.PlanName,
+                T("LoyaltyPushRemaining"),
+                entitlement.MonthlyPushRemaining,
+                entitlement.MonthlyPushQuota);
+
+            var pushDisabled = !entitlement.CampaignsPushAllowed || entitlement.MonthlyPushRemaining <= 0;
+            vm.ChannelItems = new List<SelectListItem>
+            {
+                new(T("LoyaltyInAppOnly"), "1", vm.Channels == 1, disabled: !entitlement.CampaignsInAppAllowed),
+                new(T("LoyaltyInAppPlusPush"), "3", vm.Channels == 3, disabled: pushDisabled && vm.Channels != 3)
+            };
         }
 
         private async Task<bool> TryPopulateRewardTierProgramContextAsync(LoyaltyRewardTierEditVm vm, CancellationToken ct)

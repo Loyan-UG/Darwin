@@ -1532,7 +1532,7 @@
     <value>Ihre Kontolöschungsanfrage konnte derzeit nicht abgeschlossen werden. Bitte versuchen Sie es in Kürze erneut.</value>
   </data>
   <data name="PermissionDisclosureContinueButton" xml:space="preserve">
-    <value>Weiter</value>
+    <value>Benachrichtigungen erlauben</value>
   </data>
   <data name="PermissionDisclosureCancelButton" xml:space="preserve">
     <value>Jetzt nicht</value>
@@ -1744,5 +1744,47 @@ oder Einlösen</value>
   </data>
   <data name="ExternalLoginMicrosoftComingSoon" xml:space="preserve">
     <value>Microsoft folgt</value>
+  </data>
+  <data name="NotificationsTitle" xml:space="preserve">
+    <value>Benachrichtigungen</value>
+  </data>
+  <data name="NotificationsSubtitle" xml:space="preserve">
+    <value>Kampagnen, Rewards und wichtige Kontomeldungen.</value>
+  </data>
+  <data name="NotificationsLoadFailed" xml:space="preserve">
+    <value>Benachrichtigungen konnten gerade nicht geladen werden.</value>
+  </data>
+  <data name="NotificationsMarkAllRead" xml:space="preserve">
+    <value>Alle gelesen</value>
+  </data>
+  <data name="NotificationsMarkRead" xml:space="preserve">
+    <value>Gelesen</value>
+  </data>
+  <data name="NotificationsEmptyTitle" xml:space="preserve">
+    <value>Keine Benachrichtigungen</value>
+  </data>
+  <data name="NotificationsEmptyBody" xml:space="preserve">
+    <value>Neue Kampagnen- und Reward-Updates erscheinen hier.</value>
+  </data>
+  <data name="NotificationsCategoryAll" xml:space="preserve">
+    <value>Alle</value>
+  </data>
+  <data name="NotificationsCategorySystem" xml:space="preserve">
+    <value>System</value>
+  </data>
+  <data name="NotificationsCategoryCampaign" xml:space="preserve">
+    <value>Kampagnen</value>
+  </data>
+  <data name="NotificationsCategoryReward" xml:space="preserve">
+    <value>Rewards</value>
+  </data>
+  <data name="NotificationsCategoryBilling" xml:space="preserve">
+    <value>Abrechnung</value>
+  </data>
+  <data name="NotificationsCategoryScannerSession" xml:space="preserve">
+    <value>Scanner</value>
+  </data>
+  <data name="NotificationsCategoryAccount" xml:space="preserve">
+    <value>Konto</value>
   </data>
 </root>

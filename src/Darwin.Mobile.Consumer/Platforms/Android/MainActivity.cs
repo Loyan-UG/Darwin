@@ -1,8 +1,10 @@
 using Android.App;
+using Android.Content;
 using Android.Content.PM;
 using Android.OS;
 using Android.Views;
 using AndroidX.Core.View;
+using Darwin.Mobile.Consumer.Services.Notifications;
 
 namespace Darwin.Mobile.Consumer;
 
@@ -39,12 +41,24 @@ public sealed class MainActivity : MauiAppCompatActivity
         base.OnCreate(savedInstanceState);
 
         ApplySystemBarColors();
+        HandleNotificationIntent(Intent);
     }
 
     protected override void OnResume()
     {
         base.OnResume();
         ApplySystemBarColors();
+    }
+
+    protected override void OnNewIntent(Intent? intent)
+    {
+        base.OnNewIntent(intent);
+        if (intent is not null)
+        {
+            Intent = intent;
+        }
+
+        HandleNotificationIntent(intent);
     }
 
     private void ApplySystemBarColors()
@@ -80,5 +94,14 @@ public sealed class MainActivity : MauiAppCompatActivity
             Window.SetStatusBarColor(brandStatusColor);
 #pragma warning restore CA1422
         }, 250);
+    }
+
+    private static void HandleNotificationIntent(Intent? intent)
+    {
+        var deepLink = intent?.GetStringExtra("deepLink");
+        if (!string.IsNullOrWhiteSpace(deepLink))
+        {
+            NotificationDeepLinkNavigator.HandleIncomingDeepLink(deepLink);
+        }
     }
 }

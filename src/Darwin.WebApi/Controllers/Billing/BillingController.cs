@@ -159,7 +159,15 @@ public sealed class BillingController : ApiControllerBase
                     Interval = x.Interval,
                     IntervalCount = x.IntervalCount,
                     TrialDays = x.TrialDays,
-                    IsActive = x.IsActive
+                    IsActive = x.IsActive,
+                    MaxStaff = x.MaxStaff,
+                    MaxRewardTiers = x.MaxRewardTiers,
+                    MonthlyPushCampaigns = x.MonthlyPushCampaigns,
+                    CampaignsInApp = x.CampaignsInApp,
+                    CampaignsPush = x.CampaignsPush,
+                    AdvancedTargeting = x.AdvancedTargeting,
+                    Exports = x.Exports,
+                    Sla = x.Sla
                 })
                 .ToList()
         };
@@ -267,7 +275,15 @@ public sealed class BillingController : ApiControllerBase
             CurrentPeriodEndUtc = dto.CurrentPeriodEndUtc,
             TrialEndsAtUtc = dto.TrialEndsAtUtc,
             CanceledAtUtc = dto.CanceledAtUtc,
-            CancelAtPeriodEnd = dto.CancelAtPeriodEnd
+            CancelAtPeriodEnd = dto.CancelAtPeriodEnd,
+            MaxStaff = dto.MaxStaff,
+            MaxRewardTiers = dto.MaxRewardTiers,
+            MonthlyPushCampaigns = dto.MonthlyPushCampaigns,
+            CampaignsInApp = dto.CampaignsInApp,
+            CampaignsPush = dto.CampaignsPush,
+            AdvancedTargeting = dto.AdvancedTargeting,
+            Exports = dto.Exports,
+            Sla = dto.Sla
         };
 
     private async Task<(bool Success, Guid BusinessId, IActionResult? ErrorResult)> TryGetCurrentBusinessIdAsync(bool requireOperationsAllowed, CancellationToken ct)

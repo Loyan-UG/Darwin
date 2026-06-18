@@ -162,6 +162,10 @@ namespace Darwin.Mobile.Shared.Api
         public static class Notifications
         {
             public const string RegisterDevice = "api/v1/member/notifications/devices/register";
+            public const string List = "api/v1/member/notifications";
+            public const string UnreadCount = "api/v1/member/notifications/unread-count";
+            public static string MarkRead(Guid id) => $"api/v1/member/notifications/{id:D}/read";
+            public const string MarkAllRead = "api/v1/member/notifications/read-all";
         }
         public static class Billing
         {
@@ -195,6 +199,7 @@ namespace Darwin.Mobile.Shared.Api
             public const string UpdateBusinessRewardTier = "api/v1/business/loyalty/reward-config/tiers";
             public const string DeleteBusinessRewardTier = "api/v1/business/loyalty/reward-config/tiers/delete";
             public const string GetBusinessCampaigns = "api/v1/business/loyalty/campaigns";
+            public const string GetBusinessCampaignEntitlement = "api/v1/business/loyalty/campaigns/entitlement";
             public static string UpdateBusinessCampaign(Guid campaignId) => $"api/v1/business/loyalty/campaigns/{campaignId:D}";
             public static string SetBusinessCampaignActivation(Guid campaignId) => $"api/v1/business/loyalty/campaigns/{campaignId:D}/activation";
         }

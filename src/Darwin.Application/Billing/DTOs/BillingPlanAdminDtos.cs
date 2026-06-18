@@ -15,6 +15,14 @@ public class BillingPlanCreateDto
     public int? TrialDays { get; set; }
     public bool IsActive { get; set; } = true;
     public string FeaturesJson { get; set; } = "{}";
+    public int MaxStaff { get; set; } = 3;
+    public int MaxRewardTiers { get; set; } = 5;
+    public int MonthlyPushCampaigns { get; set; }
+    public bool CampaignsInApp { get; set; } = true;
+    public bool CampaignsPush { get; set; }
+    public bool AdvancedTargeting { get; set; }
+    public bool Exports { get; set; }
+    public bool Sla { get; set; }
 }
 
 public sealed class BillingPlanEditDto : BillingPlanCreateDto
@@ -36,6 +44,10 @@ public sealed class BillingPlanListItemDto
     public int? TrialDays { get; set; }
     public bool IsActive { get; set; }
     public bool HasFeatures { get; set; }
+    public int MonthlyPushCampaigns { get; set; }
+    public bool CampaignsInApp { get; set; }
+    public bool CampaignsPush { get; set; }
+    public bool AdvancedTargeting { get; set; }
     public int ActiveSubscriptionCount { get; set; }
     public DateTime? ModifiedAtUtc { get; set; }
     public byte[] RowVersion { get; set; } = Array.Empty<byte>();

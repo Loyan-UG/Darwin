@@ -78,6 +78,9 @@ public sealed partial class RewardsViewModel : BaseViewModel
     private DateTimeOffset? _campaignTargetingFixMetricsWindowStartedAtUtc;
     private DateTimeOffset? _campaignTargetingFixMetricsLastResetAtUtc;
     private CampaignChannelOption? _selectedCampaignChannel;
+    private BusinessCampaignEntitlementResponse? _campaignEntitlement;
+    private string _campaignEntitlementSummary = string.Empty;
+    private bool _isPushCampaignOptionAvailable = true;
     private string _campaignSearchQuery = string.Empty;
     private CampaignStateFilterOption? _selectedCampaignStateFilter;
     private CampaignAudienceFilterOption? _selectedCampaignAudienceFilter;
@@ -115,11 +118,8 @@ public sealed partial class RewardsViewModel : BaseViewModel
         };
         _selectedRewardTypeOption = RewardTypeOptions[0];
 
-        CampaignChannelOptions = new ObservableCollection<CampaignChannelOption>
-        {
-            new CampaignChannelOption(1, AppResources.RewardsCampaignChannelInAppOnly),
-            new CampaignChannelOption(3, AppResources.RewardsCampaignChannelInAppAndPush)
-        };
+        CampaignChannelOptions = new ObservableCollection<CampaignChannelOption>();
+        RefreshCampaignChannelOptions();
 
         CampaignStateFilterOptions = new ObservableCollection<CampaignStateFilterOption>
         {
@@ -641,6 +641,26 @@ public sealed partial class RewardsViewModel : BaseViewModel
         InAppAndPushCampaignCount,
         OtherChannelCampaignCount);
 
+    public string CampaignEntitlementSummary
+    {
+        get => _campaignEntitlementSummary;
+        private set
+        {
+            if (SetProperty(ref _campaignEntitlementSummary, value))
+            {
+                OnPropertyChanged(nameof(HasCampaignEntitlementSummary));
+            }
+        }
+    }
+
+    public bool HasCampaignEntitlementSummary => !string.IsNullOrWhiteSpace(CampaignEntitlementSummary);
+
+    public bool IsPushCampaignOptionAvailable
+    {
+        get => _isPushCampaignOptionAvailable;
+        private set => SetProperty(ref _isPushCampaignOptionAvailable, value);
+    }
+
     /// <summary>
     /// User-entered points required for the reward tier.
     /// </summary>
@@ -1021,11 +1041,13 @@ public sealed partial class RewardsViewModel : BaseViewModel
                 .Select(RewardTierEditorItem.FromContract)
                 .ToList();
 
+            var entitlement = await LoadCampaignEntitlementAsync(cancellationToken).ConfigureAwait(false);
             var campaigns = await LoadCampaignItemsAsync(cancellationToken).ConfigureAwait(false);
 
             RunOnMain(() =>
             {
                 ErrorMessage = null;
+                ApplyCampaignEntitlement(entitlement);
                 RewardTiers.ReplaceRange(tiers);
                 OnPropertyChanged(nameof(HasRewardTiers));
                 ReplaceCampaigns(campaigns);
@@ -1746,6 +1768,11 @@ public sealed partial class RewardsViewModel : BaseViewModel
             }
 
             var selectedChannels = SelectedCampaignChannel.Value;
+            if (!ValidateSelectedCampaignChannelAgainstEntitlement(selectedChannels, out var channelEntitlementError))
+            {
+                RunOnMain(() => ErrorMessage = channelEntitlementError);
+                return;
+            }
 
             if (!TryNormalizeCampaignJsonObject(CampaignTargetingJsonInput, AppResources.RewardsCampaignTargetingValidationFailed, out var targetingJson, out var targetingError))
             {
@@ -2317,6 +2344,73 @@ public sealed partial class RewardsViewModel : BaseViewModel
             .ToList();
     }
 
+    private async Task<BusinessCampaignEntitlementResponse?> LoadCampaignEntitlementAsync(CancellationToken cancellationToken)
+    {
+        var entitlementResult = await _loyaltyService
+            .GetBusinessCampaignEntitlementAsync(cancellationToken)
+            .ConfigureAwait(false);
+
+        return entitlementResult.Succeeded ? entitlementResult.Value : null;
+    }
+
+    private void ApplyCampaignEntitlement(BusinessCampaignEntitlementResponse? entitlement)
+    {
+        _campaignEntitlement = entitlement;
+        IsPushCampaignOptionAvailable = entitlement?.CampaignsPushAllowed == true && entitlement.MonthlyPushRemaining > 0;
+        CampaignEntitlementSummary = entitlement is null
+            ? string.Empty
+            : string.Format(
+                CultureInfo.CurrentCulture,
+                AppResources.RewardsCampaignPushQuotaSummaryFormat,
+                entitlement.PlanName,
+                entitlement.MonthlyPushRemaining,
+                entitlement.MonthlyPushQuota);
+        RefreshCampaignChannelOptions();
+    }
+
+    private void RefreshCampaignChannelOptions()
+    {
+        var selectedValue = SelectedCampaignChannel?.Value ?? 1;
+        CampaignChannelOptions.Clear();
+        CampaignChannelOptions.Add(new CampaignChannelOption(1, AppResources.RewardsCampaignChannelInAppOnly));
+        if (IsPushCampaignOptionAvailable || selectedValue == 3)
+        {
+            var label = IsPushCampaignOptionAvailable
+                ? AppResources.RewardsCampaignChannelInAppAndPush
+                : string.Format(CultureInfo.CurrentCulture, AppResources.RewardsCampaignChannelUnavailableFormat, AppResources.RewardsCampaignChannelInAppAndPush);
+            CampaignChannelOptions.Add(new CampaignChannelOption(3, label));
+        }
+
+        SelectedCampaignChannel = CampaignChannelOptions.FirstOrDefault(x => x.Value == selectedValue) ?? CampaignChannelOptions[0];
+    }
+
+    private bool ValidateSelectedCampaignChannelAgainstEntitlement(short selectedChannels, out string error)
+    {
+        error = string.Empty;
+        if ((selectedChannels & 1) == 1 && _campaignEntitlement?.CampaignsInAppAllowed == false)
+        {
+            error = AppResources.RewardsCampaignInAppNotIncluded;
+            return false;
+        }
+
+        if ((selectedChannels & 2) == 2)
+        {
+            if (_campaignEntitlement?.CampaignsPushAllowed != true)
+            {
+                error = AppResources.RewardsCampaignPushNotIncluded;
+                return false;
+            }
+
+            if (!IsCampaignEditMode && _campaignEntitlement.MonthlyPushRemaining <= 0)
+            {
+                error = AppResources.RewardsCampaignPushQuotaUsed;
+                return false;
+            }
+        }
+
+        return true;
+    }
+
     /// <summary>
     /// Toggles campaign activation state for selected campaign item.
     /// </summary>
@@ -2346,6 +2440,17 @@ public sealed partial class RewardsViewModel : BaseViewModel
             {
                 RunOnMain(() => ErrorMessage = AppResources.BusinessPermissionDeniedRewardEdit);
                 return;
+            }
+
+            if (!campaign.IsActive && campaign.Channels == 3)
+            {
+                var entitlement = await LoadCampaignEntitlementAsync(cancellationToken).ConfigureAwait(false);
+                RunOnMain(() => ApplyCampaignEntitlement(entitlement));
+                if (entitlement is null || !entitlement.CampaignsPushAllowed)
+                {
+                    RunOnMain(() => ErrorMessage = AppResources.RewardsCampaignPushNotIncluded);
+                    return;
+                }
             }
 
             var result = await _loyaltyService

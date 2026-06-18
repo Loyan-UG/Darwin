@@ -85,6 +85,7 @@ public static class ServiceCollectionExtensions
         services.AddTransient<ResetPasswordViewModel>();
         services.AddTransient<LegalHubViewModel>();
         services.AddTransient<AccountDeletionViewModel>();
+        services.AddTransient<NotificationsViewModel>();
 
         services.AddTransient<LoginPage>();
         services.AddTransient<QrPage>();
@@ -105,6 +106,7 @@ public static class ServiceCollectionExtensions
         services.AddTransient<BusinessDetailPage>();
         services.AddTransient<LegalHubPage>();
         services.AddTransient<AccountDeletionPage>();
+        services.AddTransient<NotificationsPage>();
 
         return services;
     }

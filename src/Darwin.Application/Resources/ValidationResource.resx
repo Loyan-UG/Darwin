@@ -1052,6 +1052,9 @@
   <data name="InvalidDeleteRequest" xml:space="preserve">
     <value>Invalid delete request.</value>
   </data>
+  <data name="NotificationNotFound" xml:space="preserve">
+    <value>Notification was not found.</value>
+  </data>
   <data name="LoyaltyProgramConcurrencyConflict" xml:space="preserve">
     <value>Concurrency conflict. The loyalty program was modified by another process.</value>
   </data>
@@ -1117,6 +1120,15 @@
   </data>
   <data name="BusinessCampaignChannelsInvalid" xml:space="preserve">
     <value>Campaign channels are invalid. Select at least one supported channel.</value>
+  </data>
+  <data name="BusinessCampaignInAppNotAllowed" xml:space="preserve">
+    <value>In-app campaigns are not included in the current plan.</value>
+  </data>
+  <data name="BusinessCampaignPushNotAllowed" xml:space="preserve">
+    <value>Push campaigns are not included in the current plan.</value>
+  </data>
+  <data name="BusinessCampaignPushQuotaExceeded" xml:space="preserve">
+    <value>The monthly push campaign quota has been used.</value>
   </data>
   <data name="BusinessCampaignJsonInvalid" xml:space="preserve">
     <value>Campaign targeting and payload JSON must be valid JSON objects.</value>
@@ -1561,6 +1573,9 @@
   </data>
   <data name="CampaignDeliveryStatusInvalid" xml:space="preserve">
     <value>Campaign delivery status is invalid.</value>
+  </data>
+  <data name="CampaignDeliveryRequeueRequiresFailedOrCancelled" xml:space="preserve">
+    <value>Only failed or cancelled campaign deliveries can be requeued.</value>
   </data>
   <data name="ProviderCallbackInboxMessageNotFound" xml:space="preserve">
     <value>Provider callback inbox message was not found.</value>

@@ -24,6 +24,11 @@ namespace Darwin.Infrastructure.Persistence.Db
         public DbSet<BusinessSubscription> BusinessSubscriptions => Set<BusinessSubscription>();
 
         /// <summary>
+        /// Monthly feature usage records for business plan limits.
+        /// </summary>
+        public DbSet<BusinessFeatureUsage> BusinessFeatureUsages => Set<BusinessFeatureUsage>();
+
+        /// <summary>
         /// Provider-synchronized invoices for business subscriptions.
         /// </summary>
         public DbSet<SubscriptionInvoice> SubscriptionInvoices => Set<SubscriptionInvoice>();

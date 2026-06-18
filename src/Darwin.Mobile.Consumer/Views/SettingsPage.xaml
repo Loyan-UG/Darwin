@@ -22,30 +22,65 @@
 
             <Border Style="{StaticResource ElevatedListCardBorderStyle}">
                 <VerticalStackLayout Spacing="12">
-                    <Label Text="{x:Static res:AppResources.SettingsProfileButton}"
-                           Style="{StaticResource SectionHeadingLabelStyle}" />
+                    <Border Style="{StaticResource MutedCardBorderStyle}">
+                        <Border.GestureRecognizers>
+                            <TapGestureRecognizer Command="{Binding OpenProfileCommand}" />
+                        </Border.GestureRecognizers>
+                        <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="12">
+                            <Border Grid.Column="0"
+                                    WidthRequest="56"
+                                    HeightRequest="56"
+                                    Padding="0"
+                                    Background="{StaticResource BrushDarkAction}"
+                                    Stroke="{StaticResource BrandGold50}"
+                                    StrokeThickness="1"
+                                    VerticalOptions="Center">
+                                <Border.StrokeShape>
+                                    <RoundRectangle CornerRadius="28" />
+                                </Border.StrokeShape>
+                                <Grid>
+                                    <Image Source="{Binding ProfileImageUrl}"
+                                           Aspect="AspectFill"
+                                           IsVisible="{Binding HasProfileImage}" />
+                                    <Label Text="{Binding ProfileInitials}"
+                                           IsVisible="{Binding HasProfileImage, Converter={StaticResource InverseBoolConverter}}"
+                                           HorizontalOptions="Center"
+                                           VerticalOptions="Center"
+                                           FontAttributes="Bold"
+                                           FontSize="16"
+                                           TextColor="{StaticResource Neutral0}" />
+                                </Grid>
+                            </Border>
+                            <VerticalStackLayout Grid.Column="1" Spacing="3" VerticalOptions="Center">
+                                <Label Text="{Binding ProfileDisplayName}"
+                                       Style="{StaticResource SectionHeadingLabelStyle}"
+                                       LineBreakMode="TailTruncation" />
+                                <Label Text="{Binding ProfileEmail}"
+                                       Style="{StaticResource SecondaryBodyLabelStyle}"
+                                       LineBreakMode="TailTruncation" />
+                            </VerticalStackLayout>
+                            <Label Grid.Column="2"
+                                   Text="&gt;"
+                                   FontSize="26"
+                                   TextColor="{StaticResource Neutral700}"
+                                   VerticalOptions="Center" />
+                        </Grid>
+                    </Border>
 
                     <Grid ColumnDefinitions="*,*" ColumnSpacing="10">
                         <buttons:SfButton Grid.Column="0"
-                                          Text="{x:Static res:AppResources.SettingsProfileButton}"
-                                          Style="{StaticResource SyncfusionPrimaryButtonStyle}"
-                                          Command="{Binding OpenProfileCommand}" />
-                        <buttons:SfButton Grid.Column="1"
                                           Text="{x:Static res:AppResources.SettingsPreferencesButton}"
-                                          Style="{StaticResource SyncfusionOutlinedButtonStyle}"
+                                          Style="{StaticResource SyncfusionPrimaryButtonStyle}"
                                           Command="{Binding OpenMemberPreferencesCommand}" />
-                    </Grid>
-
-                    <Grid ColumnDefinitions="*,*" ColumnSpacing="10">
-                        <buttons:SfButton Grid.Column="0"
+                        <buttons:SfButton Grid.Column="1"
                                           Text="{x:Static res:AppResources.SettingsOrdersAndInvoicesButton}"
                                           Style="{StaticResource SyncfusionOutlinedButtonStyle}"
                                           Command="{Binding OpenMemberCommerceCommand}" />
-                        <buttons:SfButton Grid.Column="1"
-                                          Text="{x:Static res:AppResources.SettingsChangePasswordButton}"
+                    </Grid>
+
+                    <buttons:SfButton Text="{x:Static res:AppResources.SettingsChangePasswordButton}"
                                           Style="{StaticResource SyncfusionOutlinedButtonStyle}"
                                           Command="{Binding OpenChangePasswordCommand}" />
-                    </Grid>
                 </VerticalStackLayout>
             </Border>
 

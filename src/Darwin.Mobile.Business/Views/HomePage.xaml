@@ -12,13 +12,14 @@
 
     <Grid>
         <pullToRefresh:SfPullToRefresh RefreshCommand="{Binding LoadContextCommand}"
+                                       IsRefreshing="{Binding IsBusy, Mode=OneWay}"
                                        ProgressColor="{StaticResource BrandGold500}"
                                        ProgressBackground="{StaticResource Neutral0}">
             <pullToRefresh:SfPullToRefresh.PullableContent>
                 <ScrollView>
                     <VerticalStackLayout Spacing="14" Padding="20,16,20,24">
-                <Border Style="{StaticResource CardBorderStyle}">
-                    <Grid ColumnDefinitions="Auto,*" ColumnSpacing="12">
+                <Border Style="{StaticResource InternalPageHeaderBorderStyle}">
+                    <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="12">
                         <Image Source="loyan_logo.png"
                                Aspect="AspectFit"
                                WidthRequest="72"
@@ -28,6 +29,32 @@
                             <Label Text="{Binding Greeting}" Style="{StaticResource TitleLabelStyle}" />
                             <Label Text="{x:Static res:AppResources.HomeDashboardSubtitle}" Style="{StaticResource SecondaryBodyLabelStyle}" />
                         </VerticalStackLayout>
+                        <Grid Grid.Column="2" WidthRequest="46" HeightRequest="46" VerticalOptions="Start">
+                            <Button Text="🔔"
+                                    Command="{Binding OpenNotificationsCommand}"
+                                    Background="{StaticResource BrushDiscoverHeaderButton}"
+                                    TextColor="{StaticResource Neutral900}"
+                                    CornerRadius="23"
+                                    Padding="0"
+                                    FontSize="19" />
+                            <Border IsVisible="{Binding HasUnreadNotifications}"
+                                    Background="{StaticResource BrushDarkAction}"
+                                    Padding="4,1"
+                                    HorizontalOptions="End"
+                                    VerticalOptions="Start"
+                                    MinimumWidthRequest="18"
+                                    HeightRequest="18">
+                                <Border.StrokeShape>
+                                    <RoundRectangle CornerRadius="9" />
+                                </Border.StrokeShape>
+                                <Label Text="{Binding UnreadNotificationsText}"
+                                       FontAttributes="Bold"
+                                       FontSize="9"
+                                       HorizontalTextAlignment="Center"
+                                       VerticalTextAlignment="Center"
+                                       TextColor="{StaticResource Neutral0}" />
+                            </Border>
+                        </Grid>
                     </Grid>
                 </Border>
 
@@ -44,13 +71,13 @@
                         <Label Text="{x:Static res:AppResources.HomeCurrentBusinessContextTitle}" Style="{StaticResource SectionHeadingLabelStyle}" />
                         <Label Text="{Binding BusinessName}" Style="{StaticResource TitleLabelStyle}" />
                         <Grid ColumnDefinitions="*,*" ColumnSpacing="10">
-                            <Border Grid.Column="0" Style="{StaticResource MutedCardBorderStyle}">
+                            <Border Grid.Column="0" Style="{StaticResource HeaderStatTileBorderStyle}">
                                 <VerticalStackLayout Spacing="4">
                                     <Label Text="{x:Static res:AppResources.BusinessCategoryLabel}" Style="{StaticResource CaptionLabelStyle}" />
                                     <Label Text="{Binding BusinessCategory}" Style="{StaticResource BodyLabelStyle}" />
                                 </VerticalStackLayout>
                             </Border>
-                            <Border Grid.Column="1" Style="{StaticResource MutedCardBorderStyle}">
+                            <Border Grid.Column="1" Style="{StaticResource HeaderStatTileBorderStyle}">
                                 <VerticalStackLayout Spacing="4">
                                     <Label Text="{x:Static res:AppResources.BusinessCityLabel}" Style="{StaticResource CaptionLabelStyle}" />
                                     <Label Text="{Binding BusinessCity}" Style="{StaticResource BodyLabelStyle}" />
@@ -69,14 +96,6 @@
                     </VerticalStackLayout>
                 </Border>
 
-                <Border Style="{StaticResource CardBorderStyle}">
-                    <VerticalStackLayout Spacing="8">
-                        <Label Text="{x:Static res:AppResources.HomeBusinessOperationalStatusTitle}" Style="{StaticResource SectionHeadingLabelStyle}" />
-                        <Label Text="{Binding BusinessOperationalStatusLabel}" Style="{StaticResource BodyLabelStyle}" />
-                        <Label Text="{Binding BusinessOperationalStatusMessage}" Style="{StaticResource SecondaryBodyLabelStyle}" IsVisible="{Binding HasBusinessOperationalStatusMessage}" />
-                    </VerticalStackLayout>
-                </Border>
-
                 <Border Style="{StaticResource CardBorderStyle}" IsVisible="{Binding HasSetupChecklistSummary}">
                     <VerticalStackLayout Spacing="8">
                         <Label Text="{x:Static res:AppResources.HomeSetupChecklistTitle}" Style="{StaticResource SectionHeadingLabelStyle}" />
@@ -84,12 +103,6 @@
                     </VerticalStackLayout>
                 </Border>
 
-                <Border Style="{StaticResource CardBorderStyle}">
-                    <VerticalStackLayout Spacing="8">
-                        <Label Text="{x:Static res:AppResources.HomeTestingHintTitle}" Style="{StaticResource SectionHeadingLabelStyle}" />
-                        <Label Text="{x:Static res:AppResources.HomeTestingHintBody}" Style="{StaticResource SecondaryBodyLabelStyle}" />
-                    </VerticalStackLayout>
-                </Border>
                     </VerticalStackLayout>
                 </ScrollView>
             </pullToRefresh:SfPullToRefresh.PullableContent>

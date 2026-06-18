@@ -27,14 +27,17 @@ public sealed class ConsumerPushRegistrationCoordinator : IConsumerPushRegistrat
 
     private readonly IPushRegistrationService _pushRegistrationService;
     private readonly ITokenStore _tokenStore;
+    private readonly IConsumerNotificationPermissionService _notificationPermissionService;
     private readonly IConsumerPushTokenProvider _tokenProvider;
     private readonly IDeviceIdProvider _deviceIdProvider;
     private readonly IConsumerPushRuntimeInfo _runtimeInfo;
     private readonly IConsumerPushRegistrationStateStore _registrationStateStore;
+    private int _notificationPermissionRequestAttempted;
 
     public ConsumerPushRegistrationCoordinator(
         IPushRegistrationService pushRegistrationService,
         ITokenStore tokenStore,
+        IConsumerNotificationPermissionService notificationPermissionService,
         IConsumerPushTokenProvider tokenProvider,
         IDeviceIdProvider deviceIdProvider,
         IConsumerPushRuntimeInfo runtimeInfo,
@@ -42,6 +45,7 @@ public sealed class ConsumerPushRegistrationCoordinator : IConsumerPushRegistrat
     {
         _pushRegistrationService = pushRegistrationService ?? throw new ArgumentNullException(nameof(pushRegistrationService));
         _tokenStore = tokenStore ?? throw new ArgumentNullException(nameof(tokenStore));
+        _notificationPermissionService = notificationPermissionService ?? throw new ArgumentNullException(nameof(notificationPermissionService));
         _tokenProvider = tokenProvider ?? throw new ArgumentNullException(nameof(tokenProvider));
         _deviceIdProvider = deviceIdProvider ?? throw new ArgumentNullException(nameof(deviceIdProvider));
         _runtimeInfo = runtimeInfo ?? throw new ArgumentNullException(nameof(runtimeInfo));
@@ -57,6 +61,11 @@ public sealed class ConsumerPushRegistrationCoordinator : IConsumerPushRegistrat
         if (string.IsNullOrWhiteSpace(accessToken))
         {
             return Result.Fail("No access token is available for push-device registration.");
+        }
+
+        if (Interlocked.Exchange(ref _notificationPermissionRequestAttempted, 1) == 0)
+        {
+            _ = await _notificationPermissionService.EnsurePermissionAsync(cancellationToken).ConfigureAwait(false);
         }
 
         var pushTokenStateResult = await _tokenProvider.GetCurrentAsync(cancellationToken).ConfigureAwait(false);

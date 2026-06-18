@@ -545,6 +545,63 @@ namespace Darwin.Infrastructure.PostgreSql.Migrations
                     b.ToTable("BillingPlans", "Billing");
                 });
 
+            modelBuilder.Entity("Darwin.Domain.Entities.Billing.BusinessFeatureUsage", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("BusinessId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("CreatedByUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("FeatureKey")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<DateTime?>("ModifiedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("ModifiedByUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("PeriodEndUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime>("PeriodStartUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .HasColumnType("bytea");
+
+                    b.Property<Guid>("SourceId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("UsedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BusinessId", "FeatureKey", "PeriodStartUtc");
+
+                    b.HasIndex("BusinessId", "FeatureKey", "PeriodStartUtc", "SourceId")
+                        .IsUnique()
+                        .HasFilter("\"IsDeleted\" = FALSE");
+
+                    b.ToTable("BusinessFeatureUsages", "Billing");
+                });
+
             modelBuilder.Entity("Darwin.Domain.Entities.Billing.BusinessSubscription", b =>
                 {
                     b.Property<Guid>("Id")
@@ -9193,8 +9250,8 @@ namespace Darwin.Infrastructure.PostgreSql.Migrations
                         .HasColumnType("smallint");
 
                     b.Property<string>("PushToken")
-                        .HasMaxLength(512)
-                        .HasColumnType("character varying(512)");
+                        .HasMaxLength(2048)
+                        .HasColumnType("character varying(2048)");
 
                     b.Property<DateTime?>("PushTokenUpdatedAtUtc")
                         .HasColumnType("timestamp with time zone");
@@ -13625,7 +13682,136 @@ namespace Darwin.Infrastructure.PostgreSql.Migrations
                     b.HasIndex("Status")
                         .HasDatabaseName("IX_CampaignDeliveries_Status");
 
+                    b.HasIndex("Channel", "Status", "CreatedAtUtc")
+                        .HasDatabaseName("IX_CampaignDeliveries_Channel_Status_Created");
+
                     b.ToTable("CampaignDeliveries", "Marketing");
+                });
+
+            modelBuilder.Entity("Darwin.Domain.Entities.Notifications.NotificationMessage", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Body")
+                        .HasMaxLength(4000)
+                        .HasColumnType("character varying(4000)");
+
+                    b.Property<short>("Category")
+                        .HasColumnType("smallint");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("CreatedByUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("DeepLink")
+                        .HasMaxLength(1024)
+                        .HasColumnType("character varying(1024)");
+
+                    b.Property<DateTime?>("ExpiresAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<DateTime?>("ModifiedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("ModifiedByUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("PublishedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .HasColumnType("bytea");
+
+                    b.Property<Guid?>("SourceId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("SourceType")
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)");
+
+                    b.Property<short>("TargetApp")
+                        .HasColumnType("smallint");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("SourceType", "SourceId", "TargetApp")
+                        .HasDatabaseName("IX_NotificationMessages_Source_Target");
+
+                    b.HasIndex("TargetApp", "Category", "PublishedAtUtc")
+                        .HasDatabaseName("IX_NotificationMessages_Target_Category_Published");
+
+                    b.ToTable("NotificationMessages", "Notifications");
+                });
+
+            modelBuilder.Entity("Darwin.Domain.Entities.Notifications.NotificationRecipient", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime?>("ArchivedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("CreatedByUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime?>("DeliveredAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<DateTime?>("ModifiedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("ModifiedByUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("NotificationMessageId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime?>("ReadAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .HasColumnType("bytea");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("NotificationMessageId", "UserId")
+                        .IsUnique()
+                        .HasDatabaseName("UX_NotificationRecipients_Message_User")
+                        .HasFilter("\"IsDeleted\" = FALSE");
+
+                    b.HasIndex("UserId", "CreatedAtUtc")
+                        .HasDatabaseName("IX_NotificationRecipients_User_Created");
+
+                    b.HasIndex("UserId", "ReadAtUtc", "ArchivedAtUtc")
+                        .HasDatabaseName("IX_NotificationRecipients_User_Read_Archived");
+
+                    b.ToTable("NotificationRecipients", "Notifications");
                 });
 
             modelBuilder.Entity("Darwin.Domain.Entities.Orders.Order", b =>
@@ -17435,6 +17621,25 @@ namespace Darwin.Infrastructure.PostgreSql.Migrations
                         .HasForeignKey("CampaignId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+                });
+
+            modelBuilder.Entity("Darwin.Domain.Entities.Notifications.NotificationRecipient", b =>
+                {
+                    b.HasOne("Darwin.Domain.Entities.Notifications.NotificationMessage", "Message")
+                        .WithMany()
+                        .HasForeignKey("NotificationMessageId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Darwin.Domain.Entities.Identity.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Message");
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("Darwin.Domain.Entities.Orders.Order", b =>

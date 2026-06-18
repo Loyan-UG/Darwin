@@ -8,15 +8,19 @@ using System.Threading.Tasks;
 using Darwin.Contracts.Businesses;
 using Darwin.Contracts.Common;
 using Darwin.Contracts.Loyalty;
+using Darwin.Contracts.Notifications;
 using Darwin.Contracts.Profile;
+using Darwin.Mobile.Consumer.Constants;
 using Darwin.Mobile.Consumer.Resources;
 using Darwin.Mobile.Consumer.Services.Caching;
 using Darwin.Mobile.Shared.Collections;
 using Darwin.Mobile.Shared.Commands;
 using Darwin.Mobile.Shared.Integration;
 using Darwin.Mobile.Shared.Services;
+using Darwin.Mobile.Shared.Services.Notifications;
 using Darwin.Mobile.Shared.Services.Profile;
 using Darwin.Mobile.Shared.ViewModels;
+using Microsoft.Maui.Controls;
 
 namespace Darwin.Mobile.Consumer.ViewModels;
 
@@ -47,10 +51,12 @@ public sealed class DiscoverViewModel : BaseViewModel
     private readonly IBusinessService _businessService;
     private readonly IConsumerLoyaltySnapshotCache _loyaltySnapshotCache;
     private readonly IProfileService _profileService;
+    private readonly INotificationInboxService _notificationInboxService;
     private readonly ILocation _location;
     private CancellationTokenSource? _loadCancellation;
 
     private bool _hasLoaded;
+    private bool _isRefreshing;
     private bool _isJoinedTabSelected = true;
     private string? _searchQuery;
     private bool _isNearbyOnly;
@@ -59,6 +65,7 @@ public sealed class DiscoverViewModel : BaseViewModel
     private string _currentUserLastName = string.Empty;
     private string _currentUserEmail = string.Empty;
     private string? _currentUserProfileImageUrl;
+    private int _unreadNotificationsCount;
     private int _selectedNearbyRadiusMeters = DefaultNearbyRadiusMeters;
     private NearbyRadiusOption? _selectedNearbyRadiusOption;
 
@@ -68,11 +75,13 @@ public sealed class DiscoverViewModel : BaseViewModel
         IBusinessService businessService,
         IConsumerLoyaltySnapshotCache loyaltySnapshotCache,
         IProfileService profileService,
+        INotificationInboxService notificationInboxService,
         ILocation location)
     {
         _businessService = businessService ?? throw new ArgumentNullException(nameof(businessService));
         _loyaltySnapshotCache = loyaltySnapshotCache ?? throw new ArgumentNullException(nameof(loyaltySnapshotCache));
         _profileService = profileService ?? throw new ArgumentNullException(nameof(profileService));
+        _notificationInboxService = notificationInboxService ?? throw new ArgumentNullException(nameof(notificationInboxService));
         _location = location ?? throw new ArgumentNullException(nameof(location));
 
         JoinedAccounts = new RangeObservableCollection<LoyaltyAccountSummary>();
@@ -90,9 +99,10 @@ public sealed class DiscoverViewModel : BaseViewModel
 
         ShowJoinedTabCommand = new AsyncCommand(ShowJoinedTabAsync, () => !IsBusy);
         ShowExploreTabCommand = new AsyncCommand(ShowExploreTabAsync, () => !IsBusy);
-        RefreshCommand = new AsyncCommand(RefreshAsync, () => !IsBusy);
+        RefreshCommand = new AsyncCommand(RefreshAsync);
         SearchCommand = new AsyncCommand(SearchAsync, () => !IsBusy);
         ClearFiltersCommand = new AsyncCommand(ClearFiltersAsync, () => !IsBusy);
+        OpenNotificationsCommand = new AsyncCommand(OpenNotificationsAsync);
     }
 
     /// <summary>
@@ -228,6 +238,12 @@ public sealed class DiscoverViewModel : BaseViewModel
 
     public bool HasExploreResults => ExploreBusinesses.Count > 0;
 
+    public bool IsRefreshing
+    {
+        get => _isRefreshing;
+        set => SetProperty(ref _isRefreshing, value);
+    }
+
     public string CurrentUserFirstName
     {
         get => _currentUserFirstName;
@@ -260,6 +276,25 @@ public sealed class DiscoverViewModel : BaseViewModel
     public string DiscoverGreetingText => string.Format(CultureInfo.CurrentCulture, AppResources.DiscoverGreetingFormat, CurrentUserGreetingName);
 
     public string DiscoverGreetingSubtitle => AppResources.DiscoverGreetingSubtitle;
+
+    public int UnreadNotificationsCount
+    {
+        get => _unreadNotificationsCount;
+        private set
+        {
+            if (SetProperty(ref _unreadNotificationsCount, Math.Max(0, value)))
+            {
+                OnPropertyChanged(nameof(HasUnreadNotifications));
+                OnPropertyChanged(nameof(UnreadNotificationsText));
+            }
+        }
+    }
+
+    public bool HasUnreadNotifications => UnreadNotificationsCount > 0;
+
+    public string UnreadNotificationsText => UnreadNotificationsCount > 99
+        ? "99+"
+        : UnreadNotificationsCount.ToString(CultureInfo.InvariantCulture);
 
     private string CurrentUserGreetingName
     {
@@ -305,6 +340,8 @@ public sealed class DiscoverViewModel : BaseViewModel
     /// Clears explore filters and reloads explore data.
     /// </summary>
     public AsyncCommand ClearFiltersCommand { get; }
+
+    public AsyncCommand OpenNotificationsCommand { get; }
 
     public override async Task OnAppearingAsync()
     {
@@ -423,6 +460,7 @@ public sealed class DiscoverViewModel : BaseViewModel
     {
         if (IsBusy)
         {
+            RunOnMain(() => IsRefreshing = false);
             return;
         }
 
@@ -433,6 +471,7 @@ public sealed class DiscoverViewModel : BaseViewModel
         {
             var cancellationToken = loadCancellation.Token;
             await LoadProfileHeaderAsync(cancellationToken);
+            await LoadUnreadNotificationsAsync(cancellationToken);
 
             // Joined accounts are loaded first so Explore can label each business as joined/not-joined.
             await LoadJoinedAccountsAsync(cancellationToken);
@@ -611,6 +650,38 @@ public sealed class DiscoverViewModel : BaseViewModel
         }
     }
 
+    private async Task LoadUnreadNotificationsAsync(CancellationToken cancellationToken)
+    {
+        try
+        {
+            var result = await _notificationInboxService
+                .GetUnreadCountAsync(NotificationInboxTargetApp.Consumer, cancellationToken)
+                .ConfigureAwait(false);
+            if (result.Succeeded)
+            {
+                RunOnMain(() => UnreadNotificationsCount = result.Value);
+            }
+        }
+        catch (OperationCanceledException)
+        {
+            throw;
+        }
+        catch
+        {
+            // Notification badge refresh is best-effort and must not block Discover.
+        }
+    }
+
+    private static async Task OpenNotificationsAsync()
+    {
+        if (Shell.Current is null)
+        {
+            return;
+        }
+
+        await Shell.Current.GoToAsync(Routes.Notifications);
+    }
+
     private void ApplyProfileHeader(CustomerProfile profile)
     {
         _currentUserLastName = profile.LastName ?? string.Empty;
@@ -675,6 +746,7 @@ public sealed class DiscoverViewModel : BaseViewModel
         RunOnMain(() =>
         {
             IsBusy = true;
+            IsRefreshing = true;
             ErrorMessage = null;
             RaiseCommandStates();
         });
@@ -688,6 +760,7 @@ public sealed class DiscoverViewModel : BaseViewModel
         RunOnMain(() =>
         {
             IsBusy = false;
+            IsRefreshing = false;
             RaiseCommandStates();
         });
     }

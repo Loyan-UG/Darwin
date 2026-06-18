@@ -318,6 +318,20 @@
                         {
                             <div class="small text-muted mt-1">@item.Description</div>
                         }
+                        <div class="mt-2 d-flex flex-wrap gap-1">
+                            @if (item.CampaignsInApp)
+                            {
+                                <span class="badge text-bg-light border">In-app campaigns</span>
+                            }
+                            @if (item.CampaignsPush)
+                            {
+                                <span class="badge text-bg-warning">Push: @item.MonthlyPushCampaigns/month</span>
+                            }
+                            @if (item.AdvancedTargeting)
+                            {
+                                <span class="badge text-bg-info">Advanced targeting</span>
+                            }
+                        </div>
                     </td>
                     <td>@item.Currency @((item.PriceMinor / 100M).ToString("0.00"))</td>
                     <td>@string.Format(T.T("BillingPlansEveryInterval"), item.IntervalCount, item.Interval)</td>

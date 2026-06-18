@@ -807,6 +807,32 @@ namespace Darwin.Mobile.Shared.Services.Loyalty
         }
 
         /// <inheritdoc />
+        public async Task<Result<BusinessCampaignEntitlementResponse>> GetBusinessCampaignEntitlementAsync(CancellationToken cancellationToken)
+        {
+            try
+            {
+                var response = await _apiClient
+                    .GetResultAsync<BusinessCampaignEntitlementResponse>(ApiRoutes.Loyalty.GetBusinessCampaignEntitlement, cancellationToken)
+                    .ConfigureAwait(false);
+
+                if (!response.Succeeded || response.Value is null)
+                {
+                    return Result<BusinessCampaignEntitlementResponse>.Fail(response.Error ?? "Request failed.");
+                }
+
+                return Result<BusinessCampaignEntitlementResponse>.Ok(response.Value);
+            }
+            catch (OperationCanceledException)
+            {
+                throw;
+            }
+            catch (Exception)
+            {
+                return Result<BusinessCampaignEntitlementResponse>.Fail(MobileErrorMessages.NetworkFailure("retrieving campaign entitlement"));
+            }
+        }
+
+        /// <inheritdoc />
         public async Task<Result<BusinessCampaignMutationResponse>> CreateBusinessCampaignAsync(CreateBusinessCampaignRequest request, CancellationToken cancellationToken)
         {
             if (request is null)

@@ -16,6 +16,17 @@ public sealed class BillingPlanCreateValidator : AbstractValidator<BillingPlanCr
         RuleFor(x => x.IntervalCount).GreaterThan(0);
         RuleFor(x => x.TrialDays).GreaterThanOrEqualTo(0).When(x => x.TrialDays.HasValue);
         RuleFor(x => x.FeaturesJson).NotEmpty().MaximumLength(4000);
+        RuleFor(x => x.MaxStaff).GreaterThanOrEqualTo(0);
+        RuleFor(x => x.MaxRewardTiers).GreaterThanOrEqualTo(0);
+        RuleFor(x => x.MonthlyPushCampaigns).GreaterThanOrEqualTo(0);
+        RuleFor(x => x.MonthlyPushCampaigns)
+            .Equal(0)
+            .When(x => !x.CampaignsPush)
+            .WithMessage("Monthly push campaigns must be 0 when push campaigns are disabled.");
+        RuleFor(x => x.MonthlyPushCampaigns)
+            .GreaterThan(0)
+            .When(x => x.CampaignsPush)
+            .WithMessage("Monthly push campaigns must be greater than 0 when push campaigns are enabled.");
     }
 }
 

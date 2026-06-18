@@ -55,13 +55,13 @@ public static class MauiProgram
     }
 
     /// <summary>
-    /// Forces native input controls to use the approved Business gold tint instead of platform defaults.
+    /// Forces native input controls to use the approved Loyan gold tint instead of platform defaults.
     /// </summary>
     private static void ConfigurePlatformControlColors()
     {
 #if ANDROID
-        var goldTint = ColorStateList.ValueOf(Android.Graphics.Color.ParseColor("#F4B223"));
-        var goldHighlight = Android.Graphics.Color.ParseColor("#F4B223");
+        var goldTint = ColorStateList.ValueOf(Android.Graphics.Color.ParseColor("#FFDB34"));
+        var goldHighlight = Android.Graphics.Color.ParseColor("#FFDB34");
 
         EntryHandler.Mapper.AppendToMapping("BusinessGoldInputTint", (handler, view) =>
         {

@@ -1052,6 +1052,9 @@
   <data name="InvalidDeleteRequest" xml:space="preserve">
     <value>Ungueltige Loeschanfrage.</value>
   </data>
+  <data name="NotificationNotFound" xml:space="preserve">
+    <value>Benachrichtigung wurde nicht gefunden.</value>
+  </data>
   <data name="LoyaltyProgramConcurrencyConflict" xml:space="preserve">
     <value>Gleichzeitigkeitskonflikt. Das Loyalty-Programm wurde von einem anderen Prozess geaendert.</value>
   </data>
@@ -1117,6 +1120,15 @@
   </data>
   <data name="BusinessCampaignChannelsInvalid" xml:space="preserve">
     <value>Kampagnenkanaele sind ungueltig. Waehlen Sie mindestens einen unterstuetzten Kanal aus.</value>
+  </data>
+  <data name="BusinessCampaignInAppNotAllowed" xml:space="preserve">
+    <value>In-App-Kampagnen sind im aktuellen Plan nicht enthalten.</value>
+  </data>
+  <data name="BusinessCampaignPushNotAllowed" xml:space="preserve">
+    <value>Push-Kampagnen sind im aktuellen Plan nicht enthalten.</value>
+  </data>
+  <data name="BusinessCampaignPushQuotaExceeded" xml:space="preserve">
+    <value>Das monatliche Kontingent fuer Push-Kampagnen ist aufgebraucht.</value>
   </data>
   <data name="BusinessCampaignJsonInvalid" xml:space="preserve">
     <value>Kampagnen-Targeting und Payload-JSON muessen gueltige JSON-Objekte sein.</value>
@@ -1561,6 +1573,9 @@
   </data>
   <data name="CampaignDeliveryStatusInvalid" xml:space="preserve">
     <value>Der Kampagnenzustellungsstatus ist ungueltig.</value>
+  </data>
+  <data name="CampaignDeliveryRequeueRequiresFailedOrCancelled" xml:space="preserve">
+    <value>Nur fehlgeschlagene oder abgebrochene Kampagnenzustellungen koennen erneut eingereiht werden.</value>
   </data>
   <data name="ProviderCallbackInboxMessageNotFound" xml:space="preserve">
     <value>Die Provider-Callback-Inbox-Nachricht wurde nicht gefunden.</value>
