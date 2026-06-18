@@ -19,11 +19,12 @@ Generate and validate the non-secret local readiness report bundle before final 
 ```powershell
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\export-production-readiness-report-bundle.ps1 -Force
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\check-production-readiness-report-bundle.ps1
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\export-production-readiness-local-package-draft.ps1 -Force
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\export-production-readiness-action-plan.ps1 -Force
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\export-production-readiness-env-template.ps1 -Force
 ```
 
-The bundle gathers current-state local readiness reports under the ignored `artifacts\production-readiness\` path, including local release-candidate build/test, local backup package structure, and local PostgreSQL restore rehearsal reports when their prerequisites are present. It also refreshes the action plan and environment template so the validator can prove those follow-up artifacts exist. The action-plan exporter turns report results into owner rows and missing evidence keys for operator follow-up. The environment-template exporter creates an ignored placeholder script for missing evidence variables so operators can prepare a local/session environment without storing values in source control. These reports are attachment evidence for operators and reviewers; they do not replace production-like staging proof, private provider dashboards, customer approvals, or the filled evidence package.
+The bundle gathers current-state local readiness reports under the ignored `artifacts\production-readiness\` path, including local release-candidate build/test, local backup package structure, and local PostgreSQL restore rehearsal reports when their prerequisites are present. It also refreshes the action plan and environment template so the validator can prove those follow-up artifacts exist. The local draft exporter fills an ignored evidence-package draft with those report/helper references while keeping deployment-specific rows blocked. The action-plan exporter turns report results into owner rows and missing evidence keys for operator follow-up. The environment-template exporter creates an ignored placeholder script for missing evidence variables so operators can prepare a local/session environment without storing values in source control. These reports are attachment evidence for operators and reviewers; they do not replace production-like staging proof, private provider dashboards, customer approvals, or the filled evidence package.
 
 Validate the filled package before go-live:
 
