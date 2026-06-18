@@ -62,6 +62,68 @@ function Test-Truthy {
     return $Value -in @("1", "true", "yes", "y")
 }
 
+function Assert-SafeEvidenceReference {
+    param(
+        [Parameter(Mandatory = $true)][string]$Name,
+        [Parameter(Mandatory = $true)][string]$Value
+    )
+
+    $blocked = @(
+        "secret",
+        "token",
+        "password",
+        "private key",
+        "webhook secret",
+        "api key",
+        "raw payload",
+        "provider payload",
+        "provider response",
+        "checkout url",
+        "customer data",
+        "private approval"
+    )
+
+    foreach ($term in $blocked) {
+        if ($Value.IndexOf($term, [StringComparison]::OrdinalIgnoreCase) -ge 0) {
+            Write-Host "Stripe test-mode smoke is blocked."
+            Write-Host "$Name contains sensitive wording. Use a non-secret smoke report id, run label, ticket, or evidence-package row id."
+            exit 2
+        }
+    }
+}
+
+function Assert-ReadinessEvidenceReferences {
+    $requiredReferences = @("DARWIN_STRIPE_TESTMODE_SMOKE_REFERENCE")
+    if ($RequireRuntimePipeline) {
+        $requiredReferences += "DARWIN_STRIPE_RUNTIME_PIPELINE_REFERENCE"
+    }
+
+    if ($WaitForWebhookFinalization) {
+        $requiredReferences += "DARWIN_STRIPE_WEBHOOK_FINALIZATION_REFERENCE"
+    }
+
+    $missingReferences = @()
+    foreach ($name in $requiredReferences) {
+        if ([string]::IsNullOrWhiteSpace((Get-EnvValue $name))) {
+            $missingReferences += $name
+        }
+    }
+
+    if ($missingReferences.Count -gt 0) {
+        Write-Host "Stripe test-mode smoke is blocked. Configure these environment variables first:"
+        foreach ($name in $missingReferences) {
+            Write-Host " - $name"
+        }
+
+        Write-Host "Use non-secret Stripe smoke report ids, run labels, tickets, or evidence-package row ids. Do not paste checkout URLs, provider responses, webhook secrets, or customer data."
+        exit 2
+    }
+
+    foreach ($name in $requiredReferences) {
+        Assert-SafeEvidenceReference -Name $name -Value (Get-EnvValue $name)
+    }
+}
+
 function Assert-StripeRuntimePipelineReady {
     if (-not (Test-Truthy (Get-EnvValue "DARWIN_STRIPE_PROVIDER_CALLBACK_WORKER_CONFIRMED").ToLowerInvariant())) {
         Write-Host "Stripe runtime pipeline readiness is blocked."
@@ -359,6 +421,8 @@ elseif ($RequireRuntimePipeline) {
 }
 
 if (-not $Execute) {
+    Assert-ReadinessEvidenceReferences
+
     Write-Host "Stripe test-mode smoke configuration is present."
     if ($RequireRuntimePipeline) {
         Write-Host "Stripe runtime pipeline readiness is confirmed."

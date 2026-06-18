@@ -4,6 +4,7 @@ using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using Darwin.Application.Abstractions.Persistence;
+using Darwin.Application.Abstractions.Security;
 using Darwin.Application.Abstractions.Services;
 using Darwin.Application.Identity;
 using Darwin.Application.Identity.DTOs;
@@ -25,12 +26,18 @@ public sealed class RegisterOrUpdateUserDeviceHandler
 
     private readonly IAppDbContext _db;
     private readonly IClock _clock;
+    private readonly IProtectedStringService _protectedStringService;
     private readonly IStringLocalizer<ValidationResource> _localizer;
 
-    public RegisterOrUpdateUserDeviceHandler(IAppDbContext db, IClock clock, IStringLocalizer<ValidationResource> localizer)
+    public RegisterOrUpdateUserDeviceHandler(
+        IAppDbContext db,
+        IClock clock,
+        IProtectedStringService protectedStringService,
+        IStringLocalizer<ValidationResource> localizer)
     {
         _db = db ?? throw new ArgumentNullException(nameof(db));
         _clock = clock ?? throw new ArgumentNullException(nameof(clock));
+        _protectedStringService = protectedStringService ?? throw new ArgumentNullException(nameof(protectedStringService));
         _localizer = localizer ?? throw new ArgumentNullException(nameof(localizer));
     }
 
@@ -65,6 +72,7 @@ public sealed class RegisterOrUpdateUserDeviceHandler
         {
             return Result<RegisterUserDeviceResultDto>.Fail(_localizer["PushTokenTooLong"]);
         }
+        var protectedPushToken = _protectedStringService.Protect(normalizedPushToken);
 
         var normalizedAppVersion = string.IsNullOrWhiteSpace(dto.AppVersion) ? null : dto.AppVersion.Trim();
         if (normalizedAppVersion is not null && normalizedAppVersion.Length > 64)
@@ -101,7 +109,7 @@ public sealed class RegisterOrUpdateUserDeviceHandler
                 UserId = dto.UserId,
                 DeviceId = normalizedDeviceId,
                 Platform = dto.Platform,
-                PushToken = normalizedPushToken,
+                PushToken = protectedPushToken,
                 PushTokenUpdatedAtUtc = normalizedPushToken is null ? null : now,
                 NotificationsEnabled = dto.NotificationsEnabled,
                 LastSeenAtUtc = now,
@@ -114,13 +122,14 @@ public sealed class RegisterOrUpdateUserDeviceHandler
         }
         else
         {
-            if (!string.Equals(existing.PushToken, normalizedPushToken, StringComparison.Ordinal))
+            var existingPlainPushToken = _protectedStringService.Unprotect(existing.PushToken);
+            if (!string.Equals(existingPlainPushToken, normalizedPushToken, StringComparison.Ordinal))
             {
                 existing.PushTokenUpdatedAtUtc = normalizedPushToken is null ? existing.PushTokenUpdatedAtUtc : now;
             }
 
             existing.Platform = dto.Platform;
-            existing.PushToken = normalizedPushToken;
+            existing.PushToken = protectedPushToken;
             existing.NotificationsEnabled = dto.NotificationsEnabled;
             existing.LastSeenAtUtc = now;
             existing.AppVersion = normalizedAppVersion;

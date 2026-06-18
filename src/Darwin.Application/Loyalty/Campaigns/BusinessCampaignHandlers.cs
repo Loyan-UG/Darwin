@@ -6,8 +6,11 @@ using System.Threading.Tasks;
 using System.Text.Json;
 using Darwin.Application.Abstractions.Persistence;
 using Darwin.Application.Abstractions.Services;
+using Darwin.Domain.Entities.Billing;
+using Darwin.Domain.Entities.Businesses;
 using Darwin.Domain.Enums;
 using Darwin.Domain.Entities.Marketing;
+using Darwin.Application.Notifications;
 using Darwin.Shared.Results;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Localization;
@@ -283,11 +286,16 @@ namespace Darwin.Application.Loyalty.Campaigns
     public sealed class CreateBusinessCampaignHandler
     {
         private readonly IAppDbContext _db;
+        private readonly BusinessCampaignEntitlementService _entitlementService;
         private readonly IStringLocalizer<ValidationResource> _localizer;
 
-        public CreateBusinessCampaignHandler(IAppDbContext db, IStringLocalizer<ValidationResource> localizer)
+        public CreateBusinessCampaignHandler(
+            IAppDbContext db,
+            BusinessCampaignEntitlementService entitlementService,
+            IStringLocalizer<ValidationResource> localizer)
         {
             _db = db;
+            _entitlementService = entitlementService;
             _localizer = localizer;
         }
 
@@ -323,6 +331,13 @@ namespace Darwin.Application.Loyalty.Campaigns
                 return Result<Guid>.Fail(_localizer["BusinessCampaignEligibilityRulesInvalid"]);
             }
 
+            var entitlement = await _entitlementService.GetAsync(dto.BusinessId, ct: ct).ConfigureAwait(false);
+            var entitlementResult = BusinessCampaignValidation.ValidateChannelEntitlement(dto.Channels, entitlement, _localizer);
+            if (!entitlementResult.Succeeded)
+            {
+                return Result<Guid>.Fail(entitlementResult.Error ?? _localizer["BusinessCampaignChannelsInvalid"]);
+            }
+
             var entity = new Campaign
             {
                 BusinessId = dto.BusinessId,
@@ -352,11 +367,16 @@ namespace Darwin.Application.Loyalty.Campaigns
     public sealed class UpdateBusinessCampaignHandler
     {
         private readonly IAppDbContext _db;
+        private readonly BusinessCampaignEntitlementService _entitlementService;
         private readonly IStringLocalizer<ValidationResource> _localizer;
 
-        public UpdateBusinessCampaignHandler(IAppDbContext db, IStringLocalizer<ValidationResource> localizer)
+        public UpdateBusinessCampaignHandler(
+            IAppDbContext db,
+            BusinessCampaignEntitlementService entitlementService,
+            IStringLocalizer<ValidationResource> localizer)
         {
             _db = db;
+            _entitlementService = entitlementService;
             _localizer = localizer;
         }
 
@@ -390,6 +410,13 @@ namespace Darwin.Application.Loyalty.Campaigns
             if (!BusinessCampaignValidation.HasValidEligibilityRules(dto.EligibilityRules))
             {
                 return Result.Fail(_localizer["BusinessCampaignEligibilityRulesInvalid"]);
+            }
+
+            var entitlement = await _entitlementService.GetAsync(dto.BusinessId, ct: ct).ConfigureAwait(false);
+            var entitlementResult = BusinessCampaignValidation.ValidateChannelEntitlement(dto.Channels, entitlement, _localizer);
+            if (!entitlementResult.Succeeded)
+            {
+                return entitlementResult;
             }
 
             var entity = await _db.Set<Campaign>()
@@ -613,6 +640,30 @@ namespace Darwin.Application.Loyalty.Campaigns
         public static bool HasValidChannels(short channels)
             => channels > 0 && (channels & ~ValidCampaignChannelsMask) == 0;
 
+        public static bool IncludesInApp(short channels)
+            => (channels & (short)CampaignChannels.InApp) == (short)CampaignChannels.InApp;
+
+        public static bool IncludesPush(short channels)
+            => (channels & (short)CampaignChannels.Push) == (short)CampaignChannels.Push;
+
+        public static Result ValidateChannelEntitlement(
+            short channels,
+            BusinessCampaignEntitlementDto entitlement,
+            IStringLocalizer<ValidationResource> localizer)
+        {
+            if (IncludesInApp(channels) && !entitlement.CampaignsInAppAllowed)
+            {
+                return Result.Fail(localizer["BusinessCampaignInAppNotAllowed"]);
+            }
+
+            if (IncludesPush(channels) && !entitlement.CampaignsPushAllowed)
+            {
+                return Result.Fail(localizer["BusinessCampaignPushNotAllowed"]);
+            }
+
+            return Result.Ok();
+        }
+
         public static bool IsValidSchedule(DateTime? startsAtUtc, DateTime? endsAtUtc)
             => !startsAtUtc.HasValue || !endsAtUtc.HasValue || startsAtUtc.Value <= endsAtUtc.Value;
 
@@ -658,12 +709,24 @@ namespace Darwin.Application.Loyalty.Campaigns
     {
         private readonly IAppDbContext _db;
         private readonly IClock _clock;
+        private readonly BusinessCampaignEntitlementService _entitlementService;
+        private readonly NotificationInboxWriter _notificationInboxWriter;
+        private readonly CampaignPushDeliveryWriter _pushDeliveryWriter;
         private readonly IStringLocalizer<ValidationResource> _localizer;
 
-        public SetCampaignActivationHandler(IAppDbContext db, IClock clock, IStringLocalizer<ValidationResource> localizer)
+        public SetCampaignActivationHandler(
+            IAppDbContext db,
+            IClock clock,
+            BusinessCampaignEntitlementService entitlementService,
+            NotificationInboxWriter notificationInboxWriter,
+            CampaignPushDeliveryWriter pushDeliveryWriter,
+            IStringLocalizer<ValidationResource> localizer)
         {
             _db = db;
             _clock = clock;
+            _entitlementService = entitlementService;
+            _notificationInboxWriter = notificationInboxWriter;
+            _pushDeliveryWriter = pushDeliveryWriter;
             _localizer = localizer;
         }
 
@@ -712,9 +775,43 @@ namespace Darwin.Application.Loyalty.Campaigns
                 {
                     return Result.Fail(_localizer["BusinessCampaignCannotActivateExpired"]);
                 }
+
+                var entitlement = await _entitlementService.GetAsync(dto.BusinessId, ct: ct).ConfigureAwait(false);
+                var entitlementResult = BusinessCampaignValidation.ValidateChannelEntitlement((short)entity.Channels, entitlement, _localizer);
+                if (!entitlementResult.Succeeded)
+                {
+                    return entitlementResult;
+                }
+
+                if (BusinessCampaignValidation.IncludesPush((short)entity.Channels))
+                {
+                    var period = BusinessCampaignEntitlementService.GetCurrentPeriod(nowUtc);
+                    var alreadyUsed = await _entitlementService.HasPushUsageAsync(dto.BusinessId, entity.Id, period.PeriodStartUtc, ct).ConfigureAwait(false);
+                    if (!alreadyUsed && entitlement.MonthlyPushRemaining <= 0)
+                    {
+                        return Result.Fail(_localizer["BusinessCampaignPushQuotaExceeded"]);
+                    }
+
+                    if (!alreadyUsed)
+                    {
+                        await _entitlementService.RecordPushUsageAsync(dto.BusinessId, entity.Id, nowUtc, ct).ConfigureAwait(false);
+                    }
+                }
             }
 
             entity.IsActive = dto.IsActive;
+            if (dto.IsActive && BusinessCampaignValidation.IncludesInApp((short)entity.Channels))
+            {
+                await _notificationInboxWriter.CreateForActivatedCampaignAsync(entity, ct).ConfigureAwait(false);
+            }
+            if (dto.IsActive && BusinessCampaignValidation.IncludesPush((short)entity.Channels))
+            {
+                await _pushDeliveryWriter.QueueForActivatedCampaignAsync(entity, ct).ConfigureAwait(false);
+            }
+            if (dto.IsActive)
+            {
+                await CreateBusinessCampaignStatusNotificationAsync(entity, ct).ConfigureAwait(false);
+            }
 
             try
             {
@@ -725,6 +822,43 @@ namespace Darwin.Application.Loyalty.Campaigns
             {
                 return Result.Fail(_localizer["BusinessCampaignConcurrencyConflict"]);
             }
+        }
+
+        private async Task CreateBusinessCampaignStatusNotificationAsync(Campaign campaign, CancellationToken ct)
+        {
+            if (campaign.BusinessId is not { } businessId || businessId == Guid.Empty)
+            {
+                return;
+            }
+
+            var memberUserIds = await _db.Set<BusinessMember>()
+                .AsNoTracking()
+                .Where(x => !x.IsDeleted && x.IsActive && x.BusinessId == businessId)
+                .Select(x => x.UserId)
+                .Distinct()
+                .ToListAsync(ct)
+                .ConfigureAwait(false);
+
+            if (memberUserIds.Count == 0)
+            {
+                return;
+            }
+
+            var channels = BusinessCampaignValidation.IncludesPush((short)campaign.Channels)
+                ? "In-app + Push"
+                : "In-app";
+            await _notificationInboxWriter.CreateOrUpdateForUsersAsync(
+                    memberUserIds,
+                    NotificationCategory.Campaign,
+                    NotificationTargetApp.Business,
+                    "Campaign activated",
+                    $"{campaign.Title} is active. Channel: {channels}.",
+                    $"loyan://campaign/{campaign.Id:D}",
+                    "business-campaign-activation",
+                    campaign.Id,
+                    campaign.EndsAtUtc,
+                    ct)
+                .ConfigureAwait(false);
         }
 
     }
@@ -782,11 +916,21 @@ namespace Darwin.Application.Loyalty.Campaigns
             }
 
             var nextStatus = (CampaignDeliveryStatus)dto.Status;
+            if (nextStatus == CampaignDeliveryStatus.Pending &&
+                delivery.Status is not CampaignDeliveryStatus.Failed and not CampaignDeliveryStatus.Cancelled)
+            {
+                return Result.Fail(_localizer["CampaignDeliveryRequeueRequiresFailedOrCancelled"]);
+            }
+
             delivery.Status = nextStatus;
             if (nextStatus == CampaignDeliveryStatus.Pending)
             {
                 delivery.LastError = null;
                 delivery.LastResponseCode = null;
+                delivery.ProviderMessageId = null;
+                delivery.AttemptCount = 0;
+                delivery.FirstAttemptAtUtc = null;
+                delivery.LastAttemptAtUtc = null;
             }
             else if (!string.IsNullOrWhiteSpace(dto.OperatorNote))
             {

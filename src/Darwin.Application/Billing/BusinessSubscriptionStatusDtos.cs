@@ -21,4 +21,12 @@ public sealed class BusinessSubscriptionStatusDto
     public DateTime? TrialEndsAtUtc { get; init; }
     public DateTime? CanceledAtUtc { get; init; }
     public bool CancelAtPeriodEnd { get; init; }
+    public int MaxStaff { get; init; }
+    public int MaxRewardTiers { get; init; }
+    public int MonthlyPushCampaigns { get; init; }
+    public bool CampaignsInApp { get; init; }
+    public bool CampaignsPush { get; init; }
+    public bool AdvancedTargeting { get; init; }
+    public bool Exports { get; init; }
+    public bool Sla { get; init; }
 }

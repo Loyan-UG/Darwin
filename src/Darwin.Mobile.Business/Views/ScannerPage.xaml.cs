@@ -17,6 +17,7 @@ public partial class ScannerPage : ContentPage
 {
     private ScannerViewModel? Vm => BindingContext as ScannerViewModel;
     private bool _isFeedbackSubscribed;
+    private bool _scanStartedForCurrentActivation;
     private CancellationTokenSource? _feedbackScrollCancellation;
 
     /// <summary>
@@ -30,6 +31,19 @@ public partial class ScannerPage : ContentPage
         SubscribeFeedback(viewModel);
     }
 
+    public async Task StartScanFromTabAsync()
+    {
+        if (Vm is null)
+        {
+            return;
+        }
+
+        SubscribeFeedback(Vm);
+        ResetFeedbackScrollCancellation();
+        await Vm.OnAppearingAsync();
+        _scanStartedForCurrentActivation = false;
+        await StartScanForTabActivationAsync();
+    }
 
     protected override async void OnAppearing()
     {
@@ -66,11 +80,22 @@ public partial class ScannerPage : ContentPage
                 await Vm.OnDisappearingAsync();
                 UnsubscribeFeedback(Vm);
             }
+
+            if (!IsScannerShellLocationActive())
+            {
+                _scanStartedForCurrentActivation = false;
+            }
         }
         catch
         {
             // Disappearing cleanup should never crash navigation away from the scanner page.
         }
+    }
+
+    private static bool IsScannerShellLocationActive()
+    {
+        var location = Shell.Current?.CurrentState?.Location.OriginalString ?? string.Empty;
+        return location.Contains(Constants.Routes.Scanner, StringComparison.OrdinalIgnoreCase);
     }
 
     /// <summary>
@@ -127,6 +152,25 @@ public partial class ScannerPage : ContentPage
         catch
         {
             // Feedback scroll failure should never crash scanner flow.
+        }
+    }
+
+    /// <summary>
+    /// Starts the scanner once when the tab becomes active. Returning from the modal scanner
+    /// can trigger OnAppearing again, so this guard prevents an immediate scan loop.
+    /// </summary>
+    private async Task StartScanForTabActivationAsync()
+    {
+        if (_scanStartedForCurrentActivation || Vm is null || !Vm.CanStartScan)
+        {
+            return;
+        }
+
+        _scanStartedForCurrentActivation = true;
+        await Task.Delay(120);
+        if (Vm.ScanCommand.CanExecute(null))
+        {
+            Vm.ScanCommand.Execute(null);
         }
     }
 

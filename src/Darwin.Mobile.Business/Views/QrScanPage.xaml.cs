@@ -6,6 +6,7 @@ public partial class QrScanPage : ContentPage
 {
     private bool _isBarcodeSubscribed;
     private int _completed;
+    private bool _cameraStarted;
 
     public QrScanPage()
     {
@@ -18,8 +19,6 @@ public partial class QrScanPage : ContentPage
             AutoRotate = true,
             Multiple = false
         };
-
-        SubscribeBarcodeReader();
     }
 
     public event EventHandler<string?>? Completed;
@@ -27,13 +26,18 @@ public partial class QrScanPage : ContentPage
     protected override void OnAppearing()
     {
         base.OnAppearing();
-        SubscribeBarcodeReader();
+        StartCameraDetection();
     }
 
     protected override void OnDisappearing()
     {
-        UnsubscribeBarcodeReader();
+        StopCameraDetection();
         base.OnDisappearing();
+    }
+
+    public void CancelFromHost()
+    {
+        Complete(null);
     }
 
     private void OnBarcodesDetected(object? sender, BarcodeDetectionEventArgs e)
@@ -44,23 +48,71 @@ public partial class QrScanPage : ContentPage
             return;
         }
 
-        // prevent double-fire
-        if (Interlocked.Exchange(ref _completed, 1) == 1)
-        {
-            return;
-        }
-
-        MainThread.BeginInvokeOnMainThread(() => Completed?.Invoke(this, value));
+        MainThread.BeginInvokeOnMainThread(() => Complete(value));
     }
 
     private void OnCancelClicked(object? sender, EventArgs e)
+    {
+        Complete(null);
+    }
+
+    private void Complete(string? token)
     {
         if (Interlocked.Exchange(ref _completed, 1) == 1)
         {
             return;
         }
 
-        Completed?.Invoke(this, null);
+        StopCameraDetection();
+        if (!string.IsNullOrWhiteSpace(token))
+        {
+            Completed?.Invoke(this, token);
+            return;
+        }
+
+        Dispatcher.DispatchDelayed(TimeSpan.FromMilliseconds(250), () => Completed?.Invoke(this, null));
+    }
+
+    private void StartCameraDetection()
+    {
+        if (_cameraStarted)
+        {
+            return;
+        }
+
+        try
+        {
+            SubscribeBarcodeReader();
+            CameraView.IsDetecting = true;
+            _cameraStarted = true;
+        }
+        catch
+        {
+            Complete(null);
+        }
+    }
+
+    private void StopCameraDetection()
+    {
+        if (!_cameraStarted && !_isBarcodeSubscribed)
+        {
+            return;
+        }
+
+        try
+        {
+            CameraView.IsDetecting = false;
+            CameraView.IsTorchOn = false;
+        }
+        catch
+        {
+            // Camera controls can throw while Android is tearing down CameraX.
+        }
+        finally
+        {
+            _cameraStarted = false;
+            UnsubscribeBarcodeReader();
+        }
     }
 
     /// <summary>

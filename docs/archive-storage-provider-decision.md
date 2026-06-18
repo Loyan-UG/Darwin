@@ -1,8 +1,8 @@
 # Invoice Archive Object Storage Provider Decision
 
-Reviewed: 2026-05-10
+Reviewed: 2026-06-17
 
-Production provider direction is now selected: Darwin should use a reusable object-storage architecture with MinIO as the recommended self-hosted production target through an S3-compatible provider. AWS S3 and Azure Blob Storage remain supported alternatives. The current implementation keeps the internal/database-backed provider active, adds a file-system provider for non-vendor local/shared-volume scenarios, and adds a provider-neutral `ObjectStorage` configuration/capability boundary plus SDK-backed S3-compatible and Azure Blob adapters so future invoice archive, media, DHL label, export, and e-invoice artifacts can use the same storage model.
+Production provider direction is now selected: Darwin should use a reusable object-storage architecture with MinIO as the first production target through an S3-compatible provider. Azure Blob Storage is the next provider-hardening target after MinIO production evidence is complete, and AWS S3 remains a supported alternative. The current implementation keeps the internal/database-backed provider active, adds a file-system provider for non-vendor local/shared-volume scenarios, and adds a provider-neutral `ObjectStorage` configuration/capability boundary plus SDK-backed S3-compatible and Azure Blob adapters so future invoice archive, media, DHL label, export, and e-invoice artifacts can use the same storage model.
 
 Invoice archive provider selection remains configuration-driven through `InvoiceArchiveStorage:ProviderName` while the reusable object-storage provider selection is configured under `ObjectStorage:Provider`. The file-system invoice archive provider uses `InvoiceArchiveStorage:FileSystem:RootPath`. External object-storage adapters must be wired behind the generic object-storage boundary and then consumed by invoice archive policy code without exposing provider SDK concepts to Application or Domain. S3-compatible and Azure Blob adapters are implemented in Infrastructure; provider-level immutability is still deployment-validation work, not a source-code-only claim.
 
@@ -25,9 +25,10 @@ Evaluate each candidate provider against these requirements before implementatio
 
 ## Production Decision
 
-- Recommended self-hosted production target: MinIO using the generic S3-compatible provider.
+- First production target: MinIO using the generic S3-compatible provider.
 - API compatibility target: S3-compatible object storage.
-- Supported alternatives: AWS S3 through the S3-compatible provider and Azure Blob Storage through an Azure provider.
+- Next provider-hardening target: Azure Blob Storage through the Azure provider after MinIO production evidence is complete.
+- Supported alternative: AWS S3 through the S3-compatible provider.
 - Development/internal fallback: internal/database-backed archive provider.
 - Optional local/on-prem fallback: file-system provider, without legal immutability claims.
 

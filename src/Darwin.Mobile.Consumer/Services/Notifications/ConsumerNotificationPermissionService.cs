@@ -56,7 +56,9 @@ public sealed class ConsumerNotificationPermissionService : IConsumerNotificatio
             }
 
 #if ANDROID
-            var status = await Permissions.RequestAsync<Permissions.PostNotifications>().ConfigureAwait(false);
+            await Task.Delay(250, cancellationToken).ConfigureAwait(false);
+            var status = await MainThread.InvokeOnMainThreadAsync(async () =>
+                await Permissions.RequestAsync<Permissions.PostNotifications>().ConfigureAwait(false)).ConfigureAwait(false);
             return Result<bool>.Ok(status == PermissionStatus.Granted);
 #elif IOS || MACCATALYST
             await ApplePushRuntimeBridge.RequestAuthorizationAndRegisterAsync(cancellationToken).ConfigureAwait(false);

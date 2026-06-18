@@ -33,6 +33,10 @@
                 <label asp-for="Channels" class="form-label"></label>
                 <field-help title="@T.T("Channels")" content="@T.T("LoyaltyCampaignChannelsHelp")" placement="right"></field-help>
                 <select asp-for="Channels" asp-items="Model.ChannelItems" class="form-select"></select>
+                @if (!string.IsNullOrWhiteSpace(Model.CampaignEntitlementSummary))
+                {
+                    <div class="form-text">@Model.CampaignEntitlementSummary</div>
+                }
             </div>
             @if (ViewData["IsCreate"] as bool? != true)
             {

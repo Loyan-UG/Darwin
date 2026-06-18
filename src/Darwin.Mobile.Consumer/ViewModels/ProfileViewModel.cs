@@ -52,6 +52,7 @@ public sealed class ProfileViewModel : BaseViewModel
     private string _timezone = ProfileContractDefaults.DefaultTimezone;
     private string _currency = ProfileContractDefaults.DefaultCurrency;
     private bool _phoneNumberConfirmed;
+    private bool _hasRequestedPhoneVerificationCode;
     private PhoneVerificationChannelOption _selectedPhoneVerificationChannel;
     private int _selectedPhoneVerificationChannelIndex;
     private string _phoneVerificationCode = string.Empty;
@@ -200,11 +201,30 @@ public sealed class ProfileViewModel : BaseViewModel
             if (SetProperty(ref _phoneNumberConfirmed, value))
             {
                 OnPropertyChanged(nameof(PhoneVerificationReadinessText));
+                OnPropertyChanged(nameof(ShouldShowPhoneVerificationRequest));
+                OnPropertyChanged(nameof(ShouldShowPhoneVerificationCodeEntry));
                 RequestPhoneVerificationCommand.RaiseCanExecuteChanged();
                 ConfirmPhoneVerificationCommand.RaiseCanExecuteChanged();
             }
         }
     }
+
+    public bool HasRequestedPhoneVerificationCode
+    {
+        get => _hasRequestedPhoneVerificationCode;
+        private set
+        {
+            if (SetProperty(ref _hasRequestedPhoneVerificationCode, value))
+            {
+                OnPropertyChanged(nameof(ShouldShowPhoneVerificationRequest));
+                OnPropertyChanged(nameof(ShouldShowPhoneVerificationCodeEntry));
+            }
+        }
+    }
+
+    public bool ShouldShowPhoneVerificationRequest => !PhoneNumberConfirmed && !HasRequestedPhoneVerificationCode;
+
+    public bool ShouldShowPhoneVerificationCodeEntry => !PhoneNumberConfirmed && HasRequestedPhoneVerificationCode;
 
     public IReadOnlyList<PhoneVerificationChannelOption> PhoneVerificationChannelOptions { get; }
 
@@ -533,6 +553,7 @@ public sealed class ProfileViewModel : BaseViewModel
             ProfileImageUrl = profile.ProfileImageUrl;
             PhoneE164 = profile.PhoneE164 ?? string.Empty;
             PhoneNumberConfirmed = profile.PhoneNumberConfirmed;
+            HasRequestedPhoneVerificationCode = false;
             Locale = string.IsNullOrWhiteSpace(profile.Locale) ? ProfileContractDefaults.DefaultLocale : profile.Locale;
             Timezone = string.IsNullOrWhiteSpace(profile.Timezone) ? ProfileContractDefaults.DefaultTimezone : profile.Timezone;
             Currency = string.IsNullOrWhiteSpace(profile.Currency) ? ProfileContractDefaults.DefaultCurrency : profile.Currency;
@@ -726,6 +747,7 @@ public sealed class ProfileViewModel : BaseViewModel
                 PhoneVerificationStatusMessage = result.Succeeded
                     ? string.Format(AppResources.ProfilePhoneVerificationCodeRequested, SelectedPhoneVerificationChannel.DisplayName)
                     : AppResources.ProfilePhoneVerificationRequestFailed;
+                HasRequestedPhoneVerificationCode = result.Succeeded;
             });
         }
         catch (OperationCanceledException)
@@ -922,6 +944,7 @@ public sealed class ProfileViewModel : BaseViewModel
             {
                 PhoneVerificationCode = string.Empty;
                 PhoneVerificationStatusMessage = AppResources.ProfilePhoneVerificationConfirmSuccess;
+                HasRequestedPhoneVerificationCode = false;
             });
 
             await LoadProfileSnapshotAsync(operationCancellation.Token).ConfigureAwait(false);

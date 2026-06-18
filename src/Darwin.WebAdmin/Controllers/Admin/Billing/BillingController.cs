@@ -2,6 +2,7 @@ using Darwin.Application.Abstractions.Services;
 using Darwin.Application.Billing.Commands;
 using Darwin.Application.Billing.DTOs;
 using Darwin.Application.Billing.Queries;
+using Darwin.Application.Billing;
 using Darwin.Application.CRM.Commands;
 using Darwin.Application.CRM.DTOs;
 using Darwin.Domain.Enums;
@@ -176,6 +177,10 @@ namespace Darwin.WebAdmin.Controllers.Admin.Billing
                     TrialDays = x.TrialDays,
                     IsActive = x.IsActive,
                     HasFeatures = x.HasFeatures,
+                    MonthlyPushCampaigns = x.MonthlyPushCampaigns,
+                    CampaignsInApp = x.CampaignsInApp,
+                    CampaignsPush = x.CampaignsPush,
+                    AdvancedTargeting = x.AdvancedTargeting,
                     ActiveSubscriptionCount = x.ActiveSubscriptionCount,
                     ModifiedAtUtc = x.ModifiedAtUtc,
                     RowVersion = x.RowVersion
@@ -188,7 +193,18 @@ namespace Darwin.WebAdmin.Controllers.Admin.Billing
         [HttpGet]
         public IActionResult CreatePlan()
         {
-            var vm = new BillingPlanEditVm();
+            var vm = new BillingPlanEditVm
+            {
+                FeaturesJson = BillingPlanFeaturesJson.Build(
+                    maxStaff: 3,
+                    maxRewardTiers: 5,
+                    monthlyPushCampaigns: 0,
+                    campaignsInApp: true,
+                    campaignsPush: false,
+                    advancedTargeting: false,
+                    exports: false,
+                    sla: false)
+            };
             PopulateBillingPlanOptions(vm);
             return RenderBillingPlanEditor(vm, isCreate: true);
         }
@@ -197,6 +213,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Billing
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> CreatePlan(BillingPlanEditVm vm, CancellationToken ct = default)
         {
+            NormalizeBillingPlanFeatureModel(vm);
             if (!ModelState.IsValid)
             {
                 PopulateBillingPlanOptions(vm);
@@ -214,7 +231,15 @@ namespace Darwin.WebAdmin.Controllers.Admin.Billing
                 IntervalCount = vm.IntervalCount,
                 TrialDays = vm.TrialDays,
                 IsActive = vm.IsActive,
-                FeaturesJson = vm.FeaturesJson
+                FeaturesJson = vm.FeaturesJson,
+                MaxStaff = vm.MaxStaff,
+                MaxRewardTiers = vm.MaxRewardTiers,
+                MonthlyPushCampaigns = vm.MonthlyPushCampaigns,
+                CampaignsInApp = vm.CampaignsInApp,
+                CampaignsPush = vm.CampaignsPush,
+                AdvancedTargeting = vm.AdvancedTargeting,
+                Exports = vm.Exports,
+                Sla = vm.Sla
             };
 
             try
@@ -260,7 +285,15 @@ namespace Darwin.WebAdmin.Controllers.Admin.Billing
                 IntervalCount = dto.IntervalCount,
                 TrialDays = dto.TrialDays,
                 IsActive = dto.IsActive,
-                FeaturesJson = dto.FeaturesJson
+                FeaturesJson = dto.FeaturesJson,
+                MaxStaff = dto.MaxStaff,
+                MaxRewardTiers = dto.MaxRewardTiers,
+                MonthlyPushCampaigns = dto.MonthlyPushCampaigns,
+                CampaignsInApp = dto.CampaignsInApp,
+                CampaignsPush = dto.CampaignsPush,
+                AdvancedTargeting = dto.AdvancedTargeting,
+                Exports = dto.Exports,
+                Sla = dto.Sla
             };
             PopulateBillingPlanOptions(vm);
             vm.ActiveSubscriptionCount = (await _getBillingPlansAdminPage.HandleAsync(1, 1, dto.Code, BillingPlanQueueFilter.All, ct).ConfigureAwait(false))
@@ -278,6 +311,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Billing
                 return RedirectOrHtmx(nameof(Plans), new { });
             }
 
+            NormalizeBillingPlanFeatureModel(vm);
             if (!ModelState.IsValid)
             {
                 PopulateBillingPlanOptions(vm);
@@ -297,7 +331,15 @@ namespace Darwin.WebAdmin.Controllers.Admin.Billing
                 IntervalCount = vm.IntervalCount,
                 TrialDays = vm.TrialDays,
                 IsActive = vm.IsActive,
-                FeaturesJson = vm.FeaturesJson
+                FeaturesJson = vm.FeaturesJson,
+                MaxStaff = vm.MaxStaff,
+                MaxRewardTiers = vm.MaxRewardTiers,
+                MonthlyPushCampaigns = vm.MonthlyPushCampaigns,
+                CampaignsInApp = vm.CampaignsInApp,
+                CampaignsPush = vm.CampaignsPush,
+                AdvancedTargeting = vm.AdvancedTargeting,
+                Exports = vm.Exports,
+                Sla = vm.Sla
             };
 
             try
@@ -2267,6 +2309,30 @@ namespace Darwin.WebAdmin.Controllers.Admin.Billing
             vm.IntervalItems = Enum.GetValues<BillingInterval>()
                 .Select(x => new Microsoft.AspNetCore.Mvc.Rendering.SelectListItem(T(x.ToString()), x.ToString(), x == vm.Interval))
                 .ToList();
+        }
+
+        private void NormalizeBillingPlanFeatureModel(BillingPlanEditVm vm)
+        {
+            if (!vm.CampaignsPush)
+            {
+                vm.MonthlyPushCampaigns = 0;
+            }
+
+            if (vm.CampaignsPush && vm.MonthlyPushCampaigns <= 0)
+            {
+                ModelState.AddModelError(nameof(vm.MonthlyPushCampaigns), "Monthly push campaigns must be greater than 0 when push campaigns are enabled.");
+            }
+
+            vm.FeaturesJson = BillingPlanFeaturesJson.Build(
+                vm.MaxStaff,
+                vm.MaxRewardTiers,
+                vm.MonthlyPushCampaigns,
+                vm.CampaignsInApp,
+                vm.CampaignsPush,
+                vm.AdvancedTargeting,
+                vm.Exports,
+                vm.Sla,
+                vm.FeaturesJson);
         }
 
         private IActionResult RenderPlansWorkspace(BillingPlansListVm vm)

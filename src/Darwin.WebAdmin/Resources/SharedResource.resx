@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <root>
   <resheader name="resmimetype">
     <value>text/microsoft-resx</value>
@@ -14564,5 +14564,17 @@
   </data>
   <data name="Other" xml:space="preserve">
     <value>Other</value>
+  </data>
+  <data name="Queued" xml:space="preserve">
+    <value>Queued</value>
+  </data>
+  <data name="Sending" xml:space="preserve">
+    <value>Sending</value>
+  </data>
+  <data name="InvalidToken" xml:space="preserve">
+    <value>Invalid token</value>
+  </data>
+  <data name="RetryAvailable" xml:space="preserve">
+    <value>Retry available</value>
   </data>
 </root>

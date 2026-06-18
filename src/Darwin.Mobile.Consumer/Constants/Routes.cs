@@ -41,6 +41,11 @@ public static class Routes
     public const string Settings = "settings";
 
     /// <summary>
+    /// Internal notification inbox route.
+    /// </summary>
+    public const string Notifications = "notifications";
+
+    /// <summary>
     /// Dedicated profile edit screen route.
     /// </summary>
     public const string ProfileEdit = "profile-edit";

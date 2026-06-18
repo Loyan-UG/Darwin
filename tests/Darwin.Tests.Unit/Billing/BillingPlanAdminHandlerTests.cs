@@ -1,4 +1,5 @@
 using Darwin.Application.Abstractions.Persistence;
+using Darwin.Application.Billing;
 using Darwin.Application.Billing.Commands;
 using Darwin.Application.Billing.DTOs;
 using Darwin.Application.Billing.Queries;
@@ -557,7 +558,15 @@ public sealed class BillingPlanAdminHandlerTests
         saved.Currency.Should().Be("EUR");
         saved.PriceMinor.Should().Be(9900);
         saved.IsActive.Should().BeTrue();
-        saved.FeaturesJson.Should().Be("{\"tier\":\"pro\"}");
+        var features = BillingPlanFeaturesJson.Parse(saved.FeaturesJson);
+        features.MaxStaff.Should().Be(3);
+        features.MaxRewardTiers.Should().Be(5);
+        features.MonthlyPushCampaigns.Should().Be(0);
+        features.CampaignsInApp.Should().BeTrue();
+        features.CampaignsPush.Should().BeFalse();
+        features.AdvancedTargeting.Should().BeFalse();
+        features.Exports.Should().BeFalse();
+        features.Sla.Should().BeFalse();
     }
 
     [Fact]

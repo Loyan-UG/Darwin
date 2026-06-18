@@ -247,6 +247,11 @@ public sealed class ScannerViewModel : BaseViewModel
         return Task.CompletedTask;
     }
 
+    public async Task StartScanAsync()
+    {
+        await ScanAsync().ConfigureAwait(false);
+    }
+
     private async Task ScanAsync()
     {
         if (IsBusy)

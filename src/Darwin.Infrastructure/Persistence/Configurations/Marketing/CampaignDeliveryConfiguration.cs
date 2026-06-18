@@ -77,6 +77,9 @@ namespace Darwin.Infrastructure.Persistence.Configurations.Marketing
             builder.HasIndex(x => x.LastAttemptAtUtc)
                 .HasDatabaseName("IX_CampaignDeliveries_LastAttemptAtUtc");
 
+            builder.HasIndex(x => new { x.Channel, x.Status, x.CreatedAtUtc })
+                .HasDatabaseName("IX_CampaignDeliveries_Channel_Status_Created");
+
             // Optional idempotency key; keep it unique for live rows to avoid duplicate deliveries.
             builder.HasIndex(x => x.IdempotencyKey)
                 .IsUnique()

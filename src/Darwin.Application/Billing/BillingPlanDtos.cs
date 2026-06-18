@@ -18,6 +18,14 @@ public sealed class BillingPlanSummaryDto
     public int IntervalCount { get; init; }
     public int? TrialDays { get; init; }
     public bool IsActive { get; init; }
+    public int MaxStaff { get; init; }
+    public int MaxRewardTiers { get; init; }
+    public int MonthlyPushCampaigns { get; init; }
+    public bool CampaignsInApp { get; init; }
+    public bool CampaignsPush { get; init; }
+    public bool AdvancedTargeting { get; init; }
+    public bool Exports { get; init; }
+    public bool Sla { get; init; }
 }
 
 /// <summary>

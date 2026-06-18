@@ -83,7 +83,7 @@ The core decision is that future salary payment is a formal HR/Payroll and Treas
 - Salary payment is explicitly separated from customer payment/refund, supplier payment, supplier advance, statutory filing, provider submission, payslip artifacts, and manual journal shortcuts.
 - Formal payslip template/PDF completion is complete for the current phase.
 - Payroll provider adapter boundary design is complete for the current phase.
-- Employee payslip self-service core is complete for the current phase. The next gate is `AI-Readiness And Automation Governance`.
+- Employee payslip self-service core and AI governance are complete for the current phase. The current gate is production go-live evidence execution.
 - Public WebApi, mobile/member, storefront, customer invoice archive/download, finance export package format, supplier finance, customer payment/refund, statutory filing, provider submission, and invoice archive/download behavior remain unchanged.
 
 ## Compatibility Guards
@@ -98,6 +98,6 @@ The core decision is that future salary payment is a formal HR/Payroll and Treas
 ## Documentation Verification
 
 - `docs/README.md` links this document from the ERP expansion map.
-- `BACKLOG.md` and `erp-expansion-master-status.md` record employee payslip self-service core as complete and move the next gate to `AI-Readiness And Automation Governance`.
+- `BACKLOG.md` and `erp-expansion-master-status.md` record employee payslip self-service core and AI governance as complete, with production go-live evidence execution as the current gate.
 - This document contains no deferred ambiguous decisions for the payroll payment boundary.
 - Restricted vendor/source scans must return no output.

@@ -144,9 +144,11 @@ public sealed class ConsumerLoyaltyAndPaymentSourceContractTests
         var source = ReadSourceFile("src/Darwin.Mobile.Consumer/Platforms/Android/AndroidGoogleExternalAuthService.cs");
 
         source.Should().Contain("bootstrap.GoogleExternalLoginWebClientId");
-        source.Should().Contain(".SetServerClientId(bootstrap.GoogleExternalLoginWebClientId.Trim())");
+        source.Should().Contain("new GetSignInWithGoogleOption.Builder(bootstrap.GoogleExternalLoginWebClientId.Trim())");
         source.Should().Contain("CredentialManager.Create(activity)");
         source.Should().Contain("GoogleIdTokenCredential.CreateFrom");
+        source.Should().Contain("GoogleIdTokenCredential.TypeGoogleIdTokenSiwgCredential");
+        source.Should().NotContain("new GetGoogleIdOption.Builder()");
         source.Should().NotContain("GoogleSignIn.GetClient");
         source.Should().NotContain(".RequestIdToken(bootstrap.GoogleExternalLoginAndroidClientId.Trim())");
     }
@@ -439,6 +441,10 @@ public sealed class ConsumerLoyaltyAndPaymentSourceContractTests
         settingsViewModel.Should().Contain("public AsyncCommand OpenMemberPreferencesCommand { get; }");
         settingsViewModel.Should().Contain("public AsyncCommand OpenLegalHubCommand { get; }");
         settingsViewModel.Should().Contain("public AsyncCommand OpenAccountDeletionCommand { get; }");
+        settingsViewModel.Should().Contain("IProfileService profileService");
+        settingsViewModel.Should().Contain("public string ProfileDisplayName");
+        settingsViewModel.Should().Contain("public string? ProfileImageUrl");
+        settingsViewModel.Should().Contain("public override async Task OnAppearingAsync()");
         settingsViewModel.Should().Contain("OpenMemberCommerceCommand = new AsyncCommand(OpenMemberCommerceAsync, () => !IsBusy);");
         settingsViewModel.Should().Contain("OpenAccountDeletionCommand = new AsyncCommand(OpenAccountDeletionAsync, () => !IsBusy);");
         settingsViewModel.Should().Contain("OpenMemberCommerceAsync()");
@@ -458,8 +464,11 @@ public sealed class ConsumerLoyaltyAndPaymentSourceContractTests
         settingsPage.Should().Contain("Command=\"{Binding OpenChangePasswordCommand}\"");
         settingsPage.Should().Contain("Command=\"{Binding OpenLegalHubCommand}\"");
         settingsPage.Should().Contain("Command=\"{Binding OpenAccountDeletionCommand}\"");
+        settingsPage.Should().Contain("<TapGestureRecognizer Command=\"{Binding OpenProfileCommand}\" />");
+        settingsPage.Should().Contain("Source=\"{Binding ProfileImageUrl}\"");
+        settingsPage.Should().Contain("Text=\"{Binding ProfileDisplayName}\"");
+        settingsPage.Should().Contain("Text=\"{Binding ProfileEmail}\"");
         settingsPage.Should().Contain("Title=\"{x:Static res:AppResources.SettingsTitle}\"");
-        settingsPage.Should().Contain("Text=\"{x:Static res:AppResources.SettingsProfileButton}\"");
         settingsPage.Should().Contain("Text=\"{x:Static res:AppResources.SettingsDeleteAccountButton}\"");
     }
 
@@ -585,20 +594,21 @@ public sealed class ConsumerLoyaltyAndPaymentSourceContractTests
         page.Should().Contain("SaveProfileCommand");
         page.Should().Contain("RequestPhoneVerificationCommand");
         page.Should().Contain("ConfirmPhoneVerificationCommand");
-        page.Should().Contain("SyncPushRegistrationCommand");
         page.Should().Contain("OpenNotificationSettingsCommand");
         page.Should().Contain("Command=\"{Binding RefreshCommand}\"");
         page.Should().Contain("Command=\"{Binding SaveProfileCommand}\"");
         page.Should().Contain("Command=\"{Binding RequestPhoneVerificationCommand}\"");
         page.Should().Contain("Command=\"{Binding ConfirmPhoneVerificationCommand}\"");
-        page.Should().Contain("Command=\"{Binding SyncPushRegistrationCommand}\"");
         page.Should().Contain("Command=\"{Binding OpenNotificationSettingsCommand}\"");
-        page.Should().Contain("Clicked=\"OnManageAddressesClicked\"");
-        page.Should().Contain("Clicked=\"OnManagePreferencesClicked\"");
+        page.Should().Contain("IsVisible=\"{Binding ShouldShowPhoneVerificationRequest}\"");
+        page.Should().Contain("IsVisible=\"{Binding ShouldShowPhoneVerificationCodeEntry}\"");
+        page.Should().NotContain("Clicked=\"OnManageAddressesClicked\"");
+        page.Should().NotContain("ProfileManageAddressesButton");
         page.Should().Contain("Clicked=\"OnViewCustomerContextClicked\"");
         page.Should().Contain("Text=\"{x:Static res:AppResources.ProfilePhoneVerificationRequestButton}\"");
         page.Should().Contain("Text=\"{x:Static res:AppResources.ProfilePhoneVerificationConfirmButton}\"");
         page.Should().Contain("Text=\"{x:Static res:AppResources.ProfilePushOpenSettingsButton}\"");
+        page.Should().NotContain("Text=\"{x:Static res:AppResources.ProfilePushRegistrationSyncButton}\"");
 
         codeBehind.Should().Contain("private readonly ProfileViewModel _viewModel;");
         codeBehind.Should().Contain("private int _navigationInProgress;");
@@ -607,8 +617,7 @@ public sealed class ConsumerLoyaltyAndPaymentSourceContractTests
         codeBehind.Should().Contain("await _viewModel.OnAppearingAsync();");
         codeBehind.Should().Contain("await _viewModel.OnDisappearingAsync();");
         codeBehind.Should().Contain("if (Interlocked.Exchange(ref _navigationInProgress, 1) == 1)");
-        codeBehind.Should().Contain("await NavigateSafelyAsync(Routes.MemberAddresses)");
-        codeBehind.Should().Contain("await NavigateSafelyAsync(Routes.MemberPreferences)");
+        codeBehind.Should().NotContain("await NavigateSafelyAsync(Routes.MemberAddresses)");
         codeBehind.Should().Contain("await NavigateSafelyAsync(Routes.MemberCustomerContext)");
         codeBehind.Should().Contain("await NavigateSafelyAsync(Routes.AccountDeletion)");
         codeBehind.Should().Contain("catch");
@@ -631,6 +640,9 @@ public sealed class ConsumerLoyaltyAndPaymentSourceContractTests
         viewModel.Should().Contain("ConfirmPhoneVerificationCommand = new AsyncCommand(ConfirmPhoneVerificationAsync, CanRunPhoneVerificationAction);");
         viewModel.Should().Contain("SyncPushRegistrationCommand = new AsyncCommand(SyncPushRegistrationAsync, () => !IsPushSyncBusy);");
         viewModel.Should().Contain("OpenNotificationSettingsCommand = new AsyncCommand(OpenNotificationSettingsAsync, () => !_isOpeningNotificationSettings);");
+        viewModel.Should().Contain("public bool ShouldShowPhoneVerificationRequest");
+        viewModel.Should().Contain("public bool ShouldShowPhoneVerificationCodeEntry");
+        viewModel.Should().Contain("HasRequestedPhoneVerificationCode = result.Succeeded;");
         viewModel.Should().Contain("public override async Task OnAppearingAsync()");
         viewModel.Should().Contain("SchedulePushRuntimeStateRefresh();");
         viewModel.Should().Contain("await RefreshPushRuntimeStateAsync().ConfigureAwait(false);");

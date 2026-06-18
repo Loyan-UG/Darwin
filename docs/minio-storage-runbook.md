@@ -1,6 +1,6 @@
 # Local MinIO Object Storage Runbook
 
-Reviewed: 2026-06-17
+Reviewed: 2026-06-18
 
 This runbook describes the optional local MinIO smoke path for Darwin object storage. It is for development and validation only. Production credentials, access keys, secret keys, and bucket policy values must come from secure configuration and must never be committed.
 
@@ -22,7 +22,7 @@ Default local endpoints:
 - MinIO Console: `http://localhost:9001`
 - Default smoke bucket: `darwin-invoice-archive-smoke`
 
-The compose init container creates the smoke bucket with Object Lock enabled from the start and enables versioning. Object Lock must be enabled when a bucket is created; it cannot be added later to an existing bucket.
+The compose file uses the public MinIO server and client images and does not require a local license file or private bind mount. The compose init container creates the smoke bucket with Object Lock enabled from the start and enables versioning. Object Lock must be enabled when a bucket is created; it cannot be added later to an existing bucket.
 
 If the bucket must be recreated manually, delete the local development bucket only after confirming it contains no needed smoke artifacts, then create it with Object Lock enabled at creation time. Use local development credentials only:
 
@@ -117,7 +117,16 @@ Latest local recheck:
 - Provider smoke command: `powershell -NoProfile -ExecutionPolicy Bypass -File scripts\smoke-object-storage.ps1 -Execute -SmokeRetention`
 - Provider smoke result: save/read/metadata checks completed through the S3-compatible provider path; temporary URL generation was available; cleanup was skipped because retention smoke was enabled.
 - Guarded smoke behavior: local loopback MinIO smoke can execute without production confirmation; production-like endpoints are blocked unless `DARWIN_OBJECT_STORAGE_PRODUCTION_SMOKE_CONFIRMED=true` or `-AllowProductionEndpoint` is supplied.
-- Production readiness preflight result: blocked until the real production endpoint, bucket, TLS, dedicated least-privilege keys, Object Lock, versioning, retention, legal-hold policy, backup, restore, monitoring, alerting, and Darwin profile confirmations are supplied. This is expected and prevents claiming production immutability from local smoke alone.
+- Production readiness preflight result: blocked until the real production endpoint, bucket, TLS, dedicated least-privilege keys, Object Lock, versioning, retention, legal-hold policy, backup, restore, monitoring, alerting, and all required Darwin object-storage profile confirmations are supplied. This includes `InvoiceArchive`, `ShipmentLabels`, `MediaAssets`, `FinanceExports`, `FinanceExportOutbound`, `PersonnelDocuments`, and `PayrollPayslips`. This is expected and prevents claiming production immutability from local smoke alone.
+
+Latest local recheck:
+
+- Date: 2026-06-18
+- Compose validation: `docker-compose.minio.yml` uses public `quay.io/minio/minio` and `quay.io/minio/mc` images without a private license file, so a fresh local machine can repeat the smoke path from source plus Docker Desktop.
+- Docker validation: `darwin-minio` was healthy; init logs showed the smoke bucket created with Object Lock, versioning enabled, and default `COMPLIANCE` retention for `1DAYS`.
+- Provider smoke command: `powershell -NoProfile -ExecutionPolicy Bypass -File scripts\smoke-object-storage.ps1 -Execute -SmokeRetention`
+- Provider smoke result: save/read/metadata checks completed through the S3-compatible provider path; temporary URL generation was available; cleanup was skipped because retention smoke was enabled.
+- Local backup and restore evidence: the 2026-06-18 local backup package under `D:\Backup\2026-06-18` passed structural backup readiness and restored its PostgreSQL dump into an isolated temporary local PostgreSQL database. This is local evidence only and does not replace production backup, restore, retention, monitoring, or owner approval evidence.
 
 ## WebAdmin Local Smoke Action
 
@@ -224,7 +233,15 @@ Run the production readiness preflight after the operator has confirmed the fina
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\check-minio-production-readiness.ps1
 ```
 
-The preflight checks only non-secret confirmations. It does not accept MinIO access keys, secret keys, bucket policy JSON, object payloads, object keys, or provider responses. A passing preflight means the deployment checklist is complete enough to run the selected-provider smoke and WebAdmin smoke against the production bucket; it is not a production immutability claim by itself.
+To create an ignored, non-secret report for the production readiness evidence package:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\export-minio-production-readiness-report.ps1 -Force
+```
+
+The report is written under `artifacts\production-readiness\` by default. It is valid as current-state evidence even when it is blocked; it does not replace real MinIO policy validation, selected-provider smoke, or owner approval.
+
+The preflight checks only non-secret confirmations. `DARWIN_MINIO_PRODUCTION_ENDPOINT` must be the base HTTPS endpoint only; do not include a bucket path, object key, access key, user info, query string, or fragment. The bucket name belongs in `DARWIN_MINIO_PRODUCTION_BUCKET` and must be a safe bucket label: lowercase letters, numbers, single hyphens, and alphanumeric start/end. Do not put prefixes, object keys, policy names, access keys, query strings, or fragments in the bucket variable. The preflight does not accept MinIO access keys, secret keys, bucket policy JSON, object payloads, object keys, or provider responses. A passing preflight also requires `DARWIN_MINIO_SELECTED_PROVIDER_SMOKE_CONFIRMED=true` and a non-secret `DARWIN_MINIO_SELECTED_PROVIDER_SMOKE_REFERENCE`, because production readiness must have evidence that the selected-provider smoke ran against the approved disposable prefix. It is not a production immutability claim by itself.
 
 The preflight requires separate confirmation that:
 

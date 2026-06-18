@@ -5,7 +5,6 @@
     xmlns:buttons="clr-namespace:Syncfusion.Maui.Toolkit.Buttons;assembly=Syncfusion.Maui.Toolkit"
     xmlns:inputLayout="clr-namespace:Syncfusion.Maui.Toolkit.TextInputLayout;assembly=Syncfusion.Maui.Toolkit"
     xmlns:pullToRefresh="clr-namespace:Syncfusion.Maui.Toolkit.PullToRefresh;assembly=Syncfusion.Maui.Toolkit"
-    xmlns:segmented="clr-namespace:Syncfusion.Maui.Toolkit.SegmentedControl;assembly=Syncfusion.Maui.Toolkit"
     xmlns:res="clr-namespace:Darwin.Mobile.Consumer.Resources"
     xmlns:vm="clr-namespace:Darwin.Mobile.Consumer.ViewModels"
     x:Class="Darwin.Mobile.Consumer.Views.ProfilePage"
@@ -148,25 +147,13 @@
                                Style="{StaticResource SecondaryBodyLabelStyle}"
                                IsVisible="{Binding HasPhoneVerificationStatus}" />
 
-                        <VerticalStackLayout Spacing="4" IsVisible="{Binding PhoneNumberConfirmed, Converter={StaticResource InverseBoolConverter}}">
-                            <Label Text="{x:Static res:AppResources.ProfilePhoneVerificationChannelLabel}"
-                                   Style="{StaticResource CaptionLabelStyle}" />
-                            <segmented:SfSegmentedControl ItemsSource="{Binding PhoneVerificationChannelLabels}"
-                                                          SelectedIndex="{Binding SelectedPhoneVerificationChannelIndex, Mode=TwoWay}"
-                                                          SegmentHeight="44"
-                                                          VisibleSegmentsCount="2"
-                                                          CornerRadius="8"
-                                                          SegmentCornerRadius="8"
-                                                          SegmentBackground="{StaticResource BrushSurface}"
-                                                          Stroke="{StaticResource BrandGold50}"
-                                                          StrokeThickness="1">
-                                <segmented:SfSegmentedControl.SelectionIndicatorSettings>
-                                    <segmented:SelectionIndicatorSettings Background="{StaticResource BrushPrimary}"
-                                                                         TextColor="{StaticResource Neutral0}"
-                                                                         Stroke="{StaticResource InternalPrimaryButton}" />
-                                </segmented:SfSegmentedControl.SelectionIndicatorSettings>
-                            </segmented:SfSegmentedControl>
+                        <VerticalStackLayout Spacing="4" IsVisible="{Binding ShouldShowPhoneVerificationRequest}">
+                            <buttons:SfButton Text="{x:Static res:AppResources.ProfilePhoneVerificationRequestButton}"
+                                              Style="{StaticResource SyncfusionOutlinedButtonStyle}"
+                                              Command="{Binding RequestPhoneVerificationCommand}" />
+                        </VerticalStackLayout>
 
+                        <VerticalStackLayout Spacing="8" IsVisible="{Binding ShouldShowPhoneVerificationCodeEntry}">
                             <Label Text="{x:Static res:AppResources.ProfilePhoneVerificationCodeLabel}"
                                    Style="{StaticResource CaptionLabelStyle}" />
                             <inputLayout:SfTextInputLayout Hint="{x:Static res:AppResources.ProfilePhoneVerificationCodeLabel}"
@@ -177,67 +164,10 @@
                                        Style="{StaticResource FormEntryStyle}" />
                             </inputLayout:SfTextInputLayout>
 
-                            <Grid ColumnDefinitions="*,*" ColumnSpacing="10">
-                                <buttons:SfButton Grid.Column="0"
-                                                  Text="{x:Static res:AppResources.ProfilePhoneVerificationRequestButton}"
-                                                  Style="{StaticResource SyncfusionOutlinedButtonStyle}"
-                                                  Command="{Binding RequestPhoneVerificationCommand}" />
-                                <buttons:SfButton Grid.Column="1"
-                                                  Text="{x:Static res:AppResources.ProfilePhoneVerificationConfirmButton}"
-                                                  Style="{StaticResource SyncfusionOutlinedButtonStyle}"
-                                                  Command="{Binding ConfirmPhoneVerificationCommand}" />
-                            </Grid>
+                            <buttons:SfButton Text="{x:Static res:AppResources.ProfilePhoneVerificationConfirmButton}"
+                                              Style="{StaticResource SyncfusionOutlinedButtonStyle}"
+                                              Command="{Binding ConfirmPhoneVerificationCommand}" />
                         </VerticalStackLayout>
-                    </VerticalStackLayout>
-                </Border>
-
-                <Border Style="{StaticResource CardBorderStyle}">
-                    <VerticalStackLayout Spacing="10">
-                        <Label Text="{x:Static res:AppResources.ProfileAddressesSectionTitle}"
-                               Style="{StaticResource SectionHeadingLabelStyle}" />
-
-                        <Grid ColumnDefinitions="*,*" ColumnSpacing="10">
-                            <Border Grid.Column="0" Style="{StaticResource StatTileBorderStyle}">
-                                <VerticalStackLayout Spacing="4">
-                                    <Label Text="{x:Static res:AppResources.ProfileSavedAddressesTitle}"
-                                           Style="{StaticResource CaptionLabelStyle}" />
-                                    <Label Text="{Binding AddressCount}"
-                                           Style="{StaticResource MetricValueLabelStyle}" />
-                                </VerticalStackLayout>
-                            </Border>
-
-                            <Border Grid.Column="1" Style="{StaticResource StatTileBorderStyle}">
-                                <VerticalStackLayout Spacing="4">
-                                    <Label Text="{x:Static res:AppResources.ProfileManageAddressesButton}"
-                                           Style="{StaticResource CaptionLabelStyle}" />
-                                    <Label Text="{x:Static res:AppResources.ProfileManagePreferencesButton}"
-                                           FontAttributes="Bold"
-                                           FontSize="14"
-                                           TextColor="{StaticResource Neutral900}" />
-                                </VerticalStackLayout>
-                            </Border>
-                        </Grid>
-
-                        <Label Text="{Binding DefaultBillingAddressSummary, StringFormat='{x:Static res:AppResources.ProfileDefaultBillingAddressFormat}'}"
-                               Style="{StaticResource SecondaryBodyLabelStyle}"
-                               LineBreakMode="WordWrap"
-                               IsVisible="{Binding HasDefaultBillingAddress}" />
-
-                        <Label Text="{Binding DefaultShippingAddressSummary, StringFormat='{x:Static res:AppResources.ProfileDefaultShippingAddressFormat}'}"
-                               Style="{StaticResource SecondaryBodyLabelStyle}"
-                               LineBreakMode="WordWrap"
-                               IsVisible="{Binding HasDefaultShippingAddress}" />
-
-                        <Grid ColumnDefinitions="*,*" ColumnSpacing="10">
-                            <buttons:SfButton Grid.Column="0"
-                                              Text="{x:Static res:AppResources.ProfileManageAddressesButton}"
-                                              Style="{StaticResource SyncfusionOutlinedButtonStyle}"
-                                              Clicked="OnManageAddressesClicked" />
-                            <buttons:SfButton Grid.Column="1"
-                                              Text="{x:Static res:AppResources.ProfileManagePreferencesButton}"
-                                              Style="{StaticResource SyncfusionOutlinedButtonStyle}"
-                                              Clicked="OnManagePreferencesClicked" />
-                        </Grid>
                     </VerticalStackLayout>
                 </Border>
 
@@ -246,32 +176,9 @@
                         <Label Text="{x:Static res:AppResources.ProfilePushRegistrationSectionTitle}"
                                Style="{StaticResource SectionHeadingLabelStyle}" />
 
-                        <Border Style="{StaticResource MutedCardBorderStyle}">
-                            <VerticalStackLayout Spacing="6">
-                                <Label Text="{Binding PushRegistrationStatus}" Style="{StaticResource BodyLabelStyle}" />
-                                <Label Text="{Binding LastPushSyncAtText}" Style="{StaticResource SecondaryBodyLabelStyle}" IsVisible="{Binding HasLastPushSyncAt}" />
-                                <Label Text="{Binding PushPermissionStateText}" Style="{StaticResource SecondaryBodyLabelStyle}" />
-                                <Label Text="{Binding PushTokenAvailabilityText}" Style="{StaticResource SecondaryBodyLabelStyle}" />
-                            </VerticalStackLayout>
-                        </Border>
-
-                        <Grid ColumnDefinitions="*,*" ColumnSpacing="10">
-                            <buttons:SfButton Grid.Column="0"
-                                              Text="{x:Static res:AppResources.ProfilePushRegistrationSyncButton}"
-                                              Style="{StaticResource SyncfusionOutlinedButtonStyle}"
-                                              Command="{Binding SyncPushRegistrationCommand}" />
-                            <buttons:SfButton Grid.Column="1"
-                                              Text="{x:Static res:AppResources.ProfilePushOpenSettingsButton}"
-                                              Style="{StaticResource SyncfusionOutlinedButtonStyle}"
-                                              Command="{Binding OpenNotificationSettingsCommand}" />
-                        </Grid>
-
-                        <Label Text="{x:Static res:AppResources.ProfilePushOpenSettingsHint}"
-                               Style="{StaticResource SecondaryBodyLabelStyle}" />
-
-                        <ActivityIndicator IsVisible="{Binding IsPushSyncBusy}"
-                                           IsRunning="{Binding IsPushSyncBusy}"
-                                           Color="{StaticResource InternalPrimaryButton}" />
+                        <buttons:SfButton Text="{x:Static res:AppResources.ProfilePushOpenSettingsButton}"
+                                          Style="{StaticResource SyncfusionOutlinedButtonStyle}"
+                                          Command="{Binding OpenNotificationSettingsCommand}" />
                     </VerticalStackLayout>
                 </Border>
 

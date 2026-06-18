@@ -144,9 +144,9 @@ public partial class App : Application
         try
         {
             using var timeout = new CancellationTokenSource(AuthenticatedBackgroundWarmupTimeout);
-            await Task.Delay(TimeSpan.FromSeconds(6), timeout.Token).ConfigureAwait(false);
-            await _pushRegistrationCoordinator.TryRegisterCurrentDeviceAsync(timeout.Token).ConfigureAwait(false);
             await _startupWarmupCoordinator.WarmAuthenticatedExperienceAsync(timeout.Token).ConfigureAwait(false);
+            await Task.Delay(1000, timeout.Token).ConfigureAwait(false);
+            await _pushRegistrationCoordinator.TryRegisterCurrentDeviceAsync(timeout.Token).ConfigureAwait(false);
         }
         catch (OperationCanceledException)
         {

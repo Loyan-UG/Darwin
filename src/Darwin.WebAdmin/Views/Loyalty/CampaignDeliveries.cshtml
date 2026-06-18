@@ -17,6 +17,17 @@
         CampaignDeliveryStatus.Cancelled => "badge bg-secondary",
         _ => "badge bg-info text-dark"
     };
+    string OperationalStatusText(CampaignDeliveryStatus status, string? lastError) => status switch
+    {
+        CampaignDeliveryStatus.Pending => T.T("Queued"),
+        CampaignDeliveryStatus.InProgress => T.T("Sending"),
+        CampaignDeliveryStatus.Succeeded => T.T("Sent"),
+        CampaignDeliveryStatus.Cancelled => T.T("Cancelled"),
+        CampaignDeliveryStatus.Failed when !string.IsNullOrWhiteSpace(lastError) && lastError.Contains("Token", StringComparison.OrdinalIgnoreCase) => T.T("InvalidToken"),
+        CampaignDeliveryStatus.Failed => T.T("NeedsAttention"),
+        _ => T.T(status.ToString())
+    };
+    bool CanRequeue(CampaignDeliveryStatus status) => status is CampaignDeliveryStatus.Failed or CampaignDeliveryStatus.Cancelled;
 }
 
 <div id="loyalty-campaigns-workspace-shell">
@@ -83,7 +94,13 @@
                                 <div class="small text-muted"><code>@item.CampaignId</code></div>
                             </td>
                             <td>@ChannelText(item.Channel)</td>
-                            <td><span class="@StatusBadge(item.Status)">@T.T(item.Status.ToString())</span></td>
+                            <td>
+                                <span class="@StatusBadge(item.Status)">@OperationalStatusText(item.Status, item.LastError)</span>
+                                @if (CanRequeue(item.Status))
+                                {
+                                    <div class="small text-muted">@T.T("RetryAvailable")</div>
+                                }
+                            </td>
                             <td>
                                 <div>@(item.Destination ?? "-")</div>
                                 @if (item.RecipientUserId.HasValue)
@@ -114,6 +131,11 @@
                                 @foreach (var nextStatus in new[] { CampaignDeliveryStatus.Pending, CampaignDeliveryStatus.Succeeded, CampaignDeliveryStatus.Failed, CampaignDeliveryStatus.Cancelled })
                                 {
                                     if (nextStatus == item.Status)
+                                    {
+                                        continue;
+                                    }
+
+                                    if (nextStatus == CampaignDeliveryStatus.Pending && !CanRequeue(item.Status))
                                     {
                                         continue;
                                     }

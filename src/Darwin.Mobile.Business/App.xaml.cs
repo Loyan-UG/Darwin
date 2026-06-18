@@ -1,3 +1,4 @@
+using Darwin.Mobile.Business.Services.Notifications;
 using Darwin.Mobile.Shared.Services;
 using Darwin.Mobile.Shared.Storage.Abstractions;
 using Microsoft.Maui;
@@ -15,18 +16,24 @@ public partial class App : Application
 {
     private static readonly TimeSpan StartupOperationTimeout = TimeSpan.FromSeconds(12);
     private static readonly TimeSpan ResumeRefreshTimeout = TimeSpan.FromSeconds(8);
+    private static readonly TimeSpan AuthenticatedBackgroundWarmupTimeout = TimeSpan.FromSeconds(20);
 
     private readonly IAuthService _authService;
     private readonly ILocalDbMigrator _localDbMigrator;
+    private readonly IBusinessPushRegistrationCoordinator _pushRegistrationCoordinator;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="App"/> class.
     /// </summary>
-    public App(IAuthService authService, ILocalDbMigrator localDbMigrator)
+    public App(
+        IAuthService authService,
+        ILocalDbMigrator localDbMigrator,
+        IBusinessPushRegistrationCoordinator pushRegistrationCoordinator)
     {
         InitializeComponent();
         _authService = authService ?? throw new ArgumentNullException(nameof(authService));
         _localDbMigrator = localDbMigrator ?? throw new ArgumentNullException(nameof(localDbMigrator));
+        _pushRegistrationCoordinator = pushRegistrationCoordinator ?? throw new ArgumentNullException(nameof(pushRegistrationCoordinator));
 
         // Force a deterministic visual theme for the Business app.
         // We intentionally do not follow device Dark/Light mode for now.
@@ -62,6 +69,7 @@ public partial class App : Application
             var refreshed = await _authService.EnsureAuthenticatedSessionAsync(timeout.Token).ConfigureAwait(false);
             if (refreshed)
             {
+                _ = RunAuthenticatedBackgroundWarmupSafelyAsync();
                 return;
             }
 
@@ -121,5 +129,23 @@ public partial class App : Application
         {
             window.Page = new AppShell(hasAuthenticatedSession ? $"//{Constants.Routes.Home}" : $"//{Constants.Routes.Login}");
         }).ConfigureAwait(false);
+
+        if (hasAuthenticatedSession)
+        {
+            _ = RunAuthenticatedBackgroundWarmupSafelyAsync();
+        }
+    }
+
+    private async Task RunAuthenticatedBackgroundWarmupSafelyAsync()
+    {
+        try
+        {
+            using var timeout = new CancellationTokenSource(AuthenticatedBackgroundWarmupTimeout);
+            await _pushRegistrationCoordinator.TryRegisterCurrentDeviceAsync(timeout.Token).ConfigureAwait(false);
+        }
+        catch
+        {
+            // Best effort only. Push setup must never make startup/resume unstable.
+        }
     }
 }

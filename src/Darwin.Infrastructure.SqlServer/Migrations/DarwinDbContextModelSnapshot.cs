@@ -549,6 +549,64 @@ namespace Darwin.Infrastructure.SqlServer.Migrations
                     b.ToTable("BillingPlans", "Billing");
                 });
 
+            modelBuilder.Entity("Darwin.Domain.Entities.Billing.BusinessFeatureUsage", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("BusinessId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("CreatedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("FeatureKey")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("nvarchar(128)");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTime?>("ModifiedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("ModifiedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("PeriodEndUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("PeriodStartUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
+                    b.Property<Guid>("SourceId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("UsedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BusinessId", "FeatureKey", "PeriodStartUtc");
+
+                    b.HasIndex("BusinessId", "FeatureKey", "PeriodStartUtc", "SourceId")
+                        .IsUnique()
+                        .HasFilter("[IsDeleted] = 0");
+
+                    b.ToTable("BusinessFeatureUsages", "Billing");
+                });
+
             modelBuilder.Entity("Darwin.Domain.Entities.Billing.BusinessSubscription", b =>
                 {
                     b.Property<Guid>("Id")
@@ -9309,8 +9367,8 @@ namespace Darwin.Infrastructure.SqlServer.Migrations
                         .HasColumnType("smallint");
 
                     b.Property<string>("PushToken")
-                        .HasMaxLength(512)
-                        .HasColumnType("nvarchar(512)");
+                        .HasMaxLength(2048)
+                        .HasColumnType("nvarchar(2048)");
 
                     b.Property<DateTime?>("PushTokenUpdatedAtUtc")
                         .HasColumnType("datetime2");
@@ -10650,6 +10708,218 @@ namespace Darwin.Infrastructure.SqlServer.Migrations
                     b.HasIndex("ShipmentId", "Provider", "OperationType", "Status", "CreatedAtUtc");
 
                     b.ToTable("ShipmentProviderOperations", "Integration");
+                });
+
+            modelBuilder.Entity("Darwin.Domain.Entities.Integration.SyncConflict", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("ConflictKey")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("CreatedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("DarwinValueSummary")
+                        .HasMaxLength(1024)
+                        .HasColumnType("nvarchar(1024)");
+
+                    b.Property<DateTime>("DetectedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Direction")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("nvarchar(32)");
+
+                    b.Property<Guid>("EntityId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("EntityType")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("nvarchar(128)");
+
+                    b.Property<Guid>("ExternalSystemId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("ExternalValueSummary")
+                        .HasMaxLength(1024)
+                        .HasColumnType("nvarchar(1024)");
+
+                    b.Property<string>("FieldPath")
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("MetadataJson")
+                        .IsRequired()
+                        .HasMaxLength(4000)
+                        .HasColumnType("nvarchar(4000)");
+
+                    b.Property<DateTime?>("ModifiedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("ModifiedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Resolution")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("nvarchar(32)");
+
+                    b.Property<string>("ResolutionSummary")
+                        .HasMaxLength(1024)
+                        .HasColumnType("nvarchar(1024)");
+
+                    b.Property<DateTime?>("ResolvedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid?>("ResolvedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("nvarchar(32)");
+
+                    b.Property<Guid>("SyncStateId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("EntityType", "EntityId")
+                        .HasDatabaseName("IX_SyncConflicts_EntityType_EntityId");
+
+                    b.HasIndex("SyncStateId", "Status")
+                        .HasDatabaseName("IX_SyncConflicts_State_Status");
+
+                    b.HasIndex("ExternalSystemId", "Status", "DetectedAtUtc")
+                        .HasDatabaseName("IX_SyncConflicts_System_Status_Detected");
+
+                    b.HasIndex("ExternalSystemId", "EntityType", "EntityId", "ConflictKey")
+                        .IsUnique()
+                        .HasDatabaseName("UX_SyncConflicts_System_Entity_Key")
+                        .HasFilter("[IsDeleted] = 0");
+
+                    b.ToTable("SyncConflicts", "Integration");
+                });
+
+            modelBuilder.Entity("Darwin.Domain.Entities.Integration.SyncState", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int>("AttemptCount")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("CreatedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Direction")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("nvarchar(32)");
+
+                    b.Property<Guid>("EntityId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("EntityType")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("nvarchar(128)");
+
+                    b.Property<Guid>("ExternalSystemId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTime?>("LastAttemptAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("LastErrorCode")
+                        .HasMaxLength(128)
+                        .HasColumnType("nvarchar(128)");
+
+                    b.Property<string>("LastErrorSummary")
+                        .HasMaxLength(1024)
+                        .HasColumnType("nvarchar(1024)");
+
+                    b.Property<DateTime?>("LastSuccessfulSyncAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("LocalVersion")
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
+                    b.Property<string>("MetadataJson")
+                        .IsRequired()
+                        .HasMaxLength(4000)
+                        .HasColumnType("nvarchar(4000)");
+
+                    b.Property<DateTime?>("ModifiedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("ModifiedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime?>("NextRetryAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("RemoteVersion")
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("nvarchar(32)");
+
+                    b.Property<string>("SyncScope")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("EntityType", "EntityId")
+                        .HasDatabaseName("IX_SyncStates_EntityType_EntityId");
+
+                    b.HasIndex("ExternalSystemId", "Status", "NextRetryAtUtc")
+                        .HasDatabaseName("IX_SyncStates_System_Status_NextRetry");
+
+                    b.HasIndex("ExternalSystemId", "EntityType", "EntityId", "Direction", "SyncScope")
+                        .IsUnique()
+                        .HasDatabaseName("UX_SyncStates_System_Entity_Direction_Scope")
+                        .HasFilter("[IsDeleted] = 0");
+
+                    b.ToTable("SyncStates", "Integration");
                 });
 
             modelBuilder.Entity("Darwin.Domain.Entities.Integration.WebhookDelivery", b =>
@@ -13586,7 +13856,138 @@ namespace Darwin.Infrastructure.SqlServer.Migrations
                     b.HasIndex("Status")
                         .HasDatabaseName("IX_CampaignDeliveries_Status");
 
+                    b.HasIndex("Channel", "Status", "CreatedAtUtc")
+                        .HasDatabaseName("IX_CampaignDeliveries_Channel_Status_Created");
+
                     b.ToTable("CampaignDeliveries", "Marketing");
+                });
+
+            modelBuilder.Entity("Darwin.Domain.Entities.Notifications.NotificationMessage", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Body")
+                        .HasMaxLength(4000)
+                        .HasColumnType("nvarchar(4000)");
+
+                    b.Property<short>("Category")
+                        .HasColumnType("smallint");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("CreatedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("DeepLink")
+                        .HasMaxLength(1024)
+                        .HasColumnType("nvarchar(1024)");
+
+                    b.Property<DateTime?>("ExpiresAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTime?>("ModifiedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("ModifiedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("PublishedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
+                    b.Property<Guid?>("SourceId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("SourceType")
+                        .HasMaxLength(128)
+                        .HasColumnType("nvarchar(128)");
+
+                    b.Property<short>("TargetApp")
+                        .HasColumnType("smallint");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("SourceType", "SourceId", "TargetApp")
+                        .HasDatabaseName("IX_NotificationMessages_Source_Target");
+
+                    b.HasIndex("TargetApp", "Category", "PublishedAtUtc")
+                        .HasDatabaseName("IX_NotificationMessages_Target_Category_Published");
+
+                    b.ToTable("NotificationMessages", "Notifications");
+                });
+
+            modelBuilder.Entity("Darwin.Domain.Entities.Notifications.NotificationRecipient", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime?>("ArchivedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("CreatedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime?>("DeliveredAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTime?>("ModifiedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("ModifiedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("NotificationMessageId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime?>("ReadAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("NotificationMessageId", "UserId")
+                        .IsUnique()
+                        .HasDatabaseName("UX_NotificationRecipients_Message_User")
+                        .HasFilter("[IsDeleted] = 0");
+
+                    b.HasIndex("UserId", "CreatedAtUtc")
+                        .HasDatabaseName("IX_NotificationRecipients_User_Created");
+
+                    b.HasIndex("UserId", "ReadAtUtc", "ArchivedAtUtc")
+                        .HasDatabaseName("IX_NotificationRecipients_User_Read_Archived");
+
+                    b.ToTable("NotificationRecipients", "Notifications");
                 });
 
             modelBuilder.Entity("Darwin.Domain.Entities.Orders.Order", b =>
@@ -17215,6 +17616,36 @@ namespace Darwin.Infrastructure.SqlServer.Migrations
                     b.Navigation("ExternalSystem");
                 });
 
+            modelBuilder.Entity("Darwin.Domain.Entities.Integration.SyncConflict", b =>
+                {
+                    b.HasOne("Darwin.Domain.Entities.Integration.ExternalSystem", "ExternalSystem")
+                        .WithMany()
+                        .HasForeignKey("ExternalSystemId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Darwin.Domain.Entities.Integration.SyncState", "SyncState")
+                        .WithMany("Conflicts")
+                        .HasForeignKey("SyncStateId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("ExternalSystem");
+
+                    b.Navigation("SyncState");
+                });
+
+            modelBuilder.Entity("Darwin.Domain.Entities.Integration.SyncState", b =>
+                {
+                    b.HasOne("Darwin.Domain.Entities.Integration.ExternalSystem", "ExternalSystem")
+                        .WithMany()
+                        .HasForeignKey("ExternalSystemId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("ExternalSystem");
+                });
+
             modelBuilder.Entity("Darwin.Domain.Entities.Inventory.GoodsReceiptLine", b =>
                 {
                     b.HasOne("Darwin.Domain.Entities.Inventory.GoodsReceipt", null)
@@ -17388,6 +17819,25 @@ namespace Darwin.Infrastructure.SqlServer.Migrations
                         .HasForeignKey("CampaignId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+                });
+
+            modelBuilder.Entity("Darwin.Domain.Entities.Notifications.NotificationRecipient", b =>
+                {
+                    b.HasOne("Darwin.Domain.Entities.Notifications.NotificationMessage", "Message")
+                        .WithMany()
+                        .HasForeignKey("NotificationMessageId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Darwin.Domain.Entities.Identity.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Message");
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("Darwin.Domain.Entities.Orders.Order", b =>
@@ -17999,6 +18449,11 @@ namespace Darwin.Infrastructure.SqlServer.Migrations
             modelBuilder.Entity("Darwin.Domain.Entities.Integration.ExternalSystem", b =>
                 {
                     b.Navigation("References");
+                });
+
+            modelBuilder.Entity("Darwin.Domain.Entities.Integration.SyncState", b =>
+                {
+                    b.Navigation("Conflicts");
                 });
 
             modelBuilder.Entity("Darwin.Domain.Entities.Inventory.GoodsReceipt", b =>

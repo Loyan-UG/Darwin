@@ -8,14 +8,18 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Darwin.Mobile.Business.Resources;
+using Darwin.Mobile.Business.Constants;
 using Darwin.Mobile.Business.Services.Identity;
 using Darwin.Mobile.Business.Services.Reporting;
 using Darwin.Mobile.Shared.Collections;
 using Darwin.Mobile.Shared.Commands;
 using Darwin.Mobile.Shared.Services;
+using Darwin.Mobile.Shared.Services.Notifications;
 using Darwin.Mobile.Shared.ViewModels;
+using Darwin.Contracts.Notifications;
 using Microsoft.Maui.ApplicationModel;
 using Microsoft.Maui.ApplicationModel.DataTransfer;
+using Microsoft.Maui.Controls;
 using Microsoft.Maui.Storage;
 
 namespace Darwin.Mobile.Business.ViewModels;
@@ -38,6 +42,7 @@ public sealed class DashboardViewModel : BaseViewModel
 
     private readonly IBusinessActivityTracker _activityTracker;
     private readonly IBusinessAccessService _businessAccessService;
+    private readonly INotificationInboxService _notificationInboxService;
     private readonly TimeProvider _timeProvider;
     private BusyOperationScope? _currentOperation;
 
@@ -56,14 +61,17 @@ public sealed class DashboardViewModel : BaseViewModel
     private int _campaignTargetingFixMetricsResetCount;
     private int _totalAccruedPoints;
     private int _totalRedeemedPoints;
+    private int _unreadNotificationsCount;
 
     public DashboardViewModel(
         IBusinessActivityTracker activityTracker,
         IBusinessAccessService businessAccessService,
+        INotificationInboxService notificationInboxService,
         TimeProvider timeProvider)
     {
         _activityTracker = activityTracker ?? throw new ArgumentNullException(nameof(activityTracker));
         _businessAccessService = businessAccessService ?? throw new ArgumentNullException(nameof(businessAccessService));
+        _notificationInboxService = notificationInboxService ?? throw new ArgumentNullException(nameof(notificationInboxService));
         _timeProvider = timeProvider ?? throw new ArgumentNullException(nameof(timeProvider));
 
         TopCustomers = new RangeObservableCollection<BusinessTopCustomerItem>();
@@ -78,6 +86,7 @@ public sealed class DashboardViewModel : BaseViewModel
         RefreshCommand = new AsyncCommand(LoadAsync, () => !IsBusy && _isOperationsAllowed);
         ExportCsvCommand = new AsyncCommand(ExportCsvAsync, () => !IsBusy && _isOperationsAllowed && _lastSnapshot is not null);
         ExportPdfCommand = new AsyncCommand(ExportPdfAsync, () => !IsBusy && _isOperationsAllowed && _lastSnapshot is not null);
+        OpenNotificationsCommand = new AsyncCommand(OpenNotificationsAsync);
     }
 
     public int LookbackDays
@@ -188,12 +197,15 @@ public sealed class DashboardViewModel : BaseViewModel
     /// <summary>
     /// Localized campaign quick-fix telemetry summary for dashboard KPI card.
     /// </summary>
-    public string CampaignTargetingFixMetricsSummary => string.Format(
-        CultureInfo.CurrentCulture,
-        AppResources.DashboardCampaignTargetingFixMetricsFormat,
-        CampaignTargetingFixAppliedCount,
-        CampaignTargetingFixNoChangeCount,
-        CampaignTargetingFixMetricsResetCount);
+    public string CampaignTargetingFixMetricsSummary =>
+        CampaignTargetingFixAppliedCount + CampaignTargetingFixNoChangeCount + CampaignTargetingFixMetricsResetCount <= 0
+            ? AppResources.DashboardCampaignTargetingNoFixes
+            : string.Format(
+                CultureInfo.CurrentCulture,
+                AppResources.DashboardCampaignTargetingFixMetricsFormat,
+                CampaignTargetingFixAppliedCount,
+                CampaignTargetingFixNoChangeCount,
+                CampaignTargetingFixMetricsResetCount);
 
     public int TotalAccruedPoints
     {
@@ -227,7 +239,27 @@ public sealed class DashboardViewModel : BaseViewModel
 
     public bool HasRecentActivities => RecentActivities.Count > 0;
 
+    public int UnreadNotificationsCount
+    {
+        get => _unreadNotificationsCount;
+        private set
+        {
+            if (SetProperty(ref _unreadNotificationsCount, Math.Max(0, value)))
+            {
+                OnPropertyChanged(nameof(HasUnreadNotifications));
+                OnPropertyChanged(nameof(UnreadNotificationsText));
+            }
+        }
+    }
+
+    public bool HasUnreadNotifications => UnreadNotificationsCount > 0;
+
+    public string UnreadNotificationsText => UnreadNotificationsCount > 99
+        ? "99+"
+        : UnreadNotificationsCount.ToString(CultureInfo.InvariantCulture);
+
     public AsyncCommand RefreshCommand { get; }
+    public AsyncCommand OpenNotificationsCommand { get; }
 
     /// <summary>
     /// Exports the currently loaded dashboard snapshot as a CSV file and opens the native share sheet.
@@ -295,9 +327,11 @@ public sealed class DashboardViewModel : BaseViewModel
             }
 
             var window = TimeSpan.FromDays(Math.Clamp(LookbackDays, 1, 30));
-            var snapshot = await _activityTracker
-                .GetDashboardSnapshotAsync(window, cancellationToken)
-                .ConfigureAwait(false);
+            var snapshotTask = _activityTracker.GetDashboardSnapshotAsync(window, cancellationToken);
+            var unreadTask = LoadUnreadNotificationsSafeAsync(cancellationToken);
+            await Task.WhenAll(snapshotTask, unreadTask).ConfigureAwait(false);
+            var snapshot = await snapshotTask.ConfigureAwait(false);
+            var unreadCount = await unreadTask.ConfigureAwait(false);
 
             RunOnMain(() =>
             {
@@ -331,6 +365,10 @@ public sealed class DashboardViewModel : BaseViewModel
                         Value = Math.Max(0, snapshot.RedemptionCount)
                     }
                 });
+                if (unreadCount.HasValue)
+                {
+                    UnreadNotificationsCount = unreadCount.Value;
+                }
 
                 OnPropertyChanged(nameof(HasTopCustomers));
                 OnPropertyChanged(nameof(HasRecentActivities));
@@ -351,6 +389,35 @@ public sealed class DashboardViewModel : BaseViewModel
         {
             EndBusyOperation(operation);
         }
+    }
+
+    private async Task<int?> LoadUnreadNotificationsSafeAsync(CancellationToken cancellationToken)
+    {
+        try
+        {
+            var result = await _notificationInboxService
+                .GetUnreadCountAsync(NotificationInboxTargetApp.Business, cancellationToken)
+                .ConfigureAwait(false);
+            return result.Succeeded ? result.Value : null;
+        }
+        catch (OperationCanceledException)
+        {
+            throw;
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    private static async Task OpenNotificationsAsync()
+    {
+        if (Shell.Current is null)
+        {
+            return;
+        }
+
+        await Shell.Current.GoToAsync(Routes.Notifications);
     }
 
     /// <summary>

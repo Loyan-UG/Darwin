@@ -545,6 +545,63 @@ namespace Darwin.Infrastructure.PostgreSql.Migrations
                     b.ToTable("BillingPlans", "Billing");
                 });
 
+            modelBuilder.Entity("Darwin.Domain.Entities.Billing.BusinessFeatureUsage", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("BusinessId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("CreatedByUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("FeatureKey")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<DateTime?>("ModifiedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("ModifiedByUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("PeriodEndUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime>("PeriodStartUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .HasColumnType("bytea");
+
+                    b.Property<Guid>("SourceId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("UsedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BusinessId", "FeatureKey", "PeriodStartUtc");
+
+                    b.HasIndex("BusinessId", "FeatureKey", "PeriodStartUtc", "SourceId")
+                        .IsUnique()
+                        .HasFilter("\"IsDeleted\" = FALSE");
+
+                    b.ToTable("BusinessFeatureUsages", "Billing");
+                });
+
             modelBuilder.Entity("Darwin.Domain.Entities.Billing.BusinessSubscription", b =>
                 {
                     b.Property<Guid>("Id")
@@ -9193,8 +9250,8 @@ namespace Darwin.Infrastructure.PostgreSql.Migrations
                         .HasColumnType("smallint");
 
                     b.Property<string>("PushToken")
-                        .HasMaxLength(512)
-                        .HasColumnType("character varying(512)");
+                        .HasMaxLength(2048)
+                        .HasColumnType("character varying(2048)");
 
                     b.Property<DateTime?>("PushTokenUpdatedAtUtc")
                         .HasColumnType("timestamp with time zone");
@@ -10516,6 +10573,216 @@ namespace Darwin.Infrastructure.PostgreSql.Migrations
                     b.HasIndex("ShipmentId", "Provider", "OperationType", "Status", "CreatedAtUtc");
 
                     b.ToTable("ShipmentProviderOperations", "Integration");
+                });
+
+            modelBuilder.Entity("Darwin.Domain.Entities.Integration.SyncConflict", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("ConflictKey")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("CreatedByUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("DarwinValueSummary")
+                        .HasMaxLength(1024)
+                        .HasColumnType("character varying(1024)");
+
+                    b.Property<DateTime>("DetectedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Direction")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)");
+
+                    b.Property<Guid>("EntityId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("EntityType")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)");
+
+                    b.Property<Guid>("ExternalSystemId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("ExternalValueSummary")
+                        .HasMaxLength(1024)
+                        .HasColumnType("character varying(1024)");
+
+                    b.Property<string>("FieldPath")
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("MetadataJson")
+                        .IsRequired()
+                        .HasMaxLength(4000)
+                        .HasColumnType("jsonb");
+
+                    b.Property<DateTime?>("ModifiedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("ModifiedByUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Resolution")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)");
+
+                    b.Property<string>("ResolutionSummary")
+                        .HasMaxLength(1024)
+                        .HasColumnType("character varying(1024)");
+
+                    b.Property<DateTime?>("ResolvedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("ResolvedByUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .HasColumnType("bytea");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)");
+
+                    b.Property<Guid>("SyncStateId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("EntityType", "EntityId")
+                        .HasDatabaseName("IX_SyncConflicts_EntityType_EntityId");
+
+                    b.HasIndex("SyncStateId", "Status")
+                        .HasDatabaseName("IX_SyncConflicts_State_Status");
+
+                    b.HasIndex("ExternalSystemId", "Status", "DetectedAtUtc")
+                        .HasDatabaseName("IX_SyncConflicts_System_Status_Detected");
+
+                    b.HasIndex("ExternalSystemId", "EntityType", "EntityId", "ConflictKey")
+                        .IsUnique()
+                        .HasDatabaseName("UX_SyncConflicts_System_Entity_Key")
+                        .HasFilter("\"IsDeleted\" = FALSE");
+
+                    b.ToTable("SyncConflicts", "Integration");
+                });
+
+            modelBuilder.Entity("Darwin.Domain.Entities.Integration.SyncState", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("AttemptCount")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("CreatedByUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Direction")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)");
+
+                    b.Property<Guid>("EntityId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("EntityType")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)");
+
+                    b.Property<Guid>("ExternalSystemId")
+                        .HasColumnType("uuid");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<DateTime?>("LastAttemptAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("LastErrorCode")
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)");
+
+                    b.Property<string>("LastErrorSummary")
+                        .HasMaxLength(1024)
+                        .HasColumnType("character varying(1024)");
+
+                    b.Property<DateTime?>("LastSuccessfulSyncAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("LocalVersion")
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
+                    b.Property<string>("MetadataJson")
+                        .IsRequired()
+                        .HasMaxLength(4000)
+                        .HasColumnType("jsonb");
+
+                    b.Property<DateTime?>("ModifiedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("ModifiedByUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime?>("NextRetryAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("RemoteVersion")
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .HasColumnType("bytea");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)");
+
+                    b.Property<string>("SyncScope")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("EntityType", "EntityId")
+                        .HasDatabaseName("IX_SyncStates_EntityType_EntityId");
+
+                    b.HasIndex("ExternalSystemId", "Status", "NextRetryAtUtc")
+                        .HasDatabaseName("IX_SyncStates_System_Status_NextRetry");
+
+                    b.HasIndex("ExternalSystemId", "EntityType", "EntityId", "Direction", "SyncScope")
+                        .IsUnique()
+                        .HasDatabaseName("UX_SyncStates_System_Entity_Direction_Scope")
+                        .HasFilter("\"IsDeleted\" = FALSE");
+
+                    b.ToTable("SyncStates", "Integration");
                 });
 
             modelBuilder.Entity("Darwin.Domain.Entities.Integration.WebhookDelivery", b =>
@@ -13415,7 +13682,136 @@ namespace Darwin.Infrastructure.PostgreSql.Migrations
                     b.HasIndex("Status")
                         .HasDatabaseName("IX_CampaignDeliveries_Status");
 
+                    b.HasIndex("Channel", "Status", "CreatedAtUtc")
+                        .HasDatabaseName("IX_CampaignDeliveries_Channel_Status_Created");
+
                     b.ToTable("CampaignDeliveries", "Marketing");
+                });
+
+            modelBuilder.Entity("Darwin.Domain.Entities.Notifications.NotificationMessage", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Body")
+                        .HasMaxLength(4000)
+                        .HasColumnType("character varying(4000)");
+
+                    b.Property<short>("Category")
+                        .HasColumnType("smallint");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("CreatedByUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("DeepLink")
+                        .HasMaxLength(1024)
+                        .HasColumnType("character varying(1024)");
+
+                    b.Property<DateTime?>("ExpiresAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<DateTime?>("ModifiedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("ModifiedByUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("PublishedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .HasColumnType("bytea");
+
+                    b.Property<Guid?>("SourceId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("SourceType")
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)");
+
+                    b.Property<short>("TargetApp")
+                        .HasColumnType("smallint");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("SourceType", "SourceId", "TargetApp")
+                        .HasDatabaseName("IX_NotificationMessages_Source_Target");
+
+                    b.HasIndex("TargetApp", "Category", "PublishedAtUtc")
+                        .HasDatabaseName("IX_NotificationMessages_Target_Category_Published");
+
+                    b.ToTable("NotificationMessages", "Notifications");
+                });
+
+            modelBuilder.Entity("Darwin.Domain.Entities.Notifications.NotificationRecipient", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime?>("ArchivedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("CreatedByUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime?>("DeliveredAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<DateTime?>("ModifiedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("ModifiedByUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("NotificationMessageId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime?>("ReadAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .HasColumnType("bytea");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("NotificationMessageId", "UserId")
+                        .IsUnique()
+                        .HasDatabaseName("UX_NotificationRecipients_Message_User")
+                        .HasFilter("\"IsDeleted\" = FALSE");
+
+                    b.HasIndex("UserId", "CreatedAtUtc")
+                        .HasDatabaseName("IX_NotificationRecipients_User_Created");
+
+                    b.HasIndex("UserId", "ReadAtUtc", "ArchivedAtUtc")
+                        .HasDatabaseName("IX_NotificationRecipients_User_Read_Archived");
+
+                    b.ToTable("NotificationRecipients", "Notifications");
                 });
 
             modelBuilder.Entity("Darwin.Domain.Entities.Orders.Order", b =>
@@ -17022,6 +17418,36 @@ namespace Darwin.Infrastructure.PostgreSql.Migrations
                     b.Navigation("ExternalSystem");
                 });
 
+            modelBuilder.Entity("Darwin.Domain.Entities.Integration.SyncConflict", b =>
+                {
+                    b.HasOne("Darwin.Domain.Entities.Integration.ExternalSystem", "ExternalSystem")
+                        .WithMany()
+                        .HasForeignKey("ExternalSystemId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Darwin.Domain.Entities.Integration.SyncState", "SyncState")
+                        .WithMany("Conflicts")
+                        .HasForeignKey("SyncStateId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("ExternalSystem");
+
+                    b.Navigation("SyncState");
+                });
+
+            modelBuilder.Entity("Darwin.Domain.Entities.Integration.SyncState", b =>
+                {
+                    b.HasOne("Darwin.Domain.Entities.Integration.ExternalSystem", "ExternalSystem")
+                        .WithMany()
+                        .HasForeignKey("ExternalSystemId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("ExternalSystem");
+                });
+
             modelBuilder.Entity("Darwin.Domain.Entities.Inventory.GoodsReceiptLine", b =>
                 {
                     b.HasOne("Darwin.Domain.Entities.Inventory.GoodsReceipt", null)
@@ -17195,6 +17621,25 @@ namespace Darwin.Infrastructure.PostgreSql.Migrations
                         .HasForeignKey("CampaignId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+                });
+
+            modelBuilder.Entity("Darwin.Domain.Entities.Notifications.NotificationRecipient", b =>
+                {
+                    b.HasOne("Darwin.Domain.Entities.Notifications.NotificationMessage", "Message")
+                        .WithMany()
+                        .HasForeignKey("NotificationMessageId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Darwin.Domain.Entities.Identity.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Message");
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("Darwin.Domain.Entities.Orders.Order", b =>
@@ -17806,6 +18251,11 @@ namespace Darwin.Infrastructure.PostgreSql.Migrations
             modelBuilder.Entity("Darwin.Domain.Entities.Integration.ExternalSystem", b =>
                 {
                     b.Navigation("References");
+                });
+
+            modelBuilder.Entity("Darwin.Domain.Entities.Integration.SyncState", b =>
+                {
+                    b.Navigation("Conflicts");
                 });
 
             modelBuilder.Entity("Darwin.Domain.Entities.Inventory.GoodsReceipt", b =>

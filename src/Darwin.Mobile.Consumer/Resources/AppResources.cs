@@ -631,7 +631,7 @@ public static class AppResources
     public static string AccountDeletionOpenFailed => ResourceManager.GetString(nameof(AccountDeletionOpenFailed), Culture) ?? "The account deletion request could not be submitted right now. Please try again shortly.";
     public static string AccountDeletionConfirmationRequired => ResourceManager.GetString(nameof(AccountDeletionConfirmationRequired), Culture) ?? "Please confirm that you understand the irreversible consequences before continuing.";
     public static string AccountDeletionRequestFailed => ResourceManager.GetString(nameof(AccountDeletionRequestFailed), Culture) ?? "Your account deletion request could not be completed right now. Please try again shortly.";
-    public static string PermissionDisclosureContinueButton => ResourceManager.GetString(nameof(PermissionDisclosureContinueButton), Culture) ?? "Continue";
+    public static string PermissionDisclosureContinueButton => ResourceManager.GetString(nameof(PermissionDisclosureContinueButton), Culture) ?? "Allow notifications";
     public static string PermissionDisclosureCancelButton => ResourceManager.GetString(nameof(PermissionDisclosureCancelButton), Culture) ?? "Not now";
     public static string PermissionDisclosurePrivacyButton => ResourceManager.GetString(nameof(PermissionDisclosurePrivacyButton), Culture) ?? "Open privacy notice";
     public static string LocationDisclosureTitle => ResourceManager.GetString(nameof(LocationDisclosureTitle), Culture) ?? "Location access";
@@ -644,5 +644,19 @@ public static class AppResources
     public static string NotificationDisclosureRequirement => ResourceManager.GetString(nameof(NotificationDisclosureRequirement), Culture) ?? "Notifications are optional. If you do not allow them, loyalty updates will remain available inside the app only.";
     public static string ProfilePushPermissionNotGranted => ResourceManager.GetString(nameof(ProfilePushPermissionNotGranted), Culture) ?? "Notification permission was not granted. Push registration was not updated.";
     public static string ProfilePushPermissionRequestFailed => ResourceManager.GetString(nameof(ProfilePushPermissionRequestFailed), Culture) ?? "Notification permission could not be requested right now. Please try again.";
+    public static string NotificationsTitle => ResourceManager.GetString(nameof(NotificationsTitle), Culture) ?? "Notifications";
+    public static string NotificationsSubtitle => ResourceManager.GetString(nameof(NotificationsSubtitle), Culture) ?? "Campaigns, rewards and important account messages.";
+    public static string NotificationsLoadFailed => ResourceManager.GetString(nameof(NotificationsLoadFailed), Culture) ?? "Notifications could not be loaded right now.";
+    public static string NotificationsMarkAllRead => ResourceManager.GetString(nameof(NotificationsMarkAllRead), Culture) ?? "Mark all read";
+    public static string NotificationsMarkRead => ResourceManager.GetString(nameof(NotificationsMarkRead), Culture) ?? "Mark read";
+    public static string NotificationsEmptyTitle => ResourceManager.GetString(nameof(NotificationsEmptyTitle), Culture) ?? "No notifications";
+    public static string NotificationsEmptyBody => ResourceManager.GetString(nameof(NotificationsEmptyBody), Culture) ?? "New campaign and reward updates will appear here.";
+    public static string NotificationsCategoryAll => ResourceManager.GetString(nameof(NotificationsCategoryAll), Culture) ?? "All";
+    public static string NotificationsCategorySystem => ResourceManager.GetString(nameof(NotificationsCategorySystem), Culture) ?? "System";
+    public static string NotificationsCategoryCampaign => ResourceManager.GetString(nameof(NotificationsCategoryCampaign), Culture) ?? "Campaigns";
+    public static string NotificationsCategoryReward => ResourceManager.GetString(nameof(NotificationsCategoryReward), Culture) ?? "Rewards";
+    public static string NotificationsCategoryBilling => ResourceManager.GetString(nameof(NotificationsCategoryBilling), Culture) ?? "Billing";
+    public static string NotificationsCategoryScannerSession => ResourceManager.GetString(nameof(NotificationsCategoryScannerSession), Culture) ?? "Scanner";
+    public static string NotificationsCategoryAccount => ResourceManager.GetString(nameof(NotificationsCategoryAccount), Culture) ?? "Account";
 
 }

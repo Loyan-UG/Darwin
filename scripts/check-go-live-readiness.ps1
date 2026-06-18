@@ -1,3 +1,7 @@
+param(
+    [switch]$SkipReportBundleCheck
+)
+
 $ErrorActionPreference = "Stop"
 
 function New-ObjectStorageProfileCommand {
@@ -19,6 +23,15 @@ function New-ObjectStorageProfileCommand {
     return $command
 }
 
+function New-ProductionReadinessReportBundleCommand {
+    $command = @("powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", "scripts\check-production-readiness-report-bundle.ps1")
+    if (-not [string]::IsNullOrWhiteSpace($env:DARWIN_PRODUCTION_READINESS_REPORT_BUNDLE_DIRECTORY)) {
+        $command += @("-Directory", $env:DARWIN_PRODUCTION_READINESS_REPORT_BUNDLE_DIRECTORY)
+    }
+
+    return $command
+}
+
 $checks = @(
     @{ Name = "Secrets scan"; Command = @("powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", "scripts\check-secrets.ps1"); ExpectedBlockedExitCode = $null },
     @{ Name = "Stripe test-mode smoke prerequisites"; Command = @("powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", "scripts\smoke-stripe-testmode.ps1", "-CreateSmokeOrder", "-RequireRuntimePipeline"); ExpectedBlockedExitCode = 2 },
@@ -27,12 +40,29 @@ $checks = @(
     @{ Name = "DHL live smoke prerequisites"; Command = @("powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", "scripts\smoke-dhl-live.ps1", "-RequireRuntimePipeline"); ExpectedBlockedExitCode = 2 },
     @{ Name = "Brevo readiness smoke prerequisites"; Command = @("powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", "scripts\smoke-brevo-readiness.ps1", "-UseSiteSettings", "-RequireDeliveryPipeline"); ExpectedBlockedExitCode = 2 },
     @{ Name = "VIES live smoke prerequisites"; Command = @("powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", "scripts\smoke-vies-live.ps1"); ExpectedBlockedExitCode = 2 },
+    @{ Name = "Production-like staging readiness prerequisites"; Command = @("powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", "scripts\check-production-like-staging-readiness.ps1"); ExpectedBlockedExitCode = 2 },
+    @{ Name = "Production readiness evidence package"; Command = @("powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", "scripts\check-production-readiness-evidence-package.ps1"); ExpectedBlockedExitCode = 2 },
     @{ Name = "Object storage smoke prerequisites"; Command = @("powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", "scripts\smoke-object-storage.ps1"); ExpectedBlockedExitCode = 2 },
     @{ Name = "Object storage MediaAssets profile prerequisites"; Command = New-ObjectStorageProfileCommand -ProfileName "MediaAssets" -ContainerName $env:DARWIN_OBJECT_STORAGE_MEDIA_CONTAINER -Prefix $env:DARWIN_OBJECT_STORAGE_MEDIA_PREFIX; ExpectedBlockedExitCode = 2 },
     @{ Name = "Object storage ShipmentLabels profile prerequisites"; Command = New-ObjectStorageProfileCommand -ProfileName "ShipmentLabels" -ContainerName $env:DARWIN_OBJECT_STORAGE_SHIPMENT_LABELS_CONTAINER -Prefix $env:DARWIN_OBJECT_STORAGE_SHIPMENT_LABELS_PREFIX; ExpectedBlockedExitCode = 2 },
     @{ Name = "MinIO production readiness prerequisites"; Command = @("powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", "scripts\check-minio-production-readiness.ps1"); ExpectedBlockedExitCode = 2 },
-    @{ Name = "E-invoice external-command smoke prerequisites"; Command = @("powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", "scripts\smoke-einvoice-external-command.ps1"); ExpectedBlockedExitCode = 2 }
+    @{ Name = "Azure Blob object-storage readiness prerequisites"; Command = @("powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", "scripts\check-azure-object-storage-readiness.ps1"); ExpectedBlockedExitCode = 2 },
+    @{ Name = "E-invoice production readiness prerequisites"; Command = @("powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", "scripts\check-einvoice-production-readiness.ps1"); ExpectedBlockedExitCode = 2 },
+    @{ Name = "E-invoice external-command smoke prerequisites"; Command = @("powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", "scripts\smoke-einvoice-external-command.ps1"); ExpectedBlockedExitCode = 2 },
+    @{ Name = "Web toolchain readiness prerequisites"; Command = @("powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", "scripts\check-web-toolchain-readiness.ps1"); ExpectedBlockedExitCode = 2 },
+    @{ Name = "Web storefront route smoke prerequisites"; Command = @("powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", "scripts\smoke-web-storefront-routes.ps1"); ExpectedBlockedExitCode = 2 },
+    @{ Name = "Web storefront readiness prerequisites"; Command = @("powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", "scripts\check-web-storefront-readiness.ps1"); ExpectedBlockedExitCode = 2 },
+    @{ Name = "Mobile resource naming readiness prerequisites"; Command = @("powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", "scripts\check-mobile-resource-names.ps1"); ExpectedBlockedExitCode = 2 },
+    @{ Name = "Android project readiness prerequisites"; Command = @("powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", "scripts\check-android-project-readiness.ps1"); ExpectedBlockedExitCode = 2 },
+    @{ Name = "Android launch readiness prerequisites"; Command = @("powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", "scripts\check-android-launch-readiness.ps1"); ExpectedBlockedExitCode = 2 }
 )
+
+if (-not $SkipReportBundleCheck) {
+    $insertAt = 8
+    $checks = @($checks[0..($insertAt - 1)]) +
+        @{ Name = "Production readiness report bundle"; Command = New-ProductionReadinessReportBundleCommand; ExpectedBlockedExitCode = $null } +
+        @($checks[$insertAt..($checks.Count - 1)])
+}
 
 $results = New-Object System.Collections.Generic.List[object]
 
@@ -103,6 +133,9 @@ foreach ($result in $results) {
 }
 
 $failed = @($results | Where-Object { $_.Status -eq "Failed" })
+$blocked = @($results | Where-Object { $_.Status -eq "Blocked" })
+$finalExitCode = 0
+
 if ($failed.Count -gt 0) {
     Write-Host ""
     Write-Host "Failed checks:"
@@ -111,11 +144,10 @@ if ($failed.Count -gt 0) {
         Write-Host $result.Detail
     }
 
-    exit 1
+    $finalExitCode = 1
 }
 
-$blocked = @($results | Where-Object { $_.Status -eq "Blocked" })
-if ($blocked.Count -gt 0) {
+if ($failed.Count -eq 0 -and $blocked.Count -gt 0) {
     Write-Host ""
     Write-Host "Blocked go-live prerequisites:"
     foreach ($result in $blocked) {
@@ -123,7 +155,11 @@ if ($blocked.Count -gt 0) {
         Write-Host $result.Detail
     }
 
-    exit 2
+    $finalExitCode = 2
 }
 
-Write-Host "All local readiness checks are ready. External smoke execution still requires explicit operator approval."
+if ($failed.Count -eq 0 -and $blocked.Count -eq 0) {
+    Write-Host "All local readiness checks are ready. External smoke execution still requires explicit operator approval."
+}
+
+exit $finalExitCode

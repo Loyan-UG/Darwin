@@ -25,6 +25,11 @@
         </div>
     </div>
 
+    @if (!string.IsNullOrWhiteSpace(Model.CampaignEntitlementSummary))
+    {
+        <div class="alert alert-info py-2">@Model.CampaignEntitlementSummary</div>
+    }
+
     <div class="row g-3 mb-4">
         <div class="col-md-2">
             <div class="card h-100">

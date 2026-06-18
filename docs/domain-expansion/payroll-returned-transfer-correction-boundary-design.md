@@ -78,7 +78,7 @@ The core decision is that bank-settled payroll payment correction must be eviden
 - Duplicate payment is attention/evidence first and cannot be auto-reversed or auto-posted.
 - Payroll payment history, original settlement journals, reconciliation history, payslip artifacts, customer payment/refund flows, supplier finance flows, and finance export package format are not rewritten.
 - Payroll advance/employee receivable and bank API adapters remain future dedicated slices.
-- Employee payslip self-service core is complete for the current phase. The next implementation gate is `AI-Readiness And Automation Governance`.
+- Employee payslip self-service core and AI governance are complete for the current phase. The current implementation gate is production go-live evidence execution.
 - Public WebApi, mobile/member, storefront, customer invoice archive/download, customer payment/refund flows, supplier finance flows, statutory filing, provider submission, and finance export package format remain unchanged.
 
 ## Compatibility Guards
@@ -92,6 +92,6 @@ The core decision is that bank-settled payroll payment correction must be eviden
 ## Documentation Verification
 
 - `docs/README.md` links this document from the ERP expansion map.
-- `BACKLOG.md` and `erp-expansion-master-status.md` record employee payslip self-service core as complete and move the next gate to `AI-Readiness And Automation Governance`.
+- `BACKLOG.md` and `erp-expansion-master-status.md` record employee payslip self-service core and AI governance as complete, with production go-live evidence execution as the current gate.
 - This document contains no deferred ambiguous decisions for the payroll returned-transfer boundary or core outcome.
 - Restricted vendor/source scans must return no output.

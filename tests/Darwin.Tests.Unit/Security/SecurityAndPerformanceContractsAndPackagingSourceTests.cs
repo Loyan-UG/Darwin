@@ -233,6 +233,17 @@ public sealed class SecurityAndPerformanceContractsAndPackagingSourceTests : Sec
     public void ProviderSmokeScripts_Should_StayGuardedAndAvoidSecretOutput()
     {
         var externalSmokeInputsSource = ReadRepositoryFile(Path.Combine("docs", "external-smoke-inputs.md"));
+        var docsIndexSource = ReadRepositoryFile(Path.Combine("docs", "README.md"));
+        var onboardingChecklistSource = ReadRepositoryFile(Path.Combine("docs", "customer-deployment-onboarding-checklist.md"));
+        var evidencePackageSource = ReadRepositoryFile(Path.Combine("docs", "production-readiness-evidence-package.md"));
+        var executionPlanSource = ReadRepositoryFile(Path.Combine("docs", "production-go-live-evidence-execution-plan.md"));
+        var evidenceTemplateSource = ReadRepositoryFile(Path.Combine("docs", "templates", "production-readiness-evidence-package-template.md"));
+        var evidenceValidatorSource = ReadRepositoryFile(Path.Combine("scripts", "check-production-readiness-evidence-package.ps1"));
+        var goLiveReportExporterSource = ReadRepositoryFile(Path.Combine("scripts", "export-go-live-readiness-report.ps1"));
+        var reportBundleExporterSource = ReadRepositoryFile(Path.Combine("scripts", "export-production-readiness-report-bundle.ps1"));
+        var minioComposeSource = ReadRepositoryFile("docker-compose.minio.yml");
+        var localPostgresRestoreSource = ReadRepositoryFile(Path.Combine("scripts", "check-local-postgres-restore-readiness.ps1"));
+        var localPostgresRestoreExporterSource = ReadRepositoryFile(Path.Combine("scripts", "export-local-postgres-restore-readiness-report.ps1"));
         var scripts = new[]
         {
             "smoke-stripe-testmode.ps1",
@@ -243,7 +254,22 @@ public sealed class SecurityAndPerformanceContractsAndPackagingSourceTests : Sec
             "smoke-brevo-readiness.ps1",
             "smoke-object-storage.ps1",
             "check-minio-production-readiness.ps1",
+            "check-azure-object-storage-readiness.ps1",
+            "check-production-like-staging-readiness.ps1",
             "smoke-einvoice-external-command.ps1",
+            "check-einvoice-production-readiness.ps1",
+            "check-web-toolchain-readiness.ps1",
+            "check-web-storefront-local-build.ps1",
+            "smoke-web-storefront-routes.ps1",
+            "check-web-storefront-readiness.ps1",
+            "check-mobile-resource-names.ps1",
+            "check-android-project-readiness.ps1",
+            "check-android-launch-readiness.ps1",
+            "check-production-readiness-report-bundle.ps1",
+            "check-production-readiness-report-bundle-clean-smoke.ps1",
+            "check-production-readiness-evidence-package.ps1",
+            "new-production-readiness-evidence-package.ps1",
+            "export-production-readiness-local-execution-summary.ps1",
             "check-go-live-readiness.ps1"
         };
 
@@ -283,35 +309,161 @@ public sealed class SecurityAndPerformanceContractsAndPackagingSourceTests : Sec
             .And.Contain("scripts\\smoke-brevo-readiness.ps1")
             .And.Contain("\"-RequireDeliveryPipeline\"")
             .And.Contain("scripts\\smoke-vies-live.ps1")
+            .And.Contain("scripts\\check-production-like-staging-readiness.ps1")
+            .And.Contain("scripts\\check-production-readiness-report-bundle.ps1")
+            .And.Contain("DARWIN_PRODUCTION_READINESS_REPORT_BUNDLE_DIRECTORY")
+            .And.Contain("scripts\\check-production-readiness-evidence-package.ps1")
             .And.Contain("scripts\\smoke-object-storage.ps1")
             .And.Contain("scripts\\check-minio-production-readiness.ps1")
+            .And.Contain("scripts\\check-einvoice-production-readiness.ps1")
             .And.Contain("scripts\\smoke-einvoice-external-command.ps1")
+            .And.Contain("scripts\\check-web-toolchain-readiness.ps1")
+            .And.Contain("scripts\\smoke-web-storefront-routes.ps1")
+            .And.Contain("scripts\\check-web-storefront-readiness.ps1")
+            .And.Contain("scripts\\check-mobile-resource-names.ps1")
+            .And.Contain("scripts\\check-android-project-readiness.ps1")
+            .And.Contain("scripts\\check-android-launch-readiness.ps1")
             .And.Contain("docs\\archive-storage-provider-decision.md")
             .And.Contain("docs\\e-invoice-tooling-decision.md")
             .And.Contain("No option is selected yet\\.")
             .And.Contain("E-invoice tooling decision");
 
+        ReadRepositoryFile(Path.Combine("scripts", "check-android-launch-readiness.ps1"))
+            .Should()
+            .Contain("DARWIN_ANDROID_SIGNED_ARTIFACT_REFERENCE")
+            .And.Contain("DARWIN_ANDROID_PUSH_SMOKE_REFERENCE")
+            .And.Contain("DARWIN_ANDROID_ROUTE_COMPATIBILITY_REFERENCE")
+            .And.Contain("DARWIN_ANDROID_EVIDENCE_PACKAGE_REFERENCE")
+            .And.Contain("device log");
+
+        goLiveReportExporterSource.Should().Contain("[switch]$SkipReportBundleCheck");
+        reportBundleExporterSource.Should().Contain("-SkipReportBundleCheck");
+        reportBundleExporterSource.Should().Contain("scripts\\export-go-live-readiness-report.ps1");
+        reportBundleExporterSource.Should().Contain("scripts\\export-production-readiness-local-execution-summary.ps1");
+        reportBundleExporterSource.Should().Contain("Get-ReportExitCode");
+        reportBundleExporterSource.Should().Contain("ExporterExitCode");
+        ReadRepositoryFile(Path.Combine("scripts", "export-production-readiness-action-plan.ps1"))
+            .Should()
+            .Contain("Get-ReportExitCode")
+            .And.Contain("Evidence checklist")
+            .And.Contain("Convert-EvidenceKeyToLabel")
+            .And.Contain("| Evidence area | Result | Exit code | Owner |");
+        ReadRepositoryFile(Path.Combine("scripts", "export-production-readiness-owner-handoff.ps1"))
+            .Should()
+            .Contain("Get-ReportExitCode")
+            .And.Contain("Evidence checklist")
+            .And.Contain("Convert-EvidenceKeyToLabel")
+            .And.Contain("| Evidence area | Result | Exit code | Missing evidence keys |");
+        ReadRepositoryFile(Path.Combine("scripts", "check-production-readiness-report-bundle.ps1"))
+            .Should()
+            .Contain("Get-BundleReportRows")
+            .And.Contain("does not include report exit codes");
+        ReadRepositoryFile(Path.Combine("scripts", "export-production-readiness-local-package-draft.ps1"))
+            .Should()
+            .Contain("-RowName \"Local execution summary\"")
+            .And.Contain("$localExecutionSummaryPath");
+        localPostgresRestoreSource.Should().Contain("[int]$DockerCommandTimeoutSeconds = 900");
+        localPostgresRestoreSource.Should().Contain("Start-Job -ScriptBlock");
+        localPostgresRestoreSource.Should().Contain("& docker @DockerArguments");
+        localPostgresRestoreSource.Should().Contain("Wait-Job -Job $job -Timeout $TimeoutSeconds");
+        localPostgresRestoreSource.Should().Contain("The Docker command timed out");
+        localPostgresRestoreSource.Should().Contain("DockerCommandTimeoutSeconds must be between 30 and 3600");
+        localPostgresRestoreSource.Should().Contain("Local PostgreSQL restore readiness cleanup warning");
+        localPostgresRestoreExporterSource.Should().Contain("[int]$DockerCommandTimeoutSeconds = 900");
+        localPostgresRestoreExporterSource.Should().Contain("-DockerCommandTimeoutSeconds");
+
+        minioComposeSource.Should().Contain("quay.io/minio/minio:latest");
+        minioComposeSource.Should().Contain("quay.io/minio/mc:latest");
+        minioComposeSource.Should().Contain("mc mb --ignore-existing --with-lock");
+        minioComposeSource.Should().Contain("mc version enable");
+        minioComposeSource.Should().Contain("mc retention set --default compliance 1d");
+        minioComposeSource.Should().NotContain("aistor");
+        minioComposeSource.Should().NotContain("minio.license");
+        minioComposeSource.Should().NotContain("MINIO_LICENSE");
+
         externalSmokeInputsSource.Should().Contain("Do not store real secret values");
         externalSmokeInputsSource.Should().Contain("scripts\\check-go-live-readiness.ps1");
         externalSmokeInputsSource.Should().Contain("DARWIN_WEBAPI_BASE_URL");
         externalSmokeInputsSource.Should().Contain("DARWIN_STRIPE_WEBHOOK_PUBLIC_URL");
+        externalSmokeInputsSource.Should().Contain("DARWIN_STRIPE_WEBHOOK_FORWARDING_REFERENCE");
+        externalSmokeInputsSource.Should().Contain("DARWIN_STRIPE_TESTMODE_SMOKE_REFERENCE");
         externalSmokeInputsSource.Should().Contain("DARWIN_STRIPE_LIVE_WEBHOOK_PUBLIC_URL");
+        externalSmokeInputsSource.Should().Contain("DARWIN_STRIPE_LIVE_KEYS_REFERENCE");
         externalSmokeInputsSource.Should().Contain("DARWIN_STRIPE_MONITORING_CONFIRMED");
         externalSmokeInputsSource.Should().Contain("DARWIN_DHL_API_BASE_URL");
+        externalSmokeInputsSource.Should().Contain("DARWIN_DHL_LIVE_SMOKE_REFERENCE");
         externalSmokeInputsSource.Should().Contain("DARWIN_BREVO_API_KEY");
+        externalSmokeInputsSource.Should().Contain("DARWIN_BREVO_READINESS_SMOKE_REFERENCE");
         externalSmokeInputsSource.Should().Contain("DARWIN_VIES_VALID_VAT_ID");
+        externalSmokeInputsSource.Should().Contain("DARWIN_VIES_VALID_SMOKE_REFERENCE");
         externalSmokeInputsSource.Should().Contain("DARWIN_OBJECT_STORAGE_PROVIDER");
         externalSmokeInputsSource.Should().Contain("DARWIN_OBJECT_STORAGE_S3_BUCKET");
         externalSmokeInputsSource.Should().Contain("DARWIN_OBJECT_STORAGE_AZURE_CONTAINER");
+        externalSmokeInputsSource.Should().Contain("DARWIN_STAGING_REHEARSAL_LABEL");
+        externalSmokeInputsSource.Should().Contain("DARWIN_STAGING_BUILD_TESTS_REFERENCE");
+        externalSmokeInputsSource.Should().Contain("DARWIN_STAGING_PROVIDER_PREFLIGHTS_REFERENCE");
+        externalSmokeInputsSource.Should().Contain("DARWIN_STAGING_MONITORING_ALERTING_REFERENCE");
+        externalSmokeInputsSource.Should().Contain("DARWIN_STAGING_OWNER_SIGNOFF_REFERENCE");
+        externalSmokeInputsSource.Should().Contain("DARWIN_STAGING_OWNER_SIGNOFF_CONFIRMED");
+        externalSmokeInputsSource.Should().Contain("DARWIN_PRODUCTION_READINESS_REPORT_BUNDLE_DIRECTORY");
+        externalSmokeInputsSource.Should().Contain("DARWIN_PRODUCTION_READINESS_EVIDENCE_PACKAGE_PATH");
         externalSmokeInputsSource.Should().Contain("DARWIN_MINIO_PRODUCTION_ENDPOINT");
         externalSmokeInputsSource.Should().Contain("DARWIN_MINIO_BACKUP_CONFIGURED_CONFIRMED");
+        externalSmokeInputsSource.Should().Contain("DARWIN_AZURE_BLOB_PRODUCTION_ENDPOINT");
         externalSmokeInputsSource.Should().Contain("DARWIN_EINVOICE_COMMAND_PATH");
+        externalSmokeInputsSource.Should().Contain("DARWIN_EINVOICE_EVIDENCE_PACKAGE_REFERENCE");
+        externalSmokeInputsSource.Should().Contain("DARWIN_EINVOICE_ZUGFERD_VALIDATION_REPORT_REFERENCE");
+        externalSmokeInputsSource.Should().Contain("DARWIN_EINVOICE_XRECHNUNG_VALIDATION_REPORT_REFERENCE");
+        externalSmokeInputsSource.Should().Contain("scripts\\check-web-toolchain-readiness.ps1");
+        externalSmokeInputsSource.Should().Contain("Web storefront toolchain preflight");
+        externalSmokeInputsSource.Should().Contain("scripts\\check-web-storefront-local-build.ps1");
+        externalSmokeInputsSource.Should().Contain("Web storefront local build preflight");
+        externalSmokeInputsSource.Should().Contain("scripts\\smoke-web-storefront-routes.ps1");
+        externalSmokeInputsSource.Should().Contain("DARWIN_WEB_ROUTE_SMOKE_CONFIRMED");
+        externalSmokeInputsSource.Should().Contain("scripts\\check-web-storefront-readiness.ps1");
+        externalSmokeInputsSource.Should().Contain("DARWIN_WEB_STOREFRONT_BUILD_REFERENCE");
+        externalSmokeInputsSource.Should().Contain("DARWIN_WEB_RUNTIME_CONFIG_SMOKE_REFERENCE");
+        externalSmokeInputsSource.Should().Contain("DARWIN_WEB_CHECKOUT_ROUTE_SMOKE_REFERENCE");
+        externalSmokeInputsSource.Should().Contain("DARWIN_WEB_RUNTIME_CONFIG_SMOKE_CONFIRMED");
+        externalSmokeInputsSource.Should().Contain("DARWIN_WEB_DEFAULT_PRODUCTION_API_CONFIRMED");
+        externalSmokeInputsSource.Should().Contain("DARWIN_ANDROID_RELEASE_ARTIFACT_REFERENCE");
+        externalSmokeInputsSource.Should().Contain("DARWIN_ANDROID_SIGNED_ARTIFACT_REFERENCE");
+        externalSmokeInputsSource.Should().Contain("DARWIN_ANDROID_PUSH_SMOKE_REFERENCE");
+        externalSmokeInputsSource.Should().Contain("DARWIN_ANDROID_ROUTE_COMPATIBILITY_REFERENCE");
+        externalSmokeInputsSource.Should().Contain("scripts\\check-mobile-resource-names.ps1");
+        externalSmokeInputsSource.Should().Contain("Mobile resource naming readiness");
+        externalSmokeInputsSource.Should().Contain("scripts\\check-android-project-readiness.ps1");
+        externalSmokeInputsSource.Should().Contain("Android project readiness");
+        externalSmokeInputsSource.Should().Contain("production-like staging rehearsal");
+        externalSmokeInputsSource.Should().Contain("local execution summary");
+        externalSmokeInputsSource.Should().Contain("release reference");
+        externalSmokeInputsSource.Should().Contain("-DockerCommandTimeoutSeconds");
         externalSmokeInputsSource.Should().Contain("Provider failures must remain `Unknown`");
         externalSmokeInputsSource.Should().NotContain("sk_live_");
         externalSmokeInputsSource.Should().NotContain("sk_test_");
         externalSmokeInputsSource.Should().NotContain("rk_live_");
         externalSmokeInputsSource.Should().NotContain("rk_test_");
         externalSmokeInputsSource.Should().NotContain("whsec_");
+
+        docsIndexSource.Should().Contain("production-go-live-evidence-execution-plan.md");
+        docsIndexSource.Should().Contain("check-production-readiness-report-bundle-clean-smoke.ps1");
+        docsIndexSource.Should().Contain("export-production-readiness-local-execution-summary.ps1");
+        onboardingChecklistSource.Should().Contain("production-go-live-evidence-execution-plan.md");
+        onboardingChecklistSource.Should().Contain("production-like staging rehearsal row");
+        onboardingChecklistSource.Should().Contain("local execution summary");
+        evidencePackageSource.Should().Contain("production-like staging rehearsal");
+        evidencePackageSource.Should().Contain("check-production-like-staging-readiness.ps1");
+        evidencePackageSource.Should().Contain("local execution summary");
+        executionPlanSource.Should().Contain("production-like staging before real production");
+        executionPlanSource.Should().Contain("check-production-readiness-report-bundle-clean-smoke.ps1");
+        executionPlanSource.Should().Contain("local execution summary");
+        executionPlanSource.Should().Contain("check-production-like-staging-readiness.ps1");
+        executionPlanSource.Should().Contain("file-delivery remains the production-safe path");
+        executionPlanSource.Should().Contain("SyncState and SyncConflict are foundation only");
+        evidenceTemplateSource.Should().Contain("Production-like staging rehearsal");
+        evidenceTemplateSource.Should().Contain("Local execution summary");
+        evidenceValidatorSource.Should().Contain("Production-like staging rehearsal");
+        evidenceValidatorSource.Should().Contain("Local execution summary");
 
         ReadRepositoryFile(Path.Combine("scripts", "smoke-stripe-testmode.ps1"))
             .Should()
@@ -330,6 +482,8 @@ public sealed class SecurityAndPerformanceContractsAndPackagingSourceTests : Sec
             .And.Contain("function Invoke-BusinessSubscriptionCheckoutSmoke",
                 "the subscription checkout smoke function must be declared")
             .And.Contain("DARWIN_STRIPE_PROVIDER_CALLBACK_WORKER_CONFIRMED")
+            .And.Contain("DARWIN_STRIPE_TESTMODE_SMOKE_REFERENCE")
+            .And.Contain("DARWIN_STRIPE_RUNTIME_PIPELINE_REFERENCE")
             .And.Contain("WebhookWaitSeconds")
             .And.Contain("Creating a public storefront smoke order before Stripe handoff.")
             .And.Contain("Start-Process -FilePath $checkoutUri.AbsoluteUri | Out-Null")
@@ -346,6 +500,7 @@ public sealed class SecurityAndPerformanceContractsAndPackagingSourceTests : Sec
         ReadRepositoryFile(Path.Combine("scripts", "check-stripe-webhook-forwarding.ps1"))
             .Should()
             .Contain("DARWIN_STRIPE_WEBHOOK_PUBLIC_URL")
+            .And.Contain("DARWIN_STRIPE_WEBHOOK_FORWARDING_REFERENCE")
             .And.Contain("DARWIN_STRIPE_WEBHOOK_FORWARDING_CONFIRMED")
             .And.Contain("/api/v1/public/billing/stripe/webhooks")
             .And.Contain("No webhook signing secret is accepted or printed")
@@ -355,6 +510,8 @@ public sealed class SecurityAndPerformanceContractsAndPackagingSourceTests : Sec
         ReadRepositoryFile(Path.Combine("scripts", "check-stripe-live-readiness.ps1"))
             .Should()
             .Contain("DARWIN_STRIPE_LIVE_WEBHOOK_PUBLIC_URL")
+            .And.Contain("DARWIN_STRIPE_LIVE_KEYS_REFERENCE")
+            .And.Contain("DARWIN_STRIPE_LIVE_WEBHOOK_EVENTS_REFERENCE")
             .And.Contain("DARWIN_STRIPE_LIVE_KEYS_CONFIGURED_CONFIRMED")
             .And.Contain("DARWIN_STRIPE_LIVE_WEBHOOK_ENDPOINT_CONFIRMED")
             .And.Contain("DARWIN_STRIPE_LIVE_WEBHOOK_EVENTS_CONFIRMED")
@@ -370,6 +527,14 @@ public sealed class SecurityAndPerformanceContractsAndPackagingSourceTests : Sec
             .And.NotContain("whsec_")
             .And.NotContain("StripeSecretKey");
 
+        ReadRepositoryFile(Path.Combine("scripts", "check-web-storefront-readiness.ps1"))
+            .Should()
+            .Contain("DARWIN_WEB_STOREFRONT_BUILD_REFERENCE")
+            .And.Contain("DARWIN_WEB_RUNTIME_CONFIG_SMOKE_REFERENCE")
+            .And.Contain("DARWIN_WEB_CHECKOUT_ROUTE_SMOKE_REFERENCE")
+            .And.Contain("DARWIN_WEB_STAGING_OWNER_SIGNOFF_REFERENCE")
+            .And.Contain("Assert-SafeEvidenceReference");
+
         ReadRepositoryFile(Path.Combine("scripts", "smoke-dhl-live.ps1"))
             .Should()
             .Contain("No secrets or response payloads will be printed.")
@@ -380,6 +545,8 @@ public sealed class SecurityAndPerformanceContractsAndPackagingSourceTests : Sec
             .And.Contain("Assert-DhlRuntimePipelineReady")
             .And.Contain("DHL runtime pipeline readiness is blocked.")
             .And.Contain("DARWIN_DHL_SHIPMENT_PROVIDER_OPERATION_WORKER_CONFIRMED=true")
+            .And.Contain("DARWIN_DHL_LIVE_SMOKE_REFERENCE")
+            .And.Contain("DARWIN_DHL_PROVIDER_CALLBACK_WORKER_REFERENCE")
             .And.Contain("DARWIN_DHL_PROVIDER_CALLBACK_WORKER_CONFIRMED=true")
             .And.Contain("DARWIN_DHL_SHIPMENT_LABELS_STORAGE_CONFIRMED=true")
             .And.Contain("DHL runtime pipeline readiness is confirmed.")
@@ -392,13 +559,17 @@ public sealed class SecurityAndPerformanceContractsAndPackagingSourceTests : Sec
             .And.Contain("DARWIN_BREVO_BASE_URL must be an absolute URL.")
             .And.Contain("DARWIN_BREVO_BASE_URL must use HTTPS for non-local endpoints.")
             .And.Contain("[switch]$RequireDeliveryPipeline")
+            .And.Contain("DARWIN_BREVO_READINESS_SMOKE_REFERENCE")
+            .And.Contain("DARWIN_BREVO_WEBHOOK_REFERENCE")
             .And.Contain("DARWIN_BREVO_WEBHOOK_PUBLIC_URL must end with /api/v1/public/notifications/brevo/webhooks.")
             .And.Contain("DARWIN_BREVO_PROVIDER_CALLBACK_WORKER_CONFIRMED=true")
             .And.Contain("DARWIN_BREVO_EMAIL_DISPATCH_WORKER_CONFIRMED=true");
 
         ReadRepositoryFile(Path.Combine("scripts", "smoke-vies-live.ps1"))
             .Should()
-            .Contain("DARWIN_VIES_ENDPOINT_URL must be an absolute URL.")
+            .Contain("DARWIN_VIES_VALID_SMOKE_REFERENCE")
+            .And.Contain("DARWIN_VIES_INVALID_SMOKE_REFERENCE")
+            .And.Contain("DARWIN_VIES_ENDPOINT_URL must be an absolute URL.")
             .And.Contain("DARWIN_VIES_ENDPOINT_URL must use HTTPS for non-local endpoints.")
             .And.Contain("DARWIN_VIES_TIMEOUT_SECONDS must be between 1 and 120.");
 
@@ -410,13 +581,22 @@ public sealed class SecurityAndPerformanceContractsAndPackagingSourceTests : Sec
             .And.Contain("[string]$FileRoot")
             .And.Contain("[switch]$SmokeRetention")
             .And.Contain("[switch]$AllowProductionEndpoint")
+            .And.Contain("[int]$HostTimeoutSeconds")
             .And.Contain("DARWIN_OBJECT_STORAGE_SMOKE_RETENTION")
             .And.Contain("DARWIN_OBJECT_STORAGE_PRODUCTION_SMOKE_CONFIRMED")
             .And.Contain("Add -SmokeRetention")
             .And.Contain("ObjectStorageKeyBuilder.Build")
             .And.Contain("ObjectStorage:AzureBlob:ConnectionString")
+            .And.Contain("Invoke-DotnetRunWithTimeout")
+            .And.Contain("Start-Job -ScriptBlock")
+            .And.Contain("dotnet run --project $SmokeProjectPath")
+            .And.Contain("Wait-Job -Job $job -Timeout $TimeoutSeconds")
+            .And.Contain("taskkill /PID $childProcess.ProcessId /T /F")
+            .And.Contain("The temporary dotnet run host timed out")
+            .And.Contain("HostTimeoutSeconds must be between 60 and 900")
             .And.NotContain("Write-Host $env:DARWIN_OBJECT_STORAGE_S3_SECRET_KEY")
-            .And.NotContain("Write-Host $env:DARWIN_OBJECT_STORAGE_AZURE_CONNECTION_STRING");
+            .And.NotContain("Write-Host $env:DARWIN_OBJECT_STORAGE_AZURE_CONNECTION_STRING")
+            .And.NotContain("dotnet run --project $projectPath");
 
         ReadRepositoryFile(Path.Combine("scripts", "check-minio-production-readiness.ps1"))
             .Should()
@@ -436,11 +616,21 @@ public sealed class SecurityAndPerformanceContractsAndPackagingSourceTests : Sec
             .And.Contain("DARWIN_MINIO_MEDIA_ASSETS_PROFILE_DECIDED_CONFIRMED")
             .And.Contain("DARWIN_MINIO_DISPOSABLE_SMOKE_PREFIX_CONFIRMED")
             .And.Contain("DARWIN_MINIO_RETENTION_DELETE_BEHAVIOR_CONFIRMED")
+            .And.Contain("DARWIN_MINIO_SELECTED_PROVIDER_SMOKE_CONFIRMED")
+            .And.Contain("DARWIN_MINIO_SELECTED_PROVIDER_SMOKE_REFERENCE")
+            .And.Contain("Selected-provider smoke evidence reference is present and was not printed.")
             .And.Contain("DARWIN_MINIO_OPERATOR_RUNBOOK_CONFIRMED")
             .And.Contain("No MinIO access key, secret key")
             .And.NotContain("Invoke-RestMethod")
             .And.NotContain("Invoke-WebRequest")
             .And.NotContain("MINIO_ROOT_PASSWORD");
+
+        ReadRepositoryFile(Path.Combine("scripts", "check-azure-object-storage-readiness.ps1"))
+            .Should()
+            .Contain("DARWIN_AZURE_BLOB_SELECTED_PROVIDER_SMOKE_CONFIRMED")
+            .And.Contain("DARWIN_AZURE_BLOB_SELECTED_PROVIDER_SMOKE_REFERENCE")
+            .And.Contain("Selected-provider smoke evidence reference is present and was not printed.")
+            .And.NotContain("Write-Host $selectedProviderSmokeReference");
 
         ReadRepositoryFile(Path.Combine("scripts", "smoke-einvoice-external-command.ps1"))
             .Should()
@@ -448,6 +638,22 @@ public sealed class SecurityAndPerformanceContractsAndPackagingSourceTests : Sec
             .And.Contain("DARWIN_EINVOICE_COMMAND_PATH")
             .And.Contain("not a substitute for ZUGFeRD/Factur-X, XRechnung, PDF/A-3, EN16931, or legal validation")
             .And.NotContain("Write-Host $resolvedExecutable");
+
+        ReadRepositoryFile(Path.Combine("scripts", "check-einvoice-production-readiness.ps1"))
+            .Should()
+            .Contain("DARWIN_EINVOICE_ZUGFERD_FIXTURE_REFERENCE")
+            .And.Contain("DARWIN_EINVOICE_ZUGFERD_ARTIFACT_REFERENCE")
+            .And.Contain("DARWIN_EINVOICE_ZUGFERD_VALIDATION_REPORT_REFERENCE")
+            .And.Contain("DARWIN_EINVOICE_ZUGFERD_STORAGE_DOWNLOAD_SMOKE_REFERENCE")
+            .And.Contain("DARWIN_EINVOICE_ZUGFERD_ACCOUNTING_SIGNOFF_REFERENCE")
+            .And.Contain("DARWIN_EINVOICE_XRECHNUNG_FIXTURE_REFERENCE")
+            .And.Contain("DARWIN_EINVOICE_XRECHNUNG_ARTIFACT_REFERENCE")
+            .And.Contain("DARWIN_EINVOICE_XRECHNUNG_VALIDATION_REPORT_REFERENCE")
+            .And.Contain("DARWIN_EINVOICE_XRECHNUNG_STORAGE_DOWNLOAD_SMOKE_REFERENCE")
+            .And.Contain("DARWIN_EINVOICE_XRECHNUNG_ACCOUNTING_SIGNOFF_REFERENCE")
+            .And.Contain("Per-format fixture, artifact, validation-report, storage/download-smoke, and accounting/tax sign-off evidence references are present and were not printed.")
+            .And.NotContain("Write-Host $zugferdArtifactReference")
+            .And.NotContain("Write-Host $xrechnungArtifactReference");
     }
 
     [Fact]
@@ -484,10 +690,20 @@ public sealed class SecurityAndPerformanceContractsAndPackagingSourceTests : Sec
         output.Should().Contain("DHL live smoke prerequisites");
         output.Should().Contain("Brevo readiness smoke prerequisites");
         output.Should().Contain("VIES live smoke prerequisites");
+        output.Should().Contain("Production-like staging readiness prerequisites");
+        output.Should().Contain("Production readiness report bundle");
+        output.Should().Contain("Production readiness evidence package");
         output.Should().Contain("Object storage MediaAssets profile prerequisites");
         output.Should().Contain("Object storage ShipmentLabels profile prerequisites");
         output.Should().Contain("MinIO production readiness prerequisites");
+        output.Should().Contain("Azure Blob object-storage readiness prerequisites");
+        output.Should().Contain("E-invoice production readiness prerequisites");
         output.Should().Contain("E-invoice external-command smoke prerequisites");
+        output.Should().Contain("Web toolchain readiness prerequisites");
+        output.Should().Contain("Web storefront route smoke prerequisites");
+        output.Should().Contain("Web storefront readiness prerequisites");
+        output.Should().Contain("Mobile resource naming readiness prerequisites");
+        output.Should().Contain("Android launch readiness prerequisites");
         output.Should().NotContain("System.Management.Automation.RemoteException");
 
         var secretPattern = new Regex(@"\b(sk|rk)_(live|test)_[A-Za-z0-9]{12,}\b|\bwhsec_[A-Za-z0-9]{12,}\b", RegexOptions.IgnoreCase);
@@ -522,6 +738,8 @@ public sealed class SecurityAndPerformanceContractsAndPackagingSourceTests : Sec
             startInfo.Environment[item.Key] = item.Value;
         }
 
+        startInfo.Environment["PATH"] = $"{EnsureFakeWebToolchainPath()}{Path.PathSeparator}{startInfo.Environment["PATH"]}";
+
         using var process = Process.Start(startInfo) ?? throw new InvalidOperationException("Could not start go-live readiness script.");
         var stdoutTask = process.StandardOutput.ReadToEndAsync(TestContext.Current.CancellationToken);
         var stderrTask = process.StandardError.ReadToEndAsync(TestContext.Current.CancellationToken);
@@ -536,11 +754,21 @@ public sealed class SecurityAndPerformanceContractsAndPackagingSourceTests : Sec
         output.Should().Contain("DHL live smoke prerequisites: Ready");
         output.Should().Contain("Brevo readiness smoke prerequisites: Ready");
         output.Should().Contain("VIES live smoke prerequisites: Ready");
+        output.Should().Contain("Production-like staging readiness prerequisites: Ready");
+        output.Should().Contain("Production readiness report bundle: Ready");
+        output.Should().Contain("Production readiness evidence package: Ready");
         output.Should().Contain("Object storage smoke prerequisites: Ready");
         output.Should().Contain("Object storage MediaAssets profile prerequisites: Ready");
         output.Should().Contain("Object storage ShipmentLabels profile prerequisites: Ready");
         output.Should().Contain("MinIO production readiness prerequisites: Ready");
+        output.Should().Contain("Azure Blob object-storage readiness prerequisites: Ready");
+        output.Should().Contain("E-invoice production readiness prerequisites: Ready");
         output.Should().Contain("E-invoice external-command smoke prerequisites: Ready");
+        output.Should().Contain("Web toolchain readiness prerequisites: Ready");
+        output.Should().Contain("Web storefront route smoke prerequisites: Ready");
+        output.Should().Contain("Web storefront readiness prerequisites: Ready");
+        output.Should().Contain("Mobile resource naming readiness prerequisites: Ready");
+        output.Should().Contain("Android launch readiness prerequisites: Ready");
         output.Should().Contain("Invoice archive object-storage provider decision: Ready");
         output.Should().Contain("E-invoice tooling decision: Ready");
         output.Should().Contain("All local readiness checks are ready.");
@@ -548,6 +776,141 @@ public sealed class SecurityAndPerformanceContractsAndPackagingSourceTests : Sec
 
         var secretPattern = new Regex(@"\b(sk|rk)_(live|test)_[A-Za-z0-9]{12,}\b|\bwhsec_[A-Za-z0-9]{12,}\b", RegexOptions.IgnoreCase);
         secretPattern.IsMatch(output).Should().BeFalse("readiness dry-run output must not print provider secrets");
+    }
+
+    [Fact]
+    public async Task ProductionReadinessReportBundleValidator_Should_BlockStaleReportCommit()
+    {
+        var root = ResolveRepositoryPath();
+        var directory = EnsureReadyProductionReadinessReportBundle();
+        var staleReport = Path.Combine(directory, "web-mobile-readiness-report.md");
+        var content = File.ReadAllText(staleReport)
+            .Replace("Commit: " + ReadGitOutput(root, "rev-parse", "--short=12", "HEAD"), "Commit: 000000000000", StringComparison.Ordinal);
+        File.WriteAllText(staleReport, content);
+
+        var (exitCode, output) = await RunPowerShellScriptAsync(
+            root,
+            "check-production-readiness-report-bundle.ps1",
+            new Dictionary<string, string>(),
+            ["-Directory", directory]);
+
+        exitCode.Should().Be(2);
+        output.Should().Contain("Production readiness report bundle validation is blocked.");
+        output.Should().Contain("does not match current commit");
+        output.Should().Contain("web-mobile-readiness-report.md");
+    }
+
+    [Fact]
+    public async Task ProductionReadinessReportBundleValidator_Should_BlockStaleHelperCommit()
+    {
+        var root = ResolveRepositoryPath();
+        var directory = EnsureReadyProductionReadinessReportBundle();
+        var staleHelper = Path.Combine(directory, "production-readiness-action-plan.md");
+        var content = File.ReadAllText(staleHelper)
+            .Replace("Commit: " + ReadGitOutput(root, "rev-parse", "--short=12", "HEAD"), "Commit: 000000000000", StringComparison.Ordinal);
+        File.WriteAllText(staleHelper, content);
+
+        var (exitCode, output) = await RunPowerShellScriptAsync(
+            root,
+            "check-production-readiness-report-bundle.ps1",
+            new Dictionary<string, string>(),
+            ["-Directory", directory]);
+
+        exitCode.Should().Be(2);
+        output.Should().Contain("Production readiness report bundle validation is blocked.");
+        output.Should().Contain("Readiness helper commit");
+        output.Should().Contain("production-readiness-action-plan.md");
+    }
+
+    [Fact]
+    public async Task ProductionReadinessReportBundleValidator_Should_BlockStaleLocalExecutionSummaryCommit()
+    {
+        var root = ResolveRepositoryPath();
+        var directory = EnsureReadyProductionReadinessReportBundle();
+        var staleHelper = Path.Combine(directory, "local-execution-summary.md");
+        var content = File.ReadAllText(staleHelper)
+            .Replace("Commit: " + ReadGitOutput(root, "rev-parse", "--short=12", "HEAD"), "Commit: 000000000000", StringComparison.Ordinal);
+        File.WriteAllText(staleHelper, content);
+
+        var (exitCode, output) = await RunPowerShellScriptAsync(
+            root,
+            "check-production-readiness-report-bundle.ps1",
+            new Dictionary<string, string>(),
+            ["-Directory", directory]);
+
+        exitCode.Should().Be(2);
+        output.Should().Contain("Production readiness report bundle validation is blocked.");
+        output.Should().Contain("Readiness helper commit");
+        output.Should().Contain("local-execution-summary.md");
+    }
+
+    [Fact]
+    public async Task ProductionReadinessReportBundleValidator_Should_BlockStaleLocalDraftReleaseReference()
+    {
+        var root = ResolveRepositoryPath();
+        var directory = EnsureReadyProductionReadinessReportBundle();
+        var staleDraft = Path.Combine(directory, "evidence-package-local-draft.md");
+        var content = File.ReadAllText(staleDraft)
+            .Replace("Release reference: git-" + ReadGitOutput(root, "rev-parse", "--short=12", "HEAD"), "Release reference: git-000000000000", StringComparison.Ordinal);
+        File.WriteAllText(staleDraft, content);
+
+        var (exitCode, output) = await RunPowerShellScriptAsync(
+            root,
+            "check-production-readiness-report-bundle.ps1",
+            new Dictionary<string, string>(),
+            ["-Directory", directory]);
+
+        exitCode.Should().Be(2);
+        output.Should().Contain("Production readiness report bundle validation is blocked.");
+        output.Should().Contain("Local evidence package draft release reference does not match current commit");
+        output.Should().Contain("evidence-package-local-draft.md");
+    }
+
+    [Fact]
+    public async Task ProductionReadinessReportBundleValidator_Should_BlockMismatchedReportExitCode()
+    {
+        var root = ResolveRepositoryPath();
+        var directory = EnsureReadyProductionReadinessReportBundle();
+        var blockedReport = Path.Combine(directory, "android-launch-readiness-report.md");
+        var content = File.ReadAllText(blockedReport)
+            .Replace("Overall result: Ready", "Overall result: Blocked", StringComparison.Ordinal);
+        File.WriteAllText(blockedReport, content);
+
+        var (exitCode, output) = await RunPowerShellScriptAsync(
+            root,
+            "check-production-readiness-report-bundle.ps1",
+            new Dictionary<string, string>(),
+            ["-Directory", directory]);
+
+        exitCode.Should().Be(2);
+        output.Should().Contain("Production readiness report bundle validation is blocked.");
+        output.Should().Contain("Blocked readiness report should have exit code 2");
+        output.Should().Contain("android-launch-readiness-report.md");
+    }
+
+    [Fact]
+    public async Task ProductionReadinessReportBundleValidator_Should_BlockMismatchedBundleIndexRow()
+    {
+        var root = ResolveRepositoryPath();
+        var directory = EnsureReadyProductionReadinessReportBundle();
+        var bundle = Path.Combine(directory, "readiness-report-bundle.md");
+        var content = File.ReadAllText(bundle)
+            .Replace(
+                "| Android launch | Ready | 0 | android-launch-readiness-report.md |",
+                "| Android launch | Blocked | 2 | android-launch-readiness-report.md |",
+                StringComparison.Ordinal);
+        File.WriteAllText(bundle, content);
+
+        var (exitCode, output) = await RunPowerShellScriptAsync(
+            root,
+            "check-production-readiness-report-bundle.ps1",
+            new Dictionary<string, string>(),
+            ["-Directory", directory]);
+
+        exitCode.Should().Be(2);
+        output.Should().Contain("Production readiness report bundle validation is blocked.");
+        output.Should().Contain("Bundle index status");
+        output.Should().Contain("android-launch-readiness-report.md");
     }
 
     [Theory]
@@ -559,7 +922,13 @@ public sealed class SecurityAndPerformanceContractsAndPackagingSourceTests : Sec
     [InlineData("smoke-vies-live.ps1", "VIES live smoke is blocked.")]
     [InlineData("smoke-object-storage.ps1", "Object storage smoke is blocked.")]
     [InlineData("check-minio-production-readiness.ps1", "MinIO production readiness is blocked.")]
+    [InlineData("check-azure-object-storage-readiness.ps1", "Azure Blob object-storage readiness is blocked.")]
+    [InlineData("check-production-like-staging-readiness.ps1", "Production-like staging readiness is blocked.")]
     [InlineData("smoke-einvoice-external-command.ps1", "E-invoice external-command smoke is blocked.")]
+    [InlineData("check-einvoice-production-readiness.ps1", "E-invoice production readiness is blocked.")]
+    [InlineData("smoke-web-storefront-routes.ps1", "Web storefront route smoke is blocked.")]
+    [InlineData("check-web-storefront-readiness.ps1", "Web storefront readiness is blocked.")]
+    [InlineData("check-android-launch-readiness.ps1", "Android launch readiness is blocked.")]
     public async Task ProviderSmokeScripts_Should_BlockDryRunWhenPrerequisitesAreMissing(
         string scriptName,
         string expectedBlockedMessage)
@@ -599,6 +968,189 @@ public sealed class SecurityAndPerformanceContractsAndPackagingSourceTests : Sec
 
         var secretPattern = new Regex(@"\b(sk|rk)_(live|test)_[A-Za-z0-9]{12,}\b|\bwhsec_[A-Za-z0-9]{12,}\b", RegexOptions.IgnoreCase);
         secretPattern.IsMatch(output).Should().BeFalse($"{scriptName} dry-run output must not print provider secrets");
+    }
+
+    [Fact]
+    public async Task ProductionReadinessEvidencePackageScript_Should_ValidateFilledPackageAndRejectTemplatePlaceholders()
+    {
+        var root = ResolveRepositoryPath();
+        var filledPackagePath = EnsureFilledProductionReadinessEvidencePackage();
+        var templatePath = ResolveRepositoryPath("docs", "templates", "production-readiness-evidence-package-template.md");
+
+        var readyOutput = await RunPowerShellScriptAsync(
+            root,
+            "check-production-readiness-evidence-package.ps1",
+            new Dictionary<string, string>
+            {
+                ["DARWIN_PRODUCTION_READINESS_EVIDENCE_PACKAGE_PATH"] = filledPackagePath
+            });
+
+        readyOutput.ExitCode.Should().Be(0);
+        readyOutput.Output.Should().Contain("Production readiness evidence package validation passed.");
+        readyOutput.Output.Should().Contain("No placeholders or sensitive value patterns were detected.");
+
+        var blockedOutput = await RunPowerShellScriptAsync(
+            root,
+            "check-production-readiness-evidence-package.ps1",
+            new Dictionary<string, string>
+            {
+                ["DARWIN_PRODUCTION_READINESS_EVIDENCE_PACKAGE_PATH"] = templatePath
+            });
+
+        blockedOutput.ExitCode.Should().Be(2);
+        blockedOutput.Output.Should().Contain("Production readiness evidence package validation is blocked.");
+        blockedOutput.Output.Should().Contain("placeholder");
+        blockedOutput.Output.Should().Contain("Pending");
+        blockedOutput.Output.Should().NotContain("System.Management.Automation.RemoteException");
+    }
+
+    [Fact]
+    public async Task ProductionReadinessEvidencePackageScript_Should_ValidateReadyLocalArtifactReferences()
+    {
+        var root = ResolveRepositoryPath();
+        var directory = EnsureReadyProductionReadinessReportBundle();
+        var filledPackagePath = EnsureFilledProductionReadinessEvidencePackage();
+        var bundlePath = Path.Combine(directory, "readiness-report-bundle.md");
+        var packageContent = File.ReadAllText(filledPackagePath)
+            .Replace(
+                "| Readiness report bundle | Evidence reference REF-001 | Darwin technical owner | Ready |",
+                $"| Readiness report bundle | {bundlePath} | Darwin technical owner | Ready |",
+                StringComparison.Ordinal);
+        File.WriteAllText(filledPackagePath, packageContent);
+
+        var output = await RunPowerShellScriptAsync(
+            root,
+            "check-production-readiness-evidence-package.ps1",
+            new Dictionary<string, string>
+            {
+                ["DARWIN_PRODUCTION_READINESS_EVIDENCE_PACKAGE_PATH"] = filledPackagePath
+            });
+
+        output.ExitCode.Should().Be(0);
+        output.Output.Should().Contain("Production readiness evidence package validation passed.");
+    }
+
+    [Fact]
+    public async Task ProductionReadinessEvidencePackageScript_Should_ValidateDirectReadyLocalReportReferences()
+    {
+        var root = ResolveRepositoryPath();
+        var directory = EnsureReadyProductionReadinessReportBundle();
+        var filledPackagePath = EnsureFilledProductionReadinessEvidencePackage();
+        var reportPath = Path.Combine(directory, "local-release-candidate-readiness-report.md");
+        var packageContent = File.ReadAllText(filledPackagePath)
+            .Replace(
+                "| Build lane | Evidence reference REF-001 | Darwin technical owner | Ready |",
+                $"| Build lane | {reportPath} | Darwin technical owner | Ready |",
+                StringComparison.Ordinal);
+        File.WriteAllText(filledPackagePath, packageContent);
+
+        var output = await RunPowerShellScriptAsync(
+            root,
+            "check-production-readiness-evidence-package.ps1",
+            new Dictionary<string, string>
+            {
+                ["DARWIN_PRODUCTION_READINESS_EVIDENCE_PACKAGE_PATH"] = filledPackagePath
+            });
+
+        output.ExitCode.Should().Be(0);
+        output.Output.Should().Contain("Production readiness evidence package validation passed.");
+    }
+
+    [Fact]
+    public async Task ProductionReadinessEvidencePackageScript_Should_BlockStaleDirectReadyLocalReportReference()
+    {
+        var root = ResolveRepositoryPath();
+        var directory = EnsureReadyProductionReadinessReportBundle();
+        var filledPackagePath = EnsureFilledProductionReadinessEvidencePackage();
+        var reportPath = Path.Combine(directory, "local-release-candidate-readiness-report.md");
+        var packageContent = File.ReadAllText(filledPackagePath)
+            .Replace(
+                "| Build lane | Evidence reference REF-001 | Darwin technical owner | Ready |",
+                $"| Build lane | {reportPath} | Darwin technical owner | Ready |",
+                StringComparison.Ordinal);
+        File.WriteAllText(filledPackagePath, packageContent);
+
+        var reportContent = File.ReadAllText(reportPath)
+            .Replace("Commit: " + ReadGitOutput(root, "rev-parse", "--short=12", "HEAD"), "Commit: 000000000000", StringComparison.Ordinal);
+        File.WriteAllText(reportPath, reportContent);
+
+        var output = await RunPowerShellScriptAsync(
+            root,
+            "check-production-readiness-evidence-package.ps1",
+            new Dictionary<string, string>
+            {
+                ["DARWIN_PRODUCTION_READINESS_EVIDENCE_PACKAGE_PATH"] = filledPackagePath
+            });
+
+        output.ExitCode.Should().Be(2);
+        output.Output.Should().Contain("Production readiness evidence package validation is blocked.");
+        output.Output.Should().Contain("Ready local evidence reference commit");
+        output.Output.Should().Contain("local-release-candidate-readiness-report.md");
+    }
+
+    [Fact]
+    public async Task ProductionReadinessEvidencePackageScript_Should_BlockStaleReadyLocalArtifactReference()
+    {
+        var root = ResolveRepositoryPath();
+        var directory = EnsureReadyProductionReadinessReportBundle();
+        var filledPackagePath = EnsureFilledProductionReadinessEvidencePackage();
+        var bundlePath = Path.Combine(directory, "readiness-report-bundle.md");
+        var packageContent = File.ReadAllText(filledPackagePath)
+            .Replace(
+                "| Readiness report bundle | Evidence reference REF-001 | Darwin technical owner | Ready |",
+                $"| Readiness report bundle | {bundlePath} | Darwin technical owner | Ready |",
+                StringComparison.Ordinal);
+        File.WriteAllText(filledPackagePath, packageContent);
+
+        var bundleContent = File.ReadAllText(bundlePath)
+            .Replace("Commit: " + ReadGitOutput(root, "rev-parse", "--short=12", "HEAD"), "Commit: 000000000000", StringComparison.Ordinal);
+        File.WriteAllText(bundlePath, bundleContent);
+
+        var output = await RunPowerShellScriptAsync(
+            root,
+            "check-production-readiness-evidence-package.ps1",
+            new Dictionary<string, string>
+            {
+                ["DARWIN_PRODUCTION_READINESS_EVIDENCE_PACKAGE_PATH"] = filledPackagePath
+            });
+
+        output.ExitCode.Should().Be(2);
+        output.Output.Should().Contain("Production readiness evidence package validation is blocked.");
+        output.Output.Should().Contain("Ready local evidence reference commit");
+        output.Output.Should().Contain("readiness-report-bundle.md");
+    }
+
+    [Fact]
+    public async Task ProductionReadinessEvidencePackageScript_Should_BlockNonReadyLocalBundleReference()
+    {
+        var root = ResolveRepositoryPath();
+        var directory = EnsureReadyProductionReadinessReportBundle();
+        var filledPackagePath = EnsureFilledProductionReadinessEvidencePackage();
+        var bundlePath = Path.Combine(directory, "readiness-report-bundle.md");
+        var packageContent = File.ReadAllText(filledPackagePath)
+            .Replace(
+                "| Readiness report bundle | Evidence reference REF-001 | Darwin technical owner | Ready |",
+                $"| Readiness report bundle | {bundlePath} | Darwin technical owner | Ready |",
+                StringComparison.Ordinal);
+        File.WriteAllText(filledPackagePath, packageContent);
+
+        var bundleContent = File.ReadAllText(bundlePath)
+            .Replace("Overall result: Ready", "Overall result: Blocked", StringComparison.Ordinal)
+            .Replace("Exit code: 0", "Exit code: 2", StringComparison.Ordinal);
+        File.WriteAllText(bundlePath, bundleContent);
+
+        var output = await RunPowerShellScriptAsync(
+            root,
+            "check-production-readiness-evidence-package.ps1",
+            new Dictionary<string, string>
+            {
+                ["DARWIN_PRODUCTION_READINESS_EVIDENCE_PACKAGE_PATH"] = filledPackagePath
+            });
+
+        output.ExitCode.Should().Be(2);
+        output.Output.Should().Contain("Production readiness evidence package validation is blocked.");
+        output.Output.Should().Contain("Overall result Ready");
+        output.Output.Should().Contain("Exit code 0");
     }
 
     [Theory]
@@ -654,6 +1206,11 @@ public sealed class SecurityAndPerformanceContractsAndPackagingSourceTests : Sec
         {
             output.Should().Contain("No MinIO access key, secret key");
         }
+        else if (scriptName.StartsWith("check-", StringComparison.Ordinal))
+        {
+            output.Should().Contain("No ");
+            output.Should().Contain("accepted or printed");
+        }
         else
         {
             output.Should().Contain("Run with -Execute");
@@ -674,6 +1231,190 @@ public sealed class SecurityAndPerformanceContractsAndPackagingSourceTests : Sec
 
         var secretPattern = new Regex(@"\b(sk|rk)_(live|test)_[A-Za-z0-9]{12,}\b|\bwhsec_[A-Za-z0-9]{12,}\b", RegexOptions.IgnoreCase);
         secretPattern.IsMatch(output).Should().BeFalse($"{scriptName} ready dry-run output must not print provider secrets");
+    }
+
+    [Theory]
+    [InlineData("https://stripe-webhook.example.test/api/v1/public/billing/stripe/webhooks?token=secret")]
+    [InlineData("https://user:secret@stripe-webhook.example.test/api/v1/public/billing/stripe/webhooks")]
+    [InlineData("https://stripe-webhook.example.test/api/v1/public/billing/stripe/webhooks#secret")]
+    public async Task StripeLiveReadiness_Should_BlockWebhookUrlWithUserInfoQueryOrFragment(string webhookUrl)
+    {
+        var root = ResolveRepositoryPath();
+        var startInfo = new ProcessStartInfo
+        {
+            FileName = "powershell",
+            WorkingDirectory = root,
+            RedirectStandardOutput = true,
+            RedirectStandardError = true,
+            UseShellExecute = false
+        };
+        startInfo.ArgumentList.Add("-NoProfile");
+        startInfo.ArgumentList.Add("-ExecutionPolicy");
+        startInfo.ArgumentList.Add("Bypass");
+        startInfo.ArgumentList.Add("-File");
+        startInfo.ArgumentList.Add(Path.Combine("scripts", "check-stripe-live-readiness.ps1"));
+
+        foreach (var key in startInfo.Environment.Keys.Cast<string>()
+                     .Where(key => key.StartsWith("DARWIN_", StringComparison.OrdinalIgnoreCase)).ToList())
+        {
+            startInfo.Environment.Remove(key);
+        }
+
+        foreach (var item in StripeLiveReadinessEnvironment(webhookUrl))
+        {
+            startInfo.Environment[item.Key] = item.Value;
+        }
+
+        using var process = Process.Start(startInfo) ?? throw new InvalidOperationException("Could not start check-stripe-live-readiness.ps1.");
+        var stdoutTask = process.StandardOutput.ReadToEndAsync(TestContext.Current.CancellationToken);
+        var stderrTask = process.StandardError.ReadToEndAsync(TestContext.Current.CancellationToken);
+
+        await process.WaitForExitAsync(TestContext.Current.CancellationToken);
+        var output = $"{await stdoutTask}{Environment.NewLine}{await stderrTask}";
+
+        process.ExitCode.Should().Be(2);
+        output.Should().Contain("Stripe live readiness is blocked.");
+        output.Should().Contain("without embedded credentials, query strings, or fragments");
+        output.Should().NotContain(webhookUrl);
+        output.Should().NotContain("System.Management.Automation.RemoteException");
+    }
+
+    [Theory]
+    [InlineData("https://api.staging.example.test?token=secret", "https://web.staging.example.test")]
+    [InlineData("https://api.staging.example.test", "https://web.staging.example.test#secret")]
+    [InlineData("https://api.staging.example.test#fragment", "https://web.staging.example.test")]
+    [InlineData("https://api.staging.example.test", "https://web.staging.example.test?state=secret")]
+    public async Task WebStorefrontReadiness_Should_BlockBaseUrlsWithQueryOrFragment(string webApiBaseUrl, string webSiteUrl)
+    {
+        var root = ResolveRepositoryPath();
+        var startInfo = new ProcessStartInfo
+        {
+            FileName = "powershell",
+            WorkingDirectory = root,
+            RedirectStandardOutput = true,
+            RedirectStandardError = true,
+            UseShellExecute = false
+        };
+        startInfo.ArgumentList.Add("-NoProfile");
+        startInfo.ArgumentList.Add("-ExecutionPolicy");
+        startInfo.ArgumentList.Add("Bypass");
+        startInfo.ArgumentList.Add("-File");
+        startInfo.ArgumentList.Add(Path.Combine("scripts", "check-web-storefront-readiness.ps1"));
+
+        foreach (var key in startInfo.Environment.Keys.Cast<string>()
+                     .Where(key => key.StartsWith("DARWIN_", StringComparison.OrdinalIgnoreCase)).ToList())
+        {
+            startInfo.Environment.Remove(key);
+        }
+
+        foreach (var item in WebStorefrontReadinessEnvironment(webApiBaseUrl, webSiteUrl))
+        {
+            startInfo.Environment[item.Key] = item.Value;
+        }
+
+        using var process = Process.Start(startInfo) ?? throw new InvalidOperationException("Could not start check-web-storefront-readiness.ps1.");
+        var stdoutTask = process.StandardOutput.ReadToEndAsync(TestContext.Current.CancellationToken);
+        var stderrTask = process.StandardError.ReadToEndAsync(TestContext.Current.CancellationToken);
+
+        await process.WaitForExitAsync(TestContext.Current.CancellationToken);
+        var output = $"{await stdoutTask}{Environment.NewLine}{await stderrTask}";
+
+        process.ExitCode.Should().Be(2);
+        output.Should().Contain("Web storefront readiness is blocked.");
+        output.Should().Contain("base deployment URL without query strings or fragments");
+        output.Should().NotContain(webApiBaseUrl);
+        output.Should().NotContain(webSiteUrl);
+        output.Should().NotContain("System.Management.Automation.RemoteException");
+    }
+
+    [Theory]
+    [InlineData("https://web.staging.example.test?state=secret")]
+    [InlineData("https://web.staging.example.test#secret")]
+    public async Task WebStorefrontRouteSmoke_Should_BlockBaseUrlWithQueryOrFragment(string webSiteUrl)
+    {
+        var root = ResolveRepositoryPath();
+        var startInfo = new ProcessStartInfo
+        {
+            FileName = "powershell",
+            WorkingDirectory = root,
+            RedirectStandardOutput = true,
+            RedirectStandardError = true,
+            UseShellExecute = false
+        };
+        startInfo.ArgumentList.Add("-NoProfile");
+        startInfo.ArgumentList.Add("-ExecutionPolicy");
+        startInfo.ArgumentList.Add("Bypass");
+        startInfo.ArgumentList.Add("-File");
+        startInfo.ArgumentList.Add(Path.Combine("scripts", "smoke-web-storefront-routes.ps1"));
+
+        foreach (var key in startInfo.Environment.Keys.Cast<string>()
+                     .Where(key => key.StartsWith("DARWIN_", StringComparison.OrdinalIgnoreCase)).ToList())
+        {
+            startInfo.Environment.Remove(key);
+        }
+
+        startInfo.Environment["DARWIN_WEB_SITE_URL"] = webSiteUrl;
+        startInfo.Environment["DARWIN_WEB_ROUTE_SMOKE_PATHS"] = "/,/catalog";
+
+        using var process = Process.Start(startInfo) ?? throw new InvalidOperationException("Could not start smoke-web-storefront-routes.ps1.");
+        var stdoutTask = process.StandardOutput.ReadToEndAsync(TestContext.Current.CancellationToken);
+        var stderrTask = process.StandardError.ReadToEndAsync(TestContext.Current.CancellationToken);
+
+        await process.WaitForExitAsync(TestContext.Current.CancellationToken);
+        var output = $"{await stdoutTask}{Environment.NewLine}{await stderrTask}";
+
+        process.ExitCode.Should().Be(2);
+        output.Should().Contain("Web storefront route smoke is blocked.");
+        output.Should().Contain("base deployment URL without query strings or fragments");
+        output.Should().NotContain(webSiteUrl);
+        output.Should().NotContain("System.Management.Automation.RemoteException");
+    }
+
+    [Theory]
+    [InlineData("https://brevo-webhook.example.test/api/v1/public/notifications/brevo/webhooks?token=secret")]
+    [InlineData("https://user:secret@brevo-webhook.example.test/api/v1/public/notifications/brevo/webhooks")]
+    [InlineData("https://brevo-webhook.example.test/api/v1/public/notifications/brevo/webhooks#secret")]
+    [InlineData("https://localhost/api/v1/public/notifications/brevo/webhooks")]
+    public async Task BrevoReadiness_Should_BlockWebhookUrlWithLoopbackUserInfoQueryOrFragment(string webhookUrl)
+    {
+        var root = ResolveRepositoryPath();
+        var startInfo = new ProcessStartInfo
+        {
+            FileName = "powershell",
+            WorkingDirectory = root,
+            RedirectStandardOutput = true,
+            RedirectStandardError = true,
+            UseShellExecute = false
+        };
+        startInfo.ArgumentList.Add("-NoProfile");
+        startInfo.ArgumentList.Add("-ExecutionPolicy");
+        startInfo.ArgumentList.Add("Bypass");
+        startInfo.ArgumentList.Add("-File");
+        startInfo.ArgumentList.Add(Path.Combine("scripts", "smoke-brevo-readiness.ps1"));
+        startInfo.ArgumentList.Add("-RequireDeliveryPipeline");
+
+        foreach (var key in startInfo.Environment.Keys.Cast<string>()
+                     .Where(key => key.StartsWith("DARWIN_", StringComparison.OrdinalIgnoreCase)).ToList())
+        {
+            startInfo.Environment.Remove(key);
+        }
+
+        foreach (var item in BrevoReadinessEnvironment(webhookUrl))
+        {
+            startInfo.Environment[item.Key] = item.Value;
+        }
+
+        using var process = Process.Start(startInfo) ?? throw new InvalidOperationException("Could not start smoke-brevo-readiness.ps1.");
+        var stdoutTask = process.StandardOutput.ReadToEndAsync(TestContext.Current.CancellationToken);
+        var stderrTask = process.StandardError.ReadToEndAsync(TestContext.Current.CancellationToken);
+
+        await process.WaitForExitAsync(TestContext.Current.CancellationToken);
+        var output = $"{await stdoutTask}{Environment.NewLine}{await stderrTask}";
+
+        process.ExitCode.Should().Be(2);
+        output.Should().Contain("Brevo delivery pipeline readiness is blocked.");
+        output.Should().NotContain(webhookUrl);
+        output.Should().NotContain("System.Management.Automation.RemoteException");
     }
 
     [Fact]
@@ -752,6 +1493,7 @@ public sealed class SecurityAndPerformanceContractsAndPackagingSourceTests : Sec
         startInfo.Environment["DARWIN_WEBAPI_BASE_URL"] = "http://127.0.0.1:5134";
         startInfo.Environment["DARWIN_BUSINESS_API_BEARER_TOKEN"] = "fake-bearer-token-for-unit-test";
         startInfo.Environment["DARWIN_STRIPE_SMOKE_BILLING_PLAN_ID"] = "22222222-2222-2222-2222-222222222222";
+        startInfo.Environment["DARWIN_STRIPE_TESTMODE_SMOKE_REFERENCE"] = "stripe-testmode-smoke-ref-001";
 
         using var process = Process.Start(startInfo) ?? throw new InvalidOperationException("Could not start smoke-stripe-testmode.ps1.");
         var stdoutTask = process.StandardOutput.ReadToEndAsync(TestContext.Current.CancellationToken);
@@ -853,6 +1595,11 @@ public sealed class SecurityAndPerformanceContractsAndPackagingSourceTests : Sec
         startInfo.Environment["DARWIN_BREVO_SENDER_EMAIL"] = "sender@example.test";
         startInfo.Environment["DARWIN_BREVO_TEST_RECIPIENT_EMAIL"] = "recipient@example.test";
         startInfo.Environment["DARWIN_BREVO_WEBHOOK_PUBLIC_URL"] = "https://brevo-webhook.example.test/api/v1/public/notifications/brevo/webhooks";
+        startInfo.Environment["DARWIN_BREVO_READINESS_SMOKE_REFERENCE"] = "brevo-readiness-smoke-ref-001";
+        startInfo.Environment["DARWIN_BREVO_WEBHOOK_REFERENCE"] = "brevo-webhook-ref-001";
+        startInfo.Environment["DARWIN_BREVO_TRANSACTIONAL_EVENTS_REFERENCE"] = "brevo-events-ref-001";
+        startInfo.Environment["DARWIN_BREVO_PROVIDER_CALLBACK_WORKER_REFERENCE"] = "brevo-callback-worker-ref-001";
+        startInfo.Environment["DARWIN_BREVO_EMAIL_DISPATCH_WORKER_REFERENCE"] = "brevo-email-dispatch-worker-ref-001";
         startInfo.Environment["DARWIN_BREVO_WEBHOOK_CONFIGURED_CONFIRMED"] = "true";
         startInfo.Environment["DARWIN_BREVO_TRANSACTIONAL_EVENTS_CONFIRMED"] = "true";
         startInfo.Environment["DARWIN_BREVO_PROVIDER_CALLBACK_WORKER_CONFIRMED"] = "true";
@@ -1048,6 +1795,189 @@ public sealed class SecurityAndPerformanceContractsAndPackagingSourceTests : Sec
         output.Should().Contain("Object storage smoke configuration is present for provider 'AzureBlob'.");
         output.Should().Contain("Run with -Execute");
         output.Should().NotContain("blocked");
+        output.Should().NotContain("System.Management.Automation.RemoteException");
+    }
+
+    [Fact]
+    public async Task AzureObjectStorageReadiness_Should_BlockInvalidContainerLabel()
+    {
+        var root = ResolveRepositoryPath();
+        var startInfo = new ProcessStartInfo
+        {
+            FileName = "powershell",
+            WorkingDirectory = root,
+            RedirectStandardOutput = true,
+            RedirectStandardError = true,
+            UseShellExecute = false
+        };
+        startInfo.ArgumentList.Add("-NoProfile");
+        startInfo.ArgumentList.Add("-ExecutionPolicy");
+        startInfo.ArgumentList.Add("Bypass");
+        startInfo.ArgumentList.Add("-File");
+        startInfo.ArgumentList.Add(Path.Combine("scripts", "check-azure-object-storage-readiness.ps1"));
+
+        foreach (var key in startInfo.Environment.Keys.Cast<string>()
+                     .Where(key => key.StartsWith("DARWIN_", StringComparison.OrdinalIgnoreCase)).ToList())
+        {
+            startInfo.Environment.Remove(key);
+        }
+
+        foreach (var item in AzureReadinessEnvironment(container: "Invalid_Container"))
+        {
+            startInfo.Environment[item.Key] = item.Value;
+        }
+
+        using var process = Process.Start(startInfo) ?? throw new InvalidOperationException("Could not start check-azure-object-storage-readiness.ps1.");
+        var stdoutTask = process.StandardOutput.ReadToEndAsync(TestContext.Current.CancellationToken);
+        var stderrTask = process.StandardError.ReadToEndAsync(TestContext.Current.CancellationToken);
+
+        await process.WaitForExitAsync(TestContext.Current.CancellationToken);
+        var output = $"{await stdoutTask}{Environment.NewLine}{await stderrTask}";
+
+        process.ExitCode.Should().Be(2);
+        output.Should().Contain("Azure Blob object-storage readiness is blocked.");
+        output.Should().Contain("valid Azure container label");
+        output.Should().NotContain("System.Management.Automation.RemoteException");
+    }
+
+    [Theory]
+    [InlineData("Invalid_Bucket")]
+    [InlineData("bucket/path")]
+    [InlineData("bucket?access_key=secret")]
+    [InlineData("bucket--name")]
+    public async Task MinioProductionReadiness_Should_BlockInvalidBucketLabel(string bucket)
+    {
+        var root = ResolveRepositoryPath();
+        var startInfo = new ProcessStartInfo
+        {
+            FileName = "powershell",
+            WorkingDirectory = root,
+            RedirectStandardOutput = true,
+            RedirectStandardError = true,
+            UseShellExecute = false
+        };
+        startInfo.ArgumentList.Add("-NoProfile");
+        startInfo.ArgumentList.Add("-ExecutionPolicy");
+        startInfo.ArgumentList.Add("Bypass");
+        startInfo.ArgumentList.Add("-File");
+        startInfo.ArgumentList.Add(Path.Combine("scripts", "check-minio-production-readiness.ps1"));
+
+        foreach (var key in startInfo.Environment.Keys.Cast<string>()
+                     .Where(key => key.StartsWith("DARWIN_", StringComparison.OrdinalIgnoreCase)).ToList())
+        {
+            startInfo.Environment.Remove(key);
+        }
+
+        foreach (var item in MinioReadinessEnvironment(bucket: bucket))
+        {
+            startInfo.Environment[item.Key] = item.Value;
+        }
+
+        using var process = Process.Start(startInfo) ?? throw new InvalidOperationException("Could not start check-minio-production-readiness.ps1.");
+        var stdoutTask = process.StandardOutput.ReadToEndAsync(TestContext.Current.CancellationToken);
+        var stderrTask = process.StandardError.ReadToEndAsync(TestContext.Current.CancellationToken);
+
+        await process.WaitForExitAsync(TestContext.Current.CancellationToken);
+        var output = $"{await stdoutTask}{Environment.NewLine}{await stderrTask}";
+
+        process.ExitCode.Should().Be(2);
+        output.Should().Contain("MinIO production readiness is blocked.");
+        output.Should().Contain("valid MinIO/S3 bucket label");
+        output.Should().NotContain(bucket);
+        output.Should().NotContain("System.Management.Automation.RemoteException");
+    }
+
+    [Theory]
+    [InlineData("https://minio.example.test/bucket")]
+    [InlineData("https://minio.example.test?access_key=secret")]
+    [InlineData("https://user:secret@minio.example.test")]
+    [InlineData("https://minio.example.test#fragment")]
+    public async Task MinioProductionReadiness_Should_BlockEndpointWithPathSecretOrFragment(string endpoint)
+    {
+        var root = ResolveRepositoryPath();
+        var startInfo = new ProcessStartInfo
+        {
+            FileName = "powershell",
+            WorkingDirectory = root,
+            RedirectStandardOutput = true,
+            RedirectStandardError = true,
+            UseShellExecute = false
+        };
+        startInfo.ArgumentList.Add("-NoProfile");
+        startInfo.ArgumentList.Add("-ExecutionPolicy");
+        startInfo.ArgumentList.Add("Bypass");
+        startInfo.ArgumentList.Add("-File");
+        startInfo.ArgumentList.Add(Path.Combine("scripts", "check-minio-production-readiness.ps1"));
+
+        foreach (var key in startInfo.Environment.Keys.Cast<string>()
+                     .Where(key => key.StartsWith("DARWIN_", StringComparison.OrdinalIgnoreCase)).ToList())
+        {
+            startInfo.Environment.Remove(key);
+        }
+
+        foreach (var item in MinioReadinessEnvironment(endpoint: endpoint))
+        {
+            startInfo.Environment[item.Key] = item.Value;
+        }
+
+        using var process = Process.Start(startInfo) ?? throw new InvalidOperationException("Could not start check-minio-production-readiness.ps1.");
+        var stdoutTask = process.StandardOutput.ReadToEndAsync(TestContext.Current.CancellationToken);
+        var stderrTask = process.StandardError.ReadToEndAsync(TestContext.Current.CancellationToken);
+
+        await process.WaitForExitAsync(TestContext.Current.CancellationToken);
+        var output = $"{await stdoutTask}{Environment.NewLine}{await stderrTask}";
+
+        process.ExitCode.Should().Be(2);
+        output.Should().Contain("MinIO production readiness is blocked.");
+        output.Should().Contain("base HTTPS endpoint only");
+        output.Should().NotContain(endpoint);
+        output.Should().NotContain("System.Management.Automation.RemoteException");
+    }
+
+    [Theory]
+    [InlineData("https://storage.example.test/container")]
+    [InlineData("https://storage.example.test?sig=secret")]
+    [InlineData("https://user:secret@storage.example.test")]
+    [InlineData("https://storage.example.test#fragment")]
+    public async Task AzureObjectStorageReadiness_Should_BlockEndpointWithPathSecretOrFragment(string endpoint)
+    {
+        var root = ResolveRepositoryPath();
+        var startInfo = new ProcessStartInfo
+        {
+            FileName = "powershell",
+            WorkingDirectory = root,
+            RedirectStandardOutput = true,
+            RedirectStandardError = true,
+            UseShellExecute = false
+        };
+        startInfo.ArgumentList.Add("-NoProfile");
+        startInfo.ArgumentList.Add("-ExecutionPolicy");
+        startInfo.ArgumentList.Add("Bypass");
+        startInfo.ArgumentList.Add("-File");
+        startInfo.ArgumentList.Add(Path.Combine("scripts", "check-azure-object-storage-readiness.ps1"));
+
+        foreach (var key in startInfo.Environment.Keys.Cast<string>()
+                     .Where(key => key.StartsWith("DARWIN_", StringComparison.OrdinalIgnoreCase)).ToList())
+        {
+            startInfo.Environment.Remove(key);
+        }
+
+        foreach (var item in AzureReadinessEnvironment(endpoint: endpoint))
+        {
+            startInfo.Environment[item.Key] = item.Value;
+        }
+
+        using var process = Process.Start(startInfo) ?? throw new InvalidOperationException("Could not start check-azure-object-storage-readiness.ps1.");
+        var stdoutTask = process.StandardOutput.ReadToEndAsync(TestContext.Current.CancellationToken);
+        var stderrTask = process.StandardError.ReadToEndAsync(TestContext.Current.CancellationToken);
+
+        await process.WaitForExitAsync(TestContext.Current.CancellationToken);
+        var output = $"{await stdoutTask}{Environment.NewLine}{await stderrTask}";
+
+        process.ExitCode.Should().Be(2);
+        output.Should().Contain("Azure Blob object-storage readiness is blocked.");
+        output.Should().Contain("base HTTPS endpoint only");
+        output.Should().NotContain(endpoint);
         output.Should().NotContain("System.Management.Automation.RemoteException");
     }
 
@@ -1580,7 +2510,8 @@ public sealed class SecurityAndPerformanceContractsAndPackagingSourceTests : Sec
             {
                 ["DARWIN_WEBAPI_BASE_URL"] = "http://127.0.0.1:5134",
                 ["DARWIN_STRIPE_SMOKE_ORDER_ID"] = "11111111-1111-1111-1111-111111111111",
-                ["DARWIN_STRIPE_SMOKE_ORDER_NUMBER"] = "SMOKE-STRIPE-001"
+                ["DARWIN_STRIPE_SMOKE_ORDER_NUMBER"] = "SMOKE-STRIPE-001",
+                ["DARWIN_STRIPE_TESTMODE_SMOKE_REFERENCE"] = "stripe-testmode-smoke-ref-001"
             }
         };
 
@@ -1591,6 +2522,7 @@ public sealed class SecurityAndPerformanceContractsAndPackagingSourceTests : Sec
             new Dictionary<string, string>
             {
                 ["DARWIN_STRIPE_WEBHOOK_PUBLIC_URL"] = "https://stripe-webhook.example.test/api/v1/public/billing/stripe/webhooks",
+                ["DARWIN_STRIPE_WEBHOOK_FORWARDING_REFERENCE"] = "stripe-webhook-forwarding-ref-001",
                 ["DARWIN_STRIPE_WEBHOOK_FORWARDING_CONFIRMED"] = "true"
             }
         };
@@ -1602,6 +2534,14 @@ public sealed class SecurityAndPerformanceContractsAndPackagingSourceTests : Sec
             new Dictionary<string, string>
             {
                 ["DARWIN_STRIPE_LIVE_WEBHOOK_PUBLIC_URL"] = "https://stripe-webhook.example.test/api/v1/public/billing/stripe/webhooks",
+                ["DARWIN_STRIPE_LIVE_KEYS_REFERENCE"] = "stripe-live-keys-ref-001",
+                ["DARWIN_STRIPE_LIVE_WEBHOOK_ENDPOINT_REFERENCE"] = "stripe-live-webhook-endpoint-ref-001",
+                ["DARWIN_STRIPE_LIVE_WEBHOOK_EVENTS_REFERENCE"] = "stripe-live-webhook-events-ref-001",
+                ["DARWIN_STRIPE_PROVIDER_CALLBACK_WORKER_REFERENCE"] = "stripe-callback-worker-ref-001",
+                ["DARWIN_STRIPE_WEBADMIN_VISIBILITY_REFERENCE"] = "stripe-webadmin-visibility-ref-001",
+                ["DARWIN_STRIPE_MONITORING_REFERENCE"] = "stripe-monitoring-ref-001",
+                ["DARWIN_STRIPE_ALERTING_REFERENCE"] = "stripe-alerting-ref-001",
+                ["DARWIN_STRIPE_REFUND_DISPUTE_PLAYBOOK_REFERENCE"] = "stripe-refund-dispute-playbook-ref-001",
                 ["DARWIN_STRIPE_LIVE_KEYS_CONFIGURED_CONFIRMED"] = "true",
                 ["DARWIN_STRIPE_LIVE_WEBHOOK_ENDPOINT_CONFIRMED"] = "true",
                 ["DARWIN_STRIPE_LIVE_WEBHOOK_EVENTS_CONFIRMED"] = "true",
@@ -1634,7 +2574,8 @@ public sealed class SecurityAndPerformanceContractsAndPackagingSourceTests : Sec
                 ["DARWIN_DHL_TEST_RECEIVER_STREET"] = "Receiver Street 2",
                 ["DARWIN_DHL_TEST_RECEIVER_POSTAL_CODE"] = "10115",
                 ["DARWIN_DHL_TEST_RECEIVER_CITY"] = "Berlin",
-                ["DARWIN_DHL_TEST_RECEIVER_COUNTRY"] = "DE"
+                ["DARWIN_DHL_TEST_RECEIVER_COUNTRY"] = "DE",
+                ["DARWIN_DHL_LIVE_SMOKE_REFERENCE"] = "dhl-live-smoke-ref-001"
             }
         };
 
@@ -1646,7 +2587,8 @@ public sealed class SecurityAndPerformanceContractsAndPackagingSourceTests : Sec
             {
                 ["DARWIN_BREVO_API_KEY"] = "local-api-key",
                 ["DARWIN_BREVO_SENDER_EMAIL"] = "sender@example.test",
-                ["DARWIN_BREVO_TEST_RECIPIENT_EMAIL"] = "recipient@example.test"
+                ["DARWIN_BREVO_TEST_RECIPIENT_EMAIL"] = "recipient@example.test",
+                ["DARWIN_BREVO_READINESS_SMOKE_REFERENCE"] = "brevo-readiness-smoke-ref-001"
             }
         };
 
@@ -1658,7 +2600,9 @@ public sealed class SecurityAndPerformanceContractsAndPackagingSourceTests : Sec
             {
                 ["DARWIN_VIES_VALID_VAT_ID"] = "DE123456789",
                 ["DARWIN_VIES_INVALID_VAT_ID"] = "DE000000000",
-                ["DARWIN_VIES_ENDPOINT_URL"] = "http://127.0.0.1:5135/vies"
+                ["DARWIN_VIES_ENDPOINT_URL"] = "http://127.0.0.1:5135/vies",
+                ["DARWIN_VIES_VALID_SMOKE_REFERENCE"] = "vies-valid-smoke-ref-001",
+                ["DARWIN_VIES_INVALID_SMOKE_REFERENCE"] = "vies-invalid-smoke-ref-001"
             }
         };
 
@@ -1699,9 +2643,82 @@ public sealed class SecurityAndPerformanceContractsAndPackagingSourceTests : Sec
                 ["DARWIN_MINIO_INVOICE_ARCHIVE_PROFILE_CONFIRMED"] = "true",
                 ["DARWIN_MINIO_SHIPMENT_LABELS_PROFILE_CONFIRMED"] = "true",
                 ["DARWIN_MINIO_MEDIA_ASSETS_PROFILE_DECIDED_CONFIRMED"] = "true",
+                ["DARWIN_MINIO_FINANCE_EXPORTS_PROFILE_CONFIRMED"] = "true",
+                ["DARWIN_MINIO_FINANCE_EXPORT_OUTBOUND_PROFILE_CONFIRMED"] = "true",
+                ["DARWIN_MINIO_PERSONNEL_DOCUMENTS_PROFILE_CONFIRMED"] = "true",
+                ["DARWIN_MINIO_PAYROLL_PAYSLIPS_PROFILE_CONFIRMED"] = "true",
                 ["DARWIN_MINIO_DISPOSABLE_SMOKE_PREFIX_CONFIRMED"] = "true",
                 ["DARWIN_MINIO_RETENTION_DELETE_BEHAVIOR_CONFIRMED"] = "true",
+                ["DARWIN_MINIO_SELECTED_PROVIDER_SMOKE_CONFIRMED"] = "true",
+                ["DARWIN_MINIO_SELECTED_PROVIDER_SMOKE_REFERENCE"] = "minio-smoke-ref-001",
                 ["DARWIN_MINIO_OPERATOR_RUNBOOK_CONFIRMED"] = "true"
+            }
+        };
+
+        yield return new object[]
+        {
+            "check-azure-object-storage-readiness.ps1",
+            "Azure Blob object-storage readiness prerequisites are present.",
+            new Dictionary<string, string>
+            {
+                ["DARWIN_AZURE_BLOB_PRODUCTION_ENDPOINT"] = "https://storage.example.test",
+                ["DARWIN_AZURE_BLOB_PRODUCTION_CONTAINER"] = "darwin-invoice-archive",
+                ["DARWIN_AZURE_BLOB_PROVIDER_SELECTED_CONFIRMED"] = "true",
+                ["DARWIN_AZURE_BLOB_TLS_CONFIRMED"] = "true",
+                ["DARWIN_AZURE_BLOB_DEDICATED_IDENTITY_CONFIRMED"] = "true",
+                ["DARWIN_AZURE_BLOB_LEAST_PRIVILEGE_POLICY_CONFIRMED"] = "true",
+                ["DARWIN_AZURE_BLOB_VERSIONING_CONFIRMED"] = "true",
+                ["DARWIN_AZURE_BLOB_IMMUTABILITY_POLICY_CONFIRMED"] = "true",
+                ["DARWIN_AZURE_BLOB_LEGAL_HOLD_POLICY_CONFIRMED"] = "true",
+                ["DARWIN_AZURE_BLOB_BACKUP_CONFIGURED_CONFIRMED"] = "true",
+                ["DARWIN_AZURE_BLOB_RESTORE_TEST_CONFIRMED"] = "true",
+                ["DARWIN_AZURE_BLOB_MONITORING_CONFIRMED"] = "true",
+                ["DARWIN_AZURE_BLOB_ALERTING_CONFIRMED"] = "true",
+                ["DARWIN_AZURE_BLOB_DARWIN_PROFILE_CONFIGURED_CONFIRMED"] = "true",
+                ["DARWIN_AZURE_BLOB_INVOICE_ARCHIVE_PROFILE_CONFIRMED"] = "true",
+                ["DARWIN_AZURE_BLOB_SHIPMENT_LABELS_PROFILE_CONFIRMED"] = "true",
+                ["DARWIN_AZURE_BLOB_MEDIA_ASSETS_PROFILE_DECIDED_CONFIRMED"] = "true",
+                ["DARWIN_AZURE_BLOB_FINANCE_EXPORTS_PROFILE_CONFIRMED"] = "true",
+                ["DARWIN_AZURE_BLOB_FINANCE_EXPORT_OUTBOUND_PROFILE_CONFIRMED"] = "true",
+                ["DARWIN_AZURE_BLOB_PERSONNEL_DOCUMENTS_PROFILE_CONFIRMED"] = "true",
+                ["DARWIN_AZURE_BLOB_PAYROLL_PAYSLIPS_PROFILE_CONFIRMED"] = "true",
+                ["DARWIN_AZURE_BLOB_DISPOSABLE_SMOKE_PREFIX_CONFIRMED"] = "true",
+                ["DARWIN_AZURE_BLOB_RETENTION_DELETE_BEHAVIOR_CONFIRMED"] = "true",
+                ["DARWIN_AZURE_BLOB_SELECTED_PROVIDER_SMOKE_CONFIRMED"] = "true",
+                ["DARWIN_AZURE_BLOB_SELECTED_PROVIDER_SMOKE_REFERENCE"] = "azure-smoke-ref-001",
+                ["DARWIN_AZURE_BLOB_OPERATOR_RUNBOOK_CONFIRMED"] = "true"
+            }
+        };
+
+        yield return new object[]
+        {
+            "check-production-like-staging-readiness.ps1",
+            "Production-like staging readiness prerequisites are present.",
+            new Dictionary<string, string>
+            {
+                ["DARWIN_STAGING_REHEARSAL_LABEL"] = "production-like-staging",
+                ["DARWIN_STAGING_RELEASE_REFERENCE"] = "release-ref-001",
+                ["DARWIN_STAGING_EVIDENCE_REFERENCE"] = "staging-evidence-ref-001",
+                ["DARWIN_STAGING_BUILD_TESTS_REFERENCE"] = "staging-build-tests-ref-001",
+                ["DARWIN_STAGING_MIGRATION_REHEARSAL_REFERENCE"] = "staging-migration-rehearsal-ref-001",
+                ["DARWIN_STAGING_ROLLBACK_REHEARSAL_REFERENCE"] = "staging-rollback-rehearsal-ref-001",
+                ["DARWIN_STAGING_DATABASE_BACKUP_RESTORE_REFERENCE"] = "staging-database-backup-restore-ref-001",
+                ["DARWIN_STAGING_OBJECT_STORAGE_PREFLIGHTS_REFERENCE"] = "staging-object-storage-preflights-ref-001",
+                ["DARWIN_STAGING_PROVIDER_PREFLIGHTS_REFERENCE"] = "staging-provider-preflights-ref-001",
+                ["DARWIN_STAGING_EINVOICE_EVIDENCE_REFERENCE"] = "staging-einvoice-evidence-ref-001",
+                ["DARWIN_STAGING_ANDROID_EVIDENCE_REFERENCE"] = "staging-android-evidence-ref-001",
+                ["DARWIN_STAGING_MONITORING_ALERTING_REFERENCE"] = "staging-monitoring-alerting-ref-001",
+                ["DARWIN_STAGING_OWNER_SIGNOFF_REFERENCE"] = "staging-owner-signoff-ref-001",
+                ["DARWIN_STAGING_BUILD_TESTS_CONFIRMED"] = "true",
+                ["DARWIN_STAGING_MIGRATION_REHEARSAL_CONFIRMED"] = "true",
+                ["DARWIN_STAGING_ROLLBACK_REHEARSAL_CONFIRMED"] = "true",
+                ["DARWIN_STAGING_DATABASE_BACKUP_RESTORE_CONFIRMED"] = "true",
+                ["DARWIN_STAGING_OBJECT_STORAGE_PREFLIGHTS_CONFIRMED"] = "true",
+                ["DARWIN_STAGING_PROVIDER_PREFLIGHTS_CONFIRMED"] = "true",
+                ["DARWIN_STAGING_EINVOICE_EVIDENCE_CONFIRMED"] = "true",
+                ["DARWIN_STAGING_ANDROID_EVIDENCE_CONFIRMED"] = "true",
+                ["DARWIN_STAGING_MONITORING_ALERTING_CONFIRMED"] = "true",
+                ["DARWIN_STAGING_OWNER_SIGNOFF_CONFIRMED"] = "true"
             }
         };
 
@@ -1714,7 +2731,197 @@ public sealed class SecurityAndPerformanceContractsAndPackagingSourceTests : Sec
                 ["DARWIN_EINVOICE_COMMAND_PATH"] = Environment.ProcessPath ?? "powershell.exe"
             }
         };
+
+        yield return new object[]
+        {
+            "check-einvoice-production-readiness.ps1",
+            "E-invoice production readiness prerequisites are present for ZUGFeRD/Factur-X and XRechnung.",
+            new Dictionary<string, string>
+            {
+                ["DARWIN_EINVOICE_TOOLING_REFERENCE"] = "tooling-checksum-ref-001",
+                ["DARWIN_EINVOICE_EVIDENCE_PACKAGE_REFERENCE"] = "evidence-package-ref-001",
+                ["DARWIN_EINVOICE_ZUGFERD_FIXTURE_REFERENCE"] = "zugferd-fixture-ref-001",
+                ["DARWIN_EINVOICE_ZUGFERD_ARTIFACT_REFERENCE"] = "zugferd-artifact-ref-001",
+                ["DARWIN_EINVOICE_ZUGFERD_VALIDATION_REPORT_REFERENCE"] = "zugferd-validation-ref-001",
+                ["DARWIN_EINVOICE_ZUGFERD_STORAGE_DOWNLOAD_SMOKE_REFERENCE"] = "zugferd-storage-smoke-ref-001",
+                ["DARWIN_EINVOICE_ZUGFERD_ACCOUNTING_SIGNOFF_REFERENCE"] = "zugferd-signoff-ref-001",
+                ["DARWIN_EINVOICE_XRECHNUNG_FIXTURE_REFERENCE"] = "xrechnung-fixture-ref-001",
+                ["DARWIN_EINVOICE_XRECHNUNG_ARTIFACT_REFERENCE"] = "xrechnung-artifact-ref-001",
+                ["DARWIN_EINVOICE_XRECHNUNG_VALIDATION_REPORT_REFERENCE"] = "xrechnung-validation-ref-001",
+                ["DARWIN_EINVOICE_XRECHNUNG_STORAGE_DOWNLOAD_SMOKE_REFERENCE"] = "xrechnung-storage-smoke-ref-001",
+                ["DARWIN_EINVOICE_XRECHNUNG_ACCOUNTING_SIGNOFF_REFERENCE"] = "xrechnung-signoff-ref-001",
+                ["DARWIN_EINVOICE_TOOLING_PINNED_CONFIRMED"] = "true",
+                ["DARWIN_EINVOICE_REQUIRE_VALIDATION_REPORT_CONFIRMED"] = "true",
+                ["DARWIN_EINVOICE_ARCHIVE_RETENTION_CONFIRMED"] = "true",
+                ["DARWIN_EINVOICE_ZUGFERD_FIXTURES_APPROVED_CONFIRMED"] = "true",
+                ["DARWIN_EINVOICE_ZUGFERD_ARTIFACT_GENERATED_CONFIRMED"] = "true",
+                ["DARWIN_EINVOICE_ZUGFERD_VALIDATION_REPORT_CONFIRMED"] = "true",
+                ["DARWIN_EINVOICE_ZUGFERD_STORAGE_DOWNLOAD_SMOKE_CONFIRMED"] = "true",
+                ["DARWIN_EINVOICE_ZUGFERD_ACCOUNTING_SIGNOFF_CONFIRMED"] = "true",
+                ["DARWIN_EINVOICE_XRECHNUNG_FIXTURES_APPROVED_CONFIRMED"] = "true",
+                ["DARWIN_EINVOICE_XRECHNUNG_ARTIFACT_GENERATED_CONFIRMED"] = "true",
+                ["DARWIN_EINVOICE_XRECHNUNG_VALIDATION_REPORT_CONFIRMED"] = "true",
+                ["DARWIN_EINVOICE_XRECHNUNG_STORAGE_DOWNLOAD_SMOKE_CONFIRMED"] = "true",
+                ["DARWIN_EINVOICE_XRECHNUNG_ACCOUNTING_SIGNOFF_CONFIRMED"] = "true"
+            }
+        };
+
+        yield return new object[]
+        {
+            "check-web-toolchain-readiness.ps1",
+            "Web toolchain readiness prerequisites are present.",
+            new Dictionary<string, string>
+            {
+                ["PATH"] = $"{EnsureFakeWebToolchainPath()}{Path.PathSeparator}{Environment.GetEnvironmentVariable("PATH")}"
+            }
+        };
+
+        yield return new object[]
+        {
+            "smoke-web-storefront-routes.ps1",
+            "Web storefront route smoke configuration is present.",
+            new Dictionary<string, string>
+            {
+                ["DARWIN_WEB_SITE_URL"] = "https://web.staging.example.test",
+                ["DARWIN_WEB_ROUTE_SMOKE_PATHS"] = "/,/catalog,/help,/cart"
+            }
+        };
+
+        yield return new object[]
+        {
+            "check-web-storefront-readiness.ps1",
+            "Web storefront readiness prerequisites are present.",
+            new Dictionary<string, string>
+            {
+                ["DARWIN_WEBAPI_BASE_URL"] = "https://api.staging.example.test",
+                ["DARWIN_WEB_SITE_URL"] = "https://web.staging.example.test",
+                ["DARWIN_WEB_STOREFRONT_BUILD_REFERENCE"] = "web-build-ref-001",
+                ["DARWIN_WEB_RUNTIME_CONFIG_SMOKE_REFERENCE"] = "web-runtime-config-smoke-ref-001",
+                ["DARWIN_WEB_PUBLIC_DISCOVERY_SMOKE_REFERENCE"] = "web-public-discovery-smoke-ref-001",
+                ["DARWIN_WEB_MEMBER_PORTAL_ROUTE_SMOKE_REFERENCE"] = "web-member-route-smoke-ref-001",
+                ["DARWIN_WEB_CHECKOUT_ROUTE_SMOKE_REFERENCE"] = "web-checkout-route-smoke-ref-001",
+                ["DARWIN_WEB_DEGRADED_API_LOG_REVIEW_REFERENCE"] = "web-degraded-api-log-review-ref-001",
+                ["DARWIN_WEB_STAGING_OWNER_SIGNOFF_REFERENCE"] = "web-staging-owner-signoff-ref-001",
+                ["DARWIN_WEB_STOREFRONT_BUILD_CONFIRMED"] = "true",
+                ["DARWIN_WEB_RUNTIME_CONFIG_SMOKE_CONFIRMED"] = "true",
+                ["DARWIN_WEB_PUBLIC_DISCOVERY_SMOKE_CONFIRMED"] = "true",
+                ["DARWIN_WEB_MEMBER_PORTAL_ROUTE_SMOKE_CONFIRMED"] = "true",
+                ["DARWIN_WEB_CHECKOUT_ROUTE_SMOKE_CONFIRMED"] = "true",
+                ["DARWIN_WEB_DEGRADED_API_LOG_REVIEWED_CONFIRMED"] = "true",
+                ["DARWIN_WEB_STAGING_OWNER_SIGNOFF_CONFIRMED"] = "true"
+            }
+        };
+
+        yield return new object[]
+        {
+            "check-mobile-resource-names.ps1",
+            "Mobile resource naming readiness prerequisites are present.",
+            new Dictionary<string, string>()
+        };
+
+        yield return new object[]
+        {
+            "check-android-launch-readiness.ps1",
+            "Android launch readiness prerequisites are present.",
+            new Dictionary<string, string>
+            {
+                ["DARWIN_ANDROID_RELEASE_ARTIFACT_REFERENCE"] = "android-artifact-ref-001",
+                ["DARWIN_ANDROID_VERSION_NAME"] = "1.0.0",
+                ["DARWIN_ANDROID_VERSION_CODE"] = "100",
+                ["DARWIN_ANDROID_RELEASE_CHANNEL_REFERENCE"] = "android-release-channel-ref-001",
+                ["DARWIN_ANDROID_SIGNING_PROFILE_REFERENCE"] = "android-signing-profile-ref-001",
+                ["DARWIN_ANDROID_SIGNED_ARTIFACT_REFERENCE"] = "android-signed-artifact-ref-001",
+                ["DARWIN_ANDROID_MAPS_CONFIG_REFERENCE"] = "android-maps-config-ref-001",
+                ["DARWIN_ANDROID_MAPS_KEY_RESTRICTIONS_REFERENCE"] = "android-maps-restrictions-ref-001",
+                ["DARWIN_ANDROID_FIREBASE_CONFIG_REFERENCE"] = "android-firebase-config-ref-001",
+                ["DARWIN_ANDROID_PUSH_SMOKE_REFERENCE"] = "android-push-smoke-ref-001",
+                ["DARWIN_ANDROID_CONSUMER_SMOKE_REFERENCE"] = "android-consumer-smoke-ref-001",
+                ["DARWIN_ANDROID_BUSINESS_SMOKE_REFERENCE"] = "android-business-smoke-ref-001",
+                ["DARWIN_ANDROID_CAMERA_QR_SMOKE_REFERENCE"] = "android-camera-qr-smoke-ref-001",
+                ["DARWIN_ANDROID_CLEAR_TEXT_GUARD_REFERENCE"] = "android-cleartext-guard-ref-001",
+                ["DARWIN_ANDROID_CERT_TRUST_GUARD_REFERENCE"] = "android-cert-trust-guard-ref-001",
+                ["DARWIN_ANDROID_ROUTE_COMPATIBILITY_REFERENCE"] = "android-route-compatibility-ref-001",
+                ["DARWIN_ANDROID_EVIDENCE_PACKAGE_REFERENCE"] = "android-evidence-package-ref-001",
+                ["DARWIN_ANDROID_RELEASE_CHANNEL_CONFIRMED"] = "true",
+                ["DARWIN_ANDROID_SIGNING_PROFILE_CONFIRMED"] = "true",
+                ["DARWIN_ANDROID_SIGNED_ARTIFACT_CONFIRMED"] = "true",
+                ["DARWIN_ANDROID_MAPS_CONFIG_CONFIRMED"] = "true",
+                ["DARWIN_ANDROID_MAPS_KEY_RESTRICTIONS_CONFIRMED"] = "true",
+                ["DARWIN_ANDROID_FIREBASE_CONFIG_CONFIRMED"] = "true",
+                ["DARWIN_ANDROID_PUSH_SMOKE_CONFIRMED"] = "true",
+                ["DARWIN_ANDROID_CONSUMER_SMOKE_CONFIRMED"] = "true",
+                ["DARWIN_ANDROID_BUSINESS_SMOKE_CONFIRMED"] = "true",
+                ["DARWIN_ANDROID_CAMERA_QR_SMOKE_CONFIRMED"] = "true",
+                ["DARWIN_ANDROID_CLEAR_TEXT_GUARD_CONFIRMED"] = "true",
+                ["DARWIN_ANDROID_CERT_TRUST_GUARD_CONFIRMED"] = "true",
+                ["DARWIN_ANDROID_ROUTE_COMPATIBILITY_CONFIRMED"] = "true",
+                ["DARWIN_ANDROID_EVIDENCE_PACKAGE_CONFIRMED"] = "true"
+            }
+        };
     }
+
+    private static IReadOnlyDictionary<string, string> StripeLiveReadinessEnvironment(string webhookUrl) =>
+        new Dictionary<string, string>
+        {
+            ["DARWIN_STRIPE_LIVE_WEBHOOK_PUBLIC_URL"] = webhookUrl,
+            ["DARWIN_STRIPE_LIVE_KEYS_REFERENCE"] = "stripe-live-keys-ref-001",
+            ["DARWIN_STRIPE_LIVE_WEBHOOK_ENDPOINT_REFERENCE"] = "stripe-live-webhook-endpoint-ref-001",
+            ["DARWIN_STRIPE_LIVE_WEBHOOK_EVENTS_REFERENCE"] = "stripe-live-webhook-events-ref-001",
+            ["DARWIN_STRIPE_PROVIDER_CALLBACK_WORKER_REFERENCE"] = "stripe-callback-worker-ref-001",
+            ["DARWIN_STRIPE_WEBADMIN_VISIBILITY_REFERENCE"] = "stripe-webadmin-visibility-ref-001",
+            ["DARWIN_STRIPE_MONITORING_REFERENCE"] = "stripe-monitoring-ref-001",
+            ["DARWIN_STRIPE_ALERTING_REFERENCE"] = "stripe-alerting-ref-001",
+            ["DARWIN_STRIPE_REFUND_DISPUTE_PLAYBOOK_REFERENCE"] = "stripe-refund-dispute-playbook-ref-001",
+            ["DARWIN_STRIPE_LIVE_KEYS_CONFIGURED_CONFIRMED"] = "true",
+            ["DARWIN_STRIPE_LIVE_WEBHOOK_ENDPOINT_CONFIRMED"] = "true",
+            ["DARWIN_STRIPE_LIVE_WEBHOOK_EVENTS_CONFIRMED"] = "true",
+            ["DARWIN_STRIPE_PROVIDER_CALLBACK_WORKER_CONFIRMED"] = "true",
+            ["DARWIN_STRIPE_WEBADMIN_VISIBILITY_CONFIRMED"] = "true",
+            ["DARWIN_STRIPE_MONITORING_CONFIRMED"] = "true",
+            ["DARWIN_STRIPE_ALERTING_CONFIRMED"] = "true",
+            ["DARWIN_STRIPE_REFUND_DISPUTE_PLAYBOOK_CONFIRMED"] = "true"
+        };
+
+    private static IReadOnlyDictionary<string, string> WebStorefrontReadinessEnvironment(
+        string webApiBaseUrl,
+        string webSiteUrl) =>
+        new Dictionary<string, string>
+        {
+            ["DARWIN_WEBAPI_BASE_URL"] = webApiBaseUrl,
+            ["DARWIN_WEB_SITE_URL"] = webSiteUrl,
+            ["DARWIN_WEB_STOREFRONT_BUILD_REFERENCE"] = "web-build-ref-001",
+            ["DARWIN_WEB_RUNTIME_CONFIG_SMOKE_REFERENCE"] = "web-runtime-config-smoke-ref-001",
+            ["DARWIN_WEB_PUBLIC_DISCOVERY_SMOKE_REFERENCE"] = "web-public-discovery-smoke-ref-001",
+            ["DARWIN_WEB_MEMBER_PORTAL_ROUTE_SMOKE_REFERENCE"] = "web-member-route-smoke-ref-001",
+            ["DARWIN_WEB_CHECKOUT_ROUTE_SMOKE_REFERENCE"] = "web-checkout-route-smoke-ref-001",
+            ["DARWIN_WEB_DEGRADED_API_LOG_REVIEW_REFERENCE"] = "web-degraded-api-log-review-ref-001",
+            ["DARWIN_WEB_STAGING_OWNER_SIGNOFF_REFERENCE"] = "web-staging-owner-signoff-ref-001",
+            ["DARWIN_WEB_STOREFRONT_BUILD_CONFIRMED"] = "true",
+            ["DARWIN_WEB_RUNTIME_CONFIG_SMOKE_CONFIRMED"] = "true",
+            ["DARWIN_WEB_PUBLIC_DISCOVERY_SMOKE_CONFIRMED"] = "true",
+            ["DARWIN_WEB_MEMBER_PORTAL_ROUTE_SMOKE_CONFIRMED"] = "true",
+            ["DARWIN_WEB_CHECKOUT_ROUTE_SMOKE_CONFIRMED"] = "true",
+            ["DARWIN_WEB_DEGRADED_API_LOG_REVIEWED_CONFIRMED"] = "true",
+            ["DARWIN_WEB_STAGING_OWNER_SIGNOFF_CONFIRMED"] = "true"
+        };
+
+    private static IReadOnlyDictionary<string, string> BrevoReadinessEnvironment(string webhookUrl) =>
+        new Dictionary<string, string>
+        {
+            ["DARWIN_BREVO_API_KEY"] = "local-api-key",
+            ["DARWIN_BREVO_SENDER_EMAIL"] = "sender@example.test",
+            ["DARWIN_BREVO_TEST_RECIPIENT_EMAIL"] = "recipient@example.test",
+            ["DARWIN_BREVO_WEBHOOK_PUBLIC_URL"] = webhookUrl,
+            ["DARWIN_BREVO_READINESS_SMOKE_REFERENCE"] = "brevo-readiness-smoke-ref-001",
+            ["DARWIN_BREVO_WEBHOOK_REFERENCE"] = "brevo-webhook-ref-001",
+            ["DARWIN_BREVO_TRANSACTIONAL_EVENTS_REFERENCE"] = "brevo-events-ref-001",
+            ["DARWIN_BREVO_PROVIDER_CALLBACK_WORKER_REFERENCE"] = "brevo-callback-worker-ref-001",
+            ["DARWIN_BREVO_EMAIL_DISPATCH_WORKER_REFERENCE"] = "brevo-email-dispatch-worker-ref-001",
+            ["DARWIN_BREVO_WEBHOOK_CONFIGURED_CONFIRMED"] = "true",
+            ["DARWIN_BREVO_TRANSACTIONAL_EVENTS_CONFIRMED"] = "true",
+            ["DARWIN_BREVO_PROVIDER_CALLBACK_WORKER_CONFIRMED"] = "true",
+            ["DARWIN_BREVO_EMAIL_DISPATCH_WORKER_CONFIRMED"] = "true"
+        };
 
     private static IReadOnlyDictionary<string, string> AllProviderReadyDryRunEnvironment() =>
         new Dictionary<string, string>
@@ -1722,10 +2929,21 @@ public sealed class SecurityAndPerformanceContractsAndPackagingSourceTests : Sec
             ["DARWIN_WEBAPI_BASE_URL"] = "http://127.0.0.1:5134",
             ["DARWIN_STRIPE_SMOKE_ORDER_ID"] = "11111111-1111-1111-1111-111111111111",
             ["DARWIN_STRIPE_SMOKE_ORDER_NUMBER"] = "SMOKE-STRIPE-001",
+            ["DARWIN_STRIPE_TESTMODE_SMOKE_REFERENCE"] = "stripe-testmode-smoke-ref-001",
+            ["DARWIN_STRIPE_RUNTIME_PIPELINE_REFERENCE"] = "stripe-runtime-pipeline-ref-001",
             ["DARWIN_STRIPE_WEBHOOK_PUBLIC_URL"] = "https://stripe-webhook.example.test/api/v1/public/billing/stripe/webhooks",
+            ["DARWIN_STRIPE_WEBHOOK_FORWARDING_REFERENCE"] = "stripe-webhook-forwarding-ref-001",
             ["DARWIN_STRIPE_WEBHOOK_FORWARDING_CONFIRMED"] = "true",
             ["DARWIN_STRIPE_PROVIDER_CALLBACK_WORKER_CONFIRMED"] = "true",
             ["DARWIN_STRIPE_LIVE_WEBHOOK_PUBLIC_URL"] = "https://stripe-webhook.example.test/api/v1/public/billing/stripe/webhooks",
+            ["DARWIN_STRIPE_LIVE_KEYS_REFERENCE"] = "stripe-live-keys-ref-001",
+            ["DARWIN_STRIPE_LIVE_WEBHOOK_ENDPOINT_REFERENCE"] = "stripe-live-webhook-endpoint-ref-001",
+            ["DARWIN_STRIPE_LIVE_WEBHOOK_EVENTS_REFERENCE"] = "stripe-live-webhook-events-ref-001",
+            ["DARWIN_STRIPE_PROVIDER_CALLBACK_WORKER_REFERENCE"] = "stripe-callback-worker-ref-001",
+            ["DARWIN_STRIPE_WEBADMIN_VISIBILITY_REFERENCE"] = "stripe-webadmin-visibility-ref-001",
+            ["DARWIN_STRIPE_MONITORING_REFERENCE"] = "stripe-monitoring-ref-001",
+            ["DARWIN_STRIPE_ALERTING_REFERENCE"] = "stripe-alerting-ref-001",
+            ["DARWIN_STRIPE_REFUND_DISPUTE_PLAYBOOK_REFERENCE"] = "stripe-refund-dispute-playbook-ref-001",
             ["DARWIN_STRIPE_LIVE_KEYS_CONFIGURED_CONFIRMED"] = "true",
             ["DARWIN_STRIPE_LIVE_WEBHOOK_ENDPOINT_CONFIRMED"] = "true",
             ["DARWIN_STRIPE_LIVE_WEBHOOK_EVENTS_CONFIRMED"] = "true",
@@ -1752,10 +2970,19 @@ public sealed class SecurityAndPerformanceContractsAndPackagingSourceTests : Sec
             ["DARWIN_DHL_SHIPMENT_PROVIDER_OPERATION_WORKER_CONFIRMED"] = "true",
             ["DARWIN_DHL_PROVIDER_CALLBACK_WORKER_CONFIRMED"] = "true",
             ["DARWIN_DHL_SHIPMENT_LABELS_STORAGE_CONFIRMED"] = "true",
+            ["DARWIN_DHL_LIVE_SMOKE_REFERENCE"] = "dhl-live-smoke-ref-001",
+            ["DARWIN_DHL_PROVIDER_OPERATION_WORKER_REFERENCE"] = "dhl-operation-worker-ref-001",
+            ["DARWIN_DHL_PROVIDER_CALLBACK_WORKER_REFERENCE"] = "dhl-callback-worker-ref-001",
+            ["DARWIN_DHL_SHIPMENT_LABELS_STORAGE_REFERENCE"] = "dhl-label-storage-ref-001",
             ["DARWIN_BREVO_API_KEY"] = "local-api-key",
             ["DARWIN_BREVO_SENDER_EMAIL"] = "sender@example.test",
             ["DARWIN_BREVO_TEST_RECIPIENT_EMAIL"] = "recipient@example.test",
             ["DARWIN_BREVO_WEBHOOK_PUBLIC_URL"] = "https://brevo-webhook.example.test/api/v1/public/notifications/brevo/webhooks",
+            ["DARWIN_BREVO_READINESS_SMOKE_REFERENCE"] = "brevo-readiness-smoke-ref-001",
+            ["DARWIN_BREVO_WEBHOOK_REFERENCE"] = "brevo-webhook-ref-001",
+            ["DARWIN_BREVO_TRANSACTIONAL_EVENTS_REFERENCE"] = "brevo-events-ref-001",
+            ["DARWIN_BREVO_PROVIDER_CALLBACK_WORKER_REFERENCE"] = "brevo-callback-worker-ref-001",
+            ["DARWIN_BREVO_EMAIL_DISPATCH_WORKER_REFERENCE"] = "brevo-email-dispatch-worker-ref-001",
             ["DARWIN_BREVO_WEBHOOK_CONFIGURED_CONFIRMED"] = "true",
             ["DARWIN_BREVO_TRANSACTIONAL_EVENTS_CONFIRMED"] = "true",
             ["DARWIN_BREVO_PROVIDER_CALLBACK_WORKER_CONFIRMED"] = "true",
@@ -1763,9 +2990,52 @@ public sealed class SecurityAndPerformanceContractsAndPackagingSourceTests : Sec
             ["DARWIN_VIES_VALID_VAT_ID"] = "DE123456789",
             ["DARWIN_VIES_INVALID_VAT_ID"] = "DE000000000",
             ["DARWIN_VIES_ENDPOINT_URL"] = "http://127.0.0.1:5135/vies",
+            ["DARWIN_VIES_VALID_SMOKE_REFERENCE"] = "vies-valid-smoke-ref-001",
+            ["DARWIN_VIES_INVALID_SMOKE_REFERENCE"] = "vies-invalid-smoke-ref-001",
             ["DARWIN_OBJECT_STORAGE_PROVIDER"] = "FileSystem",
             ["DARWIN_OBJECT_STORAGE_CONTAINER"] = "smoke",
             ["DARWIN_OBJECT_STORAGE_FILE_ROOT"] = Path.Combine(Path.GetTempPath(), "darwin-object-storage-ready-dry-run"),
+            ["DARWIN_STAGING_REHEARSAL_LABEL"] = "production-like-staging",
+            ["DARWIN_STAGING_RELEASE_REFERENCE"] = "release-ref-001",
+            ["DARWIN_STAGING_EVIDENCE_REFERENCE"] = "staging-evidence-ref-001",
+            ["DARWIN_STAGING_BUILD_TESTS_REFERENCE"] = "staging-build-tests-ref-001",
+            ["DARWIN_STAGING_MIGRATION_REHEARSAL_REFERENCE"] = "staging-migration-rehearsal-ref-001",
+            ["DARWIN_STAGING_ROLLBACK_REHEARSAL_REFERENCE"] = "staging-rollback-rehearsal-ref-001",
+            ["DARWIN_STAGING_DATABASE_BACKUP_RESTORE_REFERENCE"] = "staging-database-backup-restore-ref-001",
+            ["DARWIN_STAGING_OBJECT_STORAGE_PREFLIGHTS_REFERENCE"] = "staging-object-storage-preflights-ref-001",
+            ["DARWIN_STAGING_PROVIDER_PREFLIGHTS_REFERENCE"] = "staging-provider-preflights-ref-001",
+            ["DARWIN_STAGING_EINVOICE_EVIDENCE_REFERENCE"] = "staging-einvoice-evidence-ref-001",
+            ["DARWIN_STAGING_ANDROID_EVIDENCE_REFERENCE"] = "staging-android-evidence-ref-001",
+            ["DARWIN_STAGING_MONITORING_ALERTING_REFERENCE"] = "staging-monitoring-alerting-ref-001",
+            ["DARWIN_STAGING_OWNER_SIGNOFF_REFERENCE"] = "staging-owner-signoff-ref-001",
+            ["DARWIN_STAGING_BUILD_TESTS_CONFIRMED"] = "true",
+            ["DARWIN_STAGING_MIGRATION_REHEARSAL_CONFIRMED"] = "true",
+            ["DARWIN_STAGING_ROLLBACK_REHEARSAL_CONFIRMED"] = "true",
+            ["DARWIN_STAGING_DATABASE_BACKUP_RESTORE_CONFIRMED"] = "true",
+            ["DARWIN_STAGING_OBJECT_STORAGE_PREFLIGHTS_CONFIRMED"] = "true",
+            ["DARWIN_STAGING_PROVIDER_PREFLIGHTS_CONFIRMED"] = "true",
+            ["DARWIN_STAGING_EINVOICE_EVIDENCE_CONFIRMED"] = "true",
+            ["DARWIN_STAGING_ANDROID_EVIDENCE_CONFIRMED"] = "true",
+            ["DARWIN_STAGING_MONITORING_ALERTING_CONFIRMED"] = "true",
+            ["DARWIN_STAGING_OWNER_SIGNOFF_CONFIRMED"] = "true",
+            ["DARWIN_PRODUCTION_READINESS_REPORT_BUNDLE_DIRECTORY"] = EnsureReadyProductionReadinessReportBundle(),
+            ["DARWIN_WEBAPI_BASE_URL"] = "https://api.staging.example.test",
+            ["DARWIN_WEB_SITE_URL"] = "https://web.staging.example.test",
+            ["DARWIN_WEB_STOREFRONT_BUILD_REFERENCE"] = "web-build-ref-001",
+            ["DARWIN_WEB_RUNTIME_CONFIG_SMOKE_REFERENCE"] = "web-runtime-config-smoke-ref-001",
+            ["DARWIN_WEB_PUBLIC_DISCOVERY_SMOKE_REFERENCE"] = "web-public-discovery-smoke-ref-001",
+            ["DARWIN_WEB_MEMBER_PORTAL_ROUTE_SMOKE_REFERENCE"] = "web-member-route-smoke-ref-001",
+            ["DARWIN_WEB_CHECKOUT_ROUTE_SMOKE_REFERENCE"] = "web-checkout-route-smoke-ref-001",
+            ["DARWIN_WEB_DEGRADED_API_LOG_REVIEW_REFERENCE"] = "web-degraded-api-log-review-ref-001",
+            ["DARWIN_WEB_STAGING_OWNER_SIGNOFF_REFERENCE"] = "web-staging-owner-signoff-ref-001",
+            ["DARWIN_WEB_STOREFRONT_BUILD_CONFIRMED"] = "true",
+            ["DARWIN_WEB_RUNTIME_CONFIG_SMOKE_CONFIRMED"] = "true",
+            ["DARWIN_WEB_PUBLIC_DISCOVERY_SMOKE_CONFIRMED"] = "true",
+            ["DARWIN_WEB_MEMBER_PORTAL_ROUTE_SMOKE_CONFIRMED"] = "true",
+            ["DARWIN_WEB_CHECKOUT_ROUTE_SMOKE_CONFIRMED"] = "true",
+            ["DARWIN_WEB_DEGRADED_API_LOG_REVIEWED_CONFIRMED"] = "true",
+            ["DARWIN_WEB_STAGING_OWNER_SIGNOFF_CONFIRMED"] = "true",
+            ["DARWIN_PRODUCTION_READINESS_EVIDENCE_PACKAGE_PATH"] = EnsureFilledProductionReadinessEvidencePackage(),
             ["DARWIN_MINIO_PRODUCTION_ENDPOINT"] = "https://minio.example.test",
             ["DARWIN_MINIO_PRODUCTION_BUCKET"] = "darwin-invoice-archive",
             ["DARWIN_MINIO_PRODUCTION_PROVIDER_SELECTED_CONFIRMED"] = "true",
@@ -1785,11 +3055,425 @@ public sealed class SecurityAndPerformanceContractsAndPackagingSourceTests : Sec
             ["DARWIN_MINIO_INVOICE_ARCHIVE_PROFILE_CONFIRMED"] = "true",
             ["DARWIN_MINIO_SHIPMENT_LABELS_PROFILE_CONFIRMED"] = "true",
             ["DARWIN_MINIO_MEDIA_ASSETS_PROFILE_DECIDED_CONFIRMED"] = "true",
+            ["DARWIN_MINIO_FINANCE_EXPORTS_PROFILE_CONFIRMED"] = "true",
+            ["DARWIN_MINIO_FINANCE_EXPORT_OUTBOUND_PROFILE_CONFIRMED"] = "true",
+            ["DARWIN_MINIO_PERSONNEL_DOCUMENTS_PROFILE_CONFIRMED"] = "true",
+            ["DARWIN_MINIO_PAYROLL_PAYSLIPS_PROFILE_CONFIRMED"] = "true",
             ["DARWIN_MINIO_DISPOSABLE_SMOKE_PREFIX_CONFIRMED"] = "true",
             ["DARWIN_MINIO_RETENTION_DELETE_BEHAVIOR_CONFIRMED"] = "true",
+            ["DARWIN_MINIO_SELECTED_PROVIDER_SMOKE_CONFIRMED"] = "true",
+            ["DARWIN_MINIO_SELECTED_PROVIDER_SMOKE_REFERENCE"] = "minio-smoke-ref-001",
             ["DARWIN_MINIO_OPERATOR_RUNBOOK_CONFIRMED"] = "true",
-            ["DARWIN_EINVOICE_COMMAND_PATH"] = Environment.ProcessPath ?? "powershell.exe"
+            ["DARWIN_AZURE_BLOB_PRODUCTION_ENDPOINT"] = "https://storage.example.test",
+            ["DARWIN_AZURE_BLOB_PRODUCTION_CONTAINER"] = "darwin-invoice-archive",
+            ["DARWIN_AZURE_BLOB_PROVIDER_SELECTED_CONFIRMED"] = "true",
+            ["DARWIN_AZURE_BLOB_TLS_CONFIRMED"] = "true",
+            ["DARWIN_AZURE_BLOB_DEDICATED_IDENTITY_CONFIRMED"] = "true",
+            ["DARWIN_AZURE_BLOB_LEAST_PRIVILEGE_POLICY_CONFIRMED"] = "true",
+            ["DARWIN_AZURE_BLOB_VERSIONING_CONFIRMED"] = "true",
+            ["DARWIN_AZURE_BLOB_IMMUTABILITY_POLICY_CONFIRMED"] = "true",
+            ["DARWIN_AZURE_BLOB_LEGAL_HOLD_POLICY_CONFIRMED"] = "true",
+            ["DARWIN_AZURE_BLOB_BACKUP_CONFIGURED_CONFIRMED"] = "true",
+            ["DARWIN_AZURE_BLOB_RESTORE_TEST_CONFIRMED"] = "true",
+            ["DARWIN_AZURE_BLOB_MONITORING_CONFIRMED"] = "true",
+            ["DARWIN_AZURE_BLOB_ALERTING_CONFIRMED"] = "true",
+            ["DARWIN_AZURE_BLOB_DARWIN_PROFILE_CONFIGURED_CONFIRMED"] = "true",
+            ["DARWIN_AZURE_BLOB_INVOICE_ARCHIVE_PROFILE_CONFIRMED"] = "true",
+            ["DARWIN_AZURE_BLOB_SHIPMENT_LABELS_PROFILE_CONFIRMED"] = "true",
+            ["DARWIN_AZURE_BLOB_MEDIA_ASSETS_PROFILE_DECIDED_CONFIRMED"] = "true",
+            ["DARWIN_AZURE_BLOB_FINANCE_EXPORTS_PROFILE_CONFIRMED"] = "true",
+            ["DARWIN_AZURE_BLOB_FINANCE_EXPORT_OUTBOUND_PROFILE_CONFIRMED"] = "true",
+            ["DARWIN_AZURE_BLOB_PERSONNEL_DOCUMENTS_PROFILE_CONFIRMED"] = "true",
+            ["DARWIN_AZURE_BLOB_PAYROLL_PAYSLIPS_PROFILE_CONFIRMED"] = "true",
+            ["DARWIN_AZURE_BLOB_DISPOSABLE_SMOKE_PREFIX_CONFIRMED"] = "true",
+            ["DARWIN_AZURE_BLOB_RETENTION_DELETE_BEHAVIOR_CONFIRMED"] = "true",
+            ["DARWIN_AZURE_BLOB_SELECTED_PROVIDER_SMOKE_CONFIRMED"] = "true",
+            ["DARWIN_AZURE_BLOB_SELECTED_PROVIDER_SMOKE_REFERENCE"] = "azure-smoke-ref-001",
+            ["DARWIN_AZURE_BLOB_OPERATOR_RUNBOOK_CONFIRMED"] = "true",
+            ["DARWIN_EINVOICE_TOOLING_REFERENCE"] = "tooling-checksum-ref-001",
+            ["DARWIN_EINVOICE_EVIDENCE_PACKAGE_REFERENCE"] = "evidence-package-ref-001",
+            ["DARWIN_EINVOICE_ZUGFERD_FIXTURE_REFERENCE"] = "zugferd-fixture-ref-001",
+            ["DARWIN_EINVOICE_ZUGFERD_ARTIFACT_REFERENCE"] = "zugferd-artifact-ref-001",
+            ["DARWIN_EINVOICE_ZUGFERD_VALIDATION_REPORT_REFERENCE"] = "zugferd-validation-ref-001",
+            ["DARWIN_EINVOICE_ZUGFERD_STORAGE_DOWNLOAD_SMOKE_REFERENCE"] = "zugferd-storage-smoke-ref-001",
+            ["DARWIN_EINVOICE_ZUGFERD_ACCOUNTING_SIGNOFF_REFERENCE"] = "zugferd-signoff-ref-001",
+            ["DARWIN_EINVOICE_XRECHNUNG_FIXTURE_REFERENCE"] = "xrechnung-fixture-ref-001",
+            ["DARWIN_EINVOICE_XRECHNUNG_ARTIFACT_REFERENCE"] = "xrechnung-artifact-ref-001",
+            ["DARWIN_EINVOICE_XRECHNUNG_VALIDATION_REPORT_REFERENCE"] = "xrechnung-validation-ref-001",
+            ["DARWIN_EINVOICE_XRECHNUNG_STORAGE_DOWNLOAD_SMOKE_REFERENCE"] = "xrechnung-storage-smoke-ref-001",
+            ["DARWIN_EINVOICE_XRECHNUNG_ACCOUNTING_SIGNOFF_REFERENCE"] = "xrechnung-signoff-ref-001",
+            ["DARWIN_EINVOICE_TOOLING_PINNED_CONFIRMED"] = "true",
+            ["DARWIN_EINVOICE_REQUIRE_VALIDATION_REPORT_CONFIRMED"] = "true",
+            ["DARWIN_EINVOICE_ARCHIVE_RETENTION_CONFIRMED"] = "true",
+            ["DARWIN_EINVOICE_ZUGFERD_FIXTURES_APPROVED_CONFIRMED"] = "true",
+            ["DARWIN_EINVOICE_ZUGFERD_ARTIFACT_GENERATED_CONFIRMED"] = "true",
+            ["DARWIN_EINVOICE_ZUGFERD_VALIDATION_REPORT_CONFIRMED"] = "true",
+            ["DARWIN_EINVOICE_ZUGFERD_STORAGE_DOWNLOAD_SMOKE_CONFIRMED"] = "true",
+            ["DARWIN_EINVOICE_ZUGFERD_ACCOUNTING_SIGNOFF_CONFIRMED"] = "true",
+            ["DARWIN_EINVOICE_XRECHNUNG_FIXTURES_APPROVED_CONFIRMED"] = "true",
+            ["DARWIN_EINVOICE_XRECHNUNG_ARTIFACT_GENERATED_CONFIRMED"] = "true",
+            ["DARWIN_EINVOICE_XRECHNUNG_VALIDATION_REPORT_CONFIRMED"] = "true",
+            ["DARWIN_EINVOICE_XRECHNUNG_STORAGE_DOWNLOAD_SMOKE_CONFIRMED"] = "true",
+            ["DARWIN_EINVOICE_XRECHNUNG_ACCOUNTING_SIGNOFF_CONFIRMED"] = "true",
+            ["DARWIN_EINVOICE_COMMAND_PATH"] = Environment.ProcessPath ?? "powershell.exe",
+            ["DARWIN_ANDROID_RELEASE_ARTIFACT_REFERENCE"] = "android-artifact-ref-001",
+            ["DARWIN_ANDROID_VERSION_NAME"] = "1.0.0",
+            ["DARWIN_ANDROID_VERSION_CODE"] = "100",
+            ["DARWIN_ANDROID_RELEASE_CHANNEL_REFERENCE"] = "android-release-channel-ref-001",
+            ["DARWIN_ANDROID_SIGNING_PROFILE_REFERENCE"] = "android-signing-profile-ref-001",
+            ["DARWIN_ANDROID_SIGNED_ARTIFACT_REFERENCE"] = "android-signed-artifact-ref-001",
+            ["DARWIN_ANDROID_MAPS_CONFIG_REFERENCE"] = "android-maps-config-ref-001",
+            ["DARWIN_ANDROID_MAPS_KEY_RESTRICTIONS_REFERENCE"] = "android-maps-restrictions-ref-001",
+            ["DARWIN_ANDROID_FIREBASE_CONFIG_REFERENCE"] = "android-firebase-config-ref-001",
+            ["DARWIN_ANDROID_PUSH_SMOKE_REFERENCE"] = "android-push-smoke-ref-001",
+            ["DARWIN_ANDROID_CONSUMER_SMOKE_REFERENCE"] = "android-consumer-smoke-ref-001",
+            ["DARWIN_ANDROID_BUSINESS_SMOKE_REFERENCE"] = "android-business-smoke-ref-001",
+            ["DARWIN_ANDROID_CAMERA_QR_SMOKE_REFERENCE"] = "android-camera-qr-smoke-ref-001",
+            ["DARWIN_ANDROID_CLEAR_TEXT_GUARD_REFERENCE"] = "android-cleartext-guard-ref-001",
+            ["DARWIN_ANDROID_CERT_TRUST_GUARD_REFERENCE"] = "android-cert-trust-guard-ref-001",
+            ["DARWIN_ANDROID_ROUTE_COMPATIBILITY_REFERENCE"] = "android-route-compatibility-ref-001",
+            ["DARWIN_ANDROID_EVIDENCE_PACKAGE_REFERENCE"] = "android-evidence-package-ref-001",
+            ["DARWIN_ANDROID_RELEASE_CHANNEL_CONFIRMED"] = "true",
+            ["DARWIN_ANDROID_SIGNING_PROFILE_CONFIRMED"] = "true",
+            ["DARWIN_ANDROID_SIGNED_ARTIFACT_CONFIRMED"] = "true",
+            ["DARWIN_ANDROID_MAPS_CONFIG_CONFIRMED"] = "true",
+            ["DARWIN_ANDROID_MAPS_KEY_RESTRICTIONS_CONFIRMED"] = "true",
+            ["DARWIN_ANDROID_FIREBASE_CONFIG_CONFIRMED"] = "true",
+            ["DARWIN_ANDROID_PUSH_SMOKE_CONFIRMED"] = "true",
+            ["DARWIN_ANDROID_CONSUMER_SMOKE_CONFIRMED"] = "true",
+            ["DARWIN_ANDROID_BUSINESS_SMOKE_CONFIRMED"] = "true",
+            ["DARWIN_ANDROID_CAMERA_QR_SMOKE_CONFIRMED"] = "true",
+            ["DARWIN_ANDROID_CLEAR_TEXT_GUARD_CONFIRMED"] = "true",
+            ["DARWIN_ANDROID_CERT_TRUST_GUARD_CONFIRMED"] = "true",
+            ["DARWIN_ANDROID_ROUTE_COMPATIBILITY_CONFIRMED"] = "true",
+            ["DARWIN_ANDROID_EVIDENCE_PACKAGE_CONFIRMED"] = "true"
         };
+
+    private static IReadOnlyDictionary<string, string> MinioReadinessEnvironment(
+        string endpoint = "https://minio.example.test",
+        string bucket = "darwin-invoice-archive") =>
+        new Dictionary<string, string>
+        {
+            ["DARWIN_MINIO_PRODUCTION_ENDPOINT"] = endpoint,
+            ["DARWIN_MINIO_PRODUCTION_BUCKET"] = bucket,
+            ["DARWIN_MINIO_PRODUCTION_PROVIDER_SELECTED_CONFIRMED"] = "true",
+            ["DARWIN_MINIO_TLS_CONFIRMED"] = "true",
+            ["DARWIN_MINIO_DEDICATED_KEYS_CONFIRMED"] = "true",
+            ["DARWIN_MINIO_LEAST_PRIVILEGE_POLICY_CONFIRMED"] = "true",
+            ["DARWIN_MINIO_BUCKET_OBJECT_LOCK_CONFIRMED"] = "true",
+            ["DARWIN_MINIO_BUCKET_VERSIONING_CONFIRMED"] = "true",
+            ["DARWIN_MINIO_DEFAULT_RETENTION_CONFIRMED"] = "true",
+            ["DARWIN_MINIO_RETENTION_MODE_CONFIRMED"] = "true",
+            ["DARWIN_MINIO_LEGAL_HOLD_POLICY_CONFIRMED"] = "true",
+            ["DARWIN_MINIO_BACKUP_CONFIGURED_CONFIRMED"] = "true",
+            ["DARWIN_MINIO_RESTORE_TEST_CONFIRMED"] = "true",
+            ["DARWIN_MINIO_MONITORING_CONFIRMED"] = "true",
+            ["DARWIN_MINIO_ALERTING_CONFIRMED"] = "true",
+            ["DARWIN_MINIO_DARWIN_PROFILE_CONFIGURED_CONFIRMED"] = "true",
+            ["DARWIN_MINIO_INVOICE_ARCHIVE_PROFILE_CONFIRMED"] = "true",
+            ["DARWIN_MINIO_SHIPMENT_LABELS_PROFILE_CONFIRMED"] = "true",
+            ["DARWIN_MINIO_MEDIA_ASSETS_PROFILE_DECIDED_CONFIRMED"] = "true",
+            ["DARWIN_MINIO_FINANCE_EXPORTS_PROFILE_CONFIRMED"] = "true",
+            ["DARWIN_MINIO_FINANCE_EXPORT_OUTBOUND_PROFILE_CONFIRMED"] = "true",
+            ["DARWIN_MINIO_PERSONNEL_DOCUMENTS_PROFILE_CONFIRMED"] = "true",
+            ["DARWIN_MINIO_PAYROLL_PAYSLIPS_PROFILE_CONFIRMED"] = "true",
+            ["DARWIN_MINIO_DISPOSABLE_SMOKE_PREFIX_CONFIRMED"] = "true",
+            ["DARWIN_MINIO_RETENTION_DELETE_BEHAVIOR_CONFIRMED"] = "true",
+            ["DARWIN_MINIO_SELECTED_PROVIDER_SMOKE_CONFIRMED"] = "true",
+            ["DARWIN_MINIO_SELECTED_PROVIDER_SMOKE_REFERENCE"] = "minio-smoke-ref-001",
+            ["DARWIN_MINIO_OPERATOR_RUNBOOK_CONFIRMED"] = "true"
+        };
+
+    private static IReadOnlyDictionary<string, string> AzureReadinessEnvironment(
+        string endpoint = "https://storage.example.test",
+        string container = "darwin-invoice-archive") =>
+        new Dictionary<string, string>
+        {
+            ["DARWIN_AZURE_BLOB_PRODUCTION_ENDPOINT"] = endpoint,
+            ["DARWIN_AZURE_BLOB_PRODUCTION_CONTAINER"] = container,
+            ["DARWIN_AZURE_BLOB_PROVIDER_SELECTED_CONFIRMED"] = "true",
+            ["DARWIN_AZURE_BLOB_TLS_CONFIRMED"] = "true",
+            ["DARWIN_AZURE_BLOB_DEDICATED_IDENTITY_CONFIRMED"] = "true",
+            ["DARWIN_AZURE_BLOB_LEAST_PRIVILEGE_POLICY_CONFIRMED"] = "true",
+            ["DARWIN_AZURE_BLOB_VERSIONING_CONFIRMED"] = "true",
+            ["DARWIN_AZURE_BLOB_IMMUTABILITY_POLICY_CONFIRMED"] = "true",
+            ["DARWIN_AZURE_BLOB_LEGAL_HOLD_POLICY_CONFIRMED"] = "true",
+            ["DARWIN_AZURE_BLOB_BACKUP_CONFIGURED_CONFIRMED"] = "true",
+            ["DARWIN_AZURE_BLOB_RESTORE_TEST_CONFIRMED"] = "true",
+            ["DARWIN_AZURE_BLOB_MONITORING_CONFIRMED"] = "true",
+            ["DARWIN_AZURE_BLOB_ALERTING_CONFIRMED"] = "true",
+            ["DARWIN_AZURE_BLOB_DARWIN_PROFILE_CONFIGURED_CONFIRMED"] = "true",
+            ["DARWIN_AZURE_BLOB_INVOICE_ARCHIVE_PROFILE_CONFIRMED"] = "true",
+            ["DARWIN_AZURE_BLOB_SHIPMENT_LABELS_PROFILE_CONFIRMED"] = "true",
+            ["DARWIN_AZURE_BLOB_MEDIA_ASSETS_PROFILE_DECIDED_CONFIRMED"] = "true",
+            ["DARWIN_AZURE_BLOB_FINANCE_EXPORTS_PROFILE_CONFIRMED"] = "true",
+            ["DARWIN_AZURE_BLOB_FINANCE_EXPORT_OUTBOUND_PROFILE_CONFIRMED"] = "true",
+            ["DARWIN_AZURE_BLOB_PERSONNEL_DOCUMENTS_PROFILE_CONFIRMED"] = "true",
+            ["DARWIN_AZURE_BLOB_PAYROLL_PAYSLIPS_PROFILE_CONFIRMED"] = "true",
+            ["DARWIN_AZURE_BLOB_DISPOSABLE_SMOKE_PREFIX_CONFIRMED"] = "true",
+            ["DARWIN_AZURE_BLOB_RETENTION_DELETE_BEHAVIOR_CONFIRMED"] = "true",
+            ["DARWIN_AZURE_BLOB_SELECTED_PROVIDER_SMOKE_CONFIRMED"] = "true",
+            ["DARWIN_AZURE_BLOB_SELECTED_PROVIDER_SMOKE_REFERENCE"] = "azure-smoke-ref-001",
+            ["DARWIN_AZURE_BLOB_OPERATOR_RUNBOOK_CONFIRMED"] = "true"
+        };
+
+    private static string EnsureFakeWebToolchainPath()
+    {
+        var directory = Path.Combine(Path.GetTempPath(), "darwin-web-toolchain-ready-dry-run");
+        Directory.CreateDirectory(directory);
+        File.WriteAllText(Path.Combine(directory, "node.cmd"), "@echo v24.14.0\r\n");
+        File.WriteAllText(Path.Combine(directory, "npm.cmd"), "@echo 10.9.2\r\n");
+        return directory;
+    }
+
+    private static async Task<(int ExitCode, string Output)> RunPowerShellScriptAsync(
+        string root,
+        string scriptName,
+        IReadOnlyDictionary<string, string> environment,
+        IReadOnlyList<string>? arguments = null)
+    {
+        var startInfo = new ProcessStartInfo
+        {
+            FileName = "powershell",
+            WorkingDirectory = root,
+            RedirectStandardOutput = true,
+            RedirectStandardError = true,
+            UseShellExecute = false
+        };
+        startInfo.ArgumentList.Add("-NoProfile");
+        startInfo.ArgumentList.Add("-ExecutionPolicy");
+        startInfo.ArgumentList.Add("Bypass");
+        startInfo.ArgumentList.Add("-File");
+        startInfo.ArgumentList.Add(Path.Combine("scripts", scriptName));
+        if (arguments is not null)
+        {
+            foreach (var argument in arguments)
+            {
+                startInfo.ArgumentList.Add(argument);
+            }
+        }
+
+        foreach (var key in startInfo.Environment.Keys.Cast<string>()
+                     .Where(key => key.StartsWith("DARWIN_", StringComparison.OrdinalIgnoreCase)).ToList())
+        {
+            startInfo.Environment.Remove(key);
+        }
+
+        foreach (var item in environment)
+        {
+            startInfo.Environment[item.Key] = item.Value;
+        }
+
+        using var process = Process.Start(startInfo) ?? throw new InvalidOperationException($"Could not start {scriptName}.");
+        var stdoutTask = process.StandardOutput.ReadToEndAsync(TestContext.Current.CancellationToken);
+        var stderrTask = process.StandardError.ReadToEndAsync(TestContext.Current.CancellationToken);
+
+        await process.WaitForExitAsync(TestContext.Current.CancellationToken);
+        return (process.ExitCode, $"{await stdoutTask}{Environment.NewLine}{await stderrTask}");
+    }
+
+    private static string EnsureReadyProductionReadinessReportBundle()
+    {
+        var directory = Path.Combine(Path.GetTempPath(), "darwin-production-readiness-report-bundle-ready");
+        Directory.CreateDirectory(directory);
+        var root = ResolveRepositoryPath();
+        var branch = ReadGitOutput(root, "branch", "--show-current");
+        var commit = ReadGitOutput(root, "rev-parse", "--short=12", "HEAD");
+
+        var reportNames = new[]
+        {
+            "readiness-report-bundle.md",
+            "production-like-staging-readiness-report.md",
+            "local-backup-readiness-report.md",
+            "local-postgres-restore-readiness-report.md",
+            "local-release-candidate-readiness-report.md",
+            "evidence-package-validator-smoke.md",
+            "web-mobile-readiness-report.md",
+            "go-live-readiness-report.md",
+            "minio-production-readiness-report.md",
+            "azure-object-storage-readiness-report.md",
+            "einvoice-production-readiness-report.md",
+            "android-launch-readiness-report.md",
+            "provider-readiness-report.md"
+        };
+
+        var helperNames = new[]
+        {
+            "production-readiness-action-plan.md",
+            "production-readiness-owner-handoff.md",
+            "production-readiness-env-template.ps1",
+            "local-execution-summary.md",
+            "evidence-package-local-draft.md"
+        };
+
+        foreach (var reportName in reportNames)
+        {
+            var content = $"""
+                # {reportName}
+
+                Branch: {branch}
+
+                Commit: {commit}
+
+                Overall result: Ready
+
+                Exit code: 0
+                """;
+
+            if (reportName == "readiness-report-bundle.md")
+            {
+                content += Environment.NewLine + """
+
+                    ## Reports
+
+                    | Report | Result | Exit code | File |
+                    | --- | --- | ---: | --- |
+                    | Production-like staging | Ready | 0 | production-like-staging-readiness-report.md |
+                    | Local backup package | Ready | 0 | local-backup-readiness-report.md |
+                    | Local PostgreSQL restore | Ready | 0 | local-postgres-restore-readiness-report.md |
+                    | Local release candidate | Ready | 0 | local-release-candidate-readiness-report.md |
+                    | Evidence package validator tooling | Ready | 0 | evidence-package-validator-smoke.md |
+                    | Web and mobile | Ready | 0 | web-mobile-readiness-report.md |
+                    | Go-live aggregate | Ready | 0 | go-live-readiness-report.md |
+                    | MinIO production | Ready | 0 | minio-production-readiness-report.md |
+                    | Azure Blob object storage | Ready | 0 | azure-object-storage-readiness-report.md |
+                    | E-invoice production | Ready | 0 | einvoice-production-readiness-report.md |
+                    | Android launch | Ready | 0 | android-launch-readiness-report.md |
+                    | Provider readiness | Ready | 0 | provider-readiness-report.md |
+
+                    ## Generated Follow-Up Artifacts
+                    """ + Environment.NewLine + string.Join(Environment.NewLine, helperNames);
+            }
+
+            File.WriteAllText(Path.Combine(directory, reportName), content);
+        }
+
+        File.WriteAllText(
+            Path.Combine(directory, "production-readiness-action-plan.md"),
+            $$"""
+            # Production Readiness Action Plan
+
+            Branch: {{branch}}
+
+            Commit: {{commit}}
+
+            ## Owner Action Rows
+
+            | Evidence area | Result | Exit code | Owner | Missing evidence keys | Next action | Source report |
+            | --- | --- | ---: | --- | --- | --- | --- |
+            | Go-live aggregate | Blocked | 2 | Darwin technical owner | See the dedicated readiness rows | Resolve every blocked dedicated readiness row, then rerun the aggregate go-live dry run. | go-live-readiness-report.md |
+            """);
+
+        File.WriteAllText(
+            Path.Combine(directory, "production-readiness-owner-handoff.md"),
+            $$"""
+            # Production Readiness Owner Handoff
+
+            Branch: {{branch}}
+
+            Commit: {{commit}}
+
+            ## System administrator or DevOps owner
+
+            | Evidence area | Result | Exit code | Missing evidence keys | Next action | Source report |
+            | --- | --- | ---: | --- | --- | --- |
+            | Storage | Ready | 0 | None listed by preflight | Evidence attached | storage-readiness-report.md |
+            """);
+
+        File.WriteAllText(
+            Path.Combine(directory, "production-readiness-env-template.ps1"),
+            $$"""
+            # Production readiness environment template
+
+            # Branch: {{branch}}
+            # Commit: {{commit}}
+
+            # No template assignment is written for secret-like variables.
+            """);
+
+        File.WriteAllText(
+            Path.Combine(directory, "local-execution-summary.md"),
+            $$"""
+            # Production Readiness Local Execution Summary
+
+            Branch: {{branch}}
+
+            Commit: {{commit}}
+
+            Overall result: Ready
+
+            Exit code: 0
+
+            ## Remaining Evidence Boundary
+
+            Ready local report rows are supporting evidence only.
+            """);
+
+        File.WriteAllText(
+            Path.Combine(directory, "evidence-package-local-draft.md"),
+            $$"""
+            # Local Evidence Package Draft
+
+            Release reference: git-{{commit}}
+
+            ## Local Draft Notice
+
+            | Evidence | Reference |
+            | --- | --- |
+            | Readiness report bundle | readiness-report-bundle.md |
+            | Owner handoff | production-readiness-owner-handoff.md |
+            | Local execution summary | local-execution-summary.md |
+            | Local backup | local-backup-readiness-report.md |
+
+            ## Local Supporting Evidence Snapshot
+            """);
+
+        return directory;
+    }
+
+    private static string ReadGitOutput(string root, params string[] arguments)
+    {
+        var startInfo = new ProcessStartInfo
+        {
+            FileName = "git",
+            WorkingDirectory = root,
+            RedirectStandardOutput = true,
+            RedirectStandardError = true,
+            UseShellExecute = false
+        };
+        startInfo.ArgumentList.Add("-C");
+        startInfo.ArgumentList.Add(root);
+        foreach (var argument in arguments)
+        {
+            startInfo.ArgumentList.Add(argument);
+        }
+
+        using var process = Process.Start(startInfo) ?? throw new InvalidOperationException("Could not start git.");
+        var output = process.StandardOutput.ReadToEnd();
+        var error = process.StandardError.ReadToEnd();
+        process.WaitForExit();
+        process.ExitCode.Should().Be(0, $"git {string.Join(" ", arguments)} should succeed: {error}");
+        return output.Trim();
+    }
+
+    private static string EnsureFilledProductionReadinessEvidencePackage()
+    {
+        var path = Path.Combine(Path.GetTempPath(), "darwin-production-readiness-evidence-package-ready.md");
+        var content = ReadRepositoryFile(Path.Combine("docs", "templates", "production-readiness-evidence-package-template.md"));
+
+        content = content
+            .Replace("{{DEPLOYMENT_LABEL}}", "production-readiness-test", StringComparison.Ordinal)
+            .Replace("{{RELEASE_REFERENCE}}", "release-ref-001", StringComparison.Ordinal)
+            .Replace("{{PREPARED_AT_UTC}}", "2026-06-17T00:00:00Z", StringComparison.Ordinal)
+            .Replace("{{PREPARED_BY}}", "Darwin technical owner", StringComparison.Ordinal)
+            .Replace("Pending operator entry", "Evidence reference REF-001", StringComparison.Ordinal)
+            .Replace("| Pending |", "| Ready |", StringComparison.Ordinal)
+            .Replace("| Pending", "| Ready", StringComparison.Ordinal)
+            .Replace("Pending |", "Ready |", StringComparison.Ordinal);
+
+        File.WriteAllText(path, content);
+        return path;
+    }
 
     [Fact]
     public void RepositoryDocsAndOperationalScripts_Should_AvoidAssistantMentionsAndCommittedSecretPatterns()
@@ -1906,7 +3590,7 @@ public sealed class SecurityAndPerformanceContractsAndPackagingSourceTests : Sec
         applicationSources.Should().NotContain(source => source.Contains("AmazonS3", StringComparison.Ordinal));
 
         providerDecisionSource.Should().Contain("Production provider direction is now selected");
-        providerDecisionSource.Should().Contain("MinIO as the recommended self-hosted production target");
+        providerDecisionSource.Should().Contain("MinIO as the first production target");
         providerDecisionSource.Should().Contain("Immutable retention or legal hold support");
         providerDecisionSource.Should().Contain("Audit logs for create, read, retention-policy change, legal-hold change, and delete/purge attempts.");
         providerDecisionSource.Should().Contain("Darwin must connect to MinIO through the generic S3-compatible provider.");
@@ -1932,6 +3616,7 @@ public sealed class SecurityAndPerformanceContractsAndPackagingSourceTests : Sec
         var readinessValidatorSource = ReadApplicationFile(Path.Combine("CRM", "Services", "EInvoiceSourceReadinessValidator.cs"));
         var applicationCompositionSource = ReadApplicationFile(Path.Combine("Extensions", "ServiceCollectionExtensions.Application.cs"));
         var mustangWrapperSource = ReadRepositoryFile(Path.Combine("scripts", "mustang-einvoice-wrapper.ps1"));
+        var externalCommandSmokeSource = ReadRepositoryFile(Path.Combine("scripts", "smoke-einvoice-external-command.ps1"));
 
         complianceDecisionSource.Should().Contain("Primary target: ZUGFeRD/Factur-X");
         complianceDecisionSource.Should().Contain("Secondary target: XRechnung export");
@@ -2041,6 +3726,14 @@ public sealed class SecurityAndPerformanceContractsAndPackagingSourceTests : Sec
         mustangWrapperSource.Should().Contain("Darwin Smoke Seller");
         mustangWrapperSource.Should().NotContain("Loyan");
         mustangWrapperSource.Should().NotContain("loyan.de");
+        externalCommandSmokeSource.Should().Contain("Invoke-DotnetRunWithTimeout");
+        externalCommandSmokeSource.Should().Contain("Start-Job -ScriptBlock");
+        externalCommandSmokeSource.Should().Contain("dotnet run --project $SmokeProjectPath");
+        externalCommandSmokeSource.Should().Contain("Wait-Job -Job $job -Timeout $hostTimeoutSeconds");
+        externalCommandSmokeSource.Should().Contain("Stop-Job -Job $job");
+        externalCommandSmokeSource.Should().Contain("taskkill /PID $childProcess.ProcessId /T /F");
+        externalCommandSmokeSource.Should().Contain("The temporary dotnet run host timed out");
+        externalCommandSmokeSource.Should().NotContain("Write-Error $_");
 
         var guardedSources = new[]
         {

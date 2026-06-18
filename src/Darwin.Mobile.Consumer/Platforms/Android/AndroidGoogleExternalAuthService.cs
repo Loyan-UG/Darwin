@@ -45,14 +45,11 @@ public sealed class AndroidGoogleExternalAuthService : IConsumerExternalAuthServ
         var activity = Platform.CurrentActivity
             ?? throw new InvalidOperationException(AppResources.ExternalLoginGoogleUnavailable);
 
-        var googleIdOption = new GetGoogleIdOption.Builder()
-            .SetServerClientId(bootstrap.GoogleExternalLoginWebClientId.Trim())
-            .SetFilterByAuthorizedAccounts(false)
-            .SetAutoSelectEnabled(false)
+        var signInWithGoogleOption = new GetSignInWithGoogleOption.Builder(bootstrap.GoogleExternalLoginWebClientId.Trim())
             .Build();
 
         var request = new GetCredentialRequest.Builder()
-            .AddCredentialOption(googleIdOption)
+            .AddCredentialOption(signInWithGoogleOption)
             .Build();
 
         var credentialManager = CredentialManager.Create(activity);
@@ -97,7 +94,8 @@ public sealed class AndroidGoogleExternalAuthService : IConsumerExternalAuthServ
 
                 var credential = response.Credential;
                 if (credential is null ||
-                    !string.Equals(credential.Type, GoogleIdTokenCredential.TypeGoogleIdTokenCredential, StringComparison.Ordinal))
+                    (!string.Equals(credential.Type, GoogleIdTokenCredential.TypeGoogleIdTokenCredential, StringComparison.Ordinal) &&
+                     !string.Equals(credential.Type, GoogleIdTokenCredential.TypeGoogleIdTokenSiwgCredential, StringComparison.Ordinal)))
                 {
                     _pending.TrySetException(new InvalidOperationException(BuildGoogleSignInMessage(
                         AppResources.ExternalLoginGoogleFailed,

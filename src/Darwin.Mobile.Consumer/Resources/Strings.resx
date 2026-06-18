@@ -1532,7 +1532,7 @@
     <value>Your account deletion request could not be completed right now. Please try again shortly.</value>
   </data>
   <data name="PermissionDisclosureContinueButton" xml:space="preserve">
-    <value>Continue</value>
+    <value>Allow notifications</value>
   </data>
   <data name="PermissionDisclosureCancelButton" xml:space="preserve">
     <value>Not now</value>
@@ -1744,5 +1744,47 @@ or redeem</value>
   </data>
   <data name="ExternalLoginMicrosoftComingSoon" xml:space="preserve">
     <value>Microsoft soon</value>
+  </data>
+  <data name="NotificationsTitle" xml:space="preserve">
+    <value>Notifications</value>
+  </data>
+  <data name="NotificationsSubtitle" xml:space="preserve">
+    <value>Campaigns, rewards and important account messages.</value>
+  </data>
+  <data name="NotificationsLoadFailed" xml:space="preserve">
+    <value>Notifications could not be loaded right now.</value>
+  </data>
+  <data name="NotificationsMarkAllRead" xml:space="preserve">
+    <value>Mark all read</value>
+  </data>
+  <data name="NotificationsMarkRead" xml:space="preserve">
+    <value>Mark read</value>
+  </data>
+  <data name="NotificationsEmptyTitle" xml:space="preserve">
+    <value>No notifications</value>
+  </data>
+  <data name="NotificationsEmptyBody" xml:space="preserve">
+    <value>New campaign and reward updates will appear here.</value>
+  </data>
+  <data name="NotificationsCategoryAll" xml:space="preserve">
+    <value>All</value>
+  </data>
+  <data name="NotificationsCategorySystem" xml:space="preserve">
+    <value>System</value>
+  </data>
+  <data name="NotificationsCategoryCampaign" xml:space="preserve">
+    <value>Campaigns</value>
+  </data>
+  <data name="NotificationsCategoryReward" xml:space="preserve">
+    <value>Rewards</value>
+  </data>
+  <data name="NotificationsCategoryBilling" xml:space="preserve">
+    <value>Billing</value>
+  </data>
+  <data name="NotificationsCategoryScannerSession" xml:space="preserve">
+    <value>Scanner</value>
+  </data>
+  <data name="NotificationsCategoryAccount" xml:space="preserve">
+    <value>Account</value>
   </data>
 </root>

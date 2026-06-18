@@ -28,6 +28,7 @@ public partial class AppShell : Shell
         Routing.RegisterRoute(Routes.ChangePassword, typeof(ChangePasswordPage));
         Routing.RegisterRoute(Routes.LegalHub, typeof(LegalHubPage));
         Routing.RegisterRoute(Routes.AccountDeletion, typeof(AccountDeletionPage));
+        Routing.RegisterRoute(Routes.Notifications, typeof(NotificationsPage));
 
         Navigating += OnShellNavigating;
         Navigated += OnShellNavigated;

@@ -255,12 +255,12 @@ public sealed class WebApiRouteAliasSourceTests
     }
 
     [Fact]
-    public void NotificationsController_Should_ContainMemberCanonicalRoute_AndLegacyAlias()
+    public void NotificationsController_Should_ContainMemberCanonicalRoute_WithoutLegacyAlias()
     {
         var source = ReadControllerSource(Path.Combine("Notifications", "NotificationsController.cs"));
 
         source.Should().Contain("api/v1/member/notifications");
-        source.Should().Contain("/api/v1/notifications/devices/register");
+        source.Should().NotContain("/api/v1/notifications/devices/register");
     }
 
     [Fact]

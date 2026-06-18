@@ -229,9 +229,9 @@ public sealed partial class LoginViewModel : BaseViewModel
                 deviceId: null,
                 operationCancellation.Token);
 
-            _ = _pushRegistrationCoordinator.TryRegisterCurrentDeviceAsync(operationCancellation.Token);
-
             await _appRootNavigator.NavigateToAuthenticatedShellAsync();
+            await NotificationDeepLinkNavigator.TryNavigatePendingAsync().ConfigureAwait(false);
+            _ = TryRegisterPushDeviceSafelyAsync();
         }
         catch (OperationCanceledException)
         {
@@ -294,9 +294,9 @@ public sealed partial class LoginViewModel : BaseViewModel
                 },
                 operationCancellation.Token).ConfigureAwait(false);
 
-            _ = _pushRegistrationCoordinator.TryRegisterCurrentDeviceAsync(operationCancellation.Token);
-
             await _appRootNavigator.NavigateToAuthenticatedShellAsync().ConfigureAwait(false);
+            await NotificationDeepLinkNavigator.TryNavigatePendingAsync().ConfigureAwait(false);
+            _ = TryRegisterPushDeviceSafelyAsync();
         }
         catch (OperationCanceledException)
         {
@@ -490,5 +490,19 @@ public sealed partial class LoginViewModel : BaseViewModel
     private static string ResolveLoginErrorMessage(Exception ex)
     {
         return ViewModelErrorMapper.ToUserMessage(ex, AppResources.InvalidCredentials);
+    }
+
+    private async Task TryRegisterPushDeviceSafelyAsync()
+    {
+        try
+        {
+            await Task.Delay(1000).ConfigureAwait(false);
+            using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(20));
+            await _pushRegistrationCoordinator.TryRegisterCurrentDeviceAsync(timeout.Token).ConfigureAwait(false);
+        }
+        catch
+        {
+            // Push registration is best effort and must not block sign-in.
+        }
     }
 }

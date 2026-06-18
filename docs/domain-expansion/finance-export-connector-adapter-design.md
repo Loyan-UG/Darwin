@@ -14,7 +14,7 @@ The decision is explicit: connector delivery is an adapter over the existing fin
 - `DocumentRecord` metadata links stored package evidence to `FinanceExportBatch`.
 - `ExternalSystemKind.Accounting` is the valid target kind for finance export targets.
 - `ExternalReference` exists for target-side batch, package, delivery, document, or upload receipt identifiers.
-- `SyncConflict` and two-way sync are not implemented; v1 connector delivery is outbound-only.
+- `SyncState` and `SyncConflict` foundation exists for future target-specific inbound or two-way integrations; v1 connector delivery is outbound-only.
 - WebAdmin supports generate, download, and an internal push surface. Push remains blocked unless a real `IFinanceExportConnectorAdapter` is registered for the selected accounting target.
 
 ## Connector Adapter Decision Matrix
@@ -28,7 +28,7 @@ The decision is explicit: connector delivery is an adapter over the existing fin
 | Delivery payload | Canonical JSON package exists. | Adapter maps the stored package to the target payload. The canonical package remains the source; target-specific CSV or JSON is adapter output, not the source package. | Stored package. | Future connector adapter service. | Target upload id or receipt id. | Mapping failure fails attempt before delivery. | Target payload must exclude credentials and raw archives. | Unchanged. | Needs target policy. | Keep first adapter provider-neutral or mock/file-delivery. |
 | Connector credentials | External system metadata exists but is not a secret store. | Credentials must come from secure provider configuration, not from export batches, attempts, references, documents, or package content. | Secure configuration/provider secret infrastructure. | Future connector adapter service. | None in export records. | Missing credentials fail readiness. | Secrets, access tokens, refresh tokens, private keys, and credentials are forbidden in export metadata. | Unchanged. | Needs connector-specific policy. | Design credential owner before real target adapter. |
 | Delivery status | Batch statuses exist for generated and delivered. | Delivered status is set only after target success and target evidence is stored. Generated remains downloadable but not delivered. | `FinanceExportBatch`. | Future connector adapter service. | External target receipt reference. | Failed delivery keeps batch retryable without fake success. | Safe status only; no provider payload dump. | Unchanged. | Requires implementation. | Add delivered transition tests with failure cases. |
-| Conflict handling | `SyncConflict` is not implemented. | V1 is outbound-only. Target-side rejection is a failed delivery attempt, not a sync conflict. | Future sync/conflict foundation. | Future sync service, not v1 connector. | No conflict ids in v1. | Rejection stores safe failure summary. | No inbound target records are trusted as source of truth. | Unchanged. | Blocked by sync design. | Do not implement two-way reconciliation in connector v1. |
+| Conflict handling | `SyncConflict` foundation exists. | V1 file-delivery is outbound-only. Target-side rejection is a failed delivery attempt, not a sync conflict. | Sync/conflict foundation plus future target adapter. | Future sync service, not v1 file-delivery. | No conflict ids in v1 file-delivery. | Rejection stores safe failure summary. | No inbound target records are trusted as source of truth. | Unchanged. | Foundation ready. | Do not implement two-way reconciliation in connector v1. |
 | WebAdmin push UI | Finance Exports has generate/download and internal push readiness. | Push UI calls only the connector delivery service. It is disabled when no adapter is available and never registers fake production delivery. | Finance WebAdmin. | Finance controller push action over application delivery service. | Batch and target receipt display only. | UI must not allow regenerate-on-push. | No secrets, credentials, or raw target responses displayed. | Unchanged. | Implemented for provider-neutral push surface. | Design a real target adapter and credential policy before enabling live delivery. |
 | Public/mobile boundary | No public/mobile finance export exists. | Connector delivery remains internal/operator-only. | WebAdmin/internal services. | Finance WebAdmin or background worker. | None for member contracts. | Public/mobile failures are not applicable. | No customer-facing accounting export route. | Unchanged. | Decision locked. | Keep compatibility smoke unchanged. |
 
@@ -39,8 +39,8 @@ The decision is explicit: connector delivery is an adapter over the existing fin
 - Target-side ids such as remote batch id, remote document id, upload id, or receipt id use `ExternalReference`.
 - Provider-specific columns are not added to `JournalEntry`, `Invoice`, `CreditNote`, `Payment`, `Refund`, sales documents, or export batches for target ids.
 - Secrets, access tokens, refresh tokens, private keys, raw target payloads, credentials, connection strings, and sensitive provider responses are forbidden in batch metadata, attempt metadata, external reference metadata, document metadata, and package content.
-- V1 connector delivery is outbound-only. Inbound sync, target reconciliation, and conflict resolution require a separate `SyncState`/`SyncConflict` design.
-- The adapter interface must be provider-neutral. A real target adapter starts only after target credential ownership, payload mapping, and delivery status semantics are locked.
+- V1 connector delivery is outbound-only. `SyncState`/`SyncConflict` foundation is available, but inbound sync, target reconciliation, and conflict resolution still require a concrete target-specific adapter design.
+- The adapter interface must be provider-neutral. A real accounting API target adapter starts only after target credential ownership, payload mapping, delivery status semantics, sync/conflict behavior, and smoke strategy are locked. Future target selection should follow [finance-export-accounting-api-target-selection-design.md](finance-export-accounting-api-target-selection-design.md) and prioritize several widely used German accounting products.
 - WebAdmin push action is internal/operator-only and uses the provider-neutral delivery service. It stays disabled unless a connector adapter is available for the selected accounting target.
 - Public WebApi, mobile/member, storefront, invoice archive/download, payment/refund, credit-note, and journal editor flows remain unchanged.
 
@@ -58,7 +58,7 @@ Implemented scope:
 
 Next gate:
 
-- Design an accounting API target adapter only after a real target, credential owner, payload mapping, and error contract are known.
+- Design an accounting API target adapter only after a real target, credential owner, payload mapping, error contract, sync/conflict behavior, and smoke strategy are known. Future target selection should follow [finance-export-accounting-api-target-selection-design.md](finance-export-accounting-api-target-selection-design.md) and prioritize widely used German accounting software.
 - Until then, file-delivery remains the provider-neutral production-safe outbound path.
 
 ## Finance Export Connector Adapter Foundation Outcome

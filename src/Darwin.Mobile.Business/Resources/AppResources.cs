@@ -21,6 +21,9 @@ public static class AppResources
     public static string HomeLoadingMessage => ResourceManager.GetString(nameof(HomeLoadingMessage), Culture) ?? "Loading your business context and operator access...";
     public static string StartButton => ResourceManager.GetString(nameof(StartButton), Culture) ?? "Start";
     public static string LogoutButtonText => ResourceManager.GetString(nameof(LogoutButtonText), Culture) ?? "Logout";
+    public static string LogoutConfirmTitle => ResourceManager.GetString(nameof(LogoutConfirmTitle), Culture) ?? "Log out?";
+    public static string LogoutConfirmMessage => ResourceManager.GetString(nameof(LogoutConfirmMessage), Culture) ?? "Are you sure you want to log out?";
+    public static string LogoutConfirmCancel => ResourceManager.GetString(nameof(LogoutConfirmCancel), Culture) ?? "Cancel";
 
     // Scanner / actions
     public static string ScanTitle => ResourceManager.GetString(nameof(ScanTitle), Culture) ?? "Scan";
@@ -252,6 +255,7 @@ public static class AppResources
     public static string DashboardLookbackDaysShortFormat => ResourceManager.GetString(nameof(DashboardLookbackDaysShortFormat), Culture) ?? "{0}d";
     public static string DashboardRecentActivityEmpty => ResourceManager.GetString(nameof(DashboardRecentActivityEmpty), Culture) ?? "No recent activity was recorded yet.";
     public static string DashboardCampaignTargetingFixMetricsFormat => ResourceManager.GetString(nameof(DashboardCampaignTargetingFixMetricsFormat), Culture) ?? "Campaign quick-fix — applied: {0} · no-change: {1} · resets: {2}";
+    public static string DashboardCampaignTargetingNoFixes => ResourceManager.GetString(nameof(DashboardCampaignTargetingNoFixes), Culture) ?? "No targeting fixes recorded";
     public static string DashboardSessionsFormat => ResourceManager.GetString(nameof(DashboardSessionsFormat), Culture) ?? "Sessions: {0}";
     public static string DashboardSessionsTitle => ResourceManager.GetString(nameof(DashboardSessionsTitle), Culture) ?? "Sessions";
     public static string DashboardAccrualsFormat => ResourceManager.GetString(nameof(DashboardAccrualsFormat), Culture) ?? "Accruals: {0}";
@@ -375,6 +379,11 @@ public static class AppResources
     public static string RewardsCampaignChannelPickerTitle => ResourceManager.GetString(nameof(RewardsCampaignChannelPickerTitle), Culture) ?? "Delivery channels";
     public static string RewardsCampaignChannelInAppOnly => ResourceManager.GetString(nameof(RewardsCampaignChannelInAppOnly), Culture) ?? "In-app only";
     public static string RewardsCampaignChannelInAppAndPush => ResourceManager.GetString(nameof(RewardsCampaignChannelInAppAndPush), Culture) ?? "In-app + Push";
+    public static string RewardsCampaignChannelUnavailableFormat => ResourceManager.GetString(nameof(RewardsCampaignChannelUnavailableFormat), Culture) ?? "{0} (not available)";
+    public static string RewardsCampaignPushQuotaSummaryFormat => ResourceManager.GetString(nameof(RewardsCampaignPushQuotaSummaryFormat), Culture) ?? "Plan: {0} · Push remaining: {1}/{2}";
+    public static string RewardsCampaignPushNotIncluded => ResourceManager.GetString(nameof(RewardsCampaignPushNotIncluded), Culture) ?? "Push campaigns are not included in your current plan.";
+    public static string RewardsCampaignPushQuotaUsed => ResourceManager.GetString(nameof(RewardsCampaignPushQuotaUsed), Culture) ?? "Monthly push campaign quota has been used.";
+    public static string RewardsCampaignInAppNotIncluded => ResourceManager.GetString(nameof(RewardsCampaignInAppNotIncluded), Culture) ?? "In-app campaigns are not included in your current plan.";
     public static string RewardsCampaignChannelValidationFailed => ResourceManager.GetString(nameof(RewardsCampaignChannelValidationFailed), Culture) ?? "Please select a valid campaign delivery channel.";
     public static string RewardsCampaignTargetingJsonPlaceholder => ResourceManager.GetString(nameof(RewardsCampaignTargetingJsonPlaceholder), Culture) ?? "Targeting JSON (optional, object)";
     public static string RewardsCampaignTargetingPresetTitle => ResourceManager.GetString(nameof(RewardsCampaignTargetingPresetTitle), Culture) ?? "Quick audience presets";
@@ -438,6 +447,9 @@ public static class AppResources
     public static string RewardsCampaignEligibilityMaxFormat => ResourceManager.GetString(nameof(RewardsCampaignEligibilityMaxFormat), Culture) ?? "Points ≤ {0}";
     public static string RewardsCampaignChannelSummaryFormat => ResourceManager.GetString(nameof(RewardsCampaignChannelSummaryFormat), Culture) ?? "Channels: {0}";
     public static string RewardsCampaignChannelUnknown => ResourceManager.GetString(nameof(RewardsCampaignChannelUnknown), Culture) ?? "unknown";
+    public static string RewardsCampaignDeliveryInAppOnly => ResourceManager.GetString(nameof(RewardsCampaignDeliveryInAppOnly), Culture) ?? "Delivery: in-app inbox only";
+    public static string RewardsCampaignDeliveryPushReady => ResourceManager.GetString(nameof(RewardsCampaignDeliveryPushReady), Culture) ?? "Delivery: push will be sent after activation";
+    public static string RewardsCampaignDeliveryPushQueued => ResourceManager.GetString(nameof(RewardsCampaignDeliveryPushQueued), Culture) ?? "Delivery: push queued or sent";
     public static string RewardsCampaignStateMetricsFormat => ResourceManager.GetString(nameof(RewardsCampaignStateMetricsFormat), Culture) ?? "Draft: {0} · Scheduled: {1} · Active: {2} · Expired: {3}";
     public static string RewardsCampaignAudienceMetricsFormat => ResourceManager.GetString(nameof(RewardsCampaignAudienceMetricsFormat), Culture) ?? "Joined: {0} · Tier: {1} · Points: {2} · Date window: {3}";
     public static string RewardsCampaignChannelMetricsFormat => ResourceManager.GetString(nameof(RewardsCampaignChannelMetricsFormat), Culture) ?? "In-app only: {0} · In-app + Push: {1} · Other: {2}";
@@ -531,6 +543,10 @@ public static class AppResources
     public static string PermissionDisclosureContinueButton => ResourceManager.GetString(nameof(PermissionDisclosureContinueButton), Culture) ?? "Continue";
     public static string PermissionDisclosureCancelButton => ResourceManager.GetString(nameof(PermissionDisclosureCancelButton), Culture) ?? "Not now";
     public static string PermissionDisclosurePrivacyButton => ResourceManager.GetString(nameof(PermissionDisclosurePrivacyButton), Culture) ?? "Open privacy notice";
+    public static string NotificationDisclosureTitle => ResourceManager.GetString(nameof(NotificationDisclosureTitle), Culture) ?? "Notifications";
+    public static string NotificationDisclosurePermissionName => ResourceManager.GetString(nameof(NotificationDisclosurePermissionName), Culture) ?? "Notification permission";
+    public static string NotificationDisclosurePurpose => ResourceManager.GetString(nameof(NotificationDisclosurePurpose), Culture) ?? "Loyan Business uses notifications for campaign results, scanner and session alerts, billing updates, and important account messages.";
+    public static string NotificationDisclosureRequirement => ResourceManager.GetString(nameof(NotificationDisclosureRequirement), Culture) ?? "Notifications are optional. If you do not allow them, important messages remain available inside the app.";
     public static string CameraDisclosureTitle => ResourceManager.GetString(nameof(CameraDisclosureTitle), Culture) ?? "Camera access";
     public static string CameraDisclosurePermissionName => ResourceManager.GetString(nameof(CameraDisclosurePermissionName), Culture) ?? "Camera permission";
     public static string CameraDisclosurePurpose => ResourceManager.GetString(nameof(CameraDisclosurePurpose), Culture) ?? "Loyan Business uses the camera to scan loyalty QR codes and load the correct scan session for processing.";
@@ -543,5 +559,19 @@ public static class AppResources
     public static string ScannerManualTokenAccept => ResourceManager.GetString(nameof(ScannerManualTokenAccept), Culture) ?? "OK";
     public static string ScannerManualTokenCancel => ResourceManager.GetString(nameof(ScannerManualTokenCancel), Culture) ?? "Cancel";
     public static string ScannerManualTokenPlaceholder => ResourceManager.GetString(nameof(ScannerManualTokenPlaceholder), Culture) ?? "paste token here";
+    public static string NotificationsTitle => ResourceManager.GetString(nameof(NotificationsTitle), Culture) ?? "Notifications";
+    public static string NotificationsSubtitle => ResourceManager.GetString(nameof(NotificationsSubtitle), Culture) ?? "Campaign results, scanner alerts, billing and system messages.";
+    public static string NotificationsLoadFailed => ResourceManager.GetString(nameof(NotificationsLoadFailed), Culture) ?? "Notifications could not be loaded right now.";
+    public static string NotificationsMarkAllRead => ResourceManager.GetString(nameof(NotificationsMarkAllRead), Culture) ?? "Mark all read";
+    public static string NotificationsMarkRead => ResourceManager.GetString(nameof(NotificationsMarkRead), Culture) ?? "Mark read";
+    public static string NotificationsEmptyTitle => ResourceManager.GetString(nameof(NotificationsEmptyTitle), Culture) ?? "No notifications";
+    public static string NotificationsEmptyBody => ResourceManager.GetString(nameof(NotificationsEmptyBody), Culture) ?? "Campaign, scanner and account updates will appear here.";
+    public static string NotificationsCategoryAll => ResourceManager.GetString(nameof(NotificationsCategoryAll), Culture) ?? "All";
+    public static string NotificationsCategorySystem => ResourceManager.GetString(nameof(NotificationsCategorySystem), Culture) ?? "System";
+    public static string NotificationsCategoryCampaign => ResourceManager.GetString(nameof(NotificationsCategoryCampaign), Culture) ?? "Campaigns";
+    public static string NotificationsCategoryReward => ResourceManager.GetString(nameof(NotificationsCategoryReward), Culture) ?? "Rewards";
+    public static string NotificationsCategoryBilling => ResourceManager.GetString(nameof(NotificationsCategoryBilling), Culture) ?? "Billing";
+    public static string NotificationsCategoryScannerSession => ResourceManager.GetString(nameof(NotificationsCategoryScannerSession), Culture) ?? "Scanner";
+    public static string NotificationsCategoryAccount => ResourceManager.GetString(nameof(NotificationsCategoryAccount), Culture) ?? "Account";
 
 }

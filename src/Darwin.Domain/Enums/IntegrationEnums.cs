@@ -31,3 +31,41 @@ public enum SourceOfTruth
     External = 2,
     Shared = 3
 }
+
+public enum SyncStateStatus
+{
+    NotSynced = 0,
+    PendingOutbound = 1,
+    PendingInbound = 2,
+    Synced = 3,
+    Failed = 4,
+    Conflict = 5,
+    Disabled = 6
+}
+
+public enum SyncDirection
+{
+    Unknown = 0,
+    Inbound = 1,
+    Outbound = 2,
+    Bidirectional = 3
+}
+
+public enum SyncConflictStatus
+{
+    Open = 0,
+    InReview = 1,
+    Resolved = 2,
+    Ignored = 3,
+    Cancelled = 4
+}
+
+public enum SyncConflictResolution
+{
+    None = 0,
+    UseDarwin = 1,
+    UseExternal = 2,
+    Merge = 3,
+    Ignore = 4,
+    Custom = 99
+}

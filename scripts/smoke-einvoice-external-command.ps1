@@ -69,6 +69,64 @@ if ($MaxArtifactBytes -lt 1024 -or $MaxArtifactBytes -gt 104857600) {
     exit 2
 }
 
+function Invoke-DotnetRunWithTimeout {
+    param(
+        [Parameter(Mandatory = $true)][string]$ProjectPath,
+        [Parameter(Mandatory = $true)][int]$TimeoutSeconds
+    )
+
+    $job = $null
+
+    try {
+        $job = Start-Job -ScriptBlock {
+            param([string]$SmokeProjectPath)
+
+            dotnet run --project $SmokeProjectPath 2>&1
+            $global:LASTEXITCODE
+        } -ArgumentList $ProjectPath
+
+        $hostTimeoutSeconds = [Math]::Min(900, [Math]::Max(120, $TimeoutSeconds + 120))
+        if (-not (Wait-Job -Job $job -Timeout $hostTimeoutSeconds)) {
+            Stop-Job -Job $job -ErrorAction SilentlyContinue | Out-Null
+            $childProcesses = @(Get-CimInstance Win32_Process -Filter "name = 'dotnet.exe'" |
+                Where-Object { $_.CommandLine -like "*$ProjectPath*" })
+            foreach ($childProcess in $childProcesses) {
+                & taskkill /PID $childProcess.ProcessId /T /F 2>$null | Out-Null
+            }
+
+            Write-Host "E-invoice external-command smoke failed. The temporary dotnet run host timed out."
+            return 124
+        }
+
+        $jobOutput = @(Receive-Job -Job $job)
+        $exitCode = 0
+        if ($jobOutput.Count -gt 0) {
+            $lastItem = $jobOutput[$jobOutput.Count - 1]
+            if ($lastItem -is [int]) {
+                $exitCode = [int]$lastItem
+                $jobOutput = @($jobOutput | Select-Object -First ($jobOutput.Count - 1))
+            }
+        }
+
+        $jobOutput | ForEach-Object { Write-Host $_ }
+        return $exitCode
+    }
+    finally {
+        if ($null -ne $job) {
+            if ($job.State -eq "Running") {
+                Stop-Job -Job $job -ErrorAction SilentlyContinue | Out-Null
+                $childProcesses = @(Get-CimInstance Win32_Process -Filter "name = 'dotnet.exe'" |
+                    Where-Object { $_.CommandLine -like "*$ProjectPath*" })
+                foreach ($childProcess in $childProcesses) {
+                    & taskkill /PID $childProcess.ProcessId /T /F 2>$null | Out-Null
+                }
+            }
+
+            Remove-Job -Job $job -Force -ErrorAction SilentlyContinue
+        }
+    }
+}
+
 if (-not $Execute) {
     Write-Host "E-invoice external-command smoke configuration is present for format '$normalizedFormat'."
     Write-Host "Run with -Execute to call the configured command through Darwin's IEInvoiceGenerationService adapter. Add -RequireValidationReport to reject commands that do not write a recognized positive validation report. The smoke verifies process execution plus artifact shape only; it can also fail if `--validation-report` reports a negative legal validation result. It is not a substitute for ZUGFeRD/Factur-X, XRechnung, PDF/A-3, EN16931, or legal validation."
@@ -207,9 +265,9 @@ Console.WriteLine("Validation profile: " + result.Artifact.ValidationProfile);
     Set-Item -Path Env:DARWIN_EINVOICE_TIMEOUT_SECONDS -Value $TimeoutSeconds.ToString()
     Set-Item -Path Env:DARWIN_EINVOICE_MAX_ARTIFACT_BYTES -Value $MaxArtifactBytes.ToString()
 
-    dotnet run --project $projectPath
-    if ($LASTEXITCODE -ne 0) {
-        exit $LASTEXITCODE
+    $dotnetExitCode = Invoke-DotnetRunWithTimeout -ProjectPath $projectPath -TimeoutSeconds $TimeoutSeconds
+    if ($dotnetExitCode -ne 0) {
+        exit $dotnetExitCode
     }
 }
 finally {

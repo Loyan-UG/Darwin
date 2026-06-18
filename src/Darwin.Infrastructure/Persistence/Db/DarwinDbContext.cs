@@ -12,6 +12,7 @@ using Darwin.Domain.Entities.Identity;
 using Darwin.Domain.Entities.Inventory;
 using Darwin.Domain.Entities.Integration;
 using Darwin.Domain.Entities.Marketing;
+using Darwin.Domain.Entities.Notifications;
 using Darwin.Domain.Entities.Orders;
 using Darwin.Domain.Entities.Pricing;
 using Darwin.Domain.Entities.Sales;
@@ -156,6 +157,8 @@ namespace Darwin.Infrastructure.Persistence.Db
         public DbSet<EventLog> EventLogs => Set<EventLog>();
         public DbSet<ExternalSystem> ExternalSystems => Set<ExternalSystem>();
         public DbSet<ExternalReference> ExternalReferences => Set<ExternalReference>();
+        public DbSet<SyncState> SyncStates => Set<SyncState>();
+        public DbSet<SyncConflict> SyncConflicts => Set<SyncConflict>();
         public DbSet<EmailDispatchOperation> EmailDispatchOperations => Set<EmailDispatchOperation>();
         public DbSet<ChannelDispatchOperation> ChannelDispatchOperations => Set<ChannelDispatchOperation>();
         public DbSet<ProviderCallbackInboxMessage> ProviderCallbackInboxMessages => Set<ProviderCallbackInboxMessage>();
@@ -191,6 +194,10 @@ namespace Darwin.Infrastructure.Persistence.Db
         /// Output files produced by <see cref="AnalyticsExportJob"/>.
         /// </summary>
         public DbSet<AnalyticsExportFile> AnalyticsExportFiles => Set<AnalyticsExportFile>();
+
+        // Notifications
+        public DbSet<NotificationMessage> NotificationMessages => Set<NotificationMessage>();
+        public DbSet<NotificationRecipient> NotificationRecipients => Set<NotificationRecipient>();
 
 
         /// <summary>
@@ -234,6 +241,8 @@ namespace Darwin.Infrastructure.Persistence.Db
                 modelBuilder.Entity<FinancePostingAccountMapping>().Property(x => x.MetadataJson).HasColumnType("jsonb");
                 modelBuilder.Entity<FinanceExportBatch>().Property(x => x.MetadataJson).HasColumnType("jsonb");
                 modelBuilder.Entity<FinanceExportAttempt>().Property(x => x.MetadataJson).HasColumnType("jsonb");
+                modelBuilder.Entity<SyncState>().Property(x => x.MetadataJson).HasColumnType("jsonb");
+                modelBuilder.Entity<SyncConflict>().Property(x => x.MetadataJson).HasColumnType("jsonb");
                 modelBuilder.Entity<InternalFollowUpTask>().Property(x => x.MetadataJson).HasColumnType("jsonb");
                 modelBuilder.Entity<BankAccount>().Property(x => x.MetadataJson).HasColumnType("jsonb");
                 modelBuilder.Entity<BankStatementImport>().Property(x => x.MetadataJson).HasColumnType("jsonb");

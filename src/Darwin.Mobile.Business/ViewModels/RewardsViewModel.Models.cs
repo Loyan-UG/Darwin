@@ -222,6 +222,12 @@ public sealed class BusinessCampaignEditorItem
         AppResources.RewardsCampaignChannelSummaryFormat,
         ResolveChannelLabel(Channels));
 
+    public string DeliveryStatusSummary => Channels == 3
+        ? IsActive
+            ? AppResources.RewardsCampaignDeliveryPushQueued
+            : AppResources.RewardsCampaignDeliveryPushReady
+        : AppResources.RewardsCampaignDeliveryInAppOnly;
+
     /// <summary>
     /// Gets a localized campaign state label so list cards do not render raw contract tokens.
     /// </summary>
