@@ -68,7 +68,9 @@ This package records non-secret go-live evidence for one Darwin deployment. Do n
 | PersonnelDocuments | Pending operator entry | Pending operator entry | System admin or DevOps owner | Pending |
 | PayrollPayslips | Pending operator entry | Pending operator entry | System admin or DevOps owner | Pending |
 | MinIO production readiness preflight | Pending operator entry | Pending operator entry | System admin or DevOps owner | Pending |
+| MinIO selected-provider smoke | Pending operator entry | Pending operator entry | System admin or DevOps owner | Pending |
 | Azure Blob readiness preflight | Pending operator entry | Pending operator entry | System admin or DevOps owner | Pending |
+| Azure Blob selected-provider smoke | Pending operator entry | Pending operator entry | System admin or DevOps owner | Pending |
 
 Required notes:
 

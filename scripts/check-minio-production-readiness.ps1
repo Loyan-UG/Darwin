@@ -71,8 +71,24 @@ function Assert-S3BucketName {
     }
 }
 
+function Assert-SafeEvidenceReference {
+    param(
+        [Parameter(Mandatory = $true)][string]$Name,
+        [Parameter(Mandatory = $true)][string]$Value
+    )
+
+    if ($Value -match '(?i)(password|secret|token|access[_ -]?key|connection[_ -]?string|private[_ -]?key|provider payload|raw payload)\s*[:=]' -or
+        $Value -match '-----BEGIN .*PRIVATE KEY-----' -or
+        $Value -match '[{}]') {
+        Write-Host "MinIO production readiness is blocked."
+        Write-Host "$Name must be a non-secret evidence reference, not a credential, provider payload, policy JSON, object key dump, or private artifact content."
+        exit 2
+    }
+}
+
 $endpoint = Get-EnvValue "DARWIN_MINIO_PRODUCTION_ENDPOINT"
 $bucket = Get-EnvValue "DARWIN_MINIO_PRODUCTION_BUCKET"
+$selectedProviderSmokeReference = Get-EnvValue "DARWIN_MINIO_SELECTED_PROVIDER_SMOKE_REFERENCE"
 $requiredConfirmations = @(
     "DARWIN_MINIO_PRODUCTION_PROVIDER_SELECTED_CONFIRMED",
     "DARWIN_MINIO_TLS_CONFIRMED",
@@ -97,6 +113,7 @@ $requiredConfirmations = @(
     "DARWIN_MINIO_PAYROLL_PAYSLIPS_PROFILE_CONFIRMED",
     "DARWIN_MINIO_DISPOSABLE_SMOKE_PREFIX_CONFIRMED",
     "DARWIN_MINIO_RETENTION_DELETE_BEHAVIOR_CONFIRMED",
+    "DARWIN_MINIO_SELECTED_PROVIDER_SMOKE_CONFIRMED",
     "DARWIN_MINIO_OPERATOR_RUNBOOK_CONFIRMED"
 )
 
@@ -107,6 +124,10 @@ if ([string]::IsNullOrWhiteSpace($endpoint)) {
 
 if ([string]::IsNullOrWhiteSpace($bucket)) {
     $missing += "DARWIN_MINIO_PRODUCTION_BUCKET"
+}
+
+if ([string]::IsNullOrWhiteSpace($selectedProviderSmokeReference)) {
+    $missing += "DARWIN_MINIO_SELECTED_PROVIDER_SMOKE_REFERENCE"
 }
 
 foreach ($name in $requiredConfirmations) {
@@ -128,7 +149,9 @@ if ($missing.Count -gt 0) {
 
 Assert-AbsoluteHttpsEndpoint -Name "DARWIN_MINIO_PRODUCTION_ENDPOINT" -Value $endpoint
 Assert-S3BucketName -Name "DARWIN_MINIO_PRODUCTION_BUCKET" -Value $bucket
+Assert-SafeEvidenceReference -Name "DARWIN_MINIO_SELECTED_PROVIDER_SMOKE_REFERENCE" -Value $selectedProviderSmokeReference
 
 Write-Host "MinIO production readiness prerequisites are present."
 Write-Host "No MinIO access key, secret key, object payload, bucket policy, or provider response was accepted or printed."
-Write-Host "After this preflight passes, run the selected-provider smoke and WebAdmin smoke against the approved disposable production prefix before claiming provider-level archive immutability."
+Write-Host "Selected-provider smoke evidence reference is present and was not printed."
+Write-Host "After this preflight passes, keep the selected-provider smoke and WebAdmin smoke evidence attached before claiming provider-level archive immutability."

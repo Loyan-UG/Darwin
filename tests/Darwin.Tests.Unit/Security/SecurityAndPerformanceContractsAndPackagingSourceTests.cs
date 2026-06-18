@@ -567,11 +567,21 @@ public sealed class SecurityAndPerformanceContractsAndPackagingSourceTests : Sec
             .And.Contain("DARWIN_MINIO_MEDIA_ASSETS_PROFILE_DECIDED_CONFIRMED")
             .And.Contain("DARWIN_MINIO_DISPOSABLE_SMOKE_PREFIX_CONFIRMED")
             .And.Contain("DARWIN_MINIO_RETENTION_DELETE_BEHAVIOR_CONFIRMED")
+            .And.Contain("DARWIN_MINIO_SELECTED_PROVIDER_SMOKE_CONFIRMED")
+            .And.Contain("DARWIN_MINIO_SELECTED_PROVIDER_SMOKE_REFERENCE")
+            .And.Contain("Selected-provider smoke evidence reference is present and was not printed.")
             .And.Contain("DARWIN_MINIO_OPERATOR_RUNBOOK_CONFIRMED")
             .And.Contain("No MinIO access key, secret key")
             .And.NotContain("Invoke-RestMethod")
             .And.NotContain("Invoke-WebRequest")
             .And.NotContain("MINIO_ROOT_PASSWORD");
+
+        ReadRepositoryFile(Path.Combine("scripts", "check-azure-object-storage-readiness.ps1"))
+            .Should()
+            .Contain("DARWIN_AZURE_BLOB_SELECTED_PROVIDER_SMOKE_CONFIRMED")
+            .And.Contain("DARWIN_AZURE_BLOB_SELECTED_PROVIDER_SMOKE_REFERENCE")
+            .And.Contain("Selected-provider smoke evidence reference is present and was not printed.")
+            .And.NotContain("Write-Host $selectedProviderSmokeReference");
 
         ReadRepositoryFile(Path.Combine("scripts", "smoke-einvoice-external-command.ps1"))
             .Should()
@@ -2554,6 +2564,8 @@ public sealed class SecurityAndPerformanceContractsAndPackagingSourceTests : Sec
                 ["DARWIN_MINIO_PAYROLL_PAYSLIPS_PROFILE_CONFIRMED"] = "true",
                 ["DARWIN_MINIO_DISPOSABLE_SMOKE_PREFIX_CONFIRMED"] = "true",
                 ["DARWIN_MINIO_RETENTION_DELETE_BEHAVIOR_CONFIRMED"] = "true",
+                ["DARWIN_MINIO_SELECTED_PROVIDER_SMOKE_CONFIRMED"] = "true",
+                ["DARWIN_MINIO_SELECTED_PROVIDER_SMOKE_REFERENCE"] = "minio-smoke-ref-001",
                 ["DARWIN_MINIO_OPERATOR_RUNBOOK_CONFIRMED"] = "true"
             }
         };
@@ -2587,6 +2599,8 @@ public sealed class SecurityAndPerformanceContractsAndPackagingSourceTests : Sec
                 ["DARWIN_AZURE_BLOB_PAYROLL_PAYSLIPS_PROFILE_CONFIRMED"] = "true",
                 ["DARWIN_AZURE_BLOB_DISPOSABLE_SMOKE_PREFIX_CONFIRMED"] = "true",
                 ["DARWIN_AZURE_BLOB_RETENTION_DELETE_BEHAVIOR_CONFIRMED"] = "true",
+                ["DARWIN_AZURE_BLOB_SELECTED_PROVIDER_SMOKE_CONFIRMED"] = "true",
+                ["DARWIN_AZURE_BLOB_SELECTED_PROVIDER_SMOKE_REFERENCE"] = "azure-smoke-ref-001",
                 ["DARWIN_AZURE_BLOB_OPERATOR_RUNBOOK_CONFIRMED"] = "true"
             }
         };
@@ -2862,6 +2876,8 @@ public sealed class SecurityAndPerformanceContractsAndPackagingSourceTests : Sec
             ["DARWIN_MINIO_PAYROLL_PAYSLIPS_PROFILE_CONFIRMED"] = "true",
             ["DARWIN_MINIO_DISPOSABLE_SMOKE_PREFIX_CONFIRMED"] = "true",
             ["DARWIN_MINIO_RETENTION_DELETE_BEHAVIOR_CONFIRMED"] = "true",
+            ["DARWIN_MINIO_SELECTED_PROVIDER_SMOKE_CONFIRMED"] = "true",
+            ["DARWIN_MINIO_SELECTED_PROVIDER_SMOKE_REFERENCE"] = "minio-smoke-ref-001",
             ["DARWIN_MINIO_OPERATOR_RUNBOOK_CONFIRMED"] = "true",
             ["DARWIN_AZURE_BLOB_PRODUCTION_ENDPOINT"] = "https://storage.example.test",
             ["DARWIN_AZURE_BLOB_PRODUCTION_CONTAINER"] = "darwin-invoice-archive",
@@ -2886,6 +2902,8 @@ public sealed class SecurityAndPerformanceContractsAndPackagingSourceTests : Sec
             ["DARWIN_AZURE_BLOB_PAYROLL_PAYSLIPS_PROFILE_CONFIRMED"] = "true",
             ["DARWIN_AZURE_BLOB_DISPOSABLE_SMOKE_PREFIX_CONFIRMED"] = "true",
             ["DARWIN_AZURE_BLOB_RETENTION_DELETE_BEHAVIOR_CONFIRMED"] = "true",
+            ["DARWIN_AZURE_BLOB_SELECTED_PROVIDER_SMOKE_CONFIRMED"] = "true",
+            ["DARWIN_AZURE_BLOB_SELECTED_PROVIDER_SMOKE_REFERENCE"] = "azure-smoke-ref-001",
             ["DARWIN_AZURE_BLOB_OPERATOR_RUNBOOK_CONFIRMED"] = "true",
             ["DARWIN_EINVOICE_TOOLING_REFERENCE"] = "tooling-checksum-ref-001",
             ["DARWIN_EINVOICE_EVIDENCE_PACKAGE_REFERENCE"] = "evidence-package-ref-001",
@@ -2952,6 +2970,8 @@ public sealed class SecurityAndPerformanceContractsAndPackagingSourceTests : Sec
             ["DARWIN_MINIO_PAYROLL_PAYSLIPS_PROFILE_CONFIRMED"] = "true",
             ["DARWIN_MINIO_DISPOSABLE_SMOKE_PREFIX_CONFIRMED"] = "true",
             ["DARWIN_MINIO_RETENTION_DELETE_BEHAVIOR_CONFIRMED"] = "true",
+            ["DARWIN_MINIO_SELECTED_PROVIDER_SMOKE_CONFIRMED"] = "true",
+            ["DARWIN_MINIO_SELECTED_PROVIDER_SMOKE_REFERENCE"] = "minio-smoke-ref-001",
             ["DARWIN_MINIO_OPERATOR_RUNBOOK_CONFIRMED"] = "true"
         };
 
@@ -2983,6 +3003,8 @@ public sealed class SecurityAndPerformanceContractsAndPackagingSourceTests : Sec
             ["DARWIN_AZURE_BLOB_PAYROLL_PAYSLIPS_PROFILE_CONFIRMED"] = "true",
             ["DARWIN_AZURE_BLOB_DISPOSABLE_SMOKE_PREFIX_CONFIRMED"] = "true",
             ["DARWIN_AZURE_BLOB_RETENTION_DELETE_BEHAVIOR_CONFIRMED"] = "true",
+            ["DARWIN_AZURE_BLOB_SELECTED_PROVIDER_SMOKE_CONFIRMED"] = "true",
+            ["DARWIN_AZURE_BLOB_SELECTED_PROVIDER_SMOKE_REFERENCE"] = "azure-smoke-ref-001",
             ["DARWIN_AZURE_BLOB_OPERATOR_RUNBOOK_CONFIRMED"] = "true"
         };
 

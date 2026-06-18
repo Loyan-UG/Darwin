@@ -112,6 +112,8 @@ The preflight records only environment-level confirmations and refuses to print 
 | `DARWIN_AZURE_BLOB_PAYROLL_PAYSLIPS_PROFILE_CONFIRMED` | Confirms `PayrollPayslips` profile decision. |
 | `DARWIN_AZURE_BLOB_DISPOSABLE_SMOKE_PREFIX_CONFIRMED` | Confirms the disposable smoke prefix is approved. |
 | `DARWIN_AZURE_BLOB_RETENTION_DELETE_BEHAVIOR_CONFIRMED` | Confirms delete or retention behavior for smoke artifacts. |
+| `DARWIN_AZURE_BLOB_SELECTED_PROVIDER_SMOKE_CONFIRMED` | Confirms the selected-provider smoke was executed against the approved Azure disposable prefix. |
+| `DARWIN_AZURE_BLOB_SELECTED_PROVIDER_SMOKE_REFERENCE` | Records a non-secret reference to the Azure selected-provider smoke evidence. Do not put object keys, SAS tokens, provider payloads, policy JSON, or private logs in this value. |
 | `DARWIN_AZURE_BLOB_OPERATOR_RUNBOOK_CONFIRMED` | Confirms the operator runbook and evidence owner are assigned. |
 
 Run local and staging validation only after the deployment owner confirms the target container and disposable prefix.
@@ -131,7 +133,7 @@ Azure Blob is production-ready for a Darwin deployment only when:
 - immutability or legal-hold behavior is validated for compliance-sensitive profiles;
 - backup, restore, monitoring, and alerting evidence is recorded;
 - `scripts\check-azure-object-storage-readiness.ps1` passes in the deployment shell;
-- disposable-prefix smoke passes;
+- disposable-prefix selected-provider smoke passes and has a non-secret evidence reference;
 - the production readiness evidence package contains non-secret references to the Azure preflight, smoke, retention/legal-hold evidence, and approval owner.
 
 ## Non-Goals

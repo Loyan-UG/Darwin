@@ -77,7 +77,7 @@ $lines.Add('```text')
 $lines.Add($outputText)
 $lines.Add('```')
 $lines.Add("")
-$lines.Add("Use this report as a non-secret attachment reference only when Azure Blob is selected for a deployment or readiness lane. A `Blocked` result is expected until the deployment owner provides real Azure policy, identity, monitoring, profile, smoke-prefix, and runbook evidence.")
+$lines.Add("Use this report as a non-secret attachment reference only when Azure Blob is selected for a deployment or readiness lane. A `Blocked` result is expected until the deployment owner provides real Azure policy, identity, monitoring, profile, smoke-prefix, selected-provider smoke reference, and runbook evidence.")
 
 $report = $lines -join "`r`n"
 if (Test-ContainsSensitivePattern $report) {

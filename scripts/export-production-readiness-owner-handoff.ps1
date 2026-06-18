@@ -152,13 +152,13 @@ $reports = @(
         Name = "MinIO production"
         FileName = "minio-production-readiness-report.md"
         Owner = "System administrator or DevOps owner"
-        NextAction = "Configure the approved MinIO production target with TLS, least-privilege keys, retention/legal hold, backup/restore, monitoring, disposable-prefix smoke, and runbook owner evidence."
+        NextAction = "Configure the approved MinIO production target with TLS, least-privilege keys, retention/legal hold, backup/restore, monitoring, selected-provider smoke reference, and runbook owner evidence."
     },
     @{
         Name = "Azure Blob object storage"
         FileName = "azure-object-storage-readiness-report.md"
         Owner = "System administrator or DevOps owner"
-        NextAction = "Prepare Azure Blob readiness as the next storage hardening lane without replacing the selected MinIO production evidence unless the deployment explicitly selects Azure."
+        NextAction = "Prepare Azure Blob readiness as the next storage hardening lane, including selected-provider smoke reference, without replacing the selected MinIO production evidence unless the deployment explicitly selects Azure."
     },
     @{
         Name = "E-invoice production"
