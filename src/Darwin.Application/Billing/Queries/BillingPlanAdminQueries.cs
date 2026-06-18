@@ -1,4 +1,5 @@
 using Darwin.Application.Abstractions.Persistence;
+using Darwin.Application.Billing;
 using Darwin.Application.Common;
 using Darwin.Application.Billing.DTOs;
 using Darwin.Domain.Entities.Billing;
@@ -81,22 +82,30 @@ public sealed class GetBillingPlansAdminPageHandler
             .ConfigureAwait(false);
 
         var items = planRows
-            .Select(x => new BillingPlanListItemDto
+            .Select(x =>
             {
-                Id = x.Id,
-                Code = x.Code,
-                Name = BillingLocalizedTextResolver.ResolvePlanName(x.Name, x.FeaturesJson),
-                Description = BillingLocalizedTextResolver.ResolvePlanDescription(x.Description, x.FeaturesJson),
-                PriceMinor = x.PriceMinor,
-                Currency = x.Currency,
-                Interval = x.Interval,
-                IntervalCount = x.IntervalCount,
-                TrialDays = x.TrialDays,
-                IsActive = x.IsActive,
-                HasFeatures = x.HasFeatures,
-                ActiveSubscriptionCount = x.ActiveSubscriptionCount,
-                ModifiedAtUtc = x.ModifiedAtUtc,
-                RowVersion = x.RowVersion
+                var features = BillingPlanFeaturesJson.Parse(x.FeaturesJson);
+                return new BillingPlanListItemDto
+                {
+                    Id = x.Id,
+                    Code = x.Code,
+                    Name = BillingLocalizedTextResolver.ResolvePlanName(x.Name, x.FeaturesJson),
+                    Description = BillingLocalizedTextResolver.ResolvePlanDescription(x.Description, x.FeaturesJson),
+                    PriceMinor = x.PriceMinor,
+                    Currency = x.Currency,
+                    Interval = x.Interval,
+                    IntervalCount = x.IntervalCount,
+                    TrialDays = x.TrialDays,
+                    IsActive = x.IsActive,
+                    HasFeatures = x.HasFeatures,
+                    MonthlyPushCampaigns = features.MonthlyPushCampaigns,
+                    CampaignsInApp = features.CampaignsInApp,
+                    CampaignsPush = features.CampaignsPush,
+                    AdvancedTargeting = features.AdvancedTargeting,
+                    ActiveSubscriptionCount = x.ActiveSubscriptionCount,
+                    ModifiedAtUtc = x.ModifiedAtUtc,
+                    RowVersion = x.RowVersion
+                };
             })
             .ToList();
 
@@ -153,7 +162,7 @@ public sealed class GetBillingPlanForEditHandler
 
     public async Task<BillingPlanEditDto?> HandleAsync(Guid id, CancellationToken ct = default)
     {
-        return await _db.Set<BillingPlan>()
+        var dto = await _db.Set<BillingPlan>()
             .AsNoTracking()
             .Where(x => !x.IsDeleted && x.Id == id)
             .Select(x => new BillingPlanEditDto
@@ -173,5 +182,12 @@ public sealed class GetBillingPlanForEditHandler
             })
             .FirstOrDefaultAsync(ct)
             .ConfigureAwait(false);
+
+        if (dto is not null)
+        {
+            BillingPlanFeaturesJson.ApplyToDto(dto, dto.FeaturesJson);
+        }
+
+        return dto;
     }
 }

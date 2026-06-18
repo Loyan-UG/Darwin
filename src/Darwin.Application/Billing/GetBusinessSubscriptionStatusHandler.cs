@@ -65,6 +65,8 @@ public sealed class GetBusinessSubscriptionStatusHandler
             });
         }
 
+        var features = BillingPlanFeaturesJson.Parse(snapshot.PlanFeaturesJson);
+
         return Result<BusinessSubscriptionStatusDto>.Ok(new BusinessSubscriptionStatusDto
         {
             HasSubscription = snapshot.HasSubscription,
@@ -80,7 +82,15 @@ public sealed class GetBusinessSubscriptionStatusHandler
             CurrentPeriodEndUtc = snapshot.CurrentPeriodEndUtc,
             TrialEndsAtUtc = snapshot.TrialEndsAtUtc,
             CanceledAtUtc = snapshot.CanceledAtUtc,
-            CancelAtPeriodEnd = snapshot.CancelAtPeriodEnd
+            CancelAtPeriodEnd = snapshot.CancelAtPeriodEnd,
+            MaxStaff = features.MaxStaff,
+            MaxRewardTiers = features.MaxRewardTiers,
+            MonthlyPushCampaigns = features.MonthlyPushCampaigns,
+            CampaignsInApp = features.CampaignsInApp,
+            CampaignsPush = features.CampaignsPush,
+            AdvancedTargeting = features.AdvancedTargeting,
+            Exports = features.Exports,
+            Sla = features.Sla
         });
     }
 }

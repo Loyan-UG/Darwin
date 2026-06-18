@@ -54,18 +54,30 @@ public sealed class GetBillingPlansHandler
         return new GetBillingPlansDto
         {
             Items = planRows
-                .Select(x => new BillingPlanSummaryDto
+                .Select(x =>
                 {
-                    Id = x.Id,
-                    Code = x.Code,
-                    Name = BillingLocalizedTextResolver.ResolvePlanName(x.Name, x.FeaturesJson, culture),
-                    Description = BillingLocalizedTextResolver.ResolvePlanDescription(x.Description, x.FeaturesJson, culture),
-                    PriceMinor = x.PriceMinor,
-                    Currency = x.Currency,
-                    Interval = x.Interval.ToString(),
-                    IntervalCount = x.IntervalCount,
-                    TrialDays = x.TrialDays,
-                    IsActive = x.IsActive
+                    var features = BillingPlanFeaturesJson.Parse(x.FeaturesJson);
+                    return new BillingPlanSummaryDto
+                    {
+                        Id = x.Id,
+                        Code = x.Code,
+                        Name = BillingLocalizedTextResolver.ResolvePlanName(x.Name, x.FeaturesJson, culture),
+                        Description = BillingLocalizedTextResolver.ResolvePlanDescription(x.Description, x.FeaturesJson, culture),
+                        PriceMinor = x.PriceMinor,
+                        Currency = x.Currency,
+                        Interval = x.Interval.ToString(),
+                        IntervalCount = x.IntervalCount,
+                        TrialDays = x.TrialDays,
+                        IsActive = x.IsActive,
+                        MaxStaff = features.MaxStaff,
+                        MaxRewardTiers = features.MaxRewardTiers,
+                        MonthlyPushCampaigns = features.MonthlyPushCampaigns,
+                        CampaignsInApp = features.CampaignsInApp,
+                        CampaignsPush = features.CampaignsPush,
+                        AdvancedTargeting = features.AdvancedTargeting,
+                        Exports = features.Exports,
+                        Sla = features.Sla
+                    };
                 })
                 .ToList()
         };

@@ -160,6 +160,7 @@ namespace Darwin.WebAdmin.ViewModels.Loyalty
         public LoyaltyCampaignQueueFilter Filter { get; set; } = LoyaltyCampaignQueueFilter.All;
         public List<SelectListItem> FilterItems { get; set; } = new();
         public LoyaltyCampaignOpsSummaryVm Summary { get; set; } = new();
+        public string CampaignEntitlementSummary { get; set; } = string.Empty;
         public List<LoyaltyOpsPlaybookVm> Playbooks { get; set; } = new();
         public List<SelectListItem> BusinessOptions { get; set; } = new();
         public List<LoyaltyCampaignListItemVm> Items { get; set; } = new();
@@ -275,6 +276,7 @@ namespace Darwin.WebAdmin.ViewModels.Loyalty
         public string? PayloadJson { get; set; } = "{}";
         public byte[]? RowVersion { get; set; }
         public List<SelectListItem> BusinessOptions { get; set; } = new();
+        public string CampaignEntitlementSummary { get; set; } = string.Empty;
         public List<SelectListItem> ChannelItems { get; set; } = new()
         {
             new("In-app only", "1"),

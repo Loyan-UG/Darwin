@@ -140,6 +140,7 @@ namespace Darwin.Mobile.Shared.Services.Loyalty
 
         // Business campaign management
         Task<Result<GetBusinessCampaignsResponse>> GetBusinessCampaignsAsync(int page, int pageSize, CancellationToken cancellationToken);
+        Task<Result<BusinessCampaignEntitlementResponse>> GetBusinessCampaignEntitlementAsync(CancellationToken cancellationToken);
         Task<Result<BusinessCampaignMutationResponse>> CreateBusinessCampaignAsync(CreateBusinessCampaignRequest request, CancellationToken cancellationToken);
         Task<Result> UpdateBusinessCampaignAsync(UpdateBusinessCampaignRequest request, CancellationToken cancellationToken);
         Task<Result> SetBusinessCampaignActivationAsync(SetCampaignActivationRequest request, CancellationToken cancellationToken);

@@ -148,6 +148,15 @@
   <data name="LogoutButtonText" xml:space="preserve">
     <value>Logout</value>
   </data>
+  <data name="LogoutConfirmTitle" xml:space="preserve">
+    <value>Log out?</value>
+  </data>
+  <data name="LogoutConfirmMessage" xml:space="preserve">
+    <value>Are you sure you want to log out?</value>
+  </data>
+  <data name="LogoutConfirmCancel" xml:space="preserve">
+    <value>Cancel</value>
+  </data>
   <data name="NoActiveSession" xml:space="preserve">
     <value>No active scan session.</value>
   </data>
@@ -751,6 +760,21 @@
   <data name="RewardsCampaignChannelInAppAndPush" xml:space="preserve">
     <value>In-app + Push</value>
   </data>
+  <data name="RewardsCampaignChannelUnavailableFormat" xml:space="preserve">
+    <value>{0} (not available)</value>
+  </data>
+  <data name="RewardsCampaignPushQuotaSummaryFormat" xml:space="preserve">
+    <value>Plan: {0} · Push remaining: {1}/{2}</value>
+  </data>
+  <data name="RewardsCampaignPushNotIncluded" xml:space="preserve">
+    <value>Push campaigns are not included in your current plan.</value>
+  </data>
+  <data name="RewardsCampaignPushQuotaUsed" xml:space="preserve">
+    <value>Monthly push campaign quota has been used.</value>
+  </data>
+  <data name="RewardsCampaignInAppNotIncluded" xml:space="preserve">
+    <value>In-app campaigns are not included in your current plan.</value>
+  </data>
   <data name="RewardsCampaignTargetingJsonPlaceholder" xml:space="preserve">
     <value>Targeting JSON (optional, object)</value>
   </data>
@@ -940,6 +964,15 @@
   <data name="RewardsCampaignChannelUnknown" xml:space="preserve">
     <value>unknown</value>
   </data>
+  <data name="RewardsCampaignDeliveryInAppOnly" xml:space="preserve">
+    <value>Delivery: in-app inbox only</value>
+  </data>
+  <data name="RewardsCampaignDeliveryPushReady" xml:space="preserve">
+    <value>Delivery: push will be sent after activation</value>
+  </data>
+  <data name="RewardsCampaignDeliveryPushQueued" xml:space="preserve">
+    <value>Delivery: push queued or sent</value>
+  </data>
   <data name="RewardsCampaignStateMetricsFormat" xml:space="preserve">
     <value>Draft: {0} · Scheduled: {1} · Active: {2} · Expired: {3}</value>
   </data>
@@ -990,6 +1023,9 @@
   </data>
   <data name="DashboardCampaignTargetingFixMetricsFormat" xml:space="preserve">
     <value>Campaign quick-fix — applied: {0} · no-change: {1} · resets: {2}</value>
+  </data>
+  <data name="DashboardCampaignTargetingNoFixes" xml:space="preserve">
+    <value>No targeting fixes recorded</value>
   </data>
   <data name="AuthLegalSectionTitle" xml:space="preserve">
     <value>Legal &amp; Privacy</value>
@@ -1050,6 +1086,18 @@
   </data>
   <data name="PermissionDisclosurePrivacyButton" xml:space="preserve">
     <value>Open privacy notice</value>
+  </data>
+  <data name="NotificationDisclosureTitle" xml:space="preserve">
+    <value>Notifications</value>
+  </data>
+  <data name="NotificationDisclosurePermissionName" xml:space="preserve">
+    <value>Notification permission</value>
+  </data>
+  <data name="NotificationDisclosurePurpose" xml:space="preserve">
+    <value>Loyan Business uses notifications for campaign results, scanner and session alerts, billing updates, and important account messages.</value>
+  </data>
+  <data name="NotificationDisclosureRequirement" xml:space="preserve">
+    <value>Notifications are optional. If you do not allow them, important messages remain available inside the app.</value>
   </data>
   <data name="CameraDisclosureTitle" xml:space="preserve">
     <value>Camera access</value>
@@ -1518,5 +1566,47 @@
   </data>
   <data name="HomeSetupChecklistRemainingFormat" xml:space="preserve">
     <value>Remaining setup items: {0}</value>
+  </data>
+  <data name="NotificationsTitle" xml:space="preserve">
+    <value>Notifications</value>
+  </data>
+  <data name="NotificationsSubtitle" xml:space="preserve">
+    <value>Campaign results, scanner alerts, billing and system messages.</value>
+  </data>
+  <data name="NotificationsLoadFailed" xml:space="preserve">
+    <value>Notifications could not be loaded right now.</value>
+  </data>
+  <data name="NotificationsMarkAllRead" xml:space="preserve">
+    <value>Mark all read</value>
+  </data>
+  <data name="NotificationsMarkRead" xml:space="preserve">
+    <value>Mark read</value>
+  </data>
+  <data name="NotificationsEmptyTitle" xml:space="preserve">
+    <value>No notifications</value>
+  </data>
+  <data name="NotificationsEmptyBody" xml:space="preserve">
+    <value>Campaign, scanner and account updates will appear here.</value>
+  </data>
+  <data name="NotificationsCategoryAll" xml:space="preserve">
+    <value>All</value>
+  </data>
+  <data name="NotificationsCategorySystem" xml:space="preserve">
+    <value>System</value>
+  </data>
+  <data name="NotificationsCategoryCampaign" xml:space="preserve">
+    <value>Campaigns</value>
+  </data>
+  <data name="NotificationsCategoryReward" xml:space="preserve">
+    <value>Rewards</value>
+  </data>
+  <data name="NotificationsCategoryBilling" xml:space="preserve">
+    <value>Billing</value>
+  </data>
+  <data name="NotificationsCategoryScannerSession" xml:space="preserve">
+    <value>Scanner</value>
+  </data>
+  <data name="NotificationsCategoryAccount" xml:space="preserve">
+    <value>Account</value>
   </data>
 </root>

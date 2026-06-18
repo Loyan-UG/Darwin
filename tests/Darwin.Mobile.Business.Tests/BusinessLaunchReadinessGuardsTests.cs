@@ -41,6 +41,24 @@ public sealed class BusinessLaunchReadinessGuardsTests
     }
 
     [Fact]
+    public void BusinessAndroidPush_Should_HandleForegroundMessagesAndNotificationTapDeepLinks()
+    {
+        var root = FindRepositoryRoot();
+        var firebaseService = File.ReadAllText(root.Combine("src", "Darwin.Mobile.Business", "Platforms", "Android", "Notifications", "BusinessFirebaseMessagingService.cs"));
+        var mainActivity = File.ReadAllText(root.Combine("src", "Darwin.Mobile.Business", "Platforms", "Android", "MainActivity.cs"));
+        var navigator = File.ReadAllText(root.Combine("src", "Darwin.Mobile.Business", "Services", "Notifications", "NotificationDeepLinkNavigator.cs"));
+
+        firebaseService.Should().Contain("OnMessageReceived");
+        firebaseService.Should().Contain("NotificationChannel");
+        firebaseService.Should().Contain("deepLink");
+        firebaseService.Should().Contain("notificationId");
+        mainActivity.Should().Contain("OnNewIntent");
+        mainActivity.Should().Contain("HandleNotificationIntent");
+        navigator.Should().Contain("TryNavigatePendingAsync");
+        navigator.Should().Contain("Routes.Notifications");
+    }
+
+    [Fact]
     public void BusinessApplePlatformFiles_Should_DeclareCameraUsageDescription()
     {
         var root = FindRepositoryRoot();
@@ -222,6 +240,21 @@ public sealed class BusinessLaunchReadinessGuardsTests
         service.Should().Contain("MainThread.InvokeOnMainThreadAsync(Permissions.RequestAsync<Permissions.Camera>)");
         service.Should().Contain("AppInfo.ShowSettingsUI()");
         service.Should().Contain("PromptForManualTokenAsync");
+    }
+
+    [Fact]
+    public void BusinessScannerCameraPage_Should_Not_CoverPreviewWithPrimaryCancelOverlay()
+    {
+        var root = FindRepositoryRoot();
+        var page = File.ReadAllText(root.Combine("src", "Darwin.Mobile.Business", "Views", "QrScanPage.xaml"));
+
+        page.Should().Contain("CameraBarcodeReaderView", because: "the live camera preview must remain the scanner surface");
+        page.Should().Contain("VerticalOptions=\"Fill\"", because: "the camera preview must fill the scanner page behind controls");
+        page.Should().Contain("BackgroundColor=\"Black\"", because: "camera startup gaps should not show the normal app surface color");
+        page.Should().Contain("Style=\"{StaticResource SyncfusionOutlinedButtonStyle}\"", because: "the cancel action must be a low-emphasis overlay control");
+        page.Should().Contain("WidthRequest=\"132\"", because: "the cancel action must not expand into a full-page primary button");
+        page.Should().NotContain("Style=\"{StaticResource SyncfusionPrimaryButtonStyle}\"", because: "a primary business button can cover the camera preview with the brand color");
+        page.Should().NotContain("BackgroundColor=\"{StaticResource CameraControlScrimColor}\"", because: "the control scrim should be a compact overlay, not a full-width bottom band");
     }
 
     [Fact]

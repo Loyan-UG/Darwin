@@ -5,7 +5,13 @@ using Darwin.Application;
 using Darwin.Application.Abstractions.Services;
 using Darwin.Application.Abstractions.Persistence;
 using Darwin.Application.Loyalty.Campaigns;
+using Darwin.Application.Notifications;
+using Darwin.Domain.Entities.Billing;
+using Darwin.Domain.Entities.Businesses;
+using Darwin.Domain.Entities.Identity;
+using Darwin.Domain.Entities.Loyalty;
 using Darwin.Domain.Entities.Marketing;
+using Darwin.Domain.Entities.Notifications;
 using Darwin.Domain.Enums;
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
@@ -32,7 +38,7 @@ public sealed class BusinessCampaignHandlerTests
     public async Task CreateCampaign_Should_Fail_WhenBusinessIdIsEmpty()
     {
         await using var db = CampaignTestDbContext.Create();
-        var handler = new CreateBusinessCampaignHandler(db, new TestLocalizer());
+        var handler = CreateCreateHandler(db);
 
         var result = await handler.HandleAsync(new CreateBusinessCampaignDto
         {
@@ -50,7 +56,7 @@ public sealed class BusinessCampaignHandlerTests
     public async Task CreateCampaign_Should_Fail_WhenNameIsEmpty()
     {
         await using var db = CampaignTestDbContext.Create();
-        var handler = new CreateBusinessCampaignHandler(db, new TestLocalizer());
+        var handler = CreateCreateHandler(db);
 
         var result = await handler.HandleAsync(new CreateBusinessCampaignDto
         {
@@ -68,7 +74,7 @@ public sealed class BusinessCampaignHandlerTests
     public async Task CreateCampaign_Should_Fail_WhenTitleIsEmpty()
     {
         await using var db = CampaignTestDbContext.Create();
-        var handler = new CreateBusinessCampaignHandler(db, new TestLocalizer());
+        var handler = CreateCreateHandler(db);
 
         var result = await handler.HandleAsync(new CreateBusinessCampaignDto
         {
@@ -88,7 +94,7 @@ public sealed class BusinessCampaignHandlerTests
     public async Task CreateCampaign_Should_Fail_WhenChannelsIsZeroOrNegative(short channels)
     {
         await using var db = CampaignTestDbContext.Create();
-        var handler = new CreateBusinessCampaignHandler(db, new TestLocalizer());
+        var handler = CreateCreateHandler(db);
 
         var result = await handler.HandleAsync(new CreateBusinessCampaignDto
         {
@@ -106,7 +112,7 @@ public sealed class BusinessCampaignHandlerTests
     public async Task CreateCampaign_Should_Fail_WhenChannelsHasUnknownBits()
     {
         await using var db = CampaignTestDbContext.Create();
-        var handler = new CreateBusinessCampaignHandler(db, new TestLocalizer());
+        var handler = CreateCreateHandler(db);
 
         // Valid mask is InApp|Push|Email|Sms|WhatsApp = 1|2|4|8|16 = 31. Use 32 (unknown bit).
         var result = await handler.HandleAsync(new CreateBusinessCampaignDto
@@ -125,7 +131,7 @@ public sealed class BusinessCampaignHandlerTests
     public async Task CreateCampaign_Should_Fail_WhenTargetingJsonIsMalformed()
     {
         await using var db = CampaignTestDbContext.Create();
-        var handler = new CreateBusinessCampaignHandler(db, new TestLocalizer());
+        var handler = CreateCreateHandler(db);
 
         var result = await handler.HandleAsync(new CreateBusinessCampaignDto
         {
@@ -144,7 +150,7 @@ public sealed class BusinessCampaignHandlerTests
     public async Task CreateCampaign_Should_Fail_WhenPayloadJsonIsMalformed()
     {
         await using var db = CampaignTestDbContext.Create();
-        var handler = new CreateBusinessCampaignHandler(db, new TestLocalizer());
+        var handler = CreateCreateHandler(db);
 
         var result = await handler.HandleAsync(new CreateBusinessCampaignDto
         {
@@ -164,7 +170,7 @@ public sealed class BusinessCampaignHandlerTests
     public async Task CreateCampaign_Should_Fail_WhenTargetingJsonIsArray()
     {
         await using var db = CampaignTestDbContext.Create();
-        var handler = new CreateBusinessCampaignHandler(db, new TestLocalizer());
+        var handler = CreateCreateHandler(db);
 
         var result = await handler.HandleAsync(new CreateBusinessCampaignDto
         {
@@ -183,7 +189,7 @@ public sealed class BusinessCampaignHandlerTests
     public async Task CreateCampaign_Should_Fail_WhenStartsAtUtcIsAfterEndsAtUtc()
     {
         await using var db = CampaignTestDbContext.Create();
-        var handler = new CreateBusinessCampaignHandler(db, new TestLocalizer());
+        var handler = CreateCreateHandler(db);
 
         var starts = new DateTime(2030, 6, 1, 0, 0, 0, DateTimeKind.Utc);
         var ends = new DateTime(2030, 5, 1, 0, 0, 0, DateTimeKind.Utc);
@@ -206,7 +212,7 @@ public sealed class BusinessCampaignHandlerTests
     public async Task CreateCampaign_Should_Fail_WhenEligibilityRuleHasNegativeMinPoints()
     {
         await using var db = CampaignTestDbContext.Create();
-        var handler = new CreateBusinessCampaignHandler(db, new TestLocalizer());
+        var handler = CreateCreateHandler(db);
 
         var result = await handler.HandleAsync(new CreateBusinessCampaignDto
         {
@@ -228,7 +234,7 @@ public sealed class BusinessCampaignHandlerTests
     public async Task CreateCampaign_Should_Fail_WhenEligibilityRuleHasMinPointsGreaterThanMaxPoints()
     {
         await using var db = CampaignTestDbContext.Create();
-        var handler = new CreateBusinessCampaignHandler(db, new TestLocalizer());
+        var handler = CreateCreateHandler(db);
 
         var result = await handler.HandleAsync(new CreateBusinessCampaignDto
         {
@@ -250,7 +256,7 @@ public sealed class BusinessCampaignHandlerTests
     public async Task CreateCampaign_Should_Succeed_WithValidMinimalDto()
     {
         await using var db = CampaignTestDbContext.Create();
-        var handler = new CreateBusinessCampaignHandler(db, new TestLocalizer());
+        var handler = CreateCreateHandler(db);
         var businessId = Guid.NewGuid();
 
         var result = await handler.HandleAsync(new CreateBusinessCampaignDto
@@ -258,7 +264,7 @@ public sealed class BusinessCampaignHandlerTests
             BusinessId = businessId,
             Name = "Summer Promo",
             Title = "Summer Promotion",
-            Channels = (short)(CampaignChannels.InApp | CampaignChannels.Push)
+            Channels = (short)CampaignChannels.InApp
         }, TestContext.Current.CancellationToken);
 
         result.Succeeded.Should().BeTrue();
@@ -275,7 +281,7 @@ public sealed class BusinessCampaignHandlerTests
     public async Task CreateCampaign_Should_Succeed_WithValidScheduleAndEligibilityRules()
     {
         await using var db = CampaignTestDbContext.Create();
-        var handler = new CreateBusinessCampaignHandler(db, new TestLocalizer());
+        var handler = CreateCreateHandler(db);
         var businessId = Guid.NewGuid();
 
         var starts = new DateTime(2030, 1, 1, 0, 0, 0, DateTimeKind.Utc);
@@ -304,7 +310,7 @@ public sealed class BusinessCampaignHandlerTests
     public async Task UpdateCampaign_Should_Fail_WhenBusinessIdIsEmpty()
     {
         await using var db = CampaignTestDbContext.Create();
-        var handler = new UpdateBusinessCampaignHandler(db, new TestLocalizer());
+        var handler = CreateUpdateHandler(db);
 
         var result = await handler.HandleAsync(new UpdateBusinessCampaignDto
         {
@@ -324,7 +330,7 @@ public sealed class BusinessCampaignHandlerTests
     public async Task UpdateCampaign_Should_Fail_WhenCampaignIdIsEmpty()
     {
         await using var db = CampaignTestDbContext.Create();
-        var handler = new UpdateBusinessCampaignHandler(db, new TestLocalizer());
+        var handler = CreateUpdateHandler(db);
 
         var result = await handler.HandleAsync(new UpdateBusinessCampaignDto
         {
@@ -346,7 +352,7 @@ public sealed class BusinessCampaignHandlerTests
     public async Task UpdateCampaign_Should_Fail_WhenChannelsIsInvalid(short channels)
     {
         await using var db = CampaignTestDbContext.Create();
-        var handler = new UpdateBusinessCampaignHandler(db, new TestLocalizer());
+        var handler = CreateUpdateHandler(db);
 
         var result = await handler.HandleAsync(new UpdateBusinessCampaignDto
         {
@@ -366,7 +372,7 @@ public sealed class BusinessCampaignHandlerTests
     public async Task UpdateCampaign_Should_Fail_WhenPayloadJsonIsMalformed()
     {
         await using var db = CampaignTestDbContext.Create();
-        var handler = new UpdateBusinessCampaignHandler(db, new TestLocalizer());
+        var handler = CreateUpdateHandler(db);
 
         var result = await handler.HandleAsync(new UpdateBusinessCampaignDto
         {
@@ -387,7 +393,7 @@ public sealed class BusinessCampaignHandlerTests
     public async Task UpdateCampaign_Should_Fail_WhenScheduleIsInvalid()
     {
         await using var db = CampaignTestDbContext.Create();
-        var handler = new UpdateBusinessCampaignHandler(db, new TestLocalizer());
+        var handler = CreateUpdateHandler(db);
 
         var result = await handler.HandleAsync(new UpdateBusinessCampaignDto
         {
@@ -409,7 +415,7 @@ public sealed class BusinessCampaignHandlerTests
     public async Task UpdateCampaign_Should_Fail_WhenNotFound()
     {
         await using var db = CampaignTestDbContext.Create();
-        var handler = new UpdateBusinessCampaignHandler(db, new TestLocalizer());
+        var handler = CreateUpdateHandler(db);
 
         var result = await handler.HandleAsync(new UpdateBusinessCampaignDto
         {
@@ -434,7 +440,7 @@ public sealed class BusinessCampaignHandlerTests
         db.Set<Campaign>().Add(campaign);
         await db.SaveChangesAsync(TestContext.Current.CancellationToken);
 
-        var handler = new UpdateBusinessCampaignHandler(db, new TestLocalizer());
+        var handler = CreateUpdateHandler(db);
 
         var result = await handler.HandleAsync(new UpdateBusinessCampaignDto
         {
@@ -459,7 +465,7 @@ public sealed class BusinessCampaignHandlerTests
         db.Set<Campaign>().Add(campaign);
         await db.SaveChangesAsync(TestContext.Current.CancellationToken);
 
-        var handler = new UpdateBusinessCampaignHandler(db, new TestLocalizer());
+        var handler = CreateUpdateHandler(db);
 
         var result = await handler.HandleAsync(new UpdateBusinessCampaignDto
         {
@@ -481,7 +487,7 @@ public sealed class BusinessCampaignHandlerTests
     {
         await using var db = CampaignTestDbContext.Create();
         var clock = new FakeClock(new DateTime(2030, 6, 1, 0, 0, 0, DateTimeKind.Utc));
-        var handler = new SetCampaignActivationHandler(db, clock, new TestLocalizer());
+        var handler = CreateActivationHandler(db, clock);
 
         var result = await handler.HandleAsync(new SetCampaignActivationDto
         {
@@ -500,7 +506,7 @@ public sealed class BusinessCampaignHandlerTests
     {
         await using var db = CampaignTestDbContext.Create();
         var clock = new FakeClock(new DateTime(2030, 6, 1, 0, 0, 0, DateTimeKind.Utc));
-        var handler = new SetCampaignActivationHandler(db, clock, new TestLocalizer());
+        var handler = CreateActivationHandler(db, clock);
 
         var result = await handler.HandleAsync(new SetCampaignActivationDto
         {
@@ -524,7 +530,7 @@ public sealed class BusinessCampaignHandlerTests
         await db.SaveChangesAsync(TestContext.Current.CancellationToken);
 
         var clock = new FakeClock(new DateTime(2030, 6, 1, 0, 0, 0, DateTimeKind.Utc));
-        var handler = new SetCampaignActivationHandler(db, clock, new TestLocalizer());
+        var handler = CreateActivationHandler(db, clock);
 
         var result = await handler.HandleAsync(new SetCampaignActivationDto
         {
@@ -548,7 +554,7 @@ public sealed class BusinessCampaignHandlerTests
         await db.SaveChangesAsync(TestContext.Current.CancellationToken);
 
         var clock = new FakeClock(new DateTime(2030, 6, 1, 0, 0, 0, DateTimeKind.Utc));
-        var handler = new SetCampaignActivationHandler(db, clock, new TestLocalizer());
+        var handler = CreateActivationHandler(db, clock);
 
         var result = await handler.HandleAsync(new SetCampaignActivationDto
         {
@@ -572,7 +578,7 @@ public sealed class BusinessCampaignHandlerTests
         await db.SaveChangesAsync(TestContext.Current.CancellationToken);
 
         var clock = new FakeClock(new DateTime(2030, 6, 1, 0, 0, 0, DateTimeKind.Utc));
-        var handler = new SetCampaignActivationHandler(db, clock, new TestLocalizer());
+        var handler = CreateActivationHandler(db, clock);
 
         var result = await handler.HandleAsync(new SetCampaignActivationDto
         {
@@ -600,7 +606,7 @@ public sealed class BusinessCampaignHandlerTests
         await db.SaveChangesAsync(TestContext.Current.CancellationToken);
 
         var clock = new FakeClock(new DateTime(2030, 6, 1, 0, 0, 0, DateTimeKind.Utc));
-        var handler = new SetCampaignActivationHandler(db, clock, new TestLocalizer());
+        var handler = CreateActivationHandler(db, clock);
 
         var result = await handler.HandleAsync(new SetCampaignActivationDto
         {
@@ -626,7 +632,7 @@ public sealed class BusinessCampaignHandlerTests
 
         // Clock is set to after the campaign ends (future)
         var clock = new FakeClock(new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc));
-        var handler = new SetCampaignActivationHandler(db, clock, new TestLocalizer());
+        var handler = CreateActivationHandler(db, clock);
 
         var result = await handler.HandleAsync(new SetCampaignActivationDto
         {
@@ -650,7 +656,7 @@ public sealed class BusinessCampaignHandlerTests
         await db.SaveChangesAsync(TestContext.Current.CancellationToken);
 
         var clock = new FakeClock(new DateTime(2030, 6, 1, 0, 0, 0, DateTimeKind.Utc));
-        var handler = new SetCampaignActivationHandler(db, clock, new TestLocalizer());
+        var handler = CreateActivationHandler(db, clock);
 
         var result = await handler.HandleAsync(new SetCampaignActivationDto
         {
@@ -676,7 +682,7 @@ public sealed class BusinessCampaignHandlerTests
         await db.SaveChangesAsync(TestContext.Current.CancellationToken);
 
         var clock = new FakeClock(new DateTime(2030, 6, 1, 0, 0, 0, DateTimeKind.Utc));
-        var handler = new SetCampaignActivationHandler(db, clock, new TestLocalizer());
+        var handler = CreateActivationHandler(db, clock);
 
         var result = await handler.HandleAsync(new SetCampaignActivationDto
         {
@@ -776,6 +782,11 @@ public sealed class BusinessCampaignHandlerTests
         await using var db = CampaignTestDbContext.Create();
         var businessId = Guid.NewGuid();
         var delivery = CreateDelivery(businessId, rowVersion: [5, 6, 7]);
+        if (status == (short)CampaignDeliveryStatus.Pending)
+        {
+            delivery.Status = CampaignDeliveryStatus.Failed;
+        }
+
         db.Set<CampaignDelivery>().Add(delivery);
         await db.SaveChangesAsync(TestContext.Current.CancellationToken);
 
@@ -799,6 +810,8 @@ public sealed class BusinessCampaignHandlerTests
         await using var db = CampaignTestDbContext.Create();
         var businessId = Guid.NewGuid();
         var delivery = CreateDelivery(businessId, rowVersion: [1]);
+        delivery.Status = CampaignDeliveryStatus.Failed;
+        delivery.AttemptCount = 2;
         delivery.LastError = "previous error";
         delivery.LastResponseCode = 500;
         db.Set<CampaignDelivery>().Add(delivery);
@@ -820,6 +833,7 @@ public sealed class BusinessCampaignHandlerTests
         var updated = await db.Set<CampaignDelivery>().SingleAsync(x => x.Id == delivery.Id, TestContext.Current.CancellationToken);
         updated.LastError.Should().BeNull("pending requeue clears error fields");
         updated.LastResponseCode.Should().BeNull("pending requeue clears response code");
+        updated.AttemptCount.Should().Be(0, "pending requeue resets retry state");
     }
 
     // ─── Null database RowVersion guards ──────────────────────────────────────
@@ -843,7 +857,7 @@ public sealed class BusinessCampaignHandlerTests
         db.Set<Campaign>().Add(campaign);
         await db.SaveChangesAsync(TestContext.Current.CancellationToken);
 
-        var handler = new UpdateBusinessCampaignHandler(db, new TestLocalizer());
+        var handler = CreateUpdateHandler(db);
 
         var result = await handler.HandleAsync(new UpdateBusinessCampaignDto
         {
@@ -880,7 +894,7 @@ public sealed class BusinessCampaignHandlerTests
         await db.SaveChangesAsync(TestContext.Current.CancellationToken);
 
         var clock = new FakeClock(new DateTime(2030, 6, 1, 0, 0, 0, DateTimeKind.Utc));
-        var handler = new SetCampaignActivationHandler(db, clock, new TestLocalizer());
+        var handler = CreateActivationHandler(db, clock);
 
         var result = await handler.HandleAsync(new SetCampaignActivationDto
         {
@@ -925,10 +939,39 @@ public sealed class BusinessCampaignHandlerTests
 
         result.Succeeded.Should().BeFalse(
             "null DB RowVersion must produce a safe concurrency failure, not NullReferenceException");
-        result.Error.Should().Be("CampaignDeliveryConcurrencyConflict");
+        result.Error.Should().Be("ItemConcurrencyConflict");
     }
 
     // ─── Helpers ──────────────────────────────────────────────────────────────
+
+    private static CreateBusinessCampaignHandler CreateCreateHandler(CampaignTestDbContext db)
+    {
+        var clock = new FakeClock(new DateTime(2030, 6, 1, 0, 0, 0, DateTimeKind.Utc));
+        return new CreateBusinessCampaignHandler(
+            db,
+            new BusinessCampaignEntitlementService(db, clock),
+            new TestLocalizer());
+    }
+
+    private static UpdateBusinessCampaignHandler CreateUpdateHandler(CampaignTestDbContext db)
+    {
+        var clock = new FakeClock(new DateTime(2030, 6, 1, 0, 0, 0, DateTimeKind.Utc));
+        return new UpdateBusinessCampaignHandler(
+            db,
+            new BusinessCampaignEntitlementService(db, clock),
+            new TestLocalizer());
+    }
+
+    private static SetCampaignActivationHandler CreateActivationHandler(CampaignTestDbContext db, IClock clock)
+    {
+        return new SetCampaignActivationHandler(
+            db,
+            clock,
+            new BusinessCampaignEntitlementService(db, clock),
+            new NotificationInboxWriter(db, clock),
+            new CampaignPushDeliveryWriter(db, clock),
+            new TestLocalizer());
+    }
 
     private static Campaign CreateCampaign(
         Guid businessId,
@@ -1013,7 +1056,7 @@ public sealed class BusinessCampaignHandlerTests
                 builder.Property(x => x.TargetingJson).IsRequired();
                 builder.Property(x => x.PayloadJson).IsRequired();
                 builder.Property(x => x.IsDeleted);
-                builder.Property(x => x.RowVersion).IsRowVersion();
+                builder.Property(x => x.RowVersion).IsRowVersion().IsRequired(false);
             });
 
             modelBuilder.Entity<CampaignDelivery>(builder =>
@@ -1021,7 +1064,76 @@ public sealed class BusinessCampaignHandlerTests
                 builder.HasKey(x => x.Id);
                 builder.Property(x => x.CampaignId).IsRequired();
                 builder.Property(x => x.IsDeleted);
-                builder.Property(x => x.RowVersion).IsRowVersion();
+                builder.Property(x => x.RowVersion).IsRowVersion().IsRequired(false);
+            });
+
+            modelBuilder.Entity<BillingPlan>(builder =>
+            {
+                builder.HasKey(x => x.Id);
+                builder.Property(x => x.Code).IsRequired();
+                builder.Property(x => x.Name).IsRequired();
+                builder.Property(x => x.FeaturesJson).IsRequired();
+                builder.Property(x => x.IsDeleted);
+            });
+
+            modelBuilder.Entity<BusinessSubscription>(builder =>
+            {
+                builder.HasKey(x => x.Id);
+                builder.Property(x => x.BillingPlanId).IsRequired();
+                builder.Property(x => x.IsDeleted);
+            });
+
+            modelBuilder.Entity<BusinessFeatureUsage>(builder =>
+            {
+                builder.HasKey(x => x.Id);
+                builder.Property(x => x.BusinessId).IsRequired();
+                builder.Property(x => x.FeatureKey).IsRequired();
+                builder.Property(x => x.SourceId).IsRequired();
+                builder.Property(x => x.IsDeleted);
+            });
+
+            modelBuilder.Entity<LoyaltyAccount>(builder =>
+            {
+                builder.HasKey(x => x.Id);
+                builder.Property(x => x.BusinessId).IsRequired();
+                builder.Property(x => x.UserId).IsRequired();
+                builder.Property(x => x.IsDeleted);
+                builder.Ignore(x => x.Transactions);
+                builder.Ignore(x => x.Redemptions);
+            });
+
+            modelBuilder.Entity<UserDevice>(builder =>
+            {
+                builder.HasKey(x => x.Id);
+                builder.Property(x => x.UserId).IsRequired();
+                builder.Property(x => x.DeviceId).IsRequired();
+                builder.Property(x => x.IsDeleted);
+                builder.Ignore(x => x.User);
+            });
+
+            modelBuilder.Entity<BusinessMember>(builder =>
+            {
+                builder.HasKey(x => x.Id);
+                builder.Property(x => x.BusinessId).IsRequired();
+                builder.Property(x => x.UserId).IsRequired();
+                builder.Property(x => x.IsDeleted);
+            });
+
+            modelBuilder.Entity<NotificationMessage>(builder =>
+            {
+                builder.HasKey(x => x.Id);
+                builder.Property(x => x.Title).IsRequired();
+                builder.Property(x => x.IsDeleted);
+            });
+
+            modelBuilder.Entity<NotificationRecipient>(builder =>
+            {
+                builder.HasKey(x => x.Id);
+                builder.Property(x => x.NotificationMessageId).IsRequired();
+                builder.Property(x => x.UserId).IsRequired();
+                builder.Property(x => x.IsDeleted);
+                builder.Ignore(x => x.Message);
+                builder.Ignore(x => x.User);
             });
         }
     }

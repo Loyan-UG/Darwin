@@ -7,8 +7,11 @@ using Darwin.Mobile.Business.Services.Identity;
 using Darwin.Mobile.Shared.Services;
 using Darwin.Mobile.Shared.Commands;
 using Darwin.Mobile.Shared.Navigation;
+using Darwin.Mobile.Shared.Services.Notifications;
 using Darwin.Mobile.Shared.ViewModels;
 using Darwin.Contracts.Businesses;
+using Darwin.Contracts.Notifications;
+using System.Globalization;
 
 namespace Darwin.Mobile.Business.ViewModels
 {
@@ -26,6 +29,7 @@ namespace Darwin.Mobile.Business.ViewModels
         private readonly IBusinessIdentityContextService _businessIdentityContextService;
         private readonly IBusinessAuthorizationService _businessAuthorizationService;
         private readonly IBusinessAccessService _businessAccessService;
+        private readonly INotificationInboxService _notificationInboxService;
         private CancellationTokenSource? _loadCancellation;
 
         private bool _loadedOnce;
@@ -39,20 +43,24 @@ namespace Darwin.Mobile.Business.ViewModels
         private string _businessOperationalStatusMessage = string.Empty;
         private string _setupChecklistSummary = string.Empty;
         private bool _isOperationsAllowed;
+        private int _unreadNotificationsCount;
 
         public HomeViewModel(
             INavigationService navigationService,
             IBusinessIdentityContextService businessIdentityContextService,
             IBusinessAuthorizationService businessAuthorizationService,
-            IBusinessAccessService businessAccessService)
+            IBusinessAccessService businessAccessService,
+            INotificationInboxService notificationInboxService)
         {
             _navigationService = navigationService ?? throw new ArgumentNullException(nameof(navigationService));
             _businessIdentityContextService = businessIdentityContextService ?? throw new ArgumentNullException(nameof(businessIdentityContextService));
             _businessAuthorizationService = businessAuthorizationService ?? throw new ArgumentNullException(nameof(businessAuthorizationService));
             _businessAccessService = businessAccessService ?? throw new ArgumentNullException(nameof(businessAccessService));
+            _notificationInboxService = notificationInboxService ?? throw new ArgumentNullException(nameof(notificationInboxService));
 
             LoadContextCommand = new AsyncCommand(LoadContextAsync, () => !IsBusy);
             ScanCommand = new AsyncCommand(OpenScannerAsync, () => !IsBusy && IsOperationsAllowed);
+            OpenNotificationsCommand = new AsyncCommand(OpenNotificationsAsync);
         }
 
         /// <summary>
@@ -184,8 +192,28 @@ namespace Darwin.Mobile.Business.ViewModels
         /// </summary>
         public bool HasBusinessContext => !string.IsNullOrWhiteSpace(BusinessName) && BusinessName != AppResources.HomeUnavailableValue;
 
+        public int UnreadNotificationsCount
+        {
+            get => _unreadNotificationsCount;
+            private set
+            {
+                if (SetProperty(ref _unreadNotificationsCount, Math.Max(0, value)))
+                {
+                    OnPropertyChanged(nameof(HasUnreadNotifications));
+                    OnPropertyChanged(nameof(UnreadNotificationsText));
+                }
+            }
+        }
+
+        public bool HasUnreadNotifications => UnreadNotificationsCount > 0;
+
+        public string UnreadNotificationsText => UnreadNotificationsCount > 99
+            ? "99+"
+            : UnreadNotificationsCount.ToString(CultureInfo.InvariantCulture);
+
         public AsyncCommand LoadContextCommand { get; }
         public AsyncCommand ScanCommand { get; }
+        public AsyncCommand OpenNotificationsCommand { get; }
 
         public override async Task OnAppearingAsync()
         {
@@ -269,10 +297,12 @@ namespace Darwin.Mobile.Business.ViewModels
 
                 var authSnapshotTask = _businessAuthorizationService.GetSnapshotAsync(cancellationToken);
                 var accessStateTask = _businessAccessService.GetCurrentAccessStateAsync(cancellationToken);
-                await Task.WhenAll(authSnapshotTask, accessStateTask).ConfigureAwait(false);
+                var unreadTask = LoadUnreadNotificationsSafeAsync(cancellationToken);
+                await Task.WhenAll(authSnapshotTask, accessStateTask, unreadTask).ConfigureAwait(false);
 
                 var authSnapshotResult = await authSnapshotTask.ConfigureAwait(false);
                 var accessStateResult = await accessStateTask.ConfigureAwait(false);
+                var unreadCount = await unreadTask.ConfigureAwait(false);
 
                 RunOnMain(() =>
                 {
@@ -281,6 +311,10 @@ namespace Darwin.Mobile.Business.ViewModels
                         : AppResources.HomeUnavailableValue;
 
                     ApplyAccessState(accessStateResult.Succeeded ? accessStateResult.Value : null);
+                    if (unreadCount.HasValue)
+                    {
+                        UnreadNotificationsCount = unreadCount.Value;
+                    }
                 });
             }
             catch (OperationCanceledException)
@@ -310,6 +344,30 @@ namespace Darwin.Mobile.Business.ViewModels
 
                 EndCurrentLoad(loadCancellation);
             }
+        }
+
+        private async Task<int?> LoadUnreadNotificationsSafeAsync(CancellationToken cancellationToken)
+        {
+            try
+            {
+                var result = await _notificationInboxService
+                    .GetUnreadCountAsync(NotificationInboxTargetApp.Business, cancellationToken)
+                    .ConfigureAwait(false);
+                return result.Succeeded ? result.Value : null;
+            }
+            catch (OperationCanceledException)
+            {
+                throw;
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
+        private async Task OpenNotificationsAsync()
+        {
+            await _navigationService.GoToAsync(Routes.Notifications);
         }
 
         private async Task OpenScannerAsync()

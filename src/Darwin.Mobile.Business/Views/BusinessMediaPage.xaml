@@ -14,7 +14,7 @@
 
     <ScrollView>
         <VerticalStackLayout Padding="20,18,20,24" Spacing="14">
-            <Border Style="{StaticResource CardBorderStyle}">
+            <Border Style="{StaticResource InternalPageHeaderBorderStyle}">
                 <VerticalStackLayout Spacing="12">
                     <Label Text="Business media" Style="{StaticResource TitleLabelStyle}" />
                     <Label Text="Manage the profile image and up to 10 gallery images shown to customers." Style="{StaticResource BodyLabelStyle}" />
@@ -49,7 +49,7 @@
                     <CollectionView ItemsSource="{Binding Gallery}" SelectionMode="None">
                         <CollectionView.ItemTemplate>
                             <DataTemplate x:DataType="businesses:BusinessMediaItem">
-                                <Border Style="{StaticResource CardBorderStyle}" Margin="0,6">
+                                <Border Style="{StaticResource ElevatedListCardBorderStyle}" Margin="0,6">
                                     <Grid ColumnDefinitions="96,*" ColumnSpacing="12">
                                         <Image Source="{Binding Url}" Aspect="AspectFill" HeightRequest="86" WidthRequest="96" />
                                         <VerticalStackLayout Grid.Column="1" Spacing="8">

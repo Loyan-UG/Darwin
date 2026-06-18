@@ -15,6 +15,7 @@
 
     <Grid Background="{StaticResource BrushDiscoverHeader}">
         <pullToRefresh:SfPullToRefresh RefreshCommand="{Binding RefreshCommand}"
+                                       IsRefreshing="{Binding IsRefreshing, Mode=TwoWay}"
                                        ProgressColor="{StaticResource InternalPrimaryButton}"
                                        ProgressBackground="{StaticResource Neutral0}">
             <pullToRefresh:SfPullToRefresh.PullableContent>
@@ -29,7 +30,7 @@
                         <Border Background="{StaticResource BrushDiscoverHeader}"
                                 StrokeThickness="0">
                             <VerticalStackLayout Padding="20,18,20,16" Spacing="12">
-                                <Grid ColumnDefinitions="Auto,*" ColumnSpacing="12" Margin="0,0,0,2">
+                                <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="12" Margin="0,0,0,2">
                                     <Border Grid.Column="0"
                                             WidthRequest="48"
                                             HeightRequest="48"
@@ -63,6 +64,32 @@
                                                FontSize="12"
                                                TextColor="{StaticResource Neutral700}" />
                                     </VerticalStackLayout>
+                                    <Grid Grid.Column="2" WidthRequest="46" HeightRequest="46" VerticalOptions="Center">
+                                        <Button Text="🔔"
+                                                Command="{Binding OpenNotificationsCommand}"
+                                                Background="{StaticResource BrushDiscoverHeaderButton}"
+                                                TextColor="{StaticResource Neutral900}"
+                                                CornerRadius="23"
+                                                Padding="0"
+                                                FontSize="19" />
+                                        <Border IsVisible="{Binding HasUnreadNotifications}"
+                                                Background="{StaticResource BrushDarkAction}"
+                                                Padding="4,1"
+                                                HorizontalOptions="End"
+                                                VerticalOptions="Start"
+                                                MinimumWidthRequest="18"
+                                                HeightRequest="18">
+                                            <Border.StrokeShape>
+                                                <RoundRectangle CornerRadius="9" />
+                                            </Border.StrokeShape>
+                                            <Label Text="{Binding UnreadNotificationsText}"
+                                                   FontAttributes="Bold"
+                                                   FontSize="9"
+                                                   HorizontalTextAlignment="Center"
+                                                   VerticalTextAlignment="Center"
+                                                   TextColor="{StaticResource Neutral0}" />
+                                        </Border>
+                                    </Grid>
                                 </Grid>
 
                                 <Border Stroke="{StaticResource BrandGold50}"

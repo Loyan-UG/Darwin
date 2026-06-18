@@ -19,6 +19,7 @@ public static class Routes
     public const string Home = "Home";
     public const string Scanner = "Scanner";
     public const string Settings = "Settings";
+    public const string Notifications = "Notifications";
 
     // Settings leaf routes
     public const string SettingsProfile = "SettingsProfile";
@@ -32,4 +33,6 @@ public static class Routes
     // Active business operations tabs
     public const string Dashboard = "Dashboard";
     public const string Rewards = "Rewards";
+    public const string RewardTierEditor = "RewardTierEditor";
+    public const string RewardCampaignEditor = "RewardCampaignEditor";
 }

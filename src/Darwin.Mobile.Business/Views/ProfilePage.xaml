@@ -12,13 +12,16 @@
     Title="{x:Static res:AppResources.ProfileTitle}">
 
     <pullToRefresh:SfPullToRefresh RefreshCommand="{Binding RefreshCommand}"
+                                   IsRefreshing="{Binding IsBusy, Mode=OneWay}"
                                    ProgressColor="{StaticResource BrandGold500}"
                                    ProgressBackground="{StaticResource Neutral0}">
         <pullToRefresh:SfPullToRefresh.PullableContent>
             <ScrollView>
                 <VerticalStackLayout Padding="24" Spacing="14">
-            <Label Text="{x:Static res:AppResources.ProfileTitle}"
-                   Style="{StaticResource TitleLabelStyle}" />
+            <Border Style="{StaticResource InternalPageHeaderBorderStyle}">
+                <Label Text="{x:Static res:AppResources.ProfileTitle}"
+                       Style="{StaticResource TitleLabelStyle}" />
+            </Border>
 
             <Border Style="{StaticResource CardBorderStyle}" Padding="16">
                 <VerticalStackLayout Spacing="10">

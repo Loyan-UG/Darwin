@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:Darwin.Mobile.Business.ViewModels"
+             xmlns:res="clr-namespace:Darwin.Mobile.Business.Resources"
+             xmlns:views="clr-namespace:Darwin.Mobile.Business.Views"
+             xmlns:buttons="clr-namespace:Syncfusion.Maui.Toolkit.Buttons;assembly=Syncfusion.Maui.Toolkit"
+             xmlns:inputLayout="clr-namespace:Syncfusion.Maui.Toolkit.TextInputLayout;assembly=Syncfusion.Maui.Toolkit"
+             xmlns:chips="clr-namespace:Syncfusion.Maui.Toolkit.Chips;assembly=Syncfusion.Maui.Toolkit"
+             x:Class="Darwin.Mobile.Business.Views.RewardTierEditorPage"
+             x:DataType="vm:RewardsViewModel"
+             x:Name="PageRoot"
+             Title="{x:Static res:AppResources.RewardsCurrentTiersLabel}">
+
+    <ScrollView>
+        <VerticalStackLayout Padding="20,18,20,24" Spacing="14">
+            <Border Style="{StaticResource InternalPageHeaderBorderStyle}">
+                <VerticalStackLayout Spacing="12">
+                    <Grid ColumnDefinitions="Auto,*" ColumnSpacing="12">
+                        <buttons:SfButton Text="‹"
+                                          WidthRequest="44"
+                                          HeightRequest="40"
+                                          Command="{Binding Source={x:Reference PageRoot}, Path=BackCommand, x:DataType=views:RewardTierEditorPage}"
+                                          Style="{StaticResource SyncfusionOutlinedButtonStyle}" />
+                        <VerticalStackLayout Grid.Column="1" Spacing="4" VerticalOptions="Center">
+                            <Label Text="{Binding SaveButtonText}" Style="{StaticResource SectionHeadingLabelStyle}" />
+                            <Label Text="{Binding RewardEditorSelectionHint}" Style="{StaticResource SecondaryBodyLabelStyle}" />
+                        </VerticalStackLayout>
+                    </Grid>
+                    <Label Text="{x:Static res:AppResources.BusinessPermissionDeniedRewardEdit}" Style="{StaticResource WarningLabelStyle}" IsVisible="{Binding CanManageRewards, Converter={StaticResource InverseBoolConverter}}" />
+                </VerticalStackLayout>
+            </Border>
+
+            <Border Style="{StaticResource CardBorderStyle}">
+                <VerticalStackLayout Spacing="14">
+                    <Grid ColumnDefinitions="*,*" ColumnSpacing="10">
+                        <inputLayout:SfTextInputLayout Grid.Column="0"
+                                                       Hint="{x:Static res:AppResources.RewardsPointsPlaceholder}"
+                                                       Style="{StaticResource SyncfusionOutlinedInputLayoutStyle}">
+                            <Entry Placeholder="{x:Static res:AppResources.RewardsPointsPlaceholder}" Keyboard="Numeric" Text="{Binding PointsRequiredInput}" Style="{StaticResource FormEntryStyle}" />
+                        </inputLayout:SfTextInputLayout>
+                        <inputLayout:SfTextInputLayout Grid.Column="1"
+                                                       Hint="{x:Static res:AppResources.RewardsValuePlaceholder}"
+                                                       Style="{StaticResource SyncfusionOutlinedInputLayoutStyle}">
+                            <Entry Placeholder="{x:Static res:AppResources.RewardsValuePlaceholder}" Keyboard="Numeric" Text="{Binding RewardValueInput}" Style="{StaticResource FormEntryStyle}" />
+                        </inputLayout:SfTextInputLayout>
+                    </Grid>
+
+                    <VerticalStackLayout Spacing="6">
+                        <Label Text="{x:Static res:AppResources.RewardsTypePickerTitle}" Style="{StaticResource CaptionLabelStyle}" />
+                        <chips:SfChipGroup ItemsSource="{Binding RewardTypeOptions}"
+                                           DisplayMemberPath="Label"
+                                           SelectedItem="{Binding SelectedRewardTypeOption, Mode=TwoWay}"
+                                           ChipType="Choice"
+                                           ChoiceMode="Single"
+                                           ChipCornerRadius="10"
+                                           ChipBackground="{StaticResource BrushSurface}"
+                                           ChipStroke="{StaticResource BrandGold50}"
+                                           ChipStrokeThickness="1"
+                                           ChipTextColor="{StaticResource Neutral900}"
+                                           ChipTextSize="13"
+                                           SelectedChipBackground="{StaticResource BrushPrimary}"
+                                           SelectedChipTextColor="{StaticResource Neutral0}" />
+                    </VerticalStackLayout>
+
+                    <Border Style="{StaticResource FormFieldBorderStyle}" Padding="14,10">
+                        <Editor Placeholder="{x:Static res:AppResources.RewardsDescriptionPlaceholder}" Text="{Binding DescriptionInput}" AutoSize="TextChanges" Style="{StaticResource FormEditorStyle}" />
+                    </Border>
+
+                    <Border Style="{StaticResource MutedCardBorderStyle}">
+                        <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
+                            <Label Text="{x:Static res:AppResources.RewardsAllowSelfRedemptionLabel}" VerticalOptions="Center" Style="{StaticResource BodyLabelStyle}" />
+                            <Switch Grid.Column="1" IsToggled="{Binding AllowSelfRedemption}" />
+                        </Grid>
+                    </Border>
+                </VerticalStackLayout>
+            </Border>
+
+            <Grid ColumnDefinitions="*,*" ColumnSpacing="10">
+                <buttons:SfButton Grid.Column="0" Text="{Binding SaveButtonText}" Command="{Binding SaveCommand}" IsEnabled="{Binding CanManageRewards}" Style="{StaticResource SyncfusionPrimaryButtonStyle}" />
+                <buttons:SfButton Grid.Column="1" Text="{x:Static res:AppResources.RewardsDeleteButton}" Command="{Binding DeleteCommand}" IsEnabled="{Binding CanDeleteReward}" Style="{StaticResource SyncfusionOutlinedButtonStyle}" />
+            </Grid>
+
+            <Label Text="{Binding ErrorMessage}" Style="{StaticResource ErrorLabelStyle}" IsVisible="{Binding HasError}" />
+            <ActivityIndicator IsRunning="{Binding IsBusy}" IsVisible="{Binding IsBusy}" Color="{StaticResource BrandGold500}" />
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>

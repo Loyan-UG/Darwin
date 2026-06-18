@@ -15,14 +15,45 @@
 
     <Grid>
         <pullToRefresh:SfPullToRefresh RefreshCommand="{Binding RefreshCommand}"
+                                       IsRefreshing="{Binding IsBusy, Mode=OneWay}"
                                        ProgressColor="{StaticResource BrandGold500}"
                                        ProgressBackground="{StaticResource Neutral0}">
             <pullToRefresh:SfPullToRefresh.PullableContent>
                 <ScrollView>
                     <VerticalStackLayout Padding="20,18,20,24" Spacing="14">
-                <Border Style="{StaticResource CardBorderStyle}">
+                <Border Style="{StaticResource InternalPageHeaderBorderStyle}">
                     <VerticalStackLayout Spacing="10">
-                        <Label Text="{x:Static res:AppResources.DashboardTitle}" Style="{StaticResource TitleLabelStyle}" />
+                        <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
+                            <Label Text="{x:Static res:AppResources.DashboardTitle}"
+                                   Style="{StaticResource TitleLabelStyle}"
+                                   VerticalOptions="Center" />
+                            <Grid Grid.Column="1" WidthRequest="46" HeightRequest="46" VerticalOptions="Center">
+                                <Button Text="🔔"
+                                        Command="{Binding OpenNotificationsCommand}"
+                                        Background="{StaticResource BrushDiscoverHeaderButton}"
+                                        TextColor="{StaticResource Neutral900}"
+                                        CornerRadius="23"
+                                        Padding="0"
+                                        FontSize="19" />
+                                <Border IsVisible="{Binding HasUnreadNotifications}"
+                                        Background="{StaticResource BrushDarkAction}"
+                                        Padding="4,1"
+                                        HorizontalOptions="End"
+                                        VerticalOptions="Start"
+                                        MinimumWidthRequest="18"
+                                        HeightRequest="18">
+                                    <Border.StrokeShape>
+                                        <RoundRectangle CornerRadius="9" />
+                                    </Border.StrokeShape>
+                                    <Label Text="{Binding UnreadNotificationsText}"
+                                           FontAttributes="Bold"
+                                           FontSize="9"
+                                           HorizontalTextAlignment="Center"
+                                           VerticalTextAlignment="Center"
+                                           TextColor="{StaticResource Neutral0}" />
+                                </Border>
+                            </Grid>
+                        </Grid>
                         <Label Text="{x:Static res:AppResources.DashboardSubtitle}" Style="{StaticResource BodyLabelStyle}" />
                         <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="10">
                             <segmented:SfSegmentedControl Grid.Column="0"
@@ -37,7 +68,7 @@
                                                           StrokeThickness="1">
                                 <segmented:SfSegmentedControl.SelectionIndicatorSettings>
                                     <segmented:SelectionIndicatorSettings Background="{StaticResource BrushPrimary}"
-                                                                         TextColor="{StaticResource Neutral0}"
+                                                                         TextColor="{StaticResource Neutral900}"
                                                                          Stroke="{StaticResource BrandGold500}" />
                                 </segmented:SfSegmentedControl.SelectionIndicatorSettings>
                             </segmented:SfSegmentedControl>
@@ -53,28 +84,28 @@
                       RowDefinitions="Auto,Auto,Auto"
                       RowSpacing="10">
                     <Border Grid.Row="0" Grid.Column="0"
-                            Style="{StaticResource MutedCardBorderStyle}">
+                            Style="{StaticResource HeaderStatTileBorderStyle}">
                         <VerticalStackLayout Padding="14,12" Spacing="4">
                             <Label Text="{x:Static res:AppResources.DashboardSessionsTitle}" Style="{StaticResource CaptionLabelStyle}" />
                             <Label Text="{Binding TotalSessions}" Style="{StaticResource MetricValueLabelStyle}" />
                         </VerticalStackLayout>
                     </Border>
                     <Border Grid.Row="0" Grid.Column="1"
-                            Style="{StaticResource MutedCardBorderStyle}">
+                            Style="{StaticResource HeaderStatTileBorderStyle}">
                         <VerticalStackLayout Padding="14,12" Spacing="4">
                             <Label Text="{x:Static res:AppResources.DashboardAccrualsTitle}" Style="{StaticResource CaptionLabelStyle}" />
                             <Label Text="{Binding AccrualCount}" Style="{StaticResource MetricValueLabelStyle}" />
                         </VerticalStackLayout>
                     </Border>
                     <Border Grid.Row="1" Grid.Column="0"
-                            Style="{StaticResource MutedCardBorderStyle}">
+                            Style="{StaticResource HeaderStatTileBorderStyle}">
                         <VerticalStackLayout Padding="14,12" Spacing="4">
                             <Label Text="{x:Static res:AppResources.DashboardRedemptionsTitle}" Style="{StaticResource CaptionLabelStyle}" />
                             <Label Text="{Binding RedemptionCount}" Style="{StaticResource MetricValueLabelStyle}" />
                         </VerticalStackLayout>
                     </Border>
                     <Border Grid.Row="1" Grid.Column="1"
-                            Style="{StaticResource MutedCardBorderStyle}">
+                            Style="{StaticResource HeaderStatTileBorderStyle}">
                         <VerticalStackLayout Padding="14,12" Spacing="4">
                             <Label Text="{x:Static res:AppResources.DashboardAccruedPointsTitle}" Style="{StaticResource CaptionLabelStyle}" />
                             <Label Text="{Binding TotalAccruedPoints, StringFormat='{x:Static res:AppResources.DashboardAccruedPointsFormat}'}" Style="{StaticResource BodyLabelStyle}" />
@@ -83,14 +114,14 @@
                         </VerticalStackLayout>
                     </Border>
                     <Border Grid.Row="2" Grid.Column="0"
-                            Style="{StaticResource MutedCardBorderStyle}">
+                            Style="{StaticResource HeaderStatTileBorderStyle}">
                         <VerticalStackLayout Padding="14,12" Spacing="4">
                             <Label Text="{x:Static res:AppResources.DashboardSubscriptionIssuesTitle}" Style="{StaticResource CaptionLabelStyle}" />
                             <Label Text="{Binding SubscriptionStatusRefreshFailures, StringFormat='{x:Static res:AppResources.DashboardSubscriptionRefreshFailuresFormat}'}" Style="{StaticResource BodyLabelStyle}" />
                         </VerticalStackLayout>
                     </Border>
                     <Border Grid.Row="2" Grid.Column="1"
-                            Style="{StaticResource MutedCardBorderStyle}">
+                            Style="{StaticResource HeaderStatTileBorderStyle}">
                         <VerticalStackLayout Padding="14,12" Spacing="4">
                             <Label Text="{x:Static res:AppResources.DashboardCampaignTargetingTitle}" Style="{StaticResource CaptionLabelStyle}" />
                             <Label Text="{Binding CampaignTargetingFixMetricsSummary}" Style="{StaticResource SecondaryBodyLabelStyle}" />

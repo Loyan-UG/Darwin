@@ -13890,4 +13890,16 @@
   <data name="VatValidationFormatHintNegative" xml:space="preserve">
     <value>Formathinweis: Diese USt-IdNr. passt nicht zum erwarteten Laendermuster. Behalten Sie sie in manueller Pruefung, bis ein offizieller Nachweis die richtige Entscheidung bestaetigt.</value>
   </data>
+  <data name="Queued" xml:space="preserve">
+    <value>Eingereiht</value>
+  </data>
+  <data name="Sending" xml:space="preserve">
+    <value>Wird gesendet</value>
+  </data>
+  <data name="InvalidToken" xml:space="preserve">
+    <value>Ungueltiges Token</value>
+  </data>
+  <data name="RetryAvailable" xml:space="preserve">
+    <value>Erneuter Versuch verfuegbar</value>
+  </data>
 </root>

@@ -149,6 +149,42 @@ namespace Darwin.Domain.Entities.Billing
     }
 
     /// <summary>
+    /// Records monthly usage of billable or plan-limited business features.
+    /// </summary>
+    public sealed class BusinessFeatureUsage : BaseEntity
+    {
+        /// <summary>
+        /// Gets or sets the owning business id.
+        /// </summary>
+        public Guid BusinessId { get; set; }
+
+        /// <summary>
+        /// Gets or sets the stable feature key, such as campaign.push.
+        /// </summary>
+        public string FeatureKey { get; set; } = string.Empty;
+
+        /// <summary>
+        /// Gets or sets the UTC start of the usage period.
+        /// </summary>
+        public DateTime PeriodStartUtc { get; set; }
+
+        /// <summary>
+        /// Gets or sets the UTC end of the usage period.
+        /// </summary>
+        public DateTime PeriodEndUtc { get; set; }
+
+        /// <summary>
+        /// Gets or sets the id of the source entity that consumed this feature.
+        /// </summary>
+        public Guid SourceId { get; set; }
+
+        /// <summary>
+        /// Gets or sets the UTC timestamp when usage was consumed.
+        /// </summary>
+        public DateTime UsedAtUtc { get; set; }
+    }
+
+    /// <summary>
     /// Represents a provider-synchronized invoice for a subscription.
     /// </summary>
     public sealed class SubscriptionInvoice : BaseEntity

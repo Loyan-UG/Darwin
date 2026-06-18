@@ -1,4 +1,5 @@
 ﻿using Darwin.Mobile.Business.Services.Identity;
+using Darwin.Mobile.Business.Services.Notifications;
 using Darwin.Mobile.Business.Services.Reporting;
 using Darwin.Mobile.Shared.Common;
 using Darwin.Mobile.Shared.Configuration;
@@ -56,11 +57,19 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<IBusinessIdentityContextService, BusinessIdentityContextService>();
         services.AddSingleton<IBusinessAuthorizationService, BusinessAuthorizationService>();
 
+        services.AddSingleton<IBusinessPushTokenProvider, BusinessPlatformPushTokenProvider>();
+        services.AddSingleton<IBusinessPushRuntimeInfo, BusinessPushRegistrationCoordinator.MauiBusinessPushRuntimeInfo>();
+        services.AddSingleton<IBusinessPushRegistrationStateStore, BusinessPushRegistrationCoordinator.PreferencesBusinessPushRegistrationStateStore>();
+        services.AddSingleton<IBusinessPushRegistrationCoordinator, BusinessPushRegistrationCoordinator>();
+        services.AddSingleton<IBusinessNotificationPermissionService, BusinessNotificationPermissionService>();
+
         // Local activity tracker powering dashboard and lightweight reporting cards.
         services.AddSingleton<IBusinessActivityTracker, BusinessActivityTracker>();
 
         services.AddTransient<ViewModels.HomeViewModel>();
         services.AddTransient<Views.HomePage>();
+        services.AddTransient<ViewModels.NotificationsViewModel>();
+        services.AddTransient<Views.NotificationsPage>();
 
         services.AddTransient<ViewModels.LoginViewModel>();
         services.AddTransient<Views.LoginPage>();
@@ -75,6 +84,8 @@ public static class ServiceCollectionExtensions
 
         services.AddTransient<ViewModels.RewardsViewModel>();
         services.AddTransient<Views.RewardsPage>();
+        services.AddTransient<Views.RewardTierEditorPage>();
+        services.AddTransient<Views.RewardCampaignEditorPage>();
 
         services.AddTransient<ViewModels.SessionViewModel>();
         services.AddTransient<Views.SessionPage>();

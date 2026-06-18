@@ -7,23 +7,15 @@
     xmlns:local="clr-namespace:Darwin.Mobile.Business.Constants"
     x:Class="Darwin.Mobile.Business.AppShell"
     Shell.FlyoutBehavior="Disabled"
-    Shell.BackgroundColor="{StaticResource Neutral0}"
+    Shell.NavBarIsVisible="False"
+    Shell.BackgroundColor="{StaticResource Neutral50}"
     Shell.ForegroundColor="{StaticResource Neutral900}"
     Shell.TitleColor="{StaticResource Neutral900}"
     Shell.UnselectedColor="{StaticResource Neutral700}"
     Shell.TabBarBackgroundColor="{StaticResource Neutral0}"
-    Shell.TabBarForegroundColor="{StaticResource BrandGold500}"
-    Shell.TabBarTitleColor="{StaticResource BrandGold500}"
+    Shell.TabBarForegroundColor="{StaticResource InternalPrimaryButton}"
+    Shell.TabBarTitleColor="{StaticResource InternalPrimaryButton}"
     Shell.TabBarUnselectedColor="{StaticResource Neutral700}">
-
-    <!-- Single logout button (source of truth). -->
-    <Shell.ToolbarItems>
-        <ToolbarItem x:Name="LogoutToolbarItem"
-                     Text="{x:Static res:AppResources.LogoutButtonText}"
-                     Priority="0"
-                     Order="Primary"
-                     Clicked="OnLogoutClicked" />
-    </Shell.ToolbarItems>
 
     <!-- Login route outside main tabs -->
     <ShellContent
@@ -36,26 +28,31 @@
         <ShellContent
             Route="{x:Static local:Routes.Home}"
             Title="{x:Static res:AppResources.HomeTitle}"
+            Icon="icon_tab_home.svg"
             ContentTemplate="{DataTemplate views:HomePage}" />
-
-        <ShellContent
-            Route="{x:Static local:Routes.Scanner}"
-            Title="{x:Static res:AppResources.ScanTitle}"
-            ContentTemplate="{DataTemplate views:ScannerPage}" />
 
         <!-- Business operations tabs -->
         <ShellContent Route="{x:Static local:Routes.Dashboard}"
                       Title="{x:Static res:AppResources.DashboardTitle}"
+                      Icon="icon_tab_dashboard.svg"
                       ContentTemplate="{DataTemplate views:DashboardPage}" />
+
+        <ShellContent
+            Route="{x:Static local:Routes.Scanner}"
+            Title="{x:Static res:AppResources.ScanTitle}"
+            Icon="icon_tab_scanner.svg"
+            ContentTemplate="{DataTemplate views:ScannerPage}" />
 
         <ShellContent Route="{x:Static local:Routes.Rewards}"
                       Title="{x:Static res:AppResources.RewardsTitle}"
+                      Icon="icon_tab_rewards.svg"
                       ContentTemplate="{DataTemplate views:RewardsPage}" />
 
         <!-- Settings is now functional -->
         <ShellContent
             Route="{x:Static local:Routes.Settings}"
             Title="{x:Static res:AppResources.SettingsTitle}"
+            Icon="icon_tab_settings.svg"
             ContentTemplate="{DataTemplate views:SettingsPage}" />
     </TabBar>
 

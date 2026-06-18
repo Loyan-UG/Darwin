@@ -81,15 +81,73 @@
         </section>
 
         <section class="admin-form-section">
-            <h2 class="admin-form-section-title">@T.T("BillingPlanMetadataSection")</h2>
+            <h2 class="admin-form-section-title">Plan limits</h2>
             <div class="row g-3">
-            <div class="col-12">
-                <label asp-for="FeaturesJson" class="form-label"></label>
-                <field-help title="@T.T("FeaturesJson")" content="@T.T("BillingPlanFormFeaturesHelp")" placement="right"></field-help>
-                <textarea asp-for="FeaturesJson" rows="6" class="form-control font-monospace"></textarea>
-                <span asp-validation-for="FeaturesJson" class="text-danger small"></span>
+                <div class="col-md-4">
+                    <label asp-for="MaxStaff" class="form-label">Max staff</label>
+                    <input asp-for="MaxStaff" class="form-control" />
+                    <span asp-validation-for="MaxStaff" class="text-danger small"></span>
+                </div>
+                <div class="col-md-4">
+                    <label asp-for="MaxRewardTiers" class="form-label">Max reward tiers</label>
+                    <input asp-for="MaxRewardTiers" class="form-control" />
+                    <span asp-validation-for="MaxRewardTiers" class="text-danger small"></span>
+                </div>
+                <div class="col-md-4">
+                    <label asp-for="MonthlyPushCampaigns" class="form-label">Monthly push campaigns</label>
+                    <input asp-for="MonthlyPushCampaigns" class="form-control" />
+                    <span asp-validation-for="MonthlyPushCampaigns" class="text-danger small"></span>
+                </div>
             </div>
+        </section>
 
+        <section class="admin-form-section">
+            <h2 class="admin-form-section-title">Plan features</h2>
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <div class="form-check">
+                        <input asp-for="CampaignsInApp" class="form-check-input" />
+                        <label asp-for="CampaignsInApp" class="form-check-label">In-app campaigns</label>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="form-check">
+                        <input asp-for="CampaignsPush" class="form-check-input" />
+                        <label asp-for="CampaignsPush" class="form-check-label">Push campaigns</label>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="form-check">
+                        <input asp-for="AdvancedTargeting" class="form-check-input" />
+                        <label asp-for="AdvancedTargeting" class="form-check-label">Advanced targeting</label>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="form-check">
+                        <input asp-for="Exports" class="form-check-input" />
+                        <label asp-for="Exports" class="form-check-label">Exports</label>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="form-check">
+                        <input asp-for="Sla" class="form-check-input" />
+                        <label asp-for="Sla" class="form-check-label">SLA</label>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="admin-form-section">
+            <h2 class="admin-form-section-title">@T.T("BillingPlanMetadataSection")</h2>
+            <details>
+                <summary class="mb-2">Advanced JSON preview</summary>
+                <textarea asp-for="FeaturesJson" rows="6" class="form-control font-monospace" readonly></textarea>
+                <span asp-validation-for="FeaturesJson" class="text-danger small"></span>
+            </details>
+        </section>
+
+        <section class="admin-form-section">
+            <div class="row g-3">
             <div class="col-12">
                 <div class="form-check">
                     <input asp-for="IsActive" class="form-check-input" />

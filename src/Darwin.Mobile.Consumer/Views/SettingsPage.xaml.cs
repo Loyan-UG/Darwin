@@ -35,6 +35,20 @@ public partial class SettingsPage : ContentPage
         BindingContext = _viewModel;
     }
 
+    protected override async void OnAppearing()
+    {
+        base.OnAppearing();
+
+        try
+        {
+            await _viewModel.OnAppearingAsync();
+        }
+        catch
+        {
+            // Settings summary refresh failures are handled by the view model.
+        }
+    }
+
     private async void OnLogoutClicked(object sender, EventArgs e)
     {
         var confirmed = await DisplayAlertAsync(

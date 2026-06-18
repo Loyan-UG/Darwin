@@ -37,6 +37,7 @@ public sealed class BusinessLoyaltyController : ApiControllerBase
     private readonly CreateBusinessCampaignHandler _createBusinessCampaignHandler;
     private readonly UpdateBusinessCampaignHandler _updateBusinessCampaignHandler;
     private readonly SetCampaignActivationHandler _setCampaignActivationHandler;
+    private readonly BusinessCampaignEntitlementService _campaignEntitlementService;
     private readonly ILoyaltyPresentationService _presentationService;
     private readonly GetCurrentBusinessAccessStateHandler _getCurrentBusinessAccessStateHandler;
     private readonly IStringLocalizer<ValidationResource> _validationLocalizer;
@@ -58,6 +59,7 @@ public sealed class BusinessLoyaltyController : ApiControllerBase
         CreateBusinessCampaignHandler createBusinessCampaignHandler,
         UpdateBusinessCampaignHandler updateBusinessCampaignHandler,
         SetCampaignActivationHandler setCampaignActivationHandler,
+        BusinessCampaignEntitlementService campaignEntitlementService,
         ILoyaltyPresentationService presentationService,
         GetCurrentBusinessAccessStateHandler getCurrentBusinessAccessStateHandler,
         IStringLocalizer<ValidationResource> validationLocalizer)
@@ -75,6 +77,7 @@ public sealed class BusinessLoyaltyController : ApiControllerBase
         _createBusinessCampaignHandler = createBusinessCampaignHandler ?? throw new ArgumentNullException(nameof(createBusinessCampaignHandler));
         _updateBusinessCampaignHandler = updateBusinessCampaignHandler ?? throw new ArgumentNullException(nameof(updateBusinessCampaignHandler));
         _setCampaignActivationHandler = setCampaignActivationHandler ?? throw new ArgumentNullException(nameof(setCampaignActivationHandler));
+        _campaignEntitlementService = campaignEntitlementService ?? throw new ArgumentNullException(nameof(campaignEntitlementService));
         _presentationService = presentationService ?? throw new ArgumentNullException(nameof(presentationService));
         _getCurrentBusinessAccessStateHandler = getCurrentBusinessAccessStateHandler ?? throw new ArgumentNullException(nameof(getCurrentBusinessAccessStateHandler));
         _validationLocalizer = validationLocalizer ?? throw new ArgumentNullException(nameof(validationLocalizer));
@@ -561,6 +564,37 @@ public sealed class BusinessLoyaltyController : ApiControllerBase
     }
 
     /// <summary>
+    /// Returns campaign channel entitlement and monthly push quota for the current business.
+    /// </summary>
+    [HttpGet("campaigns/entitlement")]
+    [HttpGet("/api/v1/loyalty/business/campaigns/entitlement")]
+    [Authorize(Policy = "perm:AccessLoyaltyBusiness")]
+    [ProducesResponseType(typeof(BusinessCampaignEntitlementResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    public async Task<IActionResult> GetBusinessCampaignEntitlementAsync(CancellationToken ct = default)
+    {
+        var (hasBusinessAccess, businessId, errorResult) = await TryGetCurrentBusinessIdAsync(ct).ConfigureAwait(false);
+        if (!hasBusinessAccess)
+        {
+            return errorResult ?? Forbid();
+        }
+
+        var entitlement = await _campaignEntitlementService.GetAsync(businessId, ct: ct).ConfigureAwait(false);
+        return Ok(new BusinessCampaignEntitlementResponse
+        {
+            PlanCode = entitlement.PlanCode,
+            PlanName = entitlement.PlanName,
+            CampaignsInAppAllowed = entitlement.CampaignsInAppAllowed,
+            CampaignsPushAllowed = entitlement.CampaignsPushAllowed,
+            MonthlyPushQuota = entitlement.MonthlyPushQuota,
+            MonthlyPushUsed = entitlement.MonthlyPushUsed,
+            MonthlyPushRemaining = entitlement.MonthlyPushRemaining,
+            CurrentPeriodStartUtc = entitlement.CurrentPeriodStartUtc,
+            CurrentPeriodEndUtc = entitlement.CurrentPeriodEndUtc
+        });
+    }
+
+    /// <summary>
     /// Creates a new campaign owned by the current business.
     /// </summary>
     [HttpPost("campaigns")]
@@ -834,7 +868,7 @@ public sealed class BusinessLoyaltyController : ApiControllerBase
             normalized.Contains("boundtoadifferentbusiness", StringComparison.Ordinal) ||
             normalized.Contains("doesnotbelongtothisbusiness", StringComparison.Ordinal))
         {
-            return Forbid();
+            return ForbiddenProblem(detail: LocalizeScanFailureMessage("ScanSessionTokenBusinessMismatch"));
         }
 
         if (normalized.Contains("expired", StringComparison.Ordinal) || normalized.Contains("consumed", StringComparison.Ordinal))
@@ -861,6 +895,7 @@ public sealed class BusinessLoyaltyController : ApiControllerBase
             "noselections" => _validationLocalizer["SelectedRewardsMissing"],
             "invalidselections" => _validationLocalizer["SelectedRewardsInvalid"],
             "insufficientpoints" => _validationLocalizer["InsufficientPointsForSelectedRewards"],
+            "scansessiontokenbusinessmismatch" => _validationLocalizer["ScanSessionTokenBusinessMismatch"],
             _ => message
         };
     }

@@ -8,6 +8,12 @@ using System;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+#if ANDROID
+using Android.Content;
+using Android.Hardware.Camera2;
+using AndroidBuild = Android.OS.Build;
+using JavaInteger = Java.Lang.Integer;
+#endif
 
 namespace Darwin.Mobile.Business.Services.Platform;
 
@@ -23,6 +29,11 @@ namespace Darwin.Mobile.Business.Services.Platform;
 /// </remarks>
 public sealed class ScannerPlatformService : IScanner
 {
+#if ANDROID
+    private const int AndroidLensFacingFront = 0;
+    private const int AndroidLensFacingBack = 1;
+#endif
+
     private readonly IPermissionDisclosureService _permissionDisclosureService;
 
     /// <summary>
@@ -47,6 +58,11 @@ public sealed class ScannerPlatformService : IScanner
 
             if (current == PermissionStatus.Granted)
             {
+                if (!HasUsableCamera())
+                {
+                    return await PromptForManualTokenAsync(ct).ConfigureAwait(false);
+                }
+
                 return await LaunchScanPageWithFallbackAsync(ct).ConfigureAwait(false);
             }
 
@@ -73,6 +89,11 @@ public sealed class ScannerPlatformService : IScanner
 
             if (status == PermissionStatus.Granted)
             {
+                if (!HasUsableCamera())
+                {
+                    return await PromptForManualTokenAsync(ct).ConfigureAwait(false);
+                }
+
                 return await LaunchScanPageWithFallbackAsync(ct).ConfigureAwait(false);
             }
 
@@ -97,7 +118,7 @@ public sealed class ScannerPlatformService : IScanner
 
             return await PromptForManualTokenAsync(ct).ConfigureAwait(false);
         }
-        catch (OperationCanceledException)
+        catch (System.OperationCanceledException)
         {
             throw;
         }
@@ -182,7 +203,7 @@ public sealed class ScannerPlatformService : IScanner
 
                 tcs.TrySetResult(token);
             }
-            catch (Exception ex)
+            catch (System.Exception ex)
             {
                 tcs.TrySetException(ex);
             }
@@ -195,4 +216,80 @@ public sealed class ScannerPlatformService : IScanner
 
         return await tcs.Task.ConfigureAwait(false);
     }
+
+    private static bool HasUsableCamera()
+    {
+#if ANDROID
+        try
+        {
+            var activity = Microsoft.Maui.ApplicationModel.Platform.CurrentActivity;
+            var cameraManager = activity?.GetSystemService(Context.CameraService) as CameraManager;
+            var cameraIds = cameraManager?.GetCameraIdList();
+            if (cameraManager is null || cameraIds is null || cameraIds.Length == 0)
+            {
+                return false;
+            }
+
+            var hasBackCamera = false;
+            var hasFrontCamera = false;
+
+            foreach (var cameraId in cameraIds)
+            {
+                var characteristics = cameraManager.GetCameraCharacteristics(cameraId);
+                var lensFacing = characteristics.Get(CameraCharacteristics.LensFacing) as JavaInteger;
+                if (lensFacing is null)
+                {
+                    continue;
+                }
+
+                if (lensFacing.IntValue() == AndroidLensFacingBack)
+                {
+                    hasBackCamera = true;
+                }
+                else if (lensFacing.IntValue() == AndroidLensFacingFront)
+                {
+                    hasFrontCamera = true;
+                }
+            }
+
+            if (!hasBackCamera)
+            {
+                return false;
+            }
+
+            // CameraX can crash inside ZXing on Android emulators that report a partial
+            // camera set, especially when the front camera is missing. Use manual fallback there.
+            return !IsLikelyAndroidEmulator() || hasFrontCamera;
+        }
+        catch
+        {
+            return false;
+        }
+#else
+        return true;
+#endif
+    }
+
+#if ANDROID
+    private static bool IsLikelyAndroidEmulator()
+    {
+        var fingerprint = AndroidBuild.Fingerprint?.ToLowerInvariant() ?? string.Empty;
+        var model = AndroidBuild.Model?.ToLowerInvariant() ?? string.Empty;
+        var manufacturer = AndroidBuild.Manufacturer?.ToLowerInvariant() ?? string.Empty;
+        var brand = AndroidBuild.Brand?.ToLowerInvariant() ?? string.Empty;
+        var device = AndroidBuild.Device?.ToLowerInvariant() ?? string.Empty;
+        var product = AndroidBuild.Product?.ToLowerInvariant() ?? string.Empty;
+        var hardware = AndroidBuild.Hardware?.ToLowerInvariant() ?? string.Empty;
+
+        return fingerprint.StartsWith("generic", StringComparison.Ordinal)
+               || fingerprint.Contains("emulator", StringComparison.Ordinal)
+               || model.Contains("emulator", StringComparison.Ordinal)
+               || model.Contains("android sdk built for", StringComparison.Ordinal)
+               || manufacturer.Contains("genymotion", StringComparison.Ordinal)
+               || (brand.StartsWith("generic", StringComparison.Ordinal) && device.StartsWith("generic", StringComparison.Ordinal))
+               || product.Contains("sdk", StringComparison.Ordinal)
+               || hardware.Contains("goldfish", StringComparison.Ordinal)
+               || hardware.Contains("ranchu", StringComparison.Ordinal);
+    }
+#endif
 }

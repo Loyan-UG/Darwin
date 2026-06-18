@@ -1,5 +1,6 @@
 using Darwin.Mobile.Business.ViewModels;
 using System.Windows.Input;
+using Darwin.Mobile.Business.Constants;
 
 namespace Darwin.Mobile.Business.Views;
 
@@ -28,6 +29,14 @@ public partial class RewardsPage : ContentPage
     public ICommand SelectCampaignCommand => _viewModel.SelectCampaignCommand;
 
     public ICommand ToggleCampaignActivationCommand => _viewModel.ToggleCampaignActivationCommand;
+
+    public ICommand OpenNewRewardTierCommand => new Command(async () => await OpenRewardTierEditorAsync(null));
+
+    public ICommand OpenRewardTierEditorCommand => new Command<RewardTierEditorItem>(async item => await OpenRewardTierEditorAsync(item));
+
+    public ICommand OpenNewCampaignCommand => new Command(async () => await OpenCampaignEditorAsync(null));
+
+    public ICommand OpenCampaignEditorCommand => new Command<BusinessCampaignEditorItem>(async item => await OpenCampaignEditorAsync(item));
 
     protected override async void OnAppearing()
     {
@@ -58,5 +67,45 @@ public partial class RewardsPage : ContentPage
         {
             base.OnDisappearing();
         }
+    }
+
+    private async Task OpenRewardTierEditorAsync(RewardTierEditorItem? item)
+    {
+        if (!_viewModel.CanManageRewards)
+        {
+            return;
+        }
+
+        var parameters = new Dictionary<string, object?>
+        {
+            ["viewModel"] = _viewModel
+        };
+
+        if (item is not null)
+        {
+            parameters["rewardTier"] = item;
+        }
+
+        await Shell.Current.GoToAsync(Routes.RewardTierEditor, parameters);
+    }
+
+    private async Task OpenCampaignEditorAsync(BusinessCampaignEditorItem? item)
+    {
+        if (!_viewModel.CanManageRewards)
+        {
+            return;
+        }
+
+        var parameters = new Dictionary<string, object?>
+        {
+            ["viewModel"] = _viewModel
+        };
+
+        if (item is not null)
+        {
+            parameters["campaign"] = item;
+        }
+
+        await Shell.Current.GoToAsync(Routes.RewardCampaignEditor, parameters);
     }
 }

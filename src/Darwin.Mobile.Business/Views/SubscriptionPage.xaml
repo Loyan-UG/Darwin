@@ -11,11 +11,15 @@
 
     <ScrollView>
         <VerticalStackLayout Padding="24" Spacing="14">
-            <Label Text="{x:Static res:AppResources.SubscriptionTitle}"
-                   Style="{StaticResource TitleLabelStyle}" />
+            <Border Style="{StaticResource InternalPageHeaderBorderStyle}">
+                <VerticalStackLayout Spacing="8">
+                    <Label Text="{x:Static res:AppResources.SubscriptionTitle}"
+                           Style="{StaticResource TitleLabelStyle}" />
 
-            <Label Text="{x:Static res:AppResources.SubscriptionDescription}"
-                   Style="{StaticResource SecondaryBodyLabelStyle}" />
+                    <Label Text="{x:Static res:AppResources.SubscriptionDescription}"
+                           Style="{StaticResource SecondaryBodyLabelStyle}" />
+                </VerticalStackLayout>
+            </Border>
 
             <Border Style="{StaticResource CardBorderStyle}" Padding="16">
                 <VerticalStackLayout Spacing="10">

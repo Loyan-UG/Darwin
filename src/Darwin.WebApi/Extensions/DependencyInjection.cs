@@ -13,20 +13,25 @@ using Darwin.Application.Abstractions.Auth;
 using Darwin.Application.Abstractions.Payments;
 using Darwin.Application.Abstractions.Security;
 using Darwin.Application.Abstractions.Services;
+using Darwin.Application.Abstractions.Notifications;
 using Darwin.Application.Catalog.Services;             // IAddOnPricingService, AddOnPricingService
 using Darwin.Application.Common.Html;                  // IHtmlSanitizer + HtmlSanitizerFactory
 using Darwin.Application.Extensions;
 using Darwin.Application;
+using Darwin.Application.Loyalty.Campaigns;
 using Darwin.Application.Loyalty.Queries;
 using Darwin.Application.Loyalty.Services;             // ScanSessionTokenResolver
 // Application types used to locate assemblies and for explicit registrations
 using Darwin.Application.Meta.Queries;                 // marker for Application assembly
+using Darwin.Application.Notifications;
 // Clock/Time adapter
 using Darwin.Infrastructure.Adapters.Time;
 using Darwin.Infrastructure.Extensions;
 using Darwin.Infrastructure.Health;
 using Darwin.Infrastructure.Identity;
 using Darwin.Infrastructure.Media;
+using Darwin.Infrastructure.Notifications.Push;
+using Darwin.Infrastructure.Security;
 using Darwin.WebApi.Auth;
 using Darwin.WebApi.Security;
 using Darwin.WebApi.Services;
@@ -144,6 +149,13 @@ namespace Darwin.WebApi.Extensions
             // ------------------------------------------------------------
             services.AddObjectStorageInfrastructure(configuration);
             services.AddNotificationsInfrastructure(configuration);
+            services.AddSingleton<IProtectedStringService, ProtectedStringService>();
+            services.Configure<PushGatewayOptions>(configuration.GetSection("Notifications:PushGateway"));
+            services.AddHttpClient<IPushNotificationSender, HttpPushNotificationSender>((serviceProvider, client) =>
+            {
+                var options = serviceProvider.GetRequiredService<IOptions<PushGatewayOptions>>().Value;
+                client.Timeout = TimeSpan.FromSeconds(Math.Clamp(options.TimeoutSeconds, 5, 120));
+            });
             services.AddPaymentProviderInfrastructure();
             services.AddShippingProviderInfrastructure();
             services.AddComplianceInfrastructure(configuration);
@@ -189,6 +201,11 @@ namespace Darwin.WebApi.Extensions
             // Scan session token resolver used by loyalty handlers that accept QR tokens.
             // This resolver depends on IAppDbContext and IClock, so keep it scoped.
             services.AddScoped<ScanSessionTokenResolver>();
+            services.AddScoped<BusinessCampaignEntitlementService>();
+            services.AddScoped<NotificationInboxWriter>();
+            services.AddScoped<CampaignPushDeliveryWriter>();
+            services.AddScoped<ProcessPendingPushDeliveriesHandler>();
+            services.AddHostedService<CampaignPushDeliveryWorker>();
 
             // Note: if additional helper services are required by application handlers,
             // they should be registered here following the same pattern.

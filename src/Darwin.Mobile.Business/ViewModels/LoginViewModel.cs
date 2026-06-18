@@ -4,6 +4,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Darwin.Mobile.Business.Constants;
 using Darwin.Mobile.Business.Resources;
+using Darwin.Mobile.Business.Services.Notifications;
 using Darwin.Mobile.Shared.Commands;
 using Darwin.Mobile.Shared.Common;
 using Darwin.Mobile.Shared.Navigation;
@@ -28,6 +29,7 @@ public sealed partial class LoginViewModel : BaseViewModel
     private readonly INavigationService _navigationService;
     private readonly ApiOptions _apiOptions;
     private readonly ILegalLinkService _legalLinkService;
+    private readonly IBusinessPushRegistrationCoordinator _pushRegistrationCoordinator;
     private CancellationTokenSource? _operationCancellation;
 
     private string? _email;
@@ -47,12 +49,14 @@ public sealed partial class LoginViewModel : BaseViewModel
         IAuthService authService,
         INavigationService navigationService,
         ApiOptions apiOptions,
-        ILegalLinkService legalLinkService)
+        ILegalLinkService legalLinkService,
+        IBusinessPushRegistrationCoordinator pushRegistrationCoordinator)
     {
         _authService = authService ?? throw new ArgumentNullException(nameof(authService));
         _navigationService = navigationService ?? throw new ArgumentNullException(nameof(navigationService));
         _apiOptions = apiOptions ?? throw new ArgumentNullException(nameof(apiOptions));
         _legalLinkService = legalLinkService ?? throw new ArgumentNullException(nameof(legalLinkService));
+        _pushRegistrationCoordinator = pushRegistrationCoordinator ?? throw new ArgumentNullException(nameof(pushRegistrationCoordinator));
 
         LoginCommand = new AsyncCommand(LoginAsync, CanLogin);
         RequestActivationEmailCommand = new AsyncCommand(RequestActivationEmailAsync, () => !IsBusy && !string.IsNullOrWhiteSpace(Email));
@@ -200,6 +204,8 @@ public sealed partial class LoginViewModel : BaseViewModel
         {
             await _authService.LoginAsync(Email.Trim(), Password, deviceId: null, operationCancellation.Token);
             await _navigationService.GoToAsync($"//{Routes.Home}");
+            _ = TryRegisterPushDeviceSafelyAsync();
+            await NotificationDeepLinkNavigator.TryNavigatePendingAsync().ConfigureAwait(false);
             RunOnMain(() =>
             {
                 Email = string.Empty;
@@ -473,6 +479,19 @@ public sealed partial class LoginViewModel : BaseViewModel
 
     private static string ResolveBusinessLoginErrorMessage(Exception ex, ApiOptions apiOptions)
         => ResolveBusinessAuthMessage(ex, apiOptions, AppResources.InvalidCredentials);
+
+    private async Task TryRegisterPushDeviceSafelyAsync()
+    {
+        try
+        {
+            using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(20));
+            await _pushRegistrationCoordinator.TryRegisterCurrentDeviceAsync(timeout.Token).ConfigureAwait(false);
+        }
+        catch
+        {
+            // Push registration is best effort and must not block sign-in.
+        }
+    }
 
     private static string ResolveBusinessAuthMessage(Exception ex, ApiOptions apiOptions, string fallback)
     {

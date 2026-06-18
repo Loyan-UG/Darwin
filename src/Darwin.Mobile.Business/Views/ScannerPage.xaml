@@ -11,7 +11,7 @@
 
     <ScrollView x:Name="RootScrollView">
         <VerticalStackLayout Spacing="14" Padding="20,18,20,24">
-            <Border Style="{StaticResource CardBorderStyle}">
+            <Border Style="{StaticResource InternalPageHeaderBorderStyle}">
                 <VerticalStackLayout Spacing="10">
                     <Label Text="{x:Static res:AppResources.ScanTitle}" Style="{StaticResource TitleLabelStyle}" />
                     <Label Text="{x:Static res:AppResources.ScannerSingleOwnerHint}" Style="{StaticResource BodyLabelStyle}" />
@@ -27,13 +27,13 @@
                     <Label Text="{Binding ScannerReadinessMessage}" Style="{StaticResource BodyLabelStyle}" LineBreakMode="WordWrap" />
                     <buttons:SfButton Text="{x:Static res:AppResources.ScanTitle}" Style="{StaticResource SyncfusionPrimaryButtonStyle}" Command="{Binding ScanCommand}" IsEnabled="{Binding CanStartScan}" HorizontalOptions="Fill" />
                     <Grid ColumnDefinitions="*,*" ColumnSpacing="10">
-                        <Border Grid.Column="0" Style="{StaticResource MutedCardBorderStyle}">
+                        <Border Grid.Column="0" Style="{StaticResource HeaderStatTileBorderStyle}">
                             <VerticalStackLayout Spacing="4">
                                 <Label Text="{x:Static res:AppResources.ConfirmAccrualButton}" Style="{StaticResource CaptionLabelStyle}" />
                                 <Label Text="{x:Static res:AppResources.AccrualHelpText}" Style="{StaticResource SecondaryBodyLabelStyle}" />
                             </VerticalStackLayout>
                         </Border>
-                        <Border Grid.Column="1" Style="{StaticResource MutedCardBorderStyle}">
+                        <Border Grid.Column="1" Style="{StaticResource HeaderStatTileBorderStyle}">
                             <VerticalStackLayout Spacing="4">
                                 <Label Text="{x:Static res:AppResources.ConfirmRedemptionButton}" Style="{StaticResource CaptionLabelStyle}" />
                                 <Label Text="{x:Static res:AppResources.RedemptionHelpText}" Style="{StaticResource SecondaryBodyLabelStyle}" />

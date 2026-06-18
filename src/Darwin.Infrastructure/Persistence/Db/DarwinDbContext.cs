@@ -8,6 +8,7 @@ using Darwin.Domain.Entities.CMS;
 using Darwin.Domain.Entities.Identity;
 using Darwin.Domain.Entities.Integration;
 using Darwin.Domain.Entities.Marketing;
+using Darwin.Domain.Entities.Notifications;
 using Darwin.Domain.Entities.Orders;
 using Darwin.Domain.Entities.Pricing;
 using Darwin.Domain.Entities.SEO;
@@ -131,6 +132,10 @@ namespace Darwin.Infrastructure.Persistence.Db
         /// Output files produced by <see cref="AnalyticsExportJob"/>.
         /// </summary>
         public DbSet<AnalyticsExportFile> AnalyticsExportFiles => Set<AnalyticsExportFile>();
+
+        // Notifications
+        public DbSet<NotificationMessage> NotificationMessages => Set<NotificationMessage>();
+        public DbSet<NotificationRecipient> NotificationRecipients => Set<NotificationRecipient>();
 
 
         /// <summary>

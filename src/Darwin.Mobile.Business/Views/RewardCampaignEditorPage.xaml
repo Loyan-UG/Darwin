@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:Darwin.Mobile.Business.ViewModels"
+             xmlns:res="clr-namespace:Darwin.Mobile.Business.Resources"
+             xmlns:views="clr-namespace:Darwin.Mobile.Business.Views"
+             xmlns:buttons="clr-namespace:Syncfusion.Maui.Toolkit.Buttons;assembly=Syncfusion.Maui.Toolkit"
+             xmlns:inputLayout="clr-namespace:Syncfusion.Maui.Toolkit.TextInputLayout;assembly=Syncfusion.Maui.Toolkit"
+             xmlns:chips="clr-namespace:Syncfusion.Maui.Toolkit.Chips;assembly=Syncfusion.Maui.Toolkit"
+             x:Class="Darwin.Mobile.Business.Views.RewardCampaignEditorPage"
+             x:DataType="vm:RewardsViewModel"
+             x:Name="PageRoot"
+             Title="{x:Static res:AppResources.RewardsCampaignsLabel}">
+
+    <ScrollView>
+        <VerticalStackLayout Padding="20,18,20,24" Spacing="14">
+            <Border Style="{StaticResource InternalPageHeaderBorderStyle}">
+                <VerticalStackLayout Spacing="12">
+                    <Grid ColumnDefinitions="Auto,*" ColumnSpacing="12">
+                        <buttons:SfButton Text="‹"
+                                          WidthRequest="44"
+                                          HeightRequest="40"
+                                          Command="{Binding Source={x:Reference PageRoot}, Path=BackCommand, x:DataType=views:RewardCampaignEditorPage}"
+                                          Style="{StaticResource SyncfusionOutlinedButtonStyle}" />
+                        <VerticalStackLayout Grid.Column="1" Spacing="4" VerticalOptions="Center">
+                            <Label Text="{Binding CampaignSaveButtonText}" Style="{StaticResource SectionHeadingLabelStyle}" />
+                            <Label Text="{Binding CampaignEditorSelectionHint}" Style="{StaticResource SecondaryBodyLabelStyle}" />
+                        </VerticalStackLayout>
+                    </Grid>
+                    <Label Text="{x:Static res:AppResources.BusinessPermissionDeniedRewardEdit}" Style="{StaticResource WarningLabelStyle}" IsVisible="{Binding CanManageRewards, Converter={StaticResource InverseBoolConverter}}" />
+                </VerticalStackLayout>
+            </Border>
+
+            <Border Style="{StaticResource CardBorderStyle}">
+                <VerticalStackLayout Spacing="14">
+                    <inputLayout:SfTextInputLayout Hint="{x:Static res:AppResources.RewardsCampaignNamePlaceholder}"
+                                                   Style="{StaticResource SyncfusionOutlinedInputLayoutStyle}">
+                        <Entry Placeholder="{x:Static res:AppResources.RewardsCampaignNamePlaceholder}" Text="{Binding CampaignNameInput}" Style="{StaticResource FormEntryStyle}" />
+                    </inputLayout:SfTextInputLayout>
+
+                    <inputLayout:SfTextInputLayout Hint="{x:Static res:AppResources.RewardsCampaignTitlePlaceholder}"
+                                                   Style="{StaticResource SyncfusionOutlinedInputLayoutStyle}">
+                        <Entry Placeholder="{x:Static res:AppResources.RewardsCampaignTitlePlaceholder}" Text="{Binding CampaignTitleInput}" Style="{StaticResource FormEntryStyle}" />
+                    </inputLayout:SfTextInputLayout>
+
+                    <Border Style="{StaticResource FormFieldBorderStyle}" Padding="14,10">
+                        <Editor Placeholder="{x:Static res:AppResources.RewardsCampaignBodyPlaceholder}" Text="{Binding CampaignBodyInput}" AutoSize="TextChanges" Style="{StaticResource FormEditorStyle}" />
+                    </Border>
+                </VerticalStackLayout>
+            </Border>
+
+            <Border Style="{StaticResource CardBorderStyle}">
+                <VerticalStackLayout Spacing="14">
+                    <Grid ColumnDefinitions="*,*" ColumnSpacing="10">
+                        <inputLayout:SfTextInputLayout Grid.Column="0"
+                                                       Hint="{x:Static res:AppResources.RewardsCampaignStartsAtPlaceholder}"
+                                                       Style="{StaticResource SyncfusionOutlinedInputLayoutStyle}">
+                            <Entry Placeholder="{x:Static res:AppResources.RewardsCampaignStartsAtPlaceholder}" Text="{Binding CampaignStartsAtInput}" Style="{StaticResource FormEntryStyle}" />
+                        </inputLayout:SfTextInputLayout>
+                        <inputLayout:SfTextInputLayout Grid.Column="1"
+                                                       Hint="{x:Static res:AppResources.RewardsCampaignEndsAtPlaceholder}"
+                                                       Style="{StaticResource SyncfusionOutlinedInputLayoutStyle}">
+                            <Entry Placeholder="{x:Static res:AppResources.RewardsCampaignEndsAtPlaceholder}" Text="{Binding CampaignEndsAtInput}" Style="{StaticResource FormEntryStyle}" />
+                        </inputLayout:SfTextInputLayout>
+                    </Grid>
+
+                    <VerticalStackLayout Spacing="6">
+                        <Label Text="{x:Static res:AppResources.RewardsCampaignChannelPickerTitle}" Style="{StaticResource CaptionLabelStyle}" />
+                        <Label Text="{Binding CampaignEntitlementSummary}"
+                               Style="{StaticResource CaptionLabelStyle}"
+                               IsVisible="{Binding HasCampaignEntitlementSummary}" />
+                        <chips:SfChipGroup ItemsSource="{Binding CampaignChannelOptions}"
+                                           DisplayMemberPath="Label"
+                                           SelectedItem="{Binding SelectedCampaignChannel, Mode=TwoWay}"
+                                           ChipType="Choice"
+                                           ChoiceMode="Single"
+                                           ChipCornerRadius="10"
+                                           ChipBackground="{StaticResource BrushSurface}"
+                                           ChipStroke="{StaticResource BrandGold50}"
+                                           ChipStrokeThickness="1"
+                                           ChipTextColor="{StaticResource Neutral900}"
+                                           ChipTextSize="13"
+                                           SelectedChipBackground="{StaticResource BrushPrimary}"
+                                           SelectedChipTextColor="{StaticResource Neutral0}" />
+                    </VerticalStackLayout>
+
+                    <VerticalStackLayout Spacing="6">
+                        <Label Text="{x:Static res:AppResources.RewardsCampaignTargetingPresetTitle}" Style="{StaticResource CaptionLabelStyle}" />
+                        <FlexLayout Wrap="Wrap" Direction="Row" JustifyContent="Start" AlignItems="Start">
+                            <buttons:SfButton Text="{x:Static res:AppResources.RewardsCampaignAudienceJoinedMembers}" Command="{Binding ApplyCampaignTargetingPresetCommand}" CommandParameter="JoinedMembers" Style="{StaticResource SyncfusionOutlinedButtonStyle}" FontSize="12" Margin="0,0,8,8" />
+                            <buttons:SfButton Text="{x:Static res:AppResources.RewardsCampaignAudienceTierSegment}" Command="{Binding ApplyCampaignTargetingPresetCommand}" CommandParameter="TierSegment" Style="{StaticResource SyncfusionOutlinedButtonStyle}" FontSize="12" Margin="0,0,8,8" />
+                            <buttons:SfButton Text="{x:Static res:AppResources.RewardsCampaignAudiencePointsThreshold}" Command="{Binding ApplyCampaignTargetingPresetCommand}" CommandParameter="PointsThreshold" Style="{StaticResource SyncfusionOutlinedButtonStyle}" FontSize="12" Margin="0,0,8,8" />
+                            <buttons:SfButton Text="{x:Static res:AppResources.RewardsCampaignAudienceDateWindow}" Command="{Binding ApplyCampaignTargetingPresetCommand}" CommandParameter="DateWindow" Style="{StaticResource SyncfusionOutlinedButtonStyle}" FontSize="12" Margin="0,0,8,8" />
+                        </FlexLayout>
+                        <Label Text="{Binding CampaignTargetingHint}" Style="{StaticResource CaptionLabelStyle}" />
+                    </VerticalStackLayout>
+                </VerticalStackLayout>
+            </Border>
+
+            <buttons:SfButton Text="{Binding CampaignSaveButtonText}" Command="{Binding SaveCampaignCommand}" IsEnabled="{Binding CanManageRewards}" Style="{StaticResource SyncfusionPrimaryButtonStyle}" />
+
+            <Label Text="{Binding ErrorMessage}" Style="{StaticResource ErrorLabelStyle}" IsVisible="{Binding HasError}" />
+            <ActivityIndicator IsRunning="{Binding IsBusy}" IsVisible="{Binding IsBusy}" Color="{StaticResource BrandGold500}" />
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>

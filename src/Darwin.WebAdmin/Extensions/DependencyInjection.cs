@@ -34,6 +34,7 @@ using Darwin.Application.Inventory.Queries;
 using Darwin.Application.Loyalty.Commands;
 using Darwin.Application.Loyalty.Campaigns;
 using Darwin.Application.Loyalty.Queries;
+using Darwin.Application.Notifications;
 using Darwin.Application.Orders.Commands;
 using Darwin.Application.Orders.Queries;
 using Darwin.Application.Settings.Commands;
@@ -48,6 +49,7 @@ using Darwin.Infrastructure.Adapters.Time;
 using Darwin.Infrastructure.Extensions;
 using Darwin.Infrastructure.Health;
 using Darwin.Infrastructure.Media;
+using Darwin.Infrastructure.Security;
 using Darwin.Infrastructure.Security.Jwt;
 using Darwin.Infrastructure.Security.LoginRateLimiter;
 using Darwin.WebAdmin.Auth;
@@ -173,6 +175,7 @@ namespace Darwin.WebAdmin.Extensions
             // Transactional email infrastructure; provider selection is configuration-driven.
             services.AddObjectStorageInfrastructure(config);
             services.AddNotificationsInfrastructure(config);
+            services.AddSingleton<Application.Abstractions.Security.IProtectedStringService, ProtectedStringService>();
             services.AddPaymentProviderInfrastructure();
             services.AddComplianceInfrastructure(config);
 
@@ -373,6 +376,9 @@ namespace Darwin.WebAdmin.Extensions
             services.AddScoped<ActivateLoyaltyAccountHandler>();
             services.AddScoped<ExpireLoyaltyScanSessionHandler>();
             services.AddScoped<GetBusinessCampaignsHandler>();
+            services.AddScoped<BusinessCampaignEntitlementService>();
+            services.AddScoped<NotificationInboxWriter>();
+            services.AddScoped<CampaignPushDeliveryWriter>();
             services.AddScoped<CreateBusinessCampaignHandler>();
             services.AddScoped<UpdateBusinessCampaignHandler>();
             services.AddScoped<SetCampaignActivationHandler>();

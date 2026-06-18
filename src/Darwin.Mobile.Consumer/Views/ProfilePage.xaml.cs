@@ -62,22 +62,6 @@ public partial class ProfilePage : ContentPage
     }
 
     /// <summary>
-    /// Opens the member address-book management screen from the profile page.
-    /// </summary>
-    private async void OnManageAddressesClicked(object? sender, EventArgs e)
-    {
-        await NavigateSafelyAsync(Routes.MemberAddresses);
-    }
-
-    /// <summary>
-    /// Opens the member preferences management screen from the profile page.
-    /// </summary>
-    private async void OnManagePreferencesClicked(object? sender, EventArgs e)
-    {
-        await NavigateSafelyAsync(Routes.MemberPreferences);
-    }
-
-    /// <summary>
     /// Opens the member CRM customer-context details screen from the profile page.
     /// </summary>
     private async void OnViewCustomerContextClicked(object? sender, EventArgs e)

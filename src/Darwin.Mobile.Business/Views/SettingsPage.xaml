@@ -11,14 +11,14 @@
 
     <ScrollView>
         <VerticalStackLayout Padding="20,18,20,24" Spacing="14">
-            <Border Style="{StaticResource CardBorderStyle}">
+            <Border Style="{StaticResource InternalPageHeaderBorderStyle}">
                 <VerticalStackLayout Spacing="8">
                     <Label Text="{x:Static res:AppResources.SettingsTitle}" Style="{StaticResource TitleLabelStyle}" />
                     <Label Text="{x:Static res:AppResources.SettingsSubtitle}" Style="{StaticResource BodyLabelStyle}" />
                 </VerticalStackLayout>
             </Border>
 
-            <Border Style="{StaticResource CardBorderStyle}">
+            <Border Style="{StaticResource ElevatedListCardBorderStyle}">
                 <VerticalStackLayout Spacing="12">
                     <Label Text="{x:Static res:AppResources.ProfileTitle}" Style="{StaticResource SectionHeadingLabelStyle}" />
                     <Grid ColumnDefinitions="*,*" ColumnSpacing="10">
@@ -29,9 +29,17 @@
                 </VerticalStackLayout>
             </Border>
 
-            <Border Style="{StaticResource CardBorderStyle}">
+            <Border Style="{StaticResource ElevatedListCardBorderStyle}">
                 <VerticalStackLayout Spacing="12">
                     <Label Text="{x:Static res:AppResources.HomeStatusTitle}" Style="{StaticResource SectionHeadingLabelStyle}" />
+                    <Border Style="{StaticResource HeaderStatTileBorderStyle}">
+                        <VerticalStackLayout Spacing="6">
+                            <Label Text="{x:Static res:AppResources.HomeBusinessOperationalStatusTitle}" Style="{StaticResource CaptionLabelStyle}" />
+                            <Label Text="{Binding BusinessOperationalStatusLabel}" Style="{StaticResource BodyLabelStyle}" FontAttributes="Bold" />
+                            <Label Text="{Binding BusinessOperationalStatusMessage}" Style="{StaticResource SecondaryBodyLabelStyle}" IsVisible="{Binding HasBusinessOperationalStatusMessage}" />
+                            <Label Text="{Binding SetupChecklistSummary}" Style="{StaticResource CaptionLabelStyle}" IsVisible="{Binding HasSetupChecklistSummary}" />
+                        </VerticalStackLayout>
+                    </Border>
                     <Grid ColumnDefinitions="*,*" ColumnSpacing="10">
                         <buttons:SfButton Grid.Column="0" Text="{x:Static res:AppResources.SettingsStaffAccessBadgeButton}" Style="{StaticResource SyncfusionOutlinedButtonStyle}" Command="{Binding OpenStaffAccessBadgeCommand}" />
                         <buttons:SfButton Grid.Column="1" Text="{x:Static res:AppResources.SettingsSubscriptionButton}" Style="{StaticResource SyncfusionOutlinedButtonStyle}" Command="{Binding OpenSubscriptionCommand}" />
@@ -39,11 +47,18 @@
                 </VerticalStackLayout>
             </Border>
 
-            <Border Style="{StaticResource CardBorderStyle}">
+            <Border Style="{StaticResource ElevatedListCardBorderStyle}">
                 <VerticalStackLayout Spacing="12">
                     <Label Text="{x:Static res:AppResources.LegalHubTitle}" Style="{StaticResource SectionHeadingLabelStyle}" />
                     <buttons:SfButton Text="{x:Static res:AppResources.SettingsLegalHubButton}" Style="{StaticResource SyncfusionOutlinedButtonStyle}" Command="{Binding OpenLegalHubCommand}" />
                     <Button Text="{x:Static res:AppResources.SettingsDeleteAccountButton}" Style="{StaticResource DangerLinkButtonStyle}" HorizontalOptions="Start" Command="{Binding OpenAccountDeletionCommand}" />
+                </VerticalStackLayout>
+            </Border>
+
+            <Border Style="{StaticResource ElevatedListCardBorderStyle}">
+                <VerticalStackLayout Spacing="12">
+                    <Label Text="{x:Static res:AppResources.LogoutButtonText}" Style="{StaticResource SectionHeadingLabelStyle}" />
+                    <buttons:SfButton Text="{x:Static res:AppResources.LogoutButtonText}" Style="{StaticResource SyncfusionOutlinedButtonStyle}" Clicked="OnLogoutClicked" />
                 </VerticalStackLayout>
             </Border>
         </VerticalStackLayout>

@@ -1,0 +1,130 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:vm="clr-namespace:Darwin.Mobile.Business.ViewModels"
+    xmlns:res="clr-namespace:Darwin.Mobile.Business.Resources"
+    x:Class="Darwin.Mobile.Business.Views.NotificationsPage"
+    x:Name="Page"
+    x:DataType="vm:NotificationsViewModel"
+    Title="{x:Static res:AppResources.NotificationsTitle}"
+    BackgroundColor="{StaticResource Neutral50}">
+
+    <Grid RowDefinitions="Auto,*" Padding="20,14,20,0" RowSpacing="12">
+        <VerticalStackLayout Grid.Row="0" Spacing="12">
+            <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
+                <VerticalStackLayout Spacing="2">
+                    <Label Text="{x:Static res:AppResources.NotificationsTitle}" Style="{StaticResource TitleLabelStyle}" />
+                    <Label Text="{x:Static res:AppResources.NotificationsSubtitle}" Style="{StaticResource CaptionLabelStyle}" />
+                </VerticalStackLayout>
+                <Button Grid.Column="1"
+                        Text="{x:Static res:AppResources.NotificationsMarkAllRead}"
+                        Command="{Binding MarkAllReadCommand}"
+                        Style="{StaticResource SecondaryButtonStyle}"
+                        HeightRequest="38"
+                        Padding="14,0" />
+            </Grid>
+
+            <CollectionView ItemsSource="{Binding Categories}"
+                            SelectedItem="{Binding SelectedCategory, Mode=TwoWay}"
+                            SelectionMode="Single"
+                            HeightRequest="42">
+                <CollectionView.ItemsLayout>
+                    <LinearItemsLayout Orientation="Horizontal" ItemSpacing="8" />
+                </CollectionView.ItemsLayout>
+                <CollectionView.ItemTemplate>
+                    <DataTemplate x:DataType="vm:NotificationCategoryFilter">
+                        <Border Padding="14,8"
+                                Background="{StaticResource Neutral0}"
+                                Stroke="{StaticResource Neutral200}"
+                                StrokeThickness="1">
+                            <Border.StrokeShape>
+                                <RoundRectangle CornerRadius="18" />
+                            </Border.StrokeShape>
+                            <Label Text="{Binding Label}" FontSize="12" TextColor="{StaticResource Neutral900}" />
+                        </Border>
+                    </DataTemplate>
+                </CollectionView.ItemTemplate>
+            </CollectionView>
+
+            <Label Text="{Binding ErrorMessage}"
+                   IsVisible="{Binding HasError}"
+                   TextColor="{StaticResource Danger500}"
+                   FontSize="12" />
+        </VerticalStackLayout>
+
+        <RefreshView Grid.Row="1" Command="{Binding RefreshCommand}" IsRefreshing="{Binding IsBusy, Mode=OneWay}">
+            <CollectionView ItemsSource="{Binding Items}" ItemSizingStrategy="MeasureFirstItem" SelectionMode="None">
+                <CollectionView.EmptyView>
+                    <VerticalStackLayout Padding="12,80" Spacing="8" HorizontalOptions="Center">
+                        <Label Text="{x:Static res:AppResources.NotificationsEmptyTitle}"
+                               FontAttributes="Bold"
+                               FontSize="18"
+                               HorizontalTextAlignment="Center"
+                               TextColor="{StaticResource Neutral900}" />
+                        <Label Text="{x:Static res:AppResources.NotificationsEmptyBody}"
+                               FontSize="13"
+                               HorizontalTextAlignment="Center"
+                               TextColor="{StaticResource Neutral600}" />
+                    </VerticalStackLayout>
+                </CollectionView.EmptyView>
+                <CollectionView.ItemTemplate>
+                    <DataTemplate x:DataType="vm:NotificationDisplayItem">
+                        <Border Style="{StaticResource ElevatedListCardBorderStyle}" Margin="0,6,0,10" Padding="14">
+                            <Border.GestureRecognizers>
+                                <TapGestureRecognizer Command="{Binding BindingContext.OpenNotificationCommand, Source={x:Reference Page}}"
+                                                      CommandParameter="{Binding .}" />
+                            </Border.GestureRecognizers>
+                            <Grid RowDefinitions="Auto,Auto,Auto" ColumnDefinitions="Auto,*,Auto" ColumnSpacing="10" RowSpacing="6">
+                                <Border Grid.Row="0"
+                                        Grid.Column="0"
+                                        WidthRequest="9"
+                                        HeightRequest="9"
+                                        Background="{StaticResource BrushDarkAction}"
+                                        IsVisible="{Binding IsUnread}"
+                                        VerticalOptions="Center">
+                                    <Border.StrokeShape>
+                                        <RoundRectangle CornerRadius="5" />
+                                    </Border.StrokeShape>
+                                </Border>
+                                <Label Grid.Row="0"
+                                       Grid.Column="1"
+                                       Text="{Binding Title}"
+                                       FontAttributes="Bold"
+                                       FontSize="15"
+                                       TextColor="{StaticResource Neutral900}" />
+                                <Label Grid.Row="0"
+                                       Grid.Column="2"
+                                       Text="{Binding CategoryLabel}"
+                                       FontSize="11"
+                                       TextColor="{StaticResource Neutral600}" />
+                                <Label Grid.Row="1"
+                                       Grid.Column="1"
+                                       Grid.ColumnSpan="2"
+                                       Text="{Binding Body}"
+                                       FontSize="13"
+                                       TextColor="{StaticResource Neutral700}"
+                                       LineBreakMode="WordWrap" />
+                                <Grid Grid.Row="2"
+                                      Grid.Column="1"
+                                      Grid.ColumnSpan="2"
+                                      ColumnDefinitions="*,Auto"
+                                      Margin="0,4,0,0">
+                                    <Label Text="{Binding CreatedAtText}" FontSize="11" TextColor="{StaticResource Neutral600}" />
+                                    <Button Grid.Column="1"
+                                            Text="{x:Static res:AppResources.NotificationsMarkRead}"
+                                            Command="{Binding BindingContext.MarkReadCommand, Source={x:Reference Page}}"
+                                            CommandParameter="{Binding .}"
+                                            IsVisible="{Binding IsUnread}"
+                                            HeightRequest="32"
+                                            Padding="12,0"
+                                            Style="{StaticResource SecondaryButtonStyle}" />
+                                </Grid>
+                            </Grid>
+                        </Border>
+                    </DataTemplate>
+                </CollectionView.ItemTemplate>
+            </CollectionView>
+        </RefreshView>
+    </Grid>
+</ContentPage>

@@ -1,4 +1,5 @@
 using Darwin.Application.Abstractions.Persistence;
+using Darwin.Application.Billing;
 using Darwin.Application.Billing.DTOs;
 using Darwin.Application.Billing.Validators;
 using Darwin.Domain.Entities.Billing;
@@ -50,7 +51,7 @@ public sealed class CreateBillingPlanHandler
             IntervalCount = dto.IntervalCount,
             TrialDays = dto.TrialDays,
             IsActive = dto.IsActive,
-            FeaturesJson = string.IsNullOrWhiteSpace(dto.FeaturesJson) ? "{}" : dto.FeaturesJson.Trim()
+            FeaturesJson = BillingPlanFeaturesJson.Build(dto)
         };
 
         _db.Set<BillingPlan>().Add(entity);
@@ -114,7 +115,7 @@ public sealed class UpdateBillingPlanHandler
         entity.IntervalCount = dto.IntervalCount;
         entity.TrialDays = dto.TrialDays;
         entity.IsActive = dto.IsActive;
-        entity.FeaturesJson = string.IsNullOrWhiteSpace(dto.FeaturesJson) ? "{}" : dto.FeaturesJson.Trim();
+        entity.FeaturesJson = BillingPlanFeaturesJson.Build(dto);
 
         try
         {

@@ -13890,4 +13890,16 @@
   <data name="VatValidationFormatHintNegative" xml:space="preserve">
     <value>Format hint: this VAT ID does not match the expected country pattern. Keep it under manual review until official evidence confirms the correct decision.</value>
   </data>
+  <data name="Queued" xml:space="preserve">
+    <value>Queued</value>
+  </data>
+  <data name="Sending" xml:space="preserve">
+    <value>Sending</value>
+  </data>
+  <data name="InvalidToken" xml:space="preserve">
+    <value>Invalid token</value>
+  </data>
+  <data name="RetryAvailable" xml:space="preserve">
+    <value>Retry available</value>
+  </data>
 </root>

@@ -7,19 +7,29 @@
     xmlns:res="clr-namespace:Darwin.Mobile.Business.Resources"
     x:Class="Darwin.Mobile.Business.Views.QrScanPage"
     Title="{x:Static res:AppResources.ScanTitle}"
-    BackgroundColor="{StaticResource Neutral0}">
+    BackgroundColor="Black">
 
     <Grid>
         <zxing:CameraBarcodeReaderView x:Name="CameraView"
-                                       IsDetecting="True"
+                                       CameraLocation="Rear"
+                                       IsDetecting="False"
                                        IsTorchOn="False"
                                        HorizontalOptions="Fill"
                                        VerticalOptions="Fill" />
 
-        <Grid VerticalOptions="End" Padding="16" BackgroundColor="{StaticResource CameraControlScrimColor}">
+        <Border VerticalOptions="End"
+                HorizontalOptions="Center"
+                Margin="16"
+                Padding="12,10"
+                Background="{StaticResource BrushCameraControlScrim}">
+            <Border.StrokeShape>
+                <RoundRectangle CornerRadius="14" />
+            </Border.StrokeShape>
             <buttons:SfButton Text="{x:Static res:AppResources.ScannerManualTokenCancel}"
-                              Style="{StaticResource SyncfusionPrimaryButtonStyle}"
+                              WidthRequest="132"
+                              HeightRequest="44"
+                              Style="{StaticResource SyncfusionOutlinedButtonStyle}"
                               Clicked="OnCancelClicked" />
-        </Grid>
+        </Border>
     </Grid>
 </ContentPage>

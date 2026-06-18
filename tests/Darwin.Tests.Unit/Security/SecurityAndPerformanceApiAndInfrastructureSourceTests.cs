@@ -194,6 +194,24 @@ public sealed class SecurityAndPerformanceApiAndInfrastructureSourceTests : Secu
         source.Should().Contain("MobileDevicePlatform.iOS");
     }
 
+    [Fact]
+    public void PushGatewaySender_Should_SendStableDataPayload_AndAvoidTokenLogging()
+    {
+        var sender = ReadInfrastructureFile(Path.Combine("Notifications", "Push", "HttpPushNotificationSender.cs"));
+        var deliveryHandler = ReadApplicationFile(Path.Combine("Notifications", "CampaignPushDeliveryHandlers.cs"));
+
+        sender.Should().Contain("notificationId");
+        sender.Should().Contain("targetApp");
+        sender.Should().Contain("deepLink");
+        sender.Should().Contain("sourceType");
+        sender.Should().Contain("sourceId");
+        sender.Should().Contain("collapseKey");
+        sender.Should().NotContain("PushToken={", because: "push tokens must not be written to structured logs");
+        deliveryHandler.Should().Contain("device.PushToken = null");
+        deliveryHandler.Should().Contain("device.NotificationsEnabled = false");
+        deliveryHandler.Should().Contain("CreateBusinessFailureNotificationAsync");
+    }
+
 
     [Fact]
     public void ProfileController_Should_KeepAuthenticatedLifecycleAndPreferencesAliases()

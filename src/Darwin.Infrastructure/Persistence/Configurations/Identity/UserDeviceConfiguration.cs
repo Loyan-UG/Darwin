@@ -27,7 +27,7 @@ namespace Darwin.Infrastructure.Persistence.Configurations.Identity
                 .IsRequired();
 
             builder.Property(x => x.PushToken)
-                .HasMaxLength(512);
+                .HasMaxLength(2048);
 
             builder.Property(x => x.PushTokenUpdatedAtUtc);
 
