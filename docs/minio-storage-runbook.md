@@ -1,5 +1,7 @@
 # Local MinIO Object Storage Runbook
 
+Reviewed: 2026-06-18
+
 This runbook describes the optional local MinIO smoke path for Darwin object storage. It is for development and validation only. Production credentials, access keys, secret keys, and bucket policy values must come from secure configuration and must never be committed.
 
 MinIO is the recommended self-hosted production target for Darwin invoice archive storage through the generic S3-compatible provider. AWS S3 and Azure Blob Storage remain supported alternatives. Local MinIO smoke is not a replacement for production validation with the real bucket, retention policy, Object Lock, legal hold, backup, restore, and monitoring setup.
@@ -20,7 +22,7 @@ Default local endpoints:
 - MinIO Console: `http://localhost:9001`
 - Default smoke bucket: `darwin-invoice-archive-smoke`
 
-The compose init container creates the smoke bucket with Object Lock enabled from the start and enables versioning. Object Lock must be enabled when a bucket is created; it cannot be added later to an existing bucket.
+The compose file uses the public MinIO server and client images and does not require a local license file or private bind mount. The compose init container creates the smoke bucket with Object Lock enabled from the start and enables versioning. Object Lock must be enabled when a bucket is created; it cannot be added later to an existing bucket.
 
 If the bucket must be recreated manually, delete the local development bucket only after confirming it contains no needed smoke artifacts, then create it with Object Lock enabled at creation time. Use local development credentials only:
 
@@ -115,7 +117,16 @@ Latest local recheck:
 - Provider smoke command: `powershell -NoProfile -ExecutionPolicy Bypass -File scripts\smoke-object-storage.ps1 -Execute -SmokeRetention`
 - Provider smoke result: save/read/metadata checks completed through the S3-compatible provider path; temporary URL generation was available; cleanup was skipped because retention smoke was enabled.
 - Guarded smoke behavior: local loopback MinIO smoke can execute without production confirmation; production-like endpoints are blocked unless `DARWIN_OBJECT_STORAGE_PRODUCTION_SMOKE_CONFIRMED=true` or `-AllowProductionEndpoint` is supplied.
-- Production readiness preflight result: blocked until the real production endpoint, bucket, TLS, dedicated least-privilege keys, Object Lock, versioning, retention, legal-hold policy, backup, restore, monitoring, alerting, and Darwin profile confirmations are supplied. This is expected and prevents claiming production immutability from local smoke alone.
+- Production readiness preflight result: blocked until the real production endpoint, bucket, TLS, dedicated least-privilege keys, Object Lock, versioning, retention, legal-hold policy, backup, restore, monitoring, alerting, and all required Darwin object-storage profile confirmations are supplied. This includes `InvoiceArchive`, `ShipmentLabels`, `MediaAssets`, `FinanceExports`, `FinanceExportOutbound`, `PersonnelDocuments`, and `PayrollPayslips`. This is expected and prevents claiming production immutability from local smoke alone.
+
+Latest local recheck:
+
+- Date: 2026-06-18
+- Compose validation: `docker-compose.minio.yml` uses public `quay.io/minio/minio` and `quay.io/minio/mc` images without a private license file, so a fresh local machine can repeat the smoke path from source plus Docker Desktop.
+- Docker validation: `darwin-minio` was healthy; init logs showed the smoke bucket created with Object Lock, versioning enabled, and default `COMPLIANCE` retention for `1DAYS`.
+- Provider smoke command: `powershell -NoProfile -ExecutionPolicy Bypass -File scripts\smoke-object-storage.ps1 -Execute -SmokeRetention`
+- Provider smoke result: save/read/metadata checks completed through the S3-compatible provider path; temporary URL generation was available; cleanup was skipped because retention smoke was enabled.
+- Local backup and restore evidence: the 2026-06-18 local backup package under `D:\Backup\2026-06-18` passed structural backup readiness and restored its PostgreSQL dump into an isolated temporary local PostgreSQL database. This is local evidence only and does not replace production backup, restore, retention, monitoring, or owner approval evidence.
 
 ## WebAdmin Local Smoke Action
 
@@ -139,6 +150,10 @@ Use the same provider profile names across the processes that need object storag
 - `InvoiceArchive` for invoice archive and e-invoice artifacts.
 - `ShipmentLabels` for DHL or carrier label artifacts.
 - `MediaAssets` for CMS/media uploads when external object storage is selected.
+- `FinanceExports` for generated canonical finance export package source files.
+- `FinanceExportOutbound` for outbound file-delivery connector targets.
+- `PersonnelDocuments` for internal HR personnel-file binaries linked through `DocumentRecord`.
+- `PayrollPayslips` for internal HR payslip artifacts generated from approved payroll run snapshots.
 
 Example local/staging command shape:
 
@@ -175,10 +190,26 @@ foreach ($project in $projects) {
   dotnet user-secrets --project $project set "ObjectStorage:Profiles:MediaAssets:Provider" "S3Compatible"
   dotnet user-secrets --project $project set "ObjectStorage:Profiles:MediaAssets:ContainerName" "darwin-invoice-archive"
   dotnet user-secrets --project $project set "ObjectStorage:Profiles:MediaAssets:Prefix" "media"
+
+  dotnet user-secrets --project $project set "ObjectStorage:Profiles:FinanceExports:Provider" "S3Compatible"
+  dotnet user-secrets --project $project set "ObjectStorage:Profiles:FinanceExports:ContainerName" "darwin-invoice-archive"
+  dotnet user-secrets --project $project set "ObjectStorage:Profiles:FinanceExports:Prefix" "finance-exports/packages"
+
+  dotnet user-secrets --project $project set "ObjectStorage:Profiles:FinanceExportOutbound:Provider" "S3Compatible"
+  dotnet user-secrets --project $project set "ObjectStorage:Profiles:FinanceExportOutbound:ContainerName" "darwin-invoice-archive"
+  dotnet user-secrets --project $project set "ObjectStorage:Profiles:FinanceExportOutbound:Prefix" "finance-exports/outbound"
+
+  dotnet user-secrets --project $project set "ObjectStorage:Profiles:PersonnelDocuments:Provider" "S3Compatible"
+  dotnet user-secrets --project $project set "ObjectStorage:Profiles:PersonnelDocuments:ContainerName" "darwin-invoice-archive"
+  dotnet user-secrets --project $project set "ObjectStorage:Profiles:PersonnelDocuments:Prefix" "hr/personnel-documents"
+
+  dotnet user-secrets --project $project set "ObjectStorage:Profiles:PayrollPayslips:Provider" "S3Compatible"
+  dotnet user-secrets --project $project set "ObjectStorage:Profiles:PayrollPayslips:ContainerName" "darwin-invoice-archive"
+  dotnet user-secrets --project $project set "ObjectStorage:Profiles:PayrollPayslips:Prefix" "hr/payroll-payslips"
 }
 ```
 
-Replace placeholder values through the secret store used by the target environment. For production, prefer a deployment vault and least-privilege credentials over developer user-secrets.
+Replace placeholder values through the secret store used by the target environment. For production, prefer a deployment vault and least-privilege credentials over developer user-secrets. `FinanceExports` is the stored package source; `FinanceExportOutbound` is the delivery destination; `PersonnelDocuments` is the HR personnel-file binary store; `PayrollPayslips` is the HR payroll artifact store. Do not replace these profiles with batch metadata, employee metadata, payroll run metadata, document metadata, external-reference metadata, notes, or package content.
 
 ## Manual Validation Checklist
 
@@ -202,11 +233,19 @@ Run the production readiness preflight after the operator has confirmed the fina
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\check-minio-production-readiness.ps1
 ```
 
-The preflight checks only non-secret confirmations. It does not accept MinIO access keys, secret keys, bucket policy JSON, object payloads, object keys, or provider responses. A passing preflight means the deployment checklist is complete enough to run the selected-provider smoke and WebAdmin smoke against the production bucket; it is not a production immutability claim by itself.
+To create an ignored, non-secret report for the production readiness evidence package:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\export-minio-production-readiness-report.ps1 -Force
+```
+
+The report is written under `artifacts\production-readiness\` by default. It is valid as current-state evidence even when it is blocked; it does not replace real MinIO policy validation, selected-provider smoke, or owner approval.
+
+The preflight checks only non-secret confirmations. `DARWIN_MINIO_PRODUCTION_ENDPOINT` must be the base HTTPS endpoint only; do not include a bucket path, object key, access key, user info, query string, or fragment. The bucket name belongs in `DARWIN_MINIO_PRODUCTION_BUCKET` and must be a safe bucket label: lowercase letters, numbers, single hyphens, and alphanumeric start/end. Do not put prefixes, object keys, policy names, access keys, query strings, or fragments in the bucket variable. The preflight does not accept MinIO access keys, secret keys, bucket policy JSON, object payloads, object keys, or provider responses. A passing preflight also requires `DARWIN_MINIO_SELECTED_PROVIDER_SMOKE_CONFIRMED=true` and a non-secret `DARWIN_MINIO_SELECTED_PROVIDER_SMOKE_REFERENCE`, because production readiness must have evidence that the selected-provider smoke ran against the approved disposable prefix. It is not a production immutability claim by itself.
 
 The preflight requires separate confirmation that:
 
-- `InvoiceArchive`, `ShipmentLabels`, and `MediaAssets` profiles are configured or deliberately decided for the deployment.
+- `InvoiceArchive`, `ShipmentLabels`, `MediaAssets`, `FinanceExports`, `FinanceExportOutbound`, `PersonnelDocuments`, and `PayrollPayslips` profiles are configured or deliberately decided for the deployment.
 - The disposable production smoke prefix is approved before any production-like write is executed.
 - Retention/delete behavior is understood before retained smoke objects are written.
 - The operator runbook, ownership, and escalation path are available outside source control.
@@ -221,3 +260,16 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts\smoke-object-storage
 For production-like endpoints, `scripts\smoke-object-storage.ps1 -Execute` is intentionally blocked unless `DARWIN_OBJECT_STORAGE_PRODUCTION_SMOKE_CONFIRMED=true` is present or `-AllowProductionEndpoint` is passed. Use this only after the target bucket, profile, retention policy, and cleanup behavior are approved for a disposable smoke object. The smoke confirms Darwin can save, read, inspect metadata, optionally create a temporary URL, and delete or intentionally retain a smoke object through the configured provider path; it still does not replace Object Lock, legal-hold, backup, restore, monitoring, or operator sign-off.
 
 Application-level overwrite protection is not the same as provider-level immutable retention. Production immutability can only be claimed after the selected provider bucket/container enforces retention, Object Lock or legal hold, and that behavior has been validated.
+
+## Production Evidence Package Entries
+
+For each production or production-like deployment, record the following non-secret entries in the deployment evidence package defined by [production-readiness-evidence-package.md](production-readiness-evidence-package.md):
+
+- selected provider family and approved profile decisions for `InvoiceArchive`, `ShipmentLabels`, `MediaAssets`, `FinanceExports`, `FinanceExportOutbound`, `PersonnelDocuments`, and `PayrollPayslips`;
+- preflight command date, operator, and result;
+- selected-provider smoke command date, operator, disposable prefix, and result;
+- retention mode, legal-hold behavior, Object Lock or provider-equivalent validation, and retention-policy owner;
+- backup, restore, monitoring, failed-write alert, disk/capacity alert, and escalation owner;
+- confirmation that access keys, secret keys, bucket policies, raw provider responses, object payloads, private documents, payroll contents, and customer data are not copied into source control or documentation.
+
+Do not use local MinIO smoke as evidence for production immutability. Local smoke proves Darwin's provider path and retained-object behavior only for the local development bucket.

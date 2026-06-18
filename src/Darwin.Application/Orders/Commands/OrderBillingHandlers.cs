@@ -1,7 +1,10 @@
 using Darwin.Application.Abstractions.Persistence;
 using Darwin.Application.Abstractions.Payments;
 using Darwin.Application.Abstractions.Services;
+using Darwin.Application.Billing.Services;
+using Darwin.Application.Foundation;
 using Darwin.Application.Orders.DTOs;
+using Darwin.Application.Sales.Services;
 using Darwin.Application.Orders.Validators;
 using Darwin.Domain.Entities.Billing;
 using Darwin.Domain.Entities.CRM;
@@ -25,19 +28,25 @@ namespace Darwin.Application.Orders.Commands
         private readonly IValidator<RefundCreateDto> _validator;
         private readonly IStringLocalizer<ValidationResource> _localizer;
         private readonly IRefundProviderClient? _refundProviderClient;
+        private readonly SalesLifecycleEventService? _salesEvents;
+        private readonly FinanceReceivablesPostingService? _financePosting;
 
         public AddRefundHandler(
             IAppDbContext db,
             IValidator<RefundCreateDto> validator,
             IStringLocalizer<ValidationResource>? localizer = null,
             IClock? clock = null,
-            IRefundProviderClient? refundProviderClient = null)
+            IRefundProviderClient? refundProviderClient = null,
+            SalesLifecycleEventService? salesEvents = null,
+            FinanceReceivablesPostingService? financePosting = null)
         {
             _db = db ?? throw new ArgumentNullException(nameof(db));
             _clock = clock ?? DefaultHandlerDependencies.DefaultClock;
             _validator = validator ?? throw new ArgumentNullException(nameof(validator));
             _localizer = localizer ?? DefaultHandlerDependencies.DefaultLocalizer;
             _refundProviderClient = refundProviderClient;
+            _salesEvents = salesEvents;
+            _financePosting = financePosting;
         }
 
         public async Task<Guid> HandleAsync(RefundCreateDto dto, CancellationToken ct = default)
@@ -113,7 +122,7 @@ namespace Darwin.Application.Orders.Commands
                 .SumAsync(x => (long?)x.AmountMinor, ct)
                 .ConfigureAwait(false) ?? 0L;
 
-            var resultingRefunded = totalRefundedForOrder + dto.AmountMinor;
+            var resultingRefunded = totalRefundedForOrder;
             if (resultingRefunded >= order.GrandTotalGrossMinor)
             {
                 order.Status = OrderStatus.Refunded;
@@ -129,15 +138,48 @@ namespace Darwin.Application.Orders.Commands
                 payment.Status = PaymentStatus.Refunded;
             }
 
+            Invoice? linkedInvoice = null;
             if (payment.InvoiceId.HasValue)
             {
-                var invoice = await _db.Set<Invoice>()
+                linkedInvoice = await _db.Set<Invoice>()
                     .FirstOrDefaultAsync(x => x.Id == payment.InvoiceId.Value && !x.IsDeleted, ct)
                     .ConfigureAwait(false);
 
-                if (invoice is not null && resultingRefundedForPayment >= payment.AmountMinor && invoice.Status == InvoiceStatus.Cancelled)
+                if (linkedInvoice is not null && resultingRefundedForPayment >= payment.AmountMinor && linkedInvoice.Status == InvoiceStatus.Cancelled)
                 {
-                    invoice.PaidAtUtc = null;
+                    linkedInvoice.PaidAtUtc = null;
+                }
+            }
+
+            payment.BusinessId ??= order.BusinessId;
+
+            if (_salesEvents is not null)
+            {
+                var eventResult = await _salesEvents.RecordRefundCreatedAsync(
+                    refund,
+                    payment,
+                    order,
+                    linkedInvoice,
+                    _clock.UtcNow,
+                    ct)
+                    .ConfigureAwait(false);
+                if (!eventResult.Succeeded)
+                {
+                    throw new ValidationException(eventResult.Error);
+                }
+            }
+
+            if (_financePosting is not null)
+            {
+                var posting = await _financePosting.PostRefundRecordedAsync(
+                    refund,
+                    payment,
+                    refund.CompletedAtUtc ?? _clock.UtcNow,
+                    ct)
+                    .ConfigureAwait(false);
+                if (!posting.Succeeded)
+                {
+                    throw new ValidationException(posting.Error);
                 }
             }
 
@@ -220,16 +262,26 @@ namespace Darwin.Application.Orders.Commands
         private readonly IClock _clock;
         private readonly IValidator<OrderInvoiceCreateDto> _validator;
         private readonly IStringLocalizer<ValidationResource> _localizer;
+        private readonly NumberSequenceService? _numberSequenceService;
+        private readonly SalesLifecycleEventService? _salesEvents;
+        private readonly FinanceReceivablesPostingService? _financePosting;
 
         public CreateOrderInvoiceHandler(
             IAppDbContext db,
             IValidator<OrderInvoiceCreateDto> validator,
-            IStringLocalizer<ValidationResource>? localizer = null, IClock? clock = null)
+            IStringLocalizer<ValidationResource>? localizer = null,
+            IClock? clock = null,
+            NumberSequenceService? numberSequenceService = null,
+            SalesLifecycleEventService? salesEvents = null,
+            FinanceReceivablesPostingService? financePosting = null)
         {
             _db = db ?? throw new ArgumentNullException(nameof(db));
             _clock = clock ?? DefaultHandlerDependencies.DefaultClock;
             _validator = validator ?? throw new ArgumentNullException(nameof(validator));
             _localizer = localizer ?? DefaultHandlerDependencies.DefaultLocalizer;
+            _numberSequenceService = numberSequenceService;
+            _salesEvents = salesEvents;
+            _financePosting = financePosting;
         }
 
         public async Task<Guid> HandleAsync(OrderInvoiceCreateDto dto, CancellationToken ct = default)
@@ -283,10 +335,12 @@ namespace Darwin.Application.Orders.Commands
             var nowUtc = _clock.UtcNow;
             var invoice = new Invoice
             {
+                Id = Guid.NewGuid(),
                 BusinessId = dto.BusinessId,
                 CustomerId = customerId,
                 OrderId = order.Id,
                 PaymentId = dto.PaymentId,
+                InvoiceNumber = await NextInvoiceNumberAsync(dto.BusinessId, ct).ConfigureAwait(false),
                 Status = dto.PaymentId.HasValue ? InvoiceStatus.Paid : InvoiceStatus.Open,
                 Currency = order.Currency,
                 TotalNetMinor = order.SubtotalNetMinor,
@@ -301,12 +355,12 @@ namespace Darwin.Application.Orders.Commands
                     UnitPriceNetMinor = x.UnitPriceNetMinor,
                     TaxRate = x.VatRate,
                     TotalNetMinor = x.UnitPriceNetMinor * x.Quantity,
+                    TotalTaxMinor = x.LineGrossMinor - (x.UnitPriceNetMinor * x.Quantity),
                     TotalGrossMinor = x.LineGrossMinor
                 }).ToList()
             };
 
             _db.Set<Invoice>().Add(invoice);
-            await _db.SaveChangesAsync(ct).ConfigureAwait(false);
 
             if (payment is not null)
             {
@@ -319,10 +373,83 @@ namespace Darwin.Application.Orders.Commands
                     payment.Status = PaymentStatus.Captured;
                 }
 
-                await _db.SaveChangesAsync(ct).ConfigureAwait(false);
             }
 
+            if (_salesEvents is not null)
+            {
+                var createdEvent = await _salesEvents.RecordInvoiceCreatedAsync(invoice, nowUtc, ct).ConfigureAwait(false);
+                if (!createdEvent.Succeeded)
+                {
+                    throw new ValidationException(createdEvent.Error);
+                }
+
+                var statusEvent = await _salesEvents.RecordInvoiceStatusChangedAsync(
+                    invoice,
+                    InvoiceStatus.Draft,
+                    invoice.Status,
+                    nowUtc,
+                    ct)
+                    .ConfigureAwait(false);
+                if (!statusEvent.Succeeded)
+                {
+                    throw new ValidationException(statusEvent.Error);
+                }
+            }
+
+            if (_financePosting is not null)
+            {
+                var invoicePosting = await _financePosting.PostInvoiceIssuedAsync(invoice, nowUtc, ct)
+                    .ConfigureAwait(false);
+                if (!invoicePosting.Succeeded)
+                {
+                    throw new ValidationException(invoicePosting.Error);
+                }
+
+                if (payment is not null)
+                {
+                    var paymentPosting = await _financePosting.PostPaymentRecordedAsync(payment, payment.PaidAtUtc ?? nowUtc, ct)
+                        .ConfigureAwait(false);
+                    if (!paymentPosting.Succeeded)
+                    {
+                        throw new ValidationException(paymentPosting.Error);
+                    }
+                }
+            }
+
+            await _db.SaveChangesAsync(ct).ConfigureAwait(false);
+
             return invoice.Id;
+        }
+
+        private async Task<string?> NextInvoiceNumberAsync(Guid? businessId, CancellationToken ct)
+        {
+            if (_numberSequenceService is null)
+            {
+                return null;
+            }
+
+            var scoped = await _numberSequenceService.ReserveNextAsync(
+                new NumberSequenceRequest(businessId, NumberSequenceDocumentType.Invoice, NumberSequenceService.GlobalScopeKey),
+                ct)
+                .ConfigureAwait(false);
+            if (scoped.Succeeded && !string.IsNullOrWhiteSpace(scoped.Value))
+            {
+                return scoped.Value;
+            }
+
+            if (businessId.HasValue)
+            {
+                var global = await _numberSequenceService.ReserveNextAsync(
+                    new NumberSequenceRequest(null, NumberSequenceDocumentType.Invoice, NumberSequenceService.GlobalScopeKey),
+                    ct)
+                    .ConfigureAwait(false);
+                if (global.Succeeded && !string.IsNullOrWhiteSpace(global.Value))
+                {
+                    return global.Value;
+                }
+            }
+
+            return null;
         }
     }
 }

@@ -46,6 +46,9 @@ namespace Darwin.Application.CRM.DTOs
         public bool Granted { get; set; }
         public DateTime GrantedAtUtc { get; set; }
         public DateTime? RevokedAtUtc { get; set; }
+        public string? Source { get; set; }
+        public string? PolicyVersion { get; set; }
+        public string? EvidenceJson { get; set; }
         public byte[] RowVersion { get; set; } = Array.Empty<byte>();
     }
 
@@ -59,6 +62,9 @@ namespace Darwin.Application.CRM.DTOs
         public bool Granted { get; set; }
         public DateTime GrantedAtUtc { get; set; }
         public DateTime? RevokedAtUtc { get; set; }
+        public string? Source { get; set; }
+        public string? PolicyVersion { get; set; }
+        public string? EvidenceJson { get; set; }
     }
 
     /// <summary>
@@ -69,6 +75,9 @@ namespace Darwin.Application.CRM.DTOs
         public Guid Id { get; set; }
         public string Name { get; set; } = string.Empty;
         public string? Description { get; set; }
+        public string Code { get; set; } = string.Empty;
+        public bool IsActive { get; set; } = true;
+        public string? RuleJson { get; set; }
         public int MemberCount { get; set; }
         public bool HasDescription { get; set; }
         public DateTime CreatedAtUtc { get; set; }
@@ -100,6 +109,9 @@ namespace Darwin.Application.CRM.DTOs
         public byte[] RowVersion { get; set; } = Array.Empty<byte>();
         public string Name { get; set; } = string.Empty;
         public string? Description { get; set; }
+        public string Code { get; set; } = string.Empty;
+        public bool IsActive { get; set; } = true;
+        public string? RuleJson { get; set; }
     }
 
     /// <summary>

@@ -1,6 +1,7 @@
 using Darwin.Application.Abstractions.Persistence;
 using Darwin.Application.Abstractions.Services;
 using Darwin.Application.Common;
+using Darwin.Application.Common.Addresses;
 using Darwin.Application.CRM.DTOs;
 using Darwin.Domain.Entities.CRM;
 using Darwin.Domain.Entities.Identity;
@@ -89,6 +90,12 @@ namespace Darwin.Application.CRM.Queries
                         x.user == null ||
                         x.user.Locale == null ||
                         x.user.Locale.Trim() == string.Empty,
+                    LifecycleStatus = x.customer.LifecycleStatus,
+                    OwnerUserId = x.customer.OwnerUserId,
+                    AcquisitionSource = x.customer.AcquisitionSource,
+                    PreferredContactChannel = x.customer.PreferredContactChannel,
+                    LastContactedAtUtc = x.customer.LastContactedAtUtc,
+                    NextFollowUpAtUtc = x.customer.NextFollowUpAtUtc,
                     SegmentCount = x.customer.CustomerSegments.Count(segment => !segment.IsDeleted),
                     OpportunityCount = x.customer.Opportunities.Count(opportunity => !opportunity.IsDeleted),
                     CreatedAtUtc = x.customer.CreatedAtUtc,
@@ -134,48 +141,26 @@ namespace Darwin.Application.CRM.Queries
 
                 if (user?.DefaultBillingAddressId is Guid billingAddressId)
                 {
-                    billingAddress = await _db.Set<Address>()
+                    var billingAddressEntity = await _db.Set<Address>()
                         .AsNoTracking()
                         .Where(x => x.Id == billingAddressId)
-                        .Select(x => new IdentityAddressSummaryDto
-                        {
-                            Id = x.Id,
-                            FullName = x.FullName,
-                            Street1 = x.Street1,
-                            Street2 = x.Street2,
-                            PostalCode = x.PostalCode,
-                            City = x.City,
-                            State = x.State,
-                            CountryCode = x.CountryCode,
-                            PhoneE164 = x.PhoneE164,
-                            IsDefaultBilling = x.IsDefaultBilling,
-                            IsDefaultShipping = x.IsDefaultShipping
-                        })
                         .FirstOrDefaultAsync(ct)
                         .ConfigureAwait(false);
+                    billingAddress = billingAddressEntity is null
+                        ? null
+                        : CanonicalAddressMapper.ToIdentityAddressSummaryDto(billingAddressEntity);
                 }
 
                 if (user?.DefaultShippingAddressId is Guid shippingAddressId)
                 {
-                    shippingAddress = await _db.Set<Address>()
+                    var shippingAddressEntity = await _db.Set<Address>()
                         .AsNoTracking()
                         .Where(x => x.Id == shippingAddressId)
-                        .Select(x => new IdentityAddressSummaryDto
-                        {
-                            Id = x.Id,
-                            FullName = x.FullName,
-                            Street1 = x.Street1,
-                            Street2 = x.Street2,
-                            PostalCode = x.PostalCode,
-                            City = x.City,
-                            State = x.State,
-                            CountryCode = x.CountryCode,
-                            PhoneE164 = x.PhoneE164,
-                            IsDefaultBilling = x.IsDefaultBilling,
-                            IsDefaultShipping = x.IsDefaultShipping
-                        })
                         .FirstOrDefaultAsync(ct)
                         .ConfigureAwait(false);
+                    shippingAddress = shippingAddressEntity is null
+                        ? null
+                        : CanonicalAddressMapper.ToIdentityAddressSummaryDto(shippingAddressEntity);
                 }
             }
 
@@ -192,6 +177,12 @@ namespace Darwin.Application.CRM.Queries
                 TaxProfileType = customer.TaxProfileType,
                 VatId = customer.VatId,
                 Notes = customer.Notes,
+                LifecycleStatus = customer.LifecycleStatus,
+                OwnerUserId = customer.OwnerUserId,
+                AcquisitionSource = customer.AcquisitionSource,
+                PreferredContactChannel = customer.PreferredContactChannel,
+                LastContactedAtUtc = customer.LastContactedAtUtc,
+                NextFollowUpAtUtc = customer.NextFollowUpAtUtc,
                 EffectiveFirstName = user?.FirstName ?? customer.FirstName,
                 EffectiveLastName = user?.LastName ?? customer.LastName,
                 EffectiveEmail = user?.Email ?? customer.Email,
@@ -220,19 +211,7 @@ namespace Darwin.Application.CRM.Queries
                     .OrderByDescending(x => x.IsDefaultBilling)
                     .ThenByDescending(x => x.IsDefaultShipping)
                     .ThenBy(x => x.City)
-                    .Select(x => new CustomerAddressDto
-                    {
-                        Id = x.Id,
-                        AddressId = x.AddressId,
-                        Line1 = x.Line1,
-                        Line2 = x.Line2,
-                        City = x.City,
-                        State = x.State,
-                        PostalCode = x.PostalCode,
-                        Country = x.Country,
-                        IsDefaultBilling = x.IsDefaultBilling,
-                        IsDefaultShipping = x.IsDefaultShipping
-                    })
+                    .Select(CanonicalAddressMapper.ToCustomerAddressDto)
                     .ToList()
             };
         }
@@ -302,11 +281,16 @@ namespace Darwin.Application.CRM.Queries
                     Email = x.lead.Email,
                     Phone = x.lead.Phone,
                     Status = x.lead.Status,
+                    Priority = x.lead.Priority,
                     AssignedToUserId = x.lead.AssignedToUserId,
                     AssignedToUserDisplayName = x.assignedUser == null
                         ? null
                         : (((x.assignedUser.FirstName ?? string.Empty) + " " + (x.assignedUser.LastName ?? string.Empty)).Trim()),
                     CustomerId = x.lead.CustomerId,
+                    QualifiedAtUtc = x.lead.QualifiedAtUtc,
+                    DisqualifiedAtUtc = x.lead.DisqualifiedAtUtc,
+                    ConvertedAtUtc = x.lead.ConvertedAtUtc,
+                    ClosedReason = x.lead.ClosedReason,
                     InteractionCount = x.lead.Interactions.Count(interaction => !interaction.IsDeleted),
                     CreatedAtUtc = x.lead.CreatedAtUtc,
                     ModifiedAtUtc = x.lead.ModifiedAtUtc,
@@ -342,6 +326,11 @@ namespace Darwin.Application.CRM.Queries
                     Source = x.Source,
                     Notes = x.Notes,
                     Status = x.Status,
+                    Priority = x.Priority,
+                    QualifiedAtUtc = x.QualifiedAtUtc,
+                    DisqualifiedAtUtc = x.DisqualifiedAtUtc,
+                    ConvertedAtUtc = x.ConvertedAtUtc,
+                    ClosedReason = x.ClosedReason,
                     AssignedToUserId = x.AssignedToUserId,
                     AssignedToUserDisplayName = x.AssignedToUserId.HasValue
                         ? _db.Set<User>()

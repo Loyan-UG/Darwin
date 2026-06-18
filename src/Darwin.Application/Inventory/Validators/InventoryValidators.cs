@@ -98,16 +98,283 @@ namespace Darwin.Application.Inventory.Validators
         }
     }
 
+    public sealed class WarehouseLocationCreateValidator : AbstractValidator<WarehouseLocationCreateDto>
+    {
+        public WarehouseLocationCreateValidator()
+        {
+            RuleFor(x => x.BusinessId).NotEmpty();
+            RuleFor(x => x.WarehouseId).NotEmpty();
+            RuleFor(x => x.Code).NotEmpty().MaximumLength(64);
+            RuleFor(x => x.DisplayName).NotEmpty().MaximumLength(200);
+            RuleFor(x => x.LocationType).IsInEnum();
+            RuleFor(x => x.Status).IsInEnum();
+            RuleFor(x => x.Barcode).MaximumLength(128);
+            RuleFor(x => x.SortOrder).GreaterThanOrEqualTo(0);
+            RuleFor(x => x.Description).MaximumLength(1000);
+            RuleFor(x => x.MetadataJson).MaximumLength(8000);
+        }
+    }
+
+    public sealed class WarehouseLocationEditValidator : AbstractValidator<WarehouseLocationEditDto>
+    {
+        public WarehouseLocationEditValidator()
+        {
+            Include(new WarehouseLocationCreateValidator());
+            RuleFor(x => x.Id).NotEmpty();
+            RuleFor(x => x.RowVersion).NotEmpty();
+        }
+    }
+
+    public sealed class ProductTrackingPolicyCreateValidator : AbstractValidator<ProductTrackingPolicyCreateDto>
+    {
+        public ProductTrackingPolicyCreateValidator()
+        {
+            RuleFor(x => x.BusinessId).NotEmpty();
+            RuleFor(x => x.ProductVariantId).NotEmpty();
+            RuleFor(x => x.TrackingMode).IsInEnum();
+            RuleFor(x => x.Status).IsInEnum();
+            RuleFor(x => x.Notes).MaximumLength(2000);
+            RuleFor(x => x.MetadataJson).MaximumLength(8000);
+        }
+    }
+
+    public sealed class ProductTrackingPolicyEditValidator : AbstractValidator<ProductTrackingPolicyEditDto>
+    {
+        public ProductTrackingPolicyEditValidator()
+        {
+            Include(new ProductTrackingPolicyCreateValidator());
+            RuleFor(x => x.Id).NotEmpty();
+            RuleFor(x => x.RowVersion).NotEmpty();
+        }
+    }
+
+    public sealed class InventoryLotCreateValidator : AbstractValidator<InventoryLotCreateDto>
+    {
+        public InventoryLotCreateValidator()
+        {
+            RuleFor(x => x.BusinessId).NotEmpty();
+            RuleFor(x => x.ProductVariantId).NotEmpty();
+            RuleFor(x => x.LotCode).NotEmpty().MaximumLength(100);
+            RuleFor(x => x.SupplierLotCode).MaximumLength(100);
+            RuleFor(x => x.Status).IsInEnum();
+            RuleFor(x => x.Notes).MaximumLength(2000);
+            RuleFor(x => x.MetadataJson).MaximumLength(8000);
+            RuleFor(x => x).Must(x => !x.ManufactureDateUtc.HasValue || !x.ExpiryDateUtc.HasValue || x.ManufactureDateUtc <= x.ExpiryDateUtc)
+                .WithMessage("InventoryLotDateRangeInvalid");
+        }
+    }
+
+    public sealed class InventoryLotEditValidator : AbstractValidator<InventoryLotEditDto>
+    {
+        public InventoryLotEditValidator()
+        {
+            Include(new InventoryLotCreateValidator());
+            RuleFor(x => x.Id).NotEmpty();
+            RuleFor(x => x.RowVersion).NotEmpty();
+        }
+    }
+
+    public sealed class InventorySerialUnitCreateValidator : AbstractValidator<InventorySerialUnitCreateDto>
+    {
+        public InventorySerialUnitCreateValidator()
+        {
+            RuleFor(x => x.BusinessId).NotEmpty();
+            RuleFor(x => x.ProductVariantId).NotEmpty();
+            RuleFor(x => x.SerialNumber).NotEmpty().MaximumLength(128);
+            RuleFor(x => x.Status).IsInEnum();
+            RuleFor(x => x.Notes).MaximumLength(2000);
+            RuleFor(x => x.MetadataJson).MaximumLength(8000);
+            RuleFor(x => x).Must(x => !x.ManufactureDateUtc.HasValue || !x.ExpiryDateUtc.HasValue || x.ManufactureDateUtc <= x.ExpiryDateUtc)
+                .WithMessage("InventorySerialDateRangeInvalid");
+        }
+    }
+
+    public sealed class InventorySerialUnitEditValidator : AbstractValidator<InventorySerialUnitEditDto>
+    {
+        public InventorySerialUnitEditValidator()
+        {
+            Include(new InventorySerialUnitCreateValidator());
+            RuleFor(x => x.Id).NotEmpty();
+            RuleFor(x => x.RowVersion).NotEmpty();
+        }
+    }
+
+    public sealed class HandlingUnitContentValidator : AbstractValidator<HandlingUnitContentDto>
+    {
+        public HandlingUnitContentValidator()
+        {
+            RuleFor(x => x.ProductVariantId).NotEmpty();
+            RuleFor(x => x.Quantity).GreaterThan(0);
+            RuleFor(x => x.Description).NotEmpty().MaximumLength(1000);
+            RuleFor(x => x.SkuSnapshot).MaximumLength(100);
+            RuleFor(x => x.SortOrder).GreaterThanOrEqualTo(0);
+            RuleFor(x => x.MetadataJson).MaximumLength(8000);
+        }
+    }
+
+    public sealed class HandlingUnitCreateValidator : AbstractValidator<HandlingUnitCreateDto>
+    {
+        public HandlingUnitCreateValidator()
+        {
+            RuleFor(x => x.BusinessId).NotEmpty();
+            RuleFor(x => x.Code).NotEmpty().MaximumLength(100);
+            RuleFor(x => x.DisplayName).NotEmpty().MaximumLength(200);
+            RuleFor(x => x.Barcode).MaximumLength(128);
+            RuleFor(x => x.HandlingUnitType).IsInEnum();
+            RuleFor(x => x.Status).IsInEnum();
+            RuleFor(x => x.Notes).MaximumLength(2000);
+            RuleFor(x => x.MetadataJson).MaximumLength(8000);
+            RuleFor(x => x.Contents).NotNull();
+            RuleForEach(x => x.Contents).SetValidator(new HandlingUnitContentValidator());
+        }
+    }
+
+    public sealed class HandlingUnitEditValidator : AbstractValidator<HandlingUnitEditDto>
+    {
+        public HandlingUnitEditValidator()
+        {
+            Include(new HandlingUnitCreateValidator());
+            RuleFor(x => x.Id).NotEmpty();
+            RuleFor(x => x.RowVersion).NotEmpty();
+        }
+    }
+
+    public sealed class WarehouseLabelTemplateCreateValidator : AbstractValidator<WarehouseLabelTemplateCreateDto>
+    {
+        public WarehouseLabelTemplateCreateValidator()
+        {
+            RuleFor(x => x.BusinessId).NotEmpty();
+            RuleFor(x => x.Name).NotEmpty().MaximumLength(200);
+            RuleFor(x => x.TemplateKey).NotEmpty().MaximumLength(100)
+                .Matches("^[A-Za-z0-9_.-]+$");
+            RuleFor(x => x.Status).IsInEnum();
+            RuleFor(x => x.Format).IsInEnum();
+            RuleFor(x => x.WidthMm).InclusiveBetween(10, 300);
+            RuleFor(x => x.HeightMm).InclusiveBetween(10, 300);
+            RuleFor(x => x.ContentTemplate).NotEmpty().MaximumLength(8000);
+            RuleFor(x => x.Description).MaximumLength(1000);
+            RuleFor(x => x.MetadataJson).MaximumLength(8000);
+        }
+    }
+
+    public sealed class WarehouseLabelTemplateEditValidator : AbstractValidator<WarehouseLabelTemplateEditDto>
+    {
+        public WarehouseLabelTemplateEditValidator()
+        {
+            Include(new WarehouseLabelTemplateCreateValidator());
+            RuleFor(x => x.Id).NotEmpty();
+            RuleFor(x => x.RowVersion).NotEmpty();
+        }
+    }
+
+    public sealed class WarehouseTaskLineValidator : AbstractValidator<WarehouseTaskLineDto>
+    {
+        public WarehouseTaskLineValidator()
+        {
+            RuleFor(x => x.Description).NotEmpty().MaximumLength(1000);
+            RuleFor(x => x.RequestedQuantity).GreaterThan(0);
+            RuleFor(x => x.CompletedQuantity).GreaterThanOrEqualTo(0);
+            RuleFor(x => x.ShortQuantity).GreaterThanOrEqualTo(0);
+            RuleFor(x => x).Must(x => x.CompletedQuantity + x.ShortQuantity <= x.RequestedQuantity);
+            RuleFor(x => x.ShortReason).MaximumLength(1000);
+            RuleFor(x => x.SkuSnapshot).MaximumLength(100);
+            RuleFor(x => x.SourceLineType).MaximumLength(100);
+            RuleFor(x => x.MetadataJson).MaximumLength(8000);
+            RuleForEach(x => x.Identities).SetValidator(new InventoryIdentityEvidenceValidator());
+        }
+    }
+
+    public sealed class WarehouseTaskCreateValidator : AbstractValidator<WarehouseTaskCreateDto>
+    {
+        public WarehouseTaskCreateValidator()
+        {
+            RuleFor(x => x.BusinessId).NotEmpty();
+            RuleFor(x => x.WarehouseId).NotEmpty();
+            RuleFor(x => x.Title).NotEmpty().MaximumLength(200);
+            RuleFor(x => x.TaskType).IsInEnum();
+            RuleFor(x => x.Status).IsInEnum();
+            RuleFor(x => x.Priority).IsInEnum();
+            RuleFor(x => x.SourceType).IsInEnum();
+            RuleFor(x => x.InternalNotes).MaximumLength(4000);
+            RuleFor(x => x.MetadataJson).MaximumLength(8000);
+            RuleFor(x => x.Lines).NotNull().NotEmpty();
+            RuleForEach(x => x.Lines).SetValidator(new WarehouseTaskLineValidator());
+        }
+    }
+
+    public sealed class WarehouseTaskEditValidator : AbstractValidator<WarehouseTaskEditDto>
+    {
+        public WarehouseTaskEditValidator()
+        {
+            Include(new WarehouseTaskCreateValidator());
+            RuleFor(x => x.Id).NotEmpty();
+            RuleFor(x => x.RowVersion).NotEmpty();
+        }
+    }
+
+    public sealed class StockCountLineValidator : AbstractValidator<StockCountLineDto>
+    {
+        public StockCountLineValidator()
+        {
+            RuleFor(x => x.ProductVariantId).NotEmpty();
+            RuleFor(x => x.SkuSnapshot).MaximumLength(100);
+            RuleFor(x => x.Description).NotEmpty().MaximumLength(1000);
+            RuleFor(x => x.ExpectedQuantity).GreaterThanOrEqualTo(0);
+            RuleFor(x => x.CountedQuantity).GreaterThanOrEqualTo(0);
+            RuleFor(x => x.ReviewStatus).IsInEnum();
+            RuleFor(x => x.ReviewNotes).MaximumLength(2000);
+            RuleFor(x => x.MetadataJson).MaximumLength(8000);
+            RuleForEach(x => x.Identities).SetValidator(new InventoryIdentityEvidenceValidator());
+        }
+    }
+
+    public sealed class StockCountCreateValidator : AbstractValidator<StockCountCreateDto>
+    {
+        public StockCountCreateValidator()
+        {
+            RuleFor(x => x.BusinessId).NotEmpty();
+            RuleFor(x => x.WarehouseId).NotEmpty();
+            RuleFor(x => x.Title).NotEmpty().MaximumLength(200);
+            RuleFor(x => x.CountType).IsInEnum();
+            RuleFor(x => x.InternalNotes).MaximumLength(4000);
+            RuleFor(x => x.MetadataJson).MaximumLength(8000);
+            RuleFor(x => x.Lines).NotNull().NotEmpty();
+            RuleForEach(x => x.Lines).SetValidator(new StockCountLineValidator());
+            RuleFor(x => x).Must(x => !x.CountWindowStartUtc.HasValue || !x.CountWindowEndUtc.HasValue || x.CountWindowStartUtc <= x.CountWindowEndUtc)
+                .WithMessage("StockCountWindowInvalid");
+        }
+    }
+
+    public sealed class StockCountEditValidator : AbstractValidator<StockCountEditDto>
+    {
+        public StockCountEditValidator()
+        {
+            Include(new StockCountCreateValidator());
+            RuleFor(x => x.Id).NotEmpty();
+            RuleFor(x => x.RowVersion).NotEmpty();
+        }
+    }
+
     public sealed class SupplierCreateValidator : AbstractValidator<SupplierCreateDto>
     {
         public SupplierCreateValidator()
         {
             RuleFor(x => x.BusinessId).NotEmpty();
             RuleFor(x => x.Name).NotEmpty().MaximumLength(200);
+            RuleFor(x => x.Code).MaximumLength(64);
+            RuleFor(x => x.Status)
+                .NotEmpty()
+                .Must(value => Enum.TryParse<Darwin.Domain.Enums.SupplierStatus>(value, true, out _));
             RuleFor(x => x.Email).NotEmpty().EmailAddress().MaximumLength(256);
             RuleFor(x => x.Phone).NotEmpty().MaximumLength(50);
             RuleFor(x => x.Address).MaximumLength(500);
             RuleFor(x => x.Notes).MaximumLength(2000);
+            RuleFor(x => x.PreferredCurrency).Length(3).When(x => !string.IsNullOrWhiteSpace(x.PreferredCurrency));
+            RuleFor(x => x.PaymentTermDays).InclusiveBetween(0, 3650).When(x => x.PaymentTermDays.HasValue);
+            RuleFor(x => x.LeadTimeDays).InclusiveBetween(0, 3650).When(x => x.LeadTimeDays.HasValue);
+            RuleFor(x => x.Website).MaximumLength(500);
+            RuleFor(x => x.TaxRegistrationNumber).MaximumLength(100);
+            RuleFor(x => x.ExternalNotes).MaximumLength(2000);
         }
     }
 
@@ -151,6 +418,22 @@ namespace Darwin.Application.Inventory.Validators
         {
             RuleFor(x => x.ProductVariantId).NotEmpty();
             RuleFor(x => x.Quantity).GreaterThan(0);
+            RuleForEach(x => x.Identities).SetValidator(new InventoryIdentityEvidenceValidator());
+        }
+    }
+
+    public sealed class InventoryIdentityEvidenceValidator : AbstractValidator<InventoryIdentityEvidenceDto>
+    {
+        public InventoryIdentityEvidenceValidator()
+        {
+            RuleFor(x => x.Quantity).GreaterThan(0);
+            RuleFor(x => x).Must(x => x.InventoryLotId.HasValue || x.InventorySerialUnitId.HasValue || x.HandlingUnitId.HasValue)
+                .WithMessage("InventoryIdentityEvidenceRequired");
+            RuleFor(x => x.LotCodeSnapshot).MaximumLength(100);
+            RuleFor(x => x.SupplierLotCodeSnapshot).MaximumLength(100);
+            RuleFor(x => x.SerialNumberSnapshot).MaximumLength(128);
+            RuleFor(x => x.HandlingUnitCodeSnapshot).MaximumLength(128);
+            RuleFor(x => x.MetadataJson).MaximumLength(8000);
         }
     }
 
@@ -181,7 +464,13 @@ namespace Darwin.Application.Inventory.Validators
         public PurchaseOrderLineValidator()
         {
             RuleFor(x => x.ProductVariantId).NotEmpty();
+            RuleFor(x => x.SupplierSku).MaximumLength(100);
+            RuleFor(x => x.Description).MaximumLength(1000);
             RuleFor(x => x.Quantity).GreaterThan(0);
+            RuleFor(x => x.ReceivedQuantity).GreaterThanOrEqualTo(0);
+            RuleFor(x => x.CancelledQuantity).GreaterThanOrEqualTo(0);
+            RuleFor(x => x).Must(x => x.ReceivedQuantity <= x.Quantity);
+            RuleFor(x => x).Must(x => x.CancelledQuantity <= x.Quantity);
             RuleFor(x => x.UnitCostMinor).GreaterThanOrEqualTo(0);
             RuleFor(x => x.TotalCostMinor).GreaterThanOrEqualTo(0);
         }
@@ -193,8 +482,10 @@ namespace Darwin.Application.Inventory.Validators
         {
             RuleFor(x => x.SupplierId).NotEmpty();
             RuleFor(x => x.BusinessId).NotEmpty();
-            RuleFor(x => x.OrderNumber).NotEmpty().MaximumLength(64);
+            RuleFor(x => x.OrderNumber).MaximumLength(64);
+            RuleFor(x => x.Currency).NotEmpty().Length(3);
             RuleFor(x => x.Status).NotEmpty().MaximumLength(50);
+            RuleFor(x => x.InternalNotes).MaximumLength(4000);
             RuleFor(x => x.Lines).NotEmpty();
             RuleForEach(x => x.Lines).SetValidator(new PurchaseOrderLineValidator());
         }
@@ -207,6 +498,16 @@ namespace Darwin.Application.Inventory.Validators
             Include(new PurchaseOrderCreateValidator());
             RuleFor(x => x.Id).NotEmpty();
             RuleFor(x => x.RowVersion).NotEmpty();
+        }
+    }
+
+    public sealed class GoodsReceiptCreateValidator : AbstractValidator<GoodsReceiptCreateDto>
+    {
+        public GoodsReceiptCreateValidator()
+        {
+            RuleFor(x => x.PurchaseOrderId).NotEmpty();
+            RuleFor(x => x.WarehouseId).NotEmpty();
+            RuleFor(x => x.InternalNotes).MaximumLength(4000);
         }
     }
 }

@@ -4,6 +4,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Darwin.Application.Abstractions.Persistence;
 using Darwin.Application.Businesses.DTOs;
+using Darwin.Application.Common.Addresses;
 using Darwin.Domain.Entities.Businesses;
 using FluentValidation;
 using Microsoft.EntityFrameworkCore;
@@ -58,12 +59,7 @@ namespace Darwin.Application.Businesses.Commands
             }
 
             entity.Name = dto.Name.Trim();
-            entity.AddressLine1 = string.IsNullOrWhiteSpace(dto.AddressLine1) ? null : dto.AddressLine1.Trim();
-            entity.AddressLine2 = string.IsNullOrWhiteSpace(dto.AddressLine2) ? null : dto.AddressLine2.Trim();
-            entity.City = string.IsNullOrWhiteSpace(dto.City) ? null : dto.City.Trim();
-            entity.Region = string.IsNullOrWhiteSpace(dto.Region) ? null : dto.Region.Trim();
-            entity.CountryCode = string.IsNullOrWhiteSpace(dto.CountryCode) ? null : dto.CountryCode.Trim();
-            entity.PostalCode = string.IsNullOrWhiteSpace(dto.PostalCode) ? null : dto.PostalCode.Trim();
+            CanonicalAddressMapper.ApplyToBusinessLocation(entity, CanonicalAddressMapper.FromBusinessLocationDto(dto));
             entity.Coordinate = dto.Coordinate == null
                 ? null
                 : new Darwin.Domain.Common.GeoCoordinate(dto.Coordinate.Latitude, dto.Coordinate.Longitude, dto.Coordinate.AltitudeMeters);

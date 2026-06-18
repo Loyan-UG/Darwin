@@ -39,6 +39,66 @@ namespace Darwin.Infrastructure.Persistence.Db
         public DbSet<FinancialAccount> FinancialAccounts => Set<FinancialAccount>();
 
         /// <summary>
+        /// Business-specific mappings from finance posting roles to financial accounts.
+        /// </summary>
+        public DbSet<FinancePostingAccountMapping> FinancePostingAccountMappings => Set<FinancePostingAccountMapping>();
+
+        /// <summary>
+        /// Finance export batches.
+        /// </summary>
+        public DbSet<FinanceExportBatch> FinanceExportBatches => Set<FinanceExportBatch>();
+
+        /// <summary>
+        /// Finance export attempts.
+        /// </summary>
+        public DbSet<FinanceExportAttempt> FinanceExportAttempts => Set<FinanceExportAttempt>();
+
+        public DbSet<BankAccount> BankAccounts => Set<BankAccount>();
+
+        public DbSet<BankStatementImport> BankStatementImports => Set<BankStatementImport>();
+
+        public DbSet<BankStatementLine> BankStatementLines => Set<BankStatementLine>();
+
+        public DbSet<BankReconciliationMatch> BankReconciliationMatches => Set<BankReconciliationMatch>();
+
+        public DbSet<BankReconciliationMatchLine> BankReconciliationMatchLines => Set<BankReconciliationMatchLine>();
+
+        /// <summary>
+        /// Supplier invoices used as formal payables source documents before posting.
+        /// </summary>
+        public DbSet<SupplierInvoice> SupplierInvoices => Set<SupplierInvoice>();
+
+        /// <summary>
+        /// Supplier invoice line snapshots and matching state.
+        /// </summary>
+        public DbSet<SupplierInvoiceLine> SupplierInvoiceLines => Set<SupplierInvoiceLine>();
+
+        /// <summary>
+        /// Supplier payments used as formal payables settlement records.
+        /// </summary>
+        public DbSet<SupplierPayment> SupplierPayments => Set<SupplierPayment>();
+
+        /// <summary>
+        /// Supplier payment allocations to posted supplier invoices.
+        /// </summary>
+        public DbSet<SupplierPaymentAllocation> SupplierPaymentAllocations => Set<SupplierPaymentAllocation>();
+
+        /// <summary>
+        /// Evidence-backed bank corrections for bank-settled supplier payments.
+        /// </summary>
+        public DbSet<SupplierPaymentBankCorrection> SupplierPaymentBankCorrections => Set<SupplierPaymentBankCorrection>();
+
+        /// <summary>
+        /// Supplier advances used as formal prepaid supplier assets before payable application.
+        /// </summary>
+        public DbSet<SupplierAdvance> SupplierAdvances => Set<SupplierAdvance>();
+
+        /// <summary>
+        /// Applications from supplier advances to posted supplier invoices.
+        /// </summary>
+        public DbSet<SupplierAdvanceApplication> SupplierAdvanceApplications => Set<SupplierAdvanceApplication>();
+
+        /// <summary>
         /// Journal entries.
         /// </summary>
         public DbSet<JournalEntry> JournalEntries => Set<JournalEntry>();

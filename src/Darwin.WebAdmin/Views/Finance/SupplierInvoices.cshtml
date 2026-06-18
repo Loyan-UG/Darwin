@@ -1,0 +1,81 @@
+@model Darwin.Application.Billing.DTOs.SupplierInvoicesPageDto
+@using Darwin.Domain.Enums
+@inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
+@{
+    ViewData["Title"] = T.T("SupplierInvoices");
+    string Money(string currency, long minor) => $"{currency} {(minor / 100.0M):0.00}";
+}
+
+<div id="finance-supplier-invoices-shell">
+<partial name="~/Views/Shared/_Alerts.cshtml" />
+<div class="d-flex justify-content-between align-items-start gap-3 mb-4">
+    <div>
+        <h1 class="mb-0"><i class="fa-solid fa-file-invoice"></i> @T.T("SupplierInvoices")</h1>
+        <div class="text-muted small mt-1">@Model.BusinessName</div>
+    </div>
+    <a asp-action="CreateSupplierInvoice" asp-route-businessId="@Model.BusinessId" class="btn btn-primary">@T.T("Create")</a>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-md-3"><div class="border rounded p-3"><div class="text-muted small">@T.T("Draft")</div><div class="fs-4 fw-semibold">@Model.DraftCount</div></div></div>
+    <div class="col-md-3"><div class="border rounded p-3"><div class="text-muted small">@T.T("Matched")</div><div class="fs-4 fw-semibold">@Model.MatchedCount</div></div></div>
+    <div class="col-md-2"><div class="border rounded p-3"><div class="text-muted small">@T.T("Approved")</div><div class="fs-4 fw-semibold">@Model.ApprovedCount</div></div></div>
+    <div class="col-md-2"><div class="border rounded p-3"><div class="text-muted small">@T.T("Posted")</div><div class="fs-4 fw-semibold">@Model.PostedCount</div></div></div>
+    <div class="col-md-2"><div class="border rounded p-3"><div class="text-muted small">@T.T("Voided")</div><div class="fs-4 fw-semibold">@Model.VoidedCount</div></div></div>
+</div>
+
+<form method="get" asp-action="SupplierInvoices" class="row g-2 align-items-end mb-3">
+    <div class="col-md-3">
+        <label class="form-label small text-muted">@T.T("Business")</label>
+        <select name="businessId" class="form-select">
+            @foreach (var business in Model.BusinessOptions)
+            {
+                <option value="@business.Id" selected="@(Model.BusinessId == business.Id)">@business.Name</option>
+            }
+        </select>
+    </div>
+    <div class="col-md-4">
+        <label class="form-label small text-muted">@T.T("Search")</label>
+        <input name="q" value="@Model.Query" class="form-control" />
+    </div>
+    <div class="col-md-3">
+        <label class="form-label small text-muted">@T.T("Status")</label>
+        <select name="status" class="form-select">
+            <option value="">@T.T("All")</option>
+            @foreach (var status in Enum.GetValues<SupplierInvoiceStatus>())
+            {
+                <option value="@status" selected="@(Model.Status == status)">@T.T(status.ToString())</option>
+            }
+        </select>
+    </div>
+    <div class="col-md-2"><button type="submit" class="btn btn-outline-primary w-100">@T.T("Apply")</button></div>
+</form>
+
+<div class="border rounded p-3">
+    <div class="table-responsive">
+        <table class="table table-sm align-middle mb-0">
+            <thead><tr><th>@T.T("Supplier")</th><th>@T.T("Invoice")</th><th>@T.T("Status")</th><th>@T.T("DueDate")</th><th class="text-end">@T.T("Total")</th><th class="text-end">@T.T("Actions")</th></tr></thead>
+            <tbody>
+            @if (Model.Items.Count == 0)
+            {
+                <tr><td colspan="6" class="text-center text-muted">@T.T("NoSupplierInvoices")</td></tr>
+            }
+            else
+            {
+                foreach (var item in Model.Items)
+                {
+                    <tr>
+                        <td><div class="fw-semibold">@item.SupplierName</div><div class="text-muted small">@item.LineCount @T.T("Lines")</div></td>
+                        <td><div>@item.SupplierInvoiceNumber</div><div class="text-muted small">@(string.IsNullOrWhiteSpace(item.InternalInvoiceNumber) ? "-" : item.InternalInvoiceNumber)</div></td>
+                        <td><span class="badge text-bg-secondary">@T.T(item.Status.ToString())</span>@if (item.DiscrepancyCount > 0){<div class="text-warning small">@item.DiscrepancyCount @T.T("Discrepancies")</div>}</td>
+                        <td>@(item.DueDateUtc?.ToString("yyyy-MM-dd") ?? "-")</td>
+                        <td class="text-end">@Money(item.Currency, item.TotalGrossMinor)</td>
+                        <td class="text-end"><a asp-action="SupplierInvoice" asp-route-id="@item.Id" class="btn btn-sm btn-outline-primary">@T.T("Open")</a></td>
+                    </tr>
+                }
+            }
+            </tbody>
+        </table>
+    </div>
+</div>
+</div>

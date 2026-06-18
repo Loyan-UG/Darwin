@@ -1,0 +1,5 @@
+@model Darwin.WebAdmin.ViewModels.Inventory.WarehouseTaskEditVm
+@{
+    ViewData["IsCreate"] = true;
+}
+@await Html.PartialAsync("_WarehouseTaskEditorShell", Model)

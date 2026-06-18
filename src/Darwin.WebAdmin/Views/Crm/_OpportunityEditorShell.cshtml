@@ -102,6 +102,11 @@
 
     @if (!isCreate)
     {
+        @if (Model.FoundationPanel is not null)
+        {
+            <partial name="~/Views/Crm/_CrmFoundationPanel.cshtml" model="Model.FoundationPanel" />
+        }
+
         <div class="card mt-4">
             <div class="card-header d-flex justify-content-between align-items-center">
                 <span>@T.T("Interactions")</span>

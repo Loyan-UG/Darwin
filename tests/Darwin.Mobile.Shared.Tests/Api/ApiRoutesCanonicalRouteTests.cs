@@ -42,6 +42,9 @@ public sealed class ApiRoutesCanonicalRouteTests
         ApiRoutes.Profile.GetAddresses.Should().Be("api/v1/member/profile/addresses");
         ApiRoutes.Orders.GetMyOrders.Should().Be("api/v1/member/orders");
         ApiRoutes.Invoices.GetMyInvoices.Should().Be("api/v1/member/invoices");
+        ApiRoutes.Payroll.GetMyPayslips.Should().Be("api/v1/member/payroll/payslips");
+        ApiRoutes.Payroll.DownloadPayslipDocument(Guid.Parse("aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"))
+            .Should().Be("api/v1/member/payroll/payslips/aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee/document");
         ApiRoutes.Invoices.DownloadArchiveDocument(Guid.Parse("aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"))
             .Should().Be("api/v1/member/invoices/aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee/archive-document");
         ApiRoutes.Invoices.DownloadStructuredData(Guid.Parse("aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"))

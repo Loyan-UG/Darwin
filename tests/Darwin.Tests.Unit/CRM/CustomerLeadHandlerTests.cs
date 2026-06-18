@@ -187,6 +187,45 @@ public sealed class CustomerLeadHandlerTests
         customer.VatId.Should().BeNull();
     }
 
+    [Fact]
+    public async Task CreateCustomer_Should_PersistCrmCoreFields_WhenProvided()
+    {
+        await using var db = CustomerLeadDbContext.Create();
+        var ownerId = Guid.NewGuid();
+        var lastContactedAt = new DateTime(2030, 5, 1, 8, 0, 0, DateTimeKind.Utc);
+        var nextFollowUpAt = new DateTime(2030, 5, 8, 8, 0, 0, DateTimeKind.Utc);
+
+        db.Set<User>().Add(MakeUser(ownerId));
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var handler = new CreateCustomerHandler(
+            db,
+            new CustomerCreateValidator(new TestStringLocalizer()),
+            new TestStringLocalizer());
+
+        var id = await handler.HandleAsync(new CustomerCreateDto
+        {
+            FirstName = "Ada",
+            LastName = "Lovelace",
+            Email = "ada.crm@example.com",
+            TaxProfileType = CustomerTaxProfileType.Consumer,
+            LifecycleStatus = CustomerLifecycleStatus.Prospect,
+            OwnerUserId = ownerId,
+            AcquisitionSource = "  Web Form  ",
+            PreferredContactChannel = PreferredContactChannel.Email,
+            LastContactedAtUtc = lastContactedAt,
+            NextFollowUpAtUtc = nextFollowUpAt
+        }, TestContext.Current.CancellationToken);
+
+        var customer = await db.Set<Customer>().SingleAsync(x => x.Id == id, TestContext.Current.CancellationToken);
+        customer.LifecycleStatus.Should().Be(CustomerLifecycleStatus.Prospect);
+        customer.OwnerUserId.Should().Be(ownerId);
+        customer.AcquisitionSource.Should().Be("Web Form");
+        customer.PreferredContactChannel.Should().Be(PreferredContactChannel.Email);
+        customer.LastContactedAtUtc.Should().Be(lastContactedAt);
+        customer.NextFollowUpAtUtc.Should().Be(nextFollowUpAt);
+    }
+
     // ─── UpdateCustomerHandler ────────────────────────────────────────────────
 
     [Fact]
@@ -417,7 +456,7 @@ public sealed class CustomerLeadHandlerTests
             TaxProfileType = CustomerTaxProfileType.Consumer
         }, TestContext.Current.CancellationToken);
 
-        await act.Should().ThrowAsync<InvalidOperationException>()
+        await act.Should().ThrowAsync<DbUpdateConcurrencyException>()
             .WithMessage("*ConcurrencyConflictDetected*");
     }
 
@@ -650,7 +689,7 @@ public sealed class CustomerLeadHandlerTests
             Status = LeadStatus.New
         }, TestContext.Current.CancellationToken);
 
-        await act.Should().ThrowAsync<InvalidOperationException>()
+        await act.Should().ThrowAsync<DbUpdateConcurrencyException>()
             .WithMessage("*ConcurrencyConflictDetected*");
     }
 
@@ -1018,7 +1057,7 @@ public sealed class CustomerLeadHandlerTests
             CopyNotesToCustomer = false
         }, TestContext.Current.CancellationToken);
 
-        await act.Should().ThrowAsync<InvalidOperationException>()
+        await act.Should().ThrowAsync<DbUpdateConcurrencyException>()
             .WithMessage("*ConcurrencyConflictDetected*");
     }
 
@@ -1451,11 +1490,65 @@ public sealed class CustomerLeadHandlerTests
             RowVersion = new byte[] { 1 }, // non-empty DTO RowVersion vs null DB value
             FirstName = "Legacy",
             LastName = "Lead",
-            Email = "legacy.lead@example.de"
+            Email = "legacy.lead@example.de",
+            Phone = "+4917012345678",
+            Status = LeadStatus.New
         }, TestContext.Current.CancellationToken);
 
         await act.Should().ThrowAsync<DbUpdateConcurrencyException>(
             "null DB RowVersion must produce a safe concurrency failure, not NullReferenceException");
+    }
+
+    [Fact]
+    public async Task UpdateLeadLifecycle_Should_SetTimestampsAndClosedReason()
+    {
+        await using var db = CustomerLeadDbContext.Create();
+        var leadId = Guid.NewGuid();
+        var now = new DateTime(2030, 7, 1, 10, 0, 0, DateTimeKind.Utc);
+        var rowVersion = new byte[] { 4, 3, 2, 1 };
+
+        db.Set<Lead>().Add(new Lead
+        {
+            Id = leadId,
+            FirstName = "Lifecycle",
+            LastName = "Lead",
+            Email = "lifecycle@example.test",
+            Phone = "+491234",
+            Status = LeadStatus.New,
+            RowVersion = rowVersion.ToArray()
+        });
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var handler = new UpdateLeadLifecycleHandler(
+            db,
+            new TestStringLocalizer(),
+            new FixedClock(now));
+
+        var qualified = await handler.HandleAsync(new UpdateLeadLifecycleDto
+        {
+            Id = leadId,
+            RowVersion = rowVersion,
+            Action = "QUALIFY"
+        }, TestContext.Current.CancellationToken);
+
+        qualified.Succeeded.Should().BeTrue();
+        var lead = await db.Set<Lead>().SingleAsync(x => x.Id == leadId, TestContext.Current.CancellationToken);
+        lead.Status.Should().Be(LeadStatus.Qualified);
+        lead.QualifiedAtUtc.Should().Be(now);
+
+        lead.RowVersion = rowVersion.ToArray();
+        var disqualified = await handler.HandleAsync(new UpdateLeadLifecycleDto
+        {
+            Id = leadId,
+            RowVersion = rowVersion,
+            Action = "DISQUALIFY",
+            ClosedReason = "  Not ready  "
+        }, TestContext.Current.CancellationToken);
+
+        disqualified.Succeeded.Should().BeTrue();
+        lead.Status.Should().Be(LeadStatus.Disqualified);
+        lead.DisqualifiedAtUtc.Should().Be(now);
+        lead.ClosedReason.Should().Be("Not ready");
     }
 
     private static User MakeUser(Guid userId) =>
@@ -1541,7 +1634,7 @@ public sealed class CustomerLeadHandlerTests
                 b.Property(x => x.FirstTouchUtmJson).IsRequired();
                 b.Property(x => x.LastTouchUtmJson).IsRequired();
                 b.Property(x => x.ExternalIdsJson).IsRequired();
-                b.Property(x => x.RowVersion).IsRequired();
+                b.Property(x => x.RowVersion).IsRequired(false);
             });
 
             modelBuilder.Entity<Customer>(b =>
@@ -1551,7 +1644,7 @@ public sealed class CustomerLeadHandlerTests
                 b.Property(x => x.LastName).IsRequired();
                 b.Property(x => x.Email).IsRequired();
                 b.Property(x => x.Phone).IsRequired();
-                b.Property(x => x.RowVersion).IsRequired();
+                b.Property(x => x.RowVersion).IsRequired(false);
                 b.Ignore(x => x.CustomerSegments);
                 b.Ignore(x => x.Interactions);
                 b.Ignore(x => x.Consents);
@@ -1566,7 +1659,7 @@ public sealed class CustomerLeadHandlerTests
                 b.Property(x => x.City).IsRequired();
                 b.Property(x => x.PostalCode).IsRequired();
                 b.Property(x => x.Country).IsRequired();
-                b.Property(x => x.RowVersion).IsRequired();
+                b.Property(x => x.RowVersion).IsRequired(false);
             });
 
             modelBuilder.Entity<Lead>(b =>
@@ -1576,7 +1669,7 @@ public sealed class CustomerLeadHandlerTests
                 b.Property(x => x.LastName).IsRequired();
                 b.Property(x => x.Email).IsRequired();
                 b.Property(x => x.Phone).IsRequired();
-                b.Property(x => x.RowVersion).IsRequired();
+                b.Property(x => x.RowVersion).IsRequired(false);
                 b.Ignore(x => x.Interactions);
             });
         }

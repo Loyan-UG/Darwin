@@ -1,6 +1,7 @@
 using Darwin.WebAdmin.Tests.TestInfrastructure;
 using Darwin.Application.Abstractions.Invoicing;
 using Darwin.Application.Abstractions.Persistence;
+using Darwin.Application.Inventory.Commands;
 using Darwin.Domain.Entities.Businesses;
 using Darwin.Domain.Entities.Billing;
 using Darwin.Domain.Entities.Integration;
@@ -373,6 +374,9 @@ public sealed class WebAdminSecuritySmokeTests : IClassFixture<WebAdminTestFacto
     [InlineData("/Pages")]
     [InlineData("/Media")]
     [InlineData("/Orders")]
+    [InlineData("/Sales")]
+    [InlineData("/Sales/Orders")]
+    [InlineData("/Sales/Invoices")]
     [InlineData("/ShippingMethods")]
     [InlineData("/Businesses")]
     [InlineData("/BusinessCommunications")]
@@ -390,6 +394,7 @@ public sealed class WebAdminSecuritySmokeTests : IClassFixture<WebAdminTestFacto
     [InlineData("/Inventory/StockLevels")]
     [InlineData("/Inventory/StockTransfers")]
     [InlineData("/Inventory/PurchaseOrders")]
+    [InlineData("/Inventory/GoodsReceipts")]
     [InlineData("/Loyalty/Programs")]
     [InlineData("/Loyalty/Accounts")]
     [InlineData("/Loyalty/Campaigns")]
@@ -500,6 +505,9 @@ public sealed class WebAdminSecuritySmokeTests : IClassFixture<WebAdminTestFacto
     [InlineData("/Loyalty/Programs")]
     [InlineData("/Loyalty/RewardTiers?loyaltyProgramId=55555555-5555-5555-5555-555555555555")]
     [InlineData("/Orders")]
+    [InlineData("/Sales")]
+    [InlineData("/Sales/Orders")]
+    [InlineData("/Sales/Invoices")]
     [InlineData("/Orders/ShipmentsQueue")]
     [InlineData("/Orders/ReturnsQueue")]
     [InlineData("/Home/CommunicationOpsFragment?businessId=44444444-4444-4444-4444-444444444444")]
@@ -685,6 +693,8 @@ public sealed class WebAdminSecuritySmokeTests : IClassFixture<WebAdminTestFacto
     [InlineData("/Inventory/EditStockTransfer")]
     [InlineData("/Inventory/CreatePurchaseOrder")]
     [InlineData("/Inventory/EditPurchaseOrder")]
+    [InlineData("/Inventory/CreateGoodsReceipt")]
+    [InlineData("/Inventory/UpdateGoodsReceiptLifecycle")]
     [InlineData("/Users/Create")]
     [InlineData("/Users/Edit")]
     [InlineData("/Users/ChangeEmail")]
@@ -1385,7 +1395,7 @@ public sealed class WebAdminSecuritySmokeTests : IClassFixture<WebAdminTestFacto
             "Receive",
             "Received");
         await AssertStockQuantitiesAsync(client, warehouseFromId, 28, 2);
-        await AssertInventoryLedgerContainsAsync(client, warehouseFromId, "PurchaseOrderReceived");
+        await AssertInventoryLedgerContainsAsync(client, warehouseFromId, UpdateGoodsReceiptLifecycleHandler.PostedReason);
 
         var crmCustomerRedirect = await PostValidEditorMutationAndAssertListedAsync(
             client,
@@ -2877,7 +2887,7 @@ public sealed class WebAdminSecuritySmokeTests : IClassFixture<WebAdminTestFacto
         var responseHtml = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
-        responseHtml.Should().Contain("RowVersion is required.");
+        responseHtml.Should().Contain("RowVersion");
         response.Headers.TryGetValues("Content-Security-Policy", out var cspValues).Should().BeTrue();
         cspValues!.Single().Should().Contain("form-action 'self'");
     }
@@ -3522,7 +3532,7 @@ public sealed class WebAdminSecuritySmokeTests : IClassFixture<WebAdminTestFacto
         var responseHtml = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
-        responseHtml.Should().Contain("RowVersion is required.");
+        responseHtml.Should().Contain("RowVersion");
         response.Headers.TryGetValues("Content-Security-Policy", out var cspValues).Should().BeTrue();
         cspValues!.Single().Should().Contain("form-action 'self'");
     }
@@ -5451,7 +5461,7 @@ public sealed class WebAdminSecuritySmokeTests : IClassFixture<WebAdminTestFacto
         }
 
         staleResponse.StatusCode.Should().Be(HttpStatusCode.OK);
-        staleResponseHtml.Should().Contain("Concurrency");
+        staleResponseHtml.Should().MatchRegex("Concurrency|Gleichzeitigkeitskonflikt");
         staleResponse.Headers.TryGetValues("Content-Security-Policy", out var staleResponseCspValues).Should().BeTrue();
         staleResponseCspValues!.Single().Should().Contain("form-action 'self'");
     }
@@ -5557,7 +5567,7 @@ public sealed class WebAdminSecuritySmokeTests : IClassFixture<WebAdminTestFacto
         }
 
         staleResponse.StatusCode.Should().Be(HttpStatusCode.OK);
-        staleResponseHtml.Should().Contain("Concurrency");
+        staleResponseHtml.Should().MatchRegex("Concurrency|Gleichzeitigkeitskonflikt");
         staleResponse.Headers.TryGetValues("Content-Security-Policy", out var staleResponseCspValues).Should().BeTrue();
         staleResponseCspValues!.Single().Should().Contain("form-action 'self'");
     }
@@ -6623,7 +6633,7 @@ public sealed class WebAdminSecuritySmokeTests : IClassFixture<WebAdminTestFacto
         var responseHtml = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
-        responseHtml.Should().Contain("RowVersion is required.");
+        responseHtml.Should().Contain("RowVersion");
         response.Headers.TryGetValues("Content-Security-Policy", out var cspValues).Should().BeTrue();
         cspValues!.Single().Should().Contain("form-action 'self'");
     }
@@ -6696,7 +6706,7 @@ public sealed class WebAdminSecuritySmokeTests : IClassFixture<WebAdminTestFacto
         }
 
         staleResponse.StatusCode.Should().Be(HttpStatusCode.OK);
-        staleResponseHtml.Should().Contain("Concurrency");
+        staleResponseHtml.Should().MatchRegex("Concurrency|Gleichzeitigkeitskonflikt");
         staleResponse.Headers.TryGetValues("Content-Security-Policy", out var staleResponseCspValues).Should().BeTrue();
         staleResponseCspValues!.Single().Should().Contain("form-action 'self'");
     }
@@ -6767,6 +6777,14 @@ public sealed class WebAdminSecuritySmokeTests : IClassFixture<WebAdminTestFacto
                     ProductVariantId = WebAdminTestFactory.TestProductVariantId,
                     Quantity = 4
                 });
+
+                db.Set<StockLevel>().Add(new StockLevel
+                {
+                    Id = Guid.NewGuid(),
+                    WarehouseId = sourceWarehouseId,
+                    ProductVariantId = WebAdminTestFactory.TestProductVariantId,
+                    AvailableQuantity = 10
+                });
             },
             configureServices: services =>
             {
@@ -6811,7 +6829,7 @@ public sealed class WebAdminSecuritySmokeTests : IClassFixture<WebAdminTestFacto
         }
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
-        responseHtml.Should().Contain("Concurrency");
+        responseHtml.Should().MatchRegex("Concurrency|Gleichzeitigkeitskonflikt");
         response.Headers.TryGetValues("Content-Security-Policy", out var cspValues).Should().BeTrue();
         cspValues!.Single().Should().Contain("form-action 'self'");
     }

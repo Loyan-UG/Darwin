@@ -1,0 +1,116 @@
+@model Darwin.Application.Billing.DTOs.FinancePostingsPageDto
+@using Darwin.Domain.Enums
+@inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
+@{
+    ViewData["Title"] = T.T("FinancePostings");
+    string FinanceOverviewUrl(Guid? businessId = null) => Url.Action("Index", "Finance", new { businessId }) ?? string.Empty;
+    string ReceivablesUrl(Guid? businessId = null) => Url.Action("Receivables", "Finance", new { businessId }) ?? string.Empty;
+    string AccountMappingsUrl(Guid? businessId = null) => Url.Action("AccountMappings", "Finance", new { businessId }) ?? string.Empty;
+    string ExportsUrl(Guid? businessId = null) => Url.Action("Exports", "Finance", new { businessId }) ?? string.Empty;
+    string PostingsUrl(Guid? businessId = null, string? q = null, JournalEntryPostingKind? postingKind = null, JournalEntryPostingStatus? postingStatus = null, int page = 1)
+        => Url.Action("Postings", "Finance", new { businessId, q, postingKind, postingStatus, page, pageSize = Model.PageSize }) ?? string.Empty;
+    string BillingJournalUrl(Guid id) => Url.Action("EditJournalEntry", "Billing", new { id }) ?? string.Empty;
+    string Money(long minor) => $"{(minor / 100.0M):0.00}";
+    var totalPages = Math.Max(1, (int)Math.Ceiling(Model.Total / (double)Math.Max(1, Model.PageSize)));
+}
+
+<div id="finance-postings-workspace-shell">
+<partial name="~/Views/Shared/_Alerts.cshtml" />
+<div class="d-flex justify-content-between align-items-start gap-3 mb-4">
+    <div>
+        <h1 class="mb-0"><i class="fa-solid fa-book"></i> @T.T("FinancePostings")</h1>
+        <div class="text-muted small mt-1">@Model.BusinessName</div>
+    </div>
+    <div class="d-flex gap-2 flex-wrap">
+        <a asp-action="Index" asp-route-businessId="@Model.BusinessId" hx-get="@FinanceOverviewUrl(Model.BusinessId)" hx-target="#finance-postings-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-outline-secondary">@T.T("Overview")</a>
+        <a asp-action="Receivables" asp-route-businessId="@Model.BusinessId" hx-get="@ReceivablesUrl(Model.BusinessId)" hx-target="#finance-postings-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-outline-primary">@T.T("FinanceReceivables")</a>
+        <a asp-action="AccountMappings" asp-route-businessId="@Model.BusinessId" hx-get="@AccountMappingsUrl(Model.BusinessId)" hx-target="#finance-postings-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-outline-primary">@T.T("FinanceAccountMappings")</a>
+        <a asp-action="Exports" asp-route-businessId="@Model.BusinessId" hx-get="@ExportsUrl(Model.BusinessId)" hx-target="#finance-postings-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-outline-primary">@T.T("FinanceExports")</a>
+    </div>
+</div>
+
+<form method="get" asp-action="Postings" class="row g-2 align-items-end mb-3">
+    <div class="col-md-3">
+        <label class="form-label small text-muted">@T.T("Business")</label>
+        <select name="businessId" class="form-select">
+            @foreach (var business in Model.BusinessOptions)
+            {
+                <option value="@business.Id" selected="@(Model.BusinessId == business.Id)">@business.Name</option>
+            }
+        </select>
+    </div>
+    <div class="col-md-3">
+        <label class="form-label small text-muted">@T.T("Search")</label>
+        <input name="q" value="@Model.Query" class="form-control" />
+    </div>
+    <div class="col-md-2">
+        <label class="form-label small text-muted">@T.T("Type")</label>
+        <select name="postingKind" class="form-select">
+            <option value="">@T.T("All")</option>
+            @foreach (var kind in Enum.GetValues<JournalEntryPostingKind>())
+            {
+                <option value="@kind" selected="@(Model.PostingKind == kind)">@kind</option>
+            }
+        </select>
+    </div>
+    <div class="col-md-2">
+        <label class="form-label small text-muted">@T.T("Status")</label>
+        <select name="postingStatus" class="form-select">
+            <option value="">@T.T("All")</option>
+            @foreach (var status in Enum.GetValues<JournalEntryPostingStatus>())
+            {
+                <option value="@status" selected="@(Model.PostingStatus == status)">@status</option>
+            }
+        </select>
+    </div>
+    <div class="col-md-2">
+        <button type="submit" class="btn btn-primary w-100">@T.T("Apply")</button>
+    </div>
+</form>
+
+<div class="border rounded p-3">
+    <div class="table-responsive">
+        <table class="table table-sm align-middle mb-0">
+            <thead><tr><th>@T.T("Date")</th><th>@T.T("Description")</th><th>@T.T("Type")</th><th>@T.T("Status")</th><th>@T.T("Document")</th><th class="text-end">@T.T("Debit")</th><th class="text-end">@T.T("Credit")</th><th></th></tr></thead>
+            <tbody>
+            @if (Model.Items.Count == 0)
+            {
+                <tr><td colspan="8" class="text-center text-muted">@T.T("NoFinancePostings")</td></tr>
+            }
+            else
+            {
+                foreach (var item in Model.Items)
+                {
+                    <tr>
+                        <td>@item.EntryDateUtc.ToString("yyyy-MM-dd")</td>
+                        <td>
+                            <div class="fw-semibold">@item.Description</div>
+                            <div class="text-muted small">@item.PostingKey</div>
+                        </td>
+                        <td>@item.PostingKind</td>
+                        <td><span class="badge text-bg-secondary">@item.PostingStatus</span></td>
+                        <td>
+                            <div>@item.SourceEntityType</div>
+                            <div class="text-muted small">@item.SourceDocumentNumber</div>
+                        </td>
+                        <td class="text-end">@Money(item.DebitMinor)</td>
+                        <td class="text-end">@Money(item.CreditMinor)</td>
+                        <td class="text-end">
+                            <a asp-controller="Billing" asp-action="EditJournalEntry" asp-route-id="@item.Id" hx-get="@BillingJournalUrl(item.Id)" hx-target="#finance-postings-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-sm btn-outline-secondary">@T.T("JournalEntries")</a>
+                        </td>
+                    </tr>
+                }
+            }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="d-flex justify-content-between align-items-center mt-3">
+    <div class="text-muted small">@string.Format(T.T("PaginationSummary"), Model.Page, totalPages, Model.Total)</div>
+    <div class="btn-group">
+        <a class="btn btn-outline-secondary @(Model.Page <= 1 ? "disabled" : string.Empty)" href="@PostingsUrl(Model.BusinessId, Model.Query, Model.PostingKind, Model.PostingStatus, Model.Page - 1)">@T.T("Previous")</a>
+        <a class="btn btn-outline-secondary @(Model.Page >= totalPages ? "disabled" : string.Empty)" href="@PostingsUrl(Model.BusinessId, Model.Query, Model.PostingKind, Model.PostingStatus, Model.Page + 1)">@T.T("Next")</a>
+    </div>
+</div>
+</div>

@@ -5,12 +5,17 @@ using Darwin.Domain.Entities.Businesses;
 using Darwin.Domain.Entities.CartCheckout;
 using Darwin.Domain.Entities.Catalog;
 using Darwin.Domain.Entities.CMS;
+using Darwin.Domain.Entities.CRM;
+using Darwin.Domain.Entities.Foundation;
+using Darwin.Domain.Entities.HumanResources;
 using Darwin.Domain.Entities.Identity;
+using Darwin.Domain.Entities.Inventory;
 using Darwin.Domain.Entities.Integration;
 using Darwin.Domain.Entities.Marketing;
 using Darwin.Domain.Entities.Notifications;
 using Darwin.Domain.Entities.Orders;
 using Darwin.Domain.Entities.Pricing;
+using Darwin.Domain.Entities.Sales;
 using Darwin.Domain.Entities.SEO;
 using Darwin.Domain.Entities.Settings;
 using Darwin.Domain.Entities.Shipping;
@@ -105,6 +110,42 @@ namespace Darwin.Infrastructure.Persistence.Db
         public DbSet<ShipmentLine> ShipmentLines => Set<ShipmentLine>();
         public DbSet<Refund> Refunds => Set<Refund>();
 
+        // Sales
+        public DbSet<SalesQuote> SalesQuotes => Set<SalesQuote>();
+        public DbSet<SalesQuoteLine> SalesQuoteLines => Set<SalesQuoteLine>();
+        public DbSet<DeliveryNote> DeliveryNotes => Set<DeliveryNote>();
+        public DbSet<DeliveryNoteLine> DeliveryNoteLines => Set<DeliveryNoteLine>();
+        public DbSet<ReturnOrder> ReturnOrders => Set<ReturnOrder>();
+        public DbSet<ReturnOrderLine> ReturnOrderLines => Set<ReturnOrderLine>();
+        public DbSet<ReturnOrderRefundLink> ReturnOrderRefundLinks => Set<ReturnOrderRefundLink>();
+        public DbSet<CreditNote> CreditNotes => Set<CreditNote>();
+        public DbSet<CreditNoteLine> CreditNoteLines => Set<CreditNoteLine>();
+
+        // Human Resources
+        public DbSet<Employee> Employees => Set<Employee>();
+        public DbSet<Department> Departments => Set<Department>();
+        public DbSet<Position> Positions => Set<Position>();
+        public DbSet<EmploymentContract> EmploymentContracts => Set<EmploymentContract>();
+        public DbSet<WorkSchedule> WorkSchedules => Set<WorkSchedule>();
+        public DbSet<WorkScheduleException> WorkScheduleExceptions => Set<WorkScheduleException>();
+        public DbSet<AttendanceEvent> AttendanceEvents => Set<AttendanceEvent>();
+        public DbSet<TimeEntry> TimeEntries => Set<TimeEntry>();
+        public DbSet<Timesheet> Timesheets => Set<Timesheet>();
+        public DbSet<TimesheetLine> TimesheetLines => Set<TimesheetLine>();
+        public DbSet<LeaveRequest> LeaveRequests => Set<LeaveRequest>();
+        public DbSet<AbsenceRecord> AbsenceRecords => Set<AbsenceRecord>();
+        public DbSet<PayrollPeriod> PayrollPeriods => Set<PayrollPeriod>();
+        public DbSet<PayrollPeriodLine> PayrollPeriodLines => Set<PayrollPeriodLine>();
+        public DbSet<PayrollRuleSet> PayrollRuleSets => Set<PayrollRuleSet>();
+        public DbSet<PayrollRuleComponent> PayrollRuleComponents => Set<PayrollRuleComponent>();
+        public DbSet<PayrollRun> PayrollRuns => Set<PayrollRun>();
+        public DbSet<PayrollRunLine> PayrollRunLines => Set<PayrollRunLine>();
+        public DbSet<PayrollRunLineComponent> PayrollRunLineComponents => Set<PayrollRunLineComponent>();
+        public DbSet<PayrollPayslip> PayrollPayslips => Set<PayrollPayslip>();
+        public DbSet<PayrollPayment> PayrollPayments => Set<PayrollPayment>();
+        public DbSet<PayrollPaymentAllocation> PayrollPaymentAllocations => Set<PayrollPaymentAllocation>();
+        public DbSet<PayrollPaymentBankCorrection> PayrollPaymentBankCorrections => Set<PayrollPaymentBankCorrection>();
+
         // Shipping
         public DbSet<ShippingMethod> ShippingMethods => Set<ShippingMethod>();
         public DbSet<ShippingRate> ShippingRates => Set<ShippingRate>();
@@ -114,6 +155,10 @@ namespace Darwin.Infrastructure.Persistence.Db
         public DbSet<WebhookSubscription> WebhookSubscriptions => Set<WebhookSubscription>();
         public DbSet<WebhookDelivery> WebhookDeliveries => Set<WebhookDelivery>();
         public DbSet<EventLog> EventLogs => Set<EventLog>();
+        public DbSet<ExternalSystem> ExternalSystems => Set<ExternalSystem>();
+        public DbSet<ExternalReference> ExternalReferences => Set<ExternalReference>();
+        public DbSet<SyncState> SyncStates => Set<SyncState>();
+        public DbSet<SyncConflict> SyncConflicts => Set<SyncConflict>();
         public DbSet<EmailDispatchOperation> EmailDispatchOperations => Set<EmailDispatchOperation>();
         public DbSet<ChannelDispatchOperation> ChannelDispatchOperations => Set<ChannelDispatchOperation>();
         public DbSet<ProviderCallbackInboxMessage> ProviderCallbackInboxMessages => Set<ProviderCallbackInboxMessage>();
@@ -122,6 +167,23 @@ namespace Darwin.Infrastructure.Persistence.Db
         public DbSet<ChannelDispatchAudit> ChannelDispatchAudits => Set<ChannelDispatchAudit>();
         public DbSet<RedirectRule> RedirectRules => Set<RedirectRule>();
         public DbSet<SiteSetting> SiteSettings => Set<SiteSetting>();
+
+        // Foundation
+        public DbSet<CustomFieldDefinition> CustomFieldDefinitions => Set<CustomFieldDefinition>();
+        public DbSet<CustomFieldValue> CustomFieldValues => Set<CustomFieldValue>();
+        public DbSet<Activity> Activities => Set<Activity>();
+        public DbSet<Note> Notes => Set<Note>();
+        public DbSet<DocumentRecord> DocumentRecords => Set<DocumentRecord>();
+        public DbSet<NumberSequence> NumberSequences => Set<NumberSequence>();
+        public DbSet<BusinessEvent> BusinessEvents => Set<BusinessEvent>();
+        public DbSet<AuditTrail> AuditTrails => Set<AuditTrail>();
+        public DbSet<FeatureArea> FeatureAreas => Set<FeatureArea>();
+        public DbSet<BusinessFeatureOverride> BusinessFeatureOverrides => Set<BusinessFeatureOverride>();
+        public DbSet<AiSensitiveFieldPolicy> AiSensitiveFieldPolicies => Set<AiSensitiveFieldPolicy>();
+        public DbSet<AiRecommendation> AiRecommendations => Set<AiRecommendation>();
+        public DbSet<AiActionDraft> AiActionDrafts => Set<AiActionDraft>();
+        public DbSet<AiActionApproval> AiActionApprovals => Set<AiActionApproval>();
+        public DbSet<InternalFollowUpTask> InternalFollowUpTasks => Set<InternalFollowUpTask>();
 
         /// <summary>
         /// Export jobs requested by business users.
@@ -152,6 +214,60 @@ namespace Darwin.Infrastructure.Persistence.Db
 
             // 1) Apply all IEntityTypeConfiguration<T> from Infrastructure assembly
             modelBuilder.ApplyConfigurationsFromAssembly(typeof(DarwinDbContext).Assembly);
+
+            if (Database.ProviderName?.Contains("Npgsql", StringComparison.OrdinalIgnoreCase) == true)
+            {
+                modelBuilder.Entity<GoodsReceipt>().Property(x => x.MetadataJson).HasColumnType("jsonb");
+                modelBuilder.Entity<WarehouseLocation>().Property(x => x.MetadataJson).HasColumnType("jsonb");
+                modelBuilder.Entity<ProductTrackingPolicy>().Property(x => x.MetadataJson).HasColumnType("jsonb");
+                modelBuilder.Entity<InventoryLot>().Property(x => x.MetadataJson).HasColumnType("jsonb");
+                modelBuilder.Entity<InventorySerialUnit>().Property(x => x.MetadataJson).HasColumnType("jsonb");
+                modelBuilder.Entity<HandlingUnit>().Property(x => x.MetadataJson).HasColumnType("jsonb");
+                modelBuilder.Entity<HandlingUnitContent>().Property(x => x.MetadataJson).HasColumnType("jsonb");
+                modelBuilder.Entity<GoodsReceiptLineIdentity>().Property(x => x.MetadataJson).HasColumnType("jsonb");
+                modelBuilder.Entity<WarehouseLabelTemplate>().Property(x => x.MetadataJson).HasColumnType("jsonb");
+                modelBuilder.Entity<WarehouseTask>().Property(x => x.MetadataJson).HasColumnType("jsonb");
+                modelBuilder.Entity<WarehouseTaskLine>().Property(x => x.MetadataJson).HasColumnType("jsonb");
+                modelBuilder.Entity<WarehouseTaskLineIdentity>().Property(x => x.MetadataJson).HasColumnType("jsonb");
+                modelBuilder.Entity<StockCountSession>().Property(x => x.MetadataJson).HasColumnType("jsonb");
+                modelBuilder.Entity<StockCountLine>().Property(x => x.MetadataJson).HasColumnType("jsonb");
+                modelBuilder.Entity<StockCountLineIdentity>().Property(x => x.MetadataJson).HasColumnType("jsonb");
+                modelBuilder.Entity<StockTransferLineIdentity>().Property(x => x.MetadataJson).HasColumnType("jsonb");
+                modelBuilder.Entity<DeliveryNote>().Property(x => x.MetadataJson).HasColumnType("jsonb");
+                modelBuilder.Entity<ReturnOrder>().Property(x => x.MetadataJson).HasColumnType("jsonb");
+                modelBuilder.Entity<CreditNote>().Property(x => x.SourceModelJson).HasColumnType("jsonb");
+                modelBuilder.Entity<CreditNote>().Property(x => x.MetadataJson).HasColumnType("jsonb");
+                modelBuilder.Entity<CreditNoteLine>().Property(x => x.SourceLineJson).HasColumnType("jsonb");
+                modelBuilder.Entity<FinancePostingAccountMapping>().Property(x => x.MetadataJson).HasColumnType("jsonb");
+                modelBuilder.Entity<FinanceExportBatch>().Property(x => x.MetadataJson).HasColumnType("jsonb");
+                modelBuilder.Entity<FinanceExportAttempt>().Property(x => x.MetadataJson).HasColumnType("jsonb");
+                modelBuilder.Entity<SyncState>().Property(x => x.MetadataJson).HasColumnType("jsonb");
+                modelBuilder.Entity<SyncConflict>().Property(x => x.MetadataJson).HasColumnType("jsonb");
+                modelBuilder.Entity<InternalFollowUpTask>().Property(x => x.MetadataJson).HasColumnType("jsonb");
+                modelBuilder.Entity<BankAccount>().Property(x => x.MetadataJson).HasColumnType("jsonb");
+                modelBuilder.Entity<BankStatementImport>().Property(x => x.MetadataJson).HasColumnType("jsonb");
+                modelBuilder.Entity<BankStatementLine>().Property(x => x.MetadataJson).HasColumnType("jsonb");
+                modelBuilder.Entity<BankReconciliationMatch>().Property(x => x.MetadataJson).HasColumnType("jsonb");
+                modelBuilder.Entity<SupplierInvoice>().Property(x => x.MetadataJson).HasColumnType("jsonb");
+                modelBuilder.Entity<SupplierPayment>().Property(x => x.MetadataJson).HasColumnType("jsonb");
+                modelBuilder.Entity<SupplierPaymentBankCorrection>().Property(x => x.MetadataJson).HasColumnType("jsonb");
+                modelBuilder.Entity<SupplierAdvance>().Property(x => x.MetadataJson).HasColumnType("jsonb");
+                modelBuilder.Entity<JournalEntry>().Property(x => x.MetadataJson).HasColumnType("jsonb");
+                modelBuilder.Entity<Employee>().Property(x => x.MetadataJson).HasColumnType("jsonb");
+                modelBuilder.Entity<Department>().Property(x => x.MetadataJson).HasColumnType("jsonb");
+                modelBuilder.Entity<Position>().Property(x => x.MetadataJson).HasColumnType("jsonb");
+                modelBuilder.Entity<EmploymentContract>().Property(x => x.MetadataJson).HasColumnType("jsonb");
+                modelBuilder.Entity<WorkSchedule>().Property(x => x.MetadataJson).HasColumnType("jsonb");
+                modelBuilder.Entity<WorkScheduleException>().Property(x => x.MetadataJson).HasColumnType("jsonb");
+                modelBuilder.Entity<AttendanceEvent>().Property(x => x.MetadataJson).HasColumnType("jsonb");
+                modelBuilder.Entity<TimeEntry>().Property(x => x.MetadataJson).HasColumnType("jsonb");
+                modelBuilder.Entity<Timesheet>().Property(x => x.MetadataJson).HasColumnType("jsonb");
+                modelBuilder.Entity<LeaveRequest>().Property(x => x.MetadataJson).HasColumnType("jsonb");
+                modelBuilder.Entity<AbsenceRecord>().Property(x => x.MetadataJson).HasColumnType("jsonb");
+                modelBuilder.Entity<PayrollPeriod>().Property(x => x.MetadataJson).HasColumnType("jsonb");
+                modelBuilder.Entity<PayrollPeriodLine>().Property(x => x.SummaryJson).HasColumnType("jsonb");
+                modelBuilder.Entity<PayrollPaymentBankCorrection>().Property(x => x.MetadataJson).HasColumnType("jsonb");
+            }
 
             // 2) Keep decimal storage explicit across providers; entity-specific configurations can still override this.
             ApplyDecimalPrecisionFallback(modelBuilder);
@@ -416,6 +532,60 @@ namespace Darwin.Infrastructure.Persistence.Db
                 b.Property(x => x.LastTouchUtmJson).HasColumnType("jsonb");
                 b.Property(x => x.ExternalIdsJson).HasColumnType("jsonb");
             });
+
+            modelBuilder.Entity<ExternalSystem>(b =>
+                b.Property(x => x.MetadataJson).HasColumnType("jsonb"));
+
+            modelBuilder.Entity<ExternalReference>(b =>
+                b.Property(x => x.MetadataJson).HasColumnType("jsonb"));
+
+            modelBuilder.Entity<CustomFieldDefinition>(b =>
+            {
+                b.Property(x => x.ValidationJson).HasColumnType("jsonb");
+                b.Property(x => x.MetadataJson).HasColumnType("jsonb");
+            });
+
+            modelBuilder.Entity<CustomFieldValue>(b =>
+            {
+                b.Property(x => x.JsonValue).HasColumnType("jsonb");
+                b.Property(x => x.MetadataJson).HasColumnType("jsonb");
+            });
+
+            modelBuilder.Entity<Activity>(b =>
+                b.Property(x => x.MetadataJson).HasColumnType("jsonb"));
+
+            modelBuilder.Entity<Note>(b =>
+                b.Property(x => x.MetadataJson).HasColumnType("jsonb"));
+
+            modelBuilder.Entity<DocumentRecord>(b =>
+                b.Property(x => x.MetadataJson).HasColumnType("jsonb"));
+
+            modelBuilder.Entity<NumberSequence>(b =>
+                b.Property(x => x.MetadataJson).HasColumnType("jsonb"));
+
+            modelBuilder.Entity<BusinessEvent>(b =>
+            {
+                b.Property(x => x.PayloadJson).HasColumnType("jsonb");
+                b.Property(x => x.MetadataJson).HasColumnType("jsonb");
+            });
+
+            modelBuilder.Entity<AuditTrail>(b =>
+            {
+                b.Property(x => x.ChangeSetJson).HasColumnType("jsonb");
+                b.Property(x => x.MetadataJson).HasColumnType("jsonb");
+            });
+
+            modelBuilder.Entity<FeatureArea>(b =>
+                b.Property(x => x.MetadataJson).HasColumnType("jsonb"));
+
+            modelBuilder.Entity<BusinessFeatureOverride>(b =>
+                b.Property(x => x.MetadataJson).HasColumnType("jsonb"));
+
+            modelBuilder.Entity<Consent>(b =>
+                b.Property(x => x.EvidenceJson).HasColumnType("jsonb"));
+
+            modelBuilder.Entity<CustomerSegment>(b =>
+                b.Property(x => x.RuleJson).HasColumnType("jsonb"));
         }
     }
 }

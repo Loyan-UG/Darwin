@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using Darwin.Application.Businesses.DTOs;
+using Darwin.Application.Common.Addresses;
 using Darwin.Application.Common.DTOs;
 using Darwin.Application.Loyalty.DTOs;
 using Darwin.Application.Settings.DTOs;
@@ -142,17 +143,18 @@ namespace Darwin.WebApi.Mappers
         public static BusinessLocation ToContract(BusinessPublicLocationDto dto)
         {
             ArgumentNullException.ThrowIfNull(dto);
+            var address = CanonicalAddressMapper.FromBusinessPublicLocationDto(dto);
 
             return new BusinessLocation
             {
                 BusinessLocationId = dto.Id,
                 Name = dto.Name ?? string.Empty,
-                AddressLine1 = dto.AddressLine1,
-                AddressLine2 = dto.AddressLine2,
-                City = dto.City,
-                Region = dto.Region,
-                CountryCode = dto.CountryCode,
-                PostalCode = dto.PostalCode,
+                AddressLine1 = string.IsNullOrEmpty(address.Street1) ? null : address.Street1,
+                AddressLine2 = address.Street2,
+                City = string.IsNullOrEmpty(address.City) ? null : address.City,
+                Region = address.StateOrRegion,
+                CountryCode = string.IsNullOrEmpty(address.CountryCode) ? null : address.CountryCode,
+                PostalCode = string.IsNullOrEmpty(address.PostalCode) ? null : address.PostalCode,
                 Coordinate = dto.Coordinate is null ? null : new GeoCoordinateModel
                 {
                     Latitude = dto.Coordinate.Latitude,

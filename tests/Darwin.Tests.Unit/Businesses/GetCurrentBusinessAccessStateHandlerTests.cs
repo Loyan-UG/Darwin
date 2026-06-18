@@ -180,6 +180,82 @@ public sealed class GetCurrentBusinessAccessStateHandlerTests
     }
 
     [Fact]
+    public async Task DeletedMembership_Should_BlockBusinessClientAccess()
+    {
+        await using var db = BusinessAccessStateTestDbContext.Create();
+        var business = CreateBusiness();
+        var userId = Guid.NewGuid();
+
+        db.Set<Business>().Add(business);
+        db.Set<BusinessMember>().Add(new BusinessMember
+        {
+            BusinessId = business.Id,
+            UserId = userId,
+            Role = BusinessMemberRole.Owner,
+            IsActive = true,
+            IsDeleted = true
+        });
+        db.Set<User>().Add(CreateUser(userId));
+        db.Set<BusinessLocation>().Add(new BusinessLocation
+        {
+            BusinessId = business.Id,
+            Name = "Munich",
+            IsPrimary = true
+        });
+
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var handler = new GetCurrentBusinessAccessStateHandler(db);
+        var result = await handler.HandleAsync(business.Id, userId, TestContext.Current.CancellationToken);
+
+        result.Should().NotBeNull();
+        result!.HasActiveMembership.Should().BeFalse();
+        result.IsBusinessClientAccessAllowed.Should().BeFalse();
+        result.IsOperationsAllowed.Should().BeFalse();
+        result.PrimaryBlockingCode.Should().Be("membership_inactive");
+        result.BlockingReason.Should().Be("membership_inactive");
+    }
+
+    [Fact]
+    public async Task InactiveUser_Should_BlockBusinessClientAccess()
+    {
+        await using var db = BusinessAccessStateTestDbContext.Create();
+        var business = CreateBusiness();
+        var userId = Guid.NewGuid();
+        var user = CreateUser(userId);
+        user.IsActive = false;
+
+        db.Set<Business>().Add(business);
+        db.Set<BusinessMember>().Add(new BusinessMember
+        {
+            BusinessId = business.Id,
+            UserId = userId,
+            Role = BusinessMemberRole.Owner,
+            IsActive = true
+        });
+        db.Set<User>().Add(user);
+        db.Set<BusinessLocation>().Add(new BusinessLocation
+        {
+            BusinessId = business.Id,
+            Name = "Dresden",
+            IsPrimary = true
+        });
+
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var handler = new GetCurrentBusinessAccessStateHandler(db);
+        var result = await handler.HandleAsync(business.Id, userId, TestContext.Current.CancellationToken);
+
+        result.Should().NotBeNull();
+        result!.IsUserActive.Should().BeFalse();
+        result.IsBusinessClientAccessAllowed.Should().BeFalse();
+        result.IsOperationsAllowed.Should().BeFalse();
+        result.HasActivationBlockingIssues.Should().BeTrue();
+        result.PrimaryBlockingCode.Should().Be("user_inactive");
+        result.BlockingReason.Should().Be("user_inactive");
+    }
+
+    [Fact]
     public async Task UnconfirmedUser_Should_BlockBusinessClientAccess()
     {
         await using var db = BusinessAccessStateTestDbContext.Create();

@@ -1,0 +1,20 @@
+@model Darwin.WebAdmin.ViewModels.HumanResources.PayrollRunCreateVm
+@inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
+@{ ViewData["Title"] = T.T("CreatePayrollRun"); }
+<section class="admin-page">
+    <h1 class="mb-3">@T.T("CreatePayrollRun")</h1>
+    <form asp-action="CreatePayrollRun" method="post">
+        @Html.AntiForgeryToken()
+        <section class="admin-form-section">
+            <div class="row g-3">
+                <div class="col-md-4"><label asp-for="BusinessId" class="form-label"></label><select asp-for="BusinessId" asp-items="Model.BusinessOptions" class="form-select"></select></div>
+                <div class="col-md-4"><label asp-for="PayrollPeriodId" class="form-label"></label><select asp-for="PayrollPeriodId" asp-items="Model.PayrollPeriodOptions" class="form-select"></select></div>
+                <div class="col-md-4"><label asp-for="PayrollRuleSetId" class="form-label"></label><select asp-for="PayrollRuleSetId" asp-items="Model.PayrollRuleSetOptions" class="form-select"></select></div>
+                <div class="col-md-6"><label asp-for="ReviewNotes" class="form-label"></label><textarea asp-for="ReviewNotes" class="form-control"></textarea></div>
+                <div class="col-md-6"><label asp-for="MetadataJson" class="form-label"></label><textarea asp-for="MetadataJson" class="form-control"></textarea></div>
+            </div>
+        </section>
+        <button class="btn btn-primary" type="submit">@T.T("Create")</button>
+        <a asp-action="PayrollRuns" asp-route-businessId="@Model.BusinessId" class="btn btn-outline-secondary">@T.T("Back")</a>
+    </form>
+</section>

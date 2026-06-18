@@ -1,16 +1,10 @@
-﻿using System;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
 using Darwin.Application.Abstractions.Persistence;
 using Darwin.Application.Abstractions.Services;
+using Darwin.Application.Foundation;
 using Darwin.Application.Orders.DTOs;
-using Darwin.Application.Orders.Validators;
-using Darwin.Domain.Entities.Orders;
+using Darwin.Application.Orders.Services;
 using Darwin.Domain.Enums;
 using FluentValidation;
-using Microsoft.Extensions.Localization;
-using Microsoft.EntityFrameworkCore;
 
 namespace Darwin.Application.Orders.Commands
 {
@@ -20,83 +14,64 @@ namespace Darwin.Application.Orders.Commands
     public sealed class CreateOrderHandler
     {
         private readonly IAppDbContext _db;
-        private readonly IClock _clock;
         private readonly IValidator<OrderCreateDto> _validator;
+        private readonly OrderCreationService _orderCreation;
 
-        public CreateOrderHandler(IAppDbContext db, IClock clock, IValidator<OrderCreateDto> validator)
+        public CreateOrderHandler(
+            IAppDbContext db,
+            IClock clock,
+            IValidator<OrderCreateDto> validator,
+            NumberSequenceService? numberSequenceService = null)
         {
-            _db = db;
-            _clock = clock;
-            _validator = validator;
+            _db = db ?? throw new ArgumentNullException(nameof(db));
+            _validator = validator ?? throw new ArgumentNullException(nameof(validator));
+            _orderCreation = new OrderCreationService(db, clock ?? throw new ArgumentNullException(nameof(clock)), numberSequenceService);
         }
 
         public async Task<Guid> HandleAsync(OrderCreateDto dto, CancellationToken ct = default)
         {
             var v = _validator.Validate(dto);
-            if (!v.IsValid) throw new ValidationException(v.Errors);
-
-            // Compute line totals (line-level tax calc)
-            long subtotalNet = 0;
-            long taxTotal = 0;
-            var lines = dto.Lines.Select(l =>
+            if (!v.IsValid)
             {
-                var unitGross = l.UnitPriceNetMinor + (long)Math.Round(l.UnitPriceNetMinor * (double)l.VatRate, MidpointRounding.AwayFromZero);
-                var lineNet = l.UnitPriceNetMinor * l.Quantity;
-                var lineGross = unitGross * l.Quantity;
-                var lineTax = lineGross - lineNet;
+                throw new ValidationException(v.Errors);
+            }
 
-                subtotalNet += lineNet;
-                taxTotal += lineTax;
-
-                return new OrderLine
-                {
-                    VariantId = l.VariantId,
-                    WarehouseId = l.WarehouseId,
-                    Name = l.Name.Trim(),
-                    Sku = l.Sku.Trim(),
-                    Quantity = l.Quantity,
-                    UnitPriceNetMinor = l.UnitPriceNetMinor,
-                    VatRate = l.VatRate,
-                    UnitPriceGrossMinor = unitGross,
-                    LineTaxMinor = lineTax,
-                    LineGrossMinor = lineGross
-                };
-            }).ToList();
-
-            var grand = subtotalNet + taxTotal + dto.ShippingTotalMinor - dto.DiscountTotalMinor;
-            if (grand < 0) grand = 0;
-
-            var order = new Order
+            var order = await _orderCreation.CreateAsync(new OrderCreationRequest
             {
-                OrderNumber = await NextOrderNumberAsync(ct),
                 UserId = dto.UserId,
+                BusinessId = dto.BusinessId,
+                CustomerId = dto.CustomerId,
                 Currency = dto.Currency,
                 PricesIncludeTax = dto.PricesIncludeTax,
-                SubtotalNetMinor = subtotalNet,
-                TaxTotalMinor = taxTotal,
-                ShippingTotalMinor = dto.ShippingTotalMinor,
-                DiscountTotalMinor = dto.DiscountTotalMinor,
-                GrandTotalGrossMinor = grand,
-                Status = OrderStatus.Created,
+                SalesChannel = SalesChannel.Admin,
                 BillingAddressJson = dto.BillingAddressJson,
                 ShippingAddressJson = dto.ShippingAddressJson,
-                Lines = lines
-            };
+                ShippingTotalMinor = dto.ShippingTotalMinor,
+                DiscountTotalMinor = dto.DiscountTotalMinor,
+                Lines = dto.Lines.Select(line =>
+                {
+                    var unitGross = line.UnitPriceNetMinor + (long)Math.Round(line.UnitPriceNetMinor * (double)line.VatRate, MidpointRounding.AwayFromZero);
+                    var lineGross = unitGross * line.Quantity;
+                    var lineTax = lineGross - (line.UnitPriceNetMinor * line.Quantity);
 
-            _db.Set<Order>().Add(order);
-            await _db.SaveChangesAsync(ct);
+                    return new OrderCreationLineRequest
+                    {
+                        VariantId = line.VariantId,
+                        WarehouseId = line.WarehouseId,
+                        Name = line.Name,
+                        Sku = line.Sku,
+                        Quantity = line.Quantity,
+                        UnitPriceNetMinor = line.UnitPriceNetMinor,
+                        VatRate = line.VatRate,
+                        UnitPriceGrossMinor = unitGross,
+                        LineTaxMinor = lineTax,
+                        LineGrossMinor = lineGross
+                    };
+                }).ToList()
+            }, ct).ConfigureAwait(false);
+
+            await _db.SaveChangesAsync(ct).ConfigureAwait(false);
             return order.Id;
-        }
-
-        /// <summary>
-        /// Generates a sequential, human-friendly order number (simple approach for phase 1).
-        /// </summary>
-        private async Task<string> NextOrderNumberAsync(CancellationToken ct)
-        {
-            // Simple approach: use count+1. Replace with a dedicated sequence table in the future to avoid race conditions.
-            var nowUtc = _clock.UtcNow;
-            var lastCount = await _db.Set<Order>().AsNoTracking().CountAsync(ct);
-            return $"D-{nowUtc:yyyyMMdd}-{lastCount + 1:D5}";
         }
     }
 }

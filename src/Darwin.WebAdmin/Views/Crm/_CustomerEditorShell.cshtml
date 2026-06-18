@@ -279,6 +279,11 @@
 
     @if (Model.Id != Guid.Empty)
     {
+        @if (Model.FoundationPanel is not null)
+        {
+            <partial name="~/Views/Crm/_CrmFoundationPanel.cshtml" model="Model.FoundationPanel" />
+        }
+
         <div class="row g-3 mt-4">
             <div class="col-lg-6">
                 <div class="card">

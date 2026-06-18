@@ -22,6 +22,457 @@ namespace Darwin.Infrastructure.SqlServer.Migrations
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
+            modelBuilder.Entity("Darwin.Domain.Entities.Billing.BankAccount", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("BankName")
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<Guid>("BusinessId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("CreatedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Currency")
+                        .IsRequired()
+                        .HasMaxLength(3)
+                        .HasColumnType("nvarchar(3)");
+
+                    b.Property<string>("DisplayName")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<Guid?>("FinancialAccountId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<bool>("IsDefault")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("MaskedAccountIdentifier")
+                        .HasMaxLength(128)
+                        .HasColumnType("nvarchar(128)");
+
+                    b.Property<string>("MetadataJson")
+                        .IsRequired()
+                        .HasMaxLength(4000)
+                        .HasColumnType("nvarchar(4000)");
+
+                    b.Property<DateTime?>("ModifiedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("ModifiedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BusinessId");
+
+                    b.HasIndex("FinancialAccountId");
+
+                    b.HasIndex("IsDefault");
+
+                    b.HasIndex("Status");
+
+                    b.HasIndex("BusinessId", "Code")
+                        .IsUnique()
+                        .HasDatabaseName("UX_BankAccounts_Business_Code_Active")
+                        .HasFilter("[IsDeleted] = 0");
+
+                    b.ToTable("BankAccounts", "Billing");
+                });
+
+            modelBuilder.Entity("Darwin.Domain.Entities.Billing.BankReconciliationMatch", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("BankAccountId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<long>("BankTotalMinor")
+                        .HasColumnType("bigint");
+
+                    b.Property<Guid>("BusinessId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime?>("CancelledAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("CreatedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Currency")
+                        .IsRequired()
+                        .HasMaxLength(3)
+                        .HasColumnType("nvarchar(3)");
+
+                    b.Property<long>("DifferenceMinor")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("FinanceTotalMinor")
+                        .HasColumnType("bigint");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTime>("MatchDateUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("MatchNumber")
+                        .HasMaxLength(128)
+                        .HasColumnType("nvarchar(128)");
+
+                    b.Property<DateTime?>("MatchedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("MetadataJson")
+                        .IsRequired()
+                        .HasMaxLength(4000)
+                        .HasColumnType("nvarchar(4000)");
+
+                    b.Property<DateTime?>("ModifiedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("ModifiedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("ReviewNotes")
+                        .HasMaxLength(4000)
+                        .HasColumnType("nvarchar(4000)");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BankAccountId");
+
+                    b.HasIndex("BusinessId");
+
+                    b.HasIndex("MatchDateUtc");
+
+                    b.HasIndex("MatchedAtUtc");
+
+                    b.HasIndex("Status");
+
+                    b.HasIndex("BusinessId", "MatchNumber")
+                        .IsUnique()
+                        .HasDatabaseName("UX_BankReconciliationMatches_Business_Number_Active")
+                        .HasFilter("[MatchNumber] IS NOT NULL AND [IsDeleted] = 0");
+
+                    b.ToTable("BankReconciliationMatches", "Billing");
+                });
+
+            modelBuilder.Entity("Darwin.Domain.Entities.Billing.BankReconciliationMatchLine", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<long>("AmountMinor")
+                        .HasColumnType("bigint");
+
+                    b.Property<Guid>("BankReconciliationMatchId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("BankStatementLineId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("CreatedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Direction")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<Guid?>("JournalEntryId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Memo")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<DateTime?>("ModifiedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("ModifiedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
+                    b.Property<int>("SortOrder")
+                        .HasColumnType("int");
+
+                    b.Property<Guid?>("SourceEntityId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("SourceEntityType")
+                        .HasMaxLength(128)
+                        .HasColumnType("nvarchar(128)");
+
+                    b.Property<string>("SourceType")
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BankReconciliationMatchId");
+
+                    b.HasIndex("BankStatementLineId")
+                        .IsUnique()
+                        .HasDatabaseName("UX_BankReconciliationMatchLines_StatementLine_Active")
+                        .HasFilter("[IsActive] = 1 AND [IsDeleted] = 0");
+
+                    b.HasIndex("JournalEntryId");
+
+                    b.HasIndex("SourceEntityType", "SourceEntityId")
+                        .HasDatabaseName("IX_BankReconciliationMatchLines_SourceEntity");
+
+                    b.ToTable("BankReconciliationMatchLines", "Billing");
+                });
+
+            modelBuilder.Entity("Darwin.Domain.Entities.Billing.BankStatementImport", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("BankAccountId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("BusinessId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("CreatedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<long>("CreditTotalMinor")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("DebitTotalMinor")
+                        .HasColumnType("bigint");
+
+                    b.Property<DateTime>("ImportedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<int>("LineCount")
+                        .HasColumnType("int");
+
+                    b.Property<string>("MetadataJson")
+                        .IsRequired()
+                        .HasMaxLength(4000)
+                        .HasColumnType("nvarchar(4000)");
+
+                    b.Property<DateTime?>("ModifiedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("ModifiedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("PeriodEndUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("PeriodStartUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
+                    b.Property<string>("StatementReference")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("nvarchar(128)");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BankAccountId");
+
+                    b.HasIndex("BusinessId");
+
+                    b.HasIndex("ImportedAtUtc");
+
+                    b.HasIndex("Status");
+
+                    b.HasIndex("BankAccountId", "StatementReference")
+                        .IsUnique()
+                        .HasDatabaseName("UX_BankStatementImports_Account_Reference_Active")
+                        .HasFilter("[IsDeleted] = 0");
+
+                    b.HasIndex("BusinessId", "PeriodStartUtc", "PeriodEndUtc");
+
+                    b.ToTable("BankStatementImports", "Billing");
+                });
+
+            modelBuilder.Entity("Darwin.Domain.Entities.Billing.BankStatementLine", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<long>("AmountMinor")
+                        .HasColumnType("bigint");
+
+                    b.Property<Guid>("BankAccountId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("BankStatementImportId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("BusinessId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("CounterpartyName")
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
+                    b.Property<string>("CounterpartyReference")
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("CreatedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Currency")
+                        .IsRequired()
+                        .HasMaxLength(3)
+                        .HasColumnType("nvarchar(3)");
+
+                    b.Property<string>("Direction")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("MetadataJson")
+                        .IsRequired()
+                        .HasMaxLength(4000)
+                        .HasColumnType("nvarchar(4000)");
+
+                    b.Property<DateTime?>("ModifiedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("ModifiedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("NormalizedIdentityKey")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
+                    b.Property<string>("RemittanceInformation")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<string>("ReviewStatus")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
+                    b.Property<DateTime>("TransactionDateUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("ValueDateUtc")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BankAccountId");
+
+                    b.HasIndex("BankStatementImportId");
+
+                    b.HasIndex("BusinessId");
+
+                    b.HasIndex("ReviewStatus");
+
+                    b.HasIndex("TransactionDateUtc");
+
+                    b.HasIndex("BankAccountId", "NormalizedIdentityKey")
+                        .IsUnique()
+                        .HasDatabaseName("UX_BankStatementLines_Account_Identity_Active")
+                        .HasFilter("[IsDeleted] = 0");
+
+                    b.ToTable("BankStatementLines", "Billing");
+                });
+
             modelBuilder.Entity("Darwin.Domain.Entities.Billing.BillingPlan", b =>
                 {
                     b.Property<Guid>("Id")
@@ -318,6 +769,248 @@ namespace Darwin.Infrastructure.SqlServer.Migrations
                     b.ToTable("Expenses", "Billing");
                 });
 
+            modelBuilder.Entity("Darwin.Domain.Entities.Billing.FinanceExportAttempt", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int>("AttemptNumber")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("CompletedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("CreatedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("ErrorSummary")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<DateTime?>("FailedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("FinanceExportBatchId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("MetadataJson")
+                        .IsRequired()
+                        .HasMaxLength(4000)
+                        .HasColumnType("nvarchar(4000)");
+
+                    b.Property<DateTime?>("ModifiedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("ModifiedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("PackageHashSha256")
+                        .HasMaxLength(128)
+                        .HasColumnType("nvarchar(128)");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
+                    b.Property<DateTime>("StartedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("FinanceExportBatchId");
+
+                    b.HasIndex("Status");
+
+                    b.HasIndex("FinanceExportBatchId", "AttemptNumber")
+                        .IsUnique()
+                        .HasDatabaseName("UX_FinanceExportAttempts_Batch_AttemptNumber_Active")
+                        .HasFilter("[IsDeleted] = 0");
+
+                    b.ToTable("FinanceExportAttempts", "Billing");
+                });
+
+            modelBuilder.Entity("Darwin.Domain.Entities.Billing.FinanceExportBatch", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("BusinessId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("CreatedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime?>("DeliveredAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("ErrorSummary")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<string>("ExportKey")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
+                    b.Property<Guid>("ExternalSystemId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime?>("FailedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("GeneratedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("MetadataJson")
+                        .IsRequired()
+                        .HasMaxLength(4000)
+                        .HasColumnType("nvarchar(4000)");
+
+                    b.Property<DateTime?>("ModifiedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("ModifiedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("PackageContentType")
+                        .HasMaxLength(128)
+                        .HasColumnType("nvarchar(128)");
+
+                    b.Property<string>("PackageFileName")
+                        .HasMaxLength(260)
+                        .HasColumnType("nvarchar(260)");
+
+                    b.Property<string>("PackageHashSha256")
+                        .HasMaxLength(128)
+                        .HasColumnType("nvarchar(128)");
+
+                    b.Property<DateTime>("PeriodEndUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("PeriodStartUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("PostingStatusMode")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BusinessId");
+
+                    b.HasIndex("ExternalSystemId");
+
+                    b.HasIndex("Status");
+
+                    b.HasIndex("BusinessId", "ExternalSystemId", "ExportKey")
+                        .IsUnique()
+                        .HasDatabaseName("UX_FinanceExportBatches_Business_Target_Key_Active")
+                        .HasFilter("[IsDeleted] = 0");
+
+                    b.HasIndex("BusinessId", "PeriodStartUtc", "PeriodEndUtc");
+
+                    b.ToTable("FinanceExportBatches", "Billing");
+                });
+
+            modelBuilder.Entity("Darwin.Domain.Entities.Billing.FinancePostingAccountMapping", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("BusinessId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("CreatedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<Guid>("FinancialAccountId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("MetadataJson")
+                        .IsRequired()
+                        .HasMaxLength(4000)
+                        .HasColumnType("nvarchar(4000)");
+
+                    b.Property<DateTime?>("ModifiedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("ModifiedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Role")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BusinessId");
+
+                    b.HasIndex("FinancialAccountId");
+
+                    b.HasIndex("Role");
+
+                    b.HasIndex("BusinessId", "Role")
+                        .IsUnique()
+                        .HasDatabaseName("UX_FinancePostingAccountMappings_Business_Role_Active")
+                        .HasFilter("[IsActive] = 1 AND [IsDeleted] = 0");
+
+                    b.ToTable("FinancePostingAccountMappings", "Billing");
+                });
+
             modelBuilder.Entity("Darwin.Domain.Entities.Billing.FinancialAccount", b =>
                 {
                     b.Property<Guid>("Id")
@@ -397,11 +1090,43 @@ namespace Darwin.Infrastructure.SqlServer.Migrations
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("bit");
 
+                    b.Property<string>("MetadataJson")
+                        .IsRequired()
+                        .HasMaxLength(4000)
+                        .HasColumnType("nvarchar(4000)");
+
                     b.Property<DateTime?>("ModifiedAtUtc")
                         .HasColumnType("datetime2");
 
                     b.Property<Guid>("ModifiedByUserId")
                         .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime?>("PostedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("PostingKey")
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
+                    b.Property<string>("PostingKind")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("nvarchar(32)");
+
+                    b.Property<string>("PostingReason")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<string>("PostingStatus")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("nvarchar(32)");
+
+                    b.Property<Guid?>("ReversalOfJournalEntryId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime?>("ReversedAtUtc")
+                        .HasColumnType("datetime2");
 
                     b.Property<byte[]>("RowVersion")
                         .IsConcurrencyToken()
@@ -409,11 +1134,34 @@ namespace Darwin.Infrastructure.SqlServer.Migrations
                         .ValueGeneratedOnAddOrUpdate()
                         .HasColumnType("rowversion");
 
+                    b.Property<string>("SourceDocumentNumber")
+                        .HasMaxLength(128)
+                        .HasColumnType("nvarchar(128)");
+
+                    b.Property<Guid?>("SourceEntityId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("SourceEntityType")
+                        .HasMaxLength(128)
+                        .HasColumnType("nvarchar(128)");
+
                     b.HasKey("Id");
 
                     b.HasIndex("BusinessId");
 
                     b.HasIndex("EntryDateUtc");
+
+                    b.HasIndex("PostingKey")
+                        .IsUnique()
+                        .HasDatabaseName("UX_JournalEntries_PostingKey")
+                        .HasFilter("[PostingKey] IS NOT NULL AND [IsDeleted] = 0");
+
+                    b.HasIndex("PostingKind");
+
+                    b.HasIndex("PostingStatus");
+
+                    b.HasIndex("SourceEntityType", "SourceEntityId")
+                        .HasDatabaseName("IX_JournalEntries_SourceEntity");
 
                     b.ToTable("JournalEntries", "Billing");
                 });
@@ -662,6 +1410,744 @@ namespace Darwin.Infrastructure.SqlServer.Migrations
                         .HasFilter("[ProviderInvoiceId] IS NOT NULL AND [IsDeleted] = 0");
 
                     b.ToTable("SubscriptionInvoices", "Billing");
+                });
+
+            modelBuilder.Entity("Darwin.Domain.Entities.Billing.SupplierAdvance", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("AdvanceDateUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("AdvanceNumber")
+                        .HasMaxLength(128)
+                        .HasColumnType("nvarchar(128)");
+
+                    b.Property<Guid>("BusinessId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime?>("CancelledAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("CreatedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Currency")
+                        .IsRequired()
+                        .HasMaxLength(3)
+                        .HasColumnType("nvarchar(3)");
+
+                    b.Property<string>("InternalNotes")
+                        .HasMaxLength(4000)
+                        .HasColumnType("nvarchar(4000)");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("MetadataJson")
+                        .IsRequired()
+                        .HasMaxLength(4000)
+                        .HasColumnType("nvarchar(4000)");
+
+                    b.Property<DateTime?>("ModifiedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("ModifiedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<long>("OpenAmountMinor")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("PaymentMethod")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)");
+
+                    b.Property<DateTime?>("PostedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid?>("PostingJournalEntryId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Reference")
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
+                    b.Property<Guid?>("ReversalJournalEntryId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("ReversalReason")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<DateTime?>("ReversedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)");
+
+                    b.Property<Guid>("SupplierId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<long>("TotalAmountMinor")
+                        .HasColumnType("bigint");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AdvanceDateUtc");
+
+                    b.HasIndex("BusinessId");
+
+                    b.HasIndex("CancelledAtUtc");
+
+                    b.HasIndex("PostedAtUtc");
+
+                    b.HasIndex("PostingJournalEntryId");
+
+                    b.HasIndex("ReversalJournalEntryId");
+
+                    b.HasIndex("ReversedAtUtc");
+
+                    b.HasIndex("Status");
+
+                    b.HasIndex("SupplierId");
+
+                    b.HasIndex("BusinessId", "AdvanceNumber")
+                        .IsUnique()
+                        .HasDatabaseName("UX_SupplierAdvances_Business_Number_Active")
+                        .HasFilter("[AdvanceNumber] IS NOT NULL AND [IsDeleted] = 0");
+
+                    b.ToTable("SupplierAdvances", "Billing");
+                });
+
+            modelBuilder.Entity("Darwin.Domain.Entities.Billing.SupplierAdvanceApplication", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<long>("AmountMinor")
+                        .HasColumnType("bigint");
+
+                    b.Property<DateTime>("AppliedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("CreatedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Memo")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<DateTime?>("ModifiedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("ModifiedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid?>("PostingJournalEntryId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid?>("ReversalJournalEntryId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("ReversalReason")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<DateTime?>("ReversedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
+                    b.Property<Guid>("SupplierAdvanceId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("SupplierInvoiceId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AppliedAtUtc");
+
+                    b.HasIndex("PostingJournalEntryId");
+
+                    b.HasIndex("ReversalJournalEntryId");
+
+                    b.HasIndex("ReversedAtUtc");
+
+                    b.HasIndex("SupplierAdvanceId");
+
+                    b.HasIndex("SupplierInvoiceId");
+
+                    b.HasIndex("SupplierAdvanceId", "SupplierInvoiceId")
+                        .IsUnique()
+                        .HasDatabaseName("UX_SupplierAdvanceApplications_Advance_Invoice_Active")
+                        .HasFilter("[IsDeleted] = 0");
+
+                    b.ToTable("SupplierAdvanceApplications", "Billing");
+                });
+
+            modelBuilder.Entity("Darwin.Domain.Entities.Billing.SupplierInvoice", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime?>("ApprovedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("BusinessId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("CreatedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Currency")
+                        .IsRequired()
+                        .HasMaxLength(3)
+                        .HasColumnType("nvarchar(3)");
+
+                    b.Property<DateTime?>("DueDateUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid?>("GoodsReceiptId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("InternalInvoiceNumber")
+                        .HasMaxLength(128)
+                        .HasColumnType("nvarchar(128)");
+
+                    b.Property<string>("InternalNotes")
+                        .HasMaxLength(4000)
+                        .HasColumnType("nvarchar(4000)");
+
+                    b.Property<DateTime>("InvoiceDateUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTime?>("MatchedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("MetadataJson")
+                        .IsRequired()
+                        .HasMaxLength(4000)
+                        .HasColumnType("nvarchar(4000)");
+
+                    b.Property<DateTime?>("ModifiedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("ModifiedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int?>("PaymentTermDays")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("PostedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid?>("PostingJournalEntryId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid?>("PurchaseOrderId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime?>("ReceivedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)");
+
+                    b.Property<Guid>("SupplierId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("SupplierInvoiceNumber")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("nvarchar(128)");
+
+                    b.Property<long>("TotalGrossMinor")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("TotalNetMinor")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("TotalTaxMinor")
+                        .HasColumnType("bigint");
+
+                    b.Property<DateTime?>("VoidedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BusinessId");
+
+                    b.HasIndex("DueDateUtc");
+
+                    b.HasIndex("GoodsReceiptId");
+
+                    b.HasIndex("InvoiceDateUtc");
+
+                    b.HasIndex("PostedAtUtc");
+
+                    b.HasIndex("PostingJournalEntryId");
+
+                    b.HasIndex("PurchaseOrderId");
+
+                    b.HasIndex("Status");
+
+                    b.HasIndex("SupplierId");
+
+                    b.HasIndex("BusinessId", "InternalInvoiceNumber")
+                        .IsUnique()
+                        .HasDatabaseName("UX_SupplierInvoices_Business_InternalNumber_Active")
+                        .HasFilter("[InternalInvoiceNumber] IS NOT NULL AND [IsDeleted] = 0");
+
+                    b.HasIndex("BusinessId", "SupplierId", "SupplierInvoiceNumber")
+                        .IsUnique()
+                        .HasDatabaseName("UX_SupplierInvoices_Business_Supplier_Number_Active")
+                        .HasFilter("[IsDeleted] = 0");
+
+                    b.ToTable("SupplierInvoices", "Billing");
+                });
+
+            modelBuilder.Entity("Darwin.Domain.Entities.Billing.SupplierInvoiceLine", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("CreatedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<string>("DiscrepancyReason")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<Guid?>("GoodsReceiptLineId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int>("InvoicedQuantity")
+                        .HasColumnType("int");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("MatchStatus")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)");
+
+                    b.Property<DateTime?>("ModifiedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("ModifiedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid?>("ProductVariantId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid?>("PurchaseOrderLineId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
+                    b.Property<int>("SortOrder")
+                        .HasColumnType("int");
+
+                    b.Property<Guid>("SupplierInvoiceId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("SupplierSku")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<decimal>("TaxRate")
+                        .HasPrecision(9, 4)
+                        .HasColumnType("decimal(9,4)");
+
+                    b.Property<long>("TotalGrossMinor")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("TotalNetMinor")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("TotalTaxMinor")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("UnitGrossMinor")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("UnitNetMinor")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("UnitTaxMinor")
+                        .HasColumnType("bigint");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("GoodsReceiptLineId");
+
+                    b.HasIndex("MatchStatus");
+
+                    b.HasIndex("ProductVariantId");
+
+                    b.HasIndex("PurchaseOrderLineId");
+
+                    b.HasIndex("SupplierInvoiceId");
+
+                    b.ToTable("SupplierInvoiceLines", "Billing");
+                });
+
+            modelBuilder.Entity("Darwin.Domain.Entities.Billing.SupplierPayment", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime?>("BankSettledAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid?>("BankSettlementJournalEntryId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("BankSettlementNotes")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<Guid?>("BankSettlementReconciliationMatchId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("BusinessId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime?>("CancelledAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("CreatedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Currency")
+                        .IsRequired()
+                        .HasMaxLength(3)
+                        .HasColumnType("nvarchar(3)");
+
+                    b.Property<string>("InternalNotes")
+                        .HasMaxLength(4000)
+                        .HasColumnType("nvarchar(4000)");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("MetadataJson")
+                        .IsRequired()
+                        .HasMaxLength(4000)
+                        .HasColumnType("nvarchar(4000)");
+
+                    b.Property<DateTime?>("ModifiedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("ModifiedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("PaymentDateUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("PaymentMethod")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)");
+
+                    b.Property<string>("PaymentNumber")
+                        .HasMaxLength(128)
+                        .HasColumnType("nvarchar(128)");
+
+                    b.Property<DateTime?>("PostedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid?>("PostingJournalEntryId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Reference")
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
+                    b.Property<Guid?>("ReversalJournalEntryId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("ReversalReason")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<DateTime?>("ReversedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)");
+
+                    b.Property<Guid>("SupplierId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<long>("TotalAmountMinor")
+                        .HasColumnType("bigint");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BankSettledAtUtc");
+
+                    b.HasIndex("BankSettlementJournalEntryId");
+
+                    b.HasIndex("BankSettlementReconciliationMatchId");
+
+                    b.HasIndex("BusinessId");
+
+                    b.HasIndex("PaymentDateUtc");
+
+                    b.HasIndex("PostingJournalEntryId");
+
+                    b.HasIndex("ReversalJournalEntryId");
+
+                    b.HasIndex("ReversedAtUtc");
+
+                    b.HasIndex("Status");
+
+                    b.HasIndex("SupplierId");
+
+                    b.HasIndex("BusinessId", "PaymentNumber")
+                        .IsUnique()
+                        .HasDatabaseName("UX_SupplierPayments_Business_Number_Active")
+                        .HasFilter("[PaymentNumber] IS NOT NULL AND [IsDeleted] = 0");
+
+                    b.ToTable("SupplierPayments", "Billing");
+                });
+
+            modelBuilder.Entity("Darwin.Domain.Entities.Billing.SupplierPaymentAllocation", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<long>("AmountMinor")
+                        .HasColumnType("bigint");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("CreatedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Memo")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<DateTime?>("ModifiedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("ModifiedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
+                    b.Property<Guid>("SupplierInvoiceId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("SupplierPaymentId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("SupplierInvoiceId");
+
+                    b.HasIndex("SupplierPaymentId");
+
+                    b.HasIndex("SupplierPaymentId", "SupplierInvoiceId")
+                        .IsUnique()
+                        .HasDatabaseName("UX_SupplierPaymentAllocations_Payment_Invoice_Active")
+                        .HasFilter("[IsDeleted] = 0");
+
+                    b.ToTable("SupplierPaymentAllocations", "Billing");
+                });
+
+            modelBuilder.Entity("Darwin.Domain.Entities.Billing.SupplierPaymentBankCorrection", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<long>("AmountMinor")
+                        .HasColumnType("bigint");
+
+                    b.Property<Guid>("BankReconciliationMatchId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid?>("BankStatementLineId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("BusinessId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime?>("CancelledAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("CorrectionDateUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid?>("CorrectionJournalEntryId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("CorrectionType")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("CreatedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Currency")
+                        .IsRequired()
+                        .HasMaxLength(3)
+                        .HasColumnType("nvarchar(3)");
+
+                    b.Property<string>("InternalNotes")
+                        .HasMaxLength(4000)
+                        .HasColumnType("nvarchar(4000)");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("MetadataJson")
+                        .IsRequired()
+                        .HasMaxLength(4000)
+                        .HasColumnType("nvarchar(4000)");
+
+                    b.Property<DateTime?>("ModifiedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("ModifiedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid?>("OriginalBankSettlementJournalEntryId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime?>("PostedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Reason")
+                        .IsRequired()
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)");
+
+                    b.Property<Guid>("SupplierPaymentId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BankReconciliationMatchId");
+
+                    b.HasIndex("BankStatementLineId");
+
+                    b.HasIndex("BusinessId");
+
+                    b.HasIndex("CorrectionDateUtc");
+
+                    b.HasIndex("CorrectionJournalEntryId");
+
+                    b.HasIndex("CorrectionType");
+
+                    b.HasIndex("OriginalBankSettlementJournalEntryId");
+
+                    b.HasIndex("PostedAtUtc");
+
+                    b.HasIndex("Status");
+
+                    b.HasIndex("SupplierPaymentId");
+
+                    b.HasIndex("SupplierPaymentId", "CorrectionType", "BankReconciliationMatchId")
+                        .IsUnique()
+                        .HasDatabaseName("UX_SupplierPaymentBankCorrections_Payment_Type_Reconciliation_Active")
+                        .HasFilter("[IsDeleted] = 0");
+
+                    b.ToTable("SupplierPaymentBankCorrections", "Billing");
                 });
 
             modelBuilder.Entity("Darwin.Domain.Entities.Businesses.Business", b =>
@@ -1822,6 +3308,10 @@ namespace Darwin.Infrastructure.SqlServer.Migrations
                     b.Property<Guid>("CustomerId")
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<string>("EvidenceJson")
+                        .HasMaxLength(4000)
+                        .HasColumnType("nvarchar(4000)");
+
                     b.Property<bool>("Granted")
                         .HasColumnType("bit");
 
@@ -1837,6 +3327,10 @@ namespace Darwin.Infrastructure.SqlServer.Migrations
                     b.Property<Guid>("ModifiedByUserId")
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<string>("PolicyVersion")
+                        .HasMaxLength(80)
+                        .HasColumnType("nvarchar(80)");
+
                     b.Property<DateTime?>("RevokedAtUtc")
                         .HasColumnType("datetime2");
 
@@ -1846,10 +3340,16 @@ namespace Darwin.Infrastructure.SqlServer.Migrations
                         .ValueGeneratedOnAddOrUpdate()
                         .HasColumnType("rowversion");
 
+                    b.Property<string>("Source")
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
                     b.Property<int>("Type")
                         .HasColumnType("int");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("PolicyVersion");
 
                     b.HasIndex("CustomerId", "Type");
 
@@ -1861,6 +3361,10 @@ namespace Darwin.Infrastructure.SqlServer.Migrations
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("AcquisitionSource")
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
 
                     b.Property<string>("CompanyName")
                         .HasMaxLength(200)
@@ -1885,10 +3389,18 @@ namespace Darwin.Infrastructure.SqlServer.Migrations
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("bit");
 
+                    b.Property<DateTime?>("LastContactedAtUtc")
+                        .HasColumnType("datetime2");
+
                     b.Property<string>("LastName")
                         .IsRequired()
                         .HasMaxLength(150)
                         .HasColumnType("nvarchar(150)");
+
+                    b.Property<int>("LifecycleStatus")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasDefaultValue(0);
 
                     b.Property<DateTime?>("ModifiedAtUtc")
                         .HasColumnType("datetime2");
@@ -1896,14 +3408,23 @@ namespace Darwin.Infrastructure.SqlServer.Migrations
                     b.Property<Guid>("ModifiedByUserId")
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<DateTime?>("NextFollowUpAtUtc")
+                        .HasColumnType("datetime2");
+
                     b.Property<string>("Notes")
                         .HasMaxLength(4000)
                         .HasColumnType("nvarchar(4000)");
+
+                    b.Property<Guid?>("OwnerUserId")
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<string>("Phone")
                         .IsRequired()
                         .HasMaxLength(50)
                         .HasColumnType("nvarchar(50)");
+
+                    b.Property<int?>("PreferredContactChannel")
+                        .HasColumnType("int");
 
                     b.Property<byte[]>("RowVersion")
                         .IsConcurrencyToken()
@@ -1938,6 +3459,12 @@ namespace Darwin.Infrastructure.SqlServer.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("Email");
+
+                    b.HasIndex("LifecycleStatus");
+
+                    b.HasIndex("NextFollowUpAtUtc");
+
+                    b.HasIndex("OwnerUserId");
 
                     b.HasIndex("UserId")
                         .IsUnique()
@@ -2030,6 +3557,11 @@ namespace Darwin.Infrastructure.SqlServer.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("nvarchar(128)");
+
                     b.Property<DateTime>("CreatedAtUtc")
                         .HasColumnType("datetime2");
 
@@ -2039,6 +3571,11 @@ namespace Darwin.Infrastructure.SqlServer.Migrations
                     b.Property<string>("Description")
                         .HasMaxLength(2000)
                         .HasColumnType("nvarchar(2000)");
+
+                    b.Property<bool>("IsActive")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(true);
 
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("bit");
@@ -2060,7 +3597,17 @@ namespace Darwin.Infrastructure.SqlServer.Migrations
                         .ValueGeneratedOnAddOrUpdate()
                         .HasColumnType("rowversion");
 
+                    b.Property<string>("RuleJson")
+                        .HasMaxLength(4000)
+                        .HasColumnType("nvarchar(4000)");
+
                     b.HasKey("Id");
+
+                    b.HasIndex("Code")
+                        .IsUnique()
+                        .HasFilter("[IsDeleted] = 0");
+
+                    b.HasIndex("IsActive");
 
                     b.HasIndex("Name")
                         .IsUnique()
@@ -2222,6 +3769,10 @@ namespace Darwin.Infrastructure.SqlServer.Migrations
                     b.Property<DateTime>("DueDateUtc")
                         .HasColumnType("datetime2");
 
+                    b.Property<string>("InvoiceNumber")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("bit");
 
@@ -2289,6 +3840,10 @@ namespace Darwin.Infrastructure.SqlServer.Migrations
 
                     b.HasIndex("CustomerId");
 
+                    b.HasIndex("InvoiceNumber")
+                        .IsUnique()
+                        .HasFilter("[InvoiceNumber] IS NOT NULL AND [IsDeleted] = 0");
+
                     b.HasIndex("IssuedAtUtc");
 
                     b.HasIndex("OrderId");
@@ -2348,6 +3903,11 @@ namespace Darwin.Infrastructure.SqlServer.Migrations
                     b.Property<long>("TotalNetMinor")
                         .HasColumnType("bigint");
 
+                    b.Property<long>("TotalTaxMinor")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint")
+                        .HasDefaultValue(0L);
+
                     b.Property<long>("UnitPriceNetMinor")
                         .HasColumnType("bigint");
 
@@ -2367,9 +3927,16 @@ namespace Darwin.Infrastructure.SqlServer.Migrations
                     b.Property<Guid?>("AssignedToUserId")
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<string>("ClosedReason")
+                        .HasMaxLength(512)
+                        .HasColumnType("nvarchar(512)");
+
                     b.Property<string>("CompanyName")
                         .HasMaxLength(200)
                         .HasColumnType("nvarchar(200)");
+
+                    b.Property<DateTime?>("ConvertedAtUtc")
+                        .HasColumnType("datetime2");
 
                     b.Property<DateTime>("CreatedAtUtc")
                         .HasColumnType("datetime2");
@@ -2379,6 +3946,9 @@ namespace Darwin.Infrastructure.SqlServer.Migrations
 
                     b.Property<Guid?>("CustomerId")
                         .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime?>("DisqualifiedAtUtc")
+                        .HasColumnType("datetime2");
 
                     b.Property<string>("Email")
                         .IsRequired()
@@ -2413,6 +3983,12 @@ namespace Darwin.Infrastructure.SqlServer.Migrations
                         .HasMaxLength(50)
                         .HasColumnType("nvarchar(50)");
 
+                    b.Property<int>("Priority")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("QualifiedAtUtc")
+                        .HasColumnType("datetime2");
+
                     b.Property<byte[]>("RowVersion")
                         .IsConcurrencyToken()
                         .IsRequired()
@@ -2430,9 +4006,15 @@ namespace Darwin.Infrastructure.SqlServer.Migrations
 
                     b.HasIndex("AssignedToUserId");
 
+                    b.HasIndex("ConvertedAtUtc");
+
                     b.HasIndex("CustomerId");
 
                     b.HasIndex("Email");
+
+                    b.HasIndex("Priority");
+
+                    b.HasIndex("QualifiedAtUtc");
 
                     b.HasIndex("Status");
 
@@ -2448,11 +4030,25 @@ namespace Darwin.Infrastructure.SqlServer.Migrations
                     b.Property<Guid?>("AssignedToUserId")
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<string>("CloseReason")
+                        .HasMaxLength(512)
+                        .HasColumnType("nvarchar(512)");
+
+                    b.Property<DateTime?>("ClosedAtUtc")
+                        .HasColumnType("datetime2");
+
                     b.Property<DateTime>("CreatedAtUtc")
                         .HasColumnType("datetime2");
 
                     b.Property<Guid>("CreatedByUserId")
                         .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Currency")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(3)
+                        .HasColumnType("nvarchar(3)")
+                        .HasDefaultValue("EUR");
 
                     b.Property<Guid>("CustomerId")
                         .HasColumnType("uniqueidentifier");
@@ -2463,6 +4059,11 @@ namespace Darwin.Infrastructure.SqlServer.Migrations
                     b.Property<DateTime?>("ExpectedCloseDateUtc")
                         .HasColumnType("datetime2");
 
+                    b.Property<int>("ForecastCategory")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasDefaultValue(0);
+
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("bit");
 
@@ -2472,11 +4073,18 @@ namespace Darwin.Infrastructure.SqlServer.Migrations
                     b.Property<Guid>("ModifiedByUserId")
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<int?>("ProbabilityPercent")
+                        .HasColumnType("int");
+
                     b.Property<byte[]>("RowVersion")
                         .IsConcurrencyToken()
                         .IsRequired()
                         .ValueGeneratedOnAddOrUpdate()
                         .HasColumnType("rowversion");
+
+                    b.Property<string>("Source")
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
 
                     b.Property<int>("Stage")
                         .HasColumnType("int");
@@ -2490,7 +4098,13 @@ namespace Darwin.Infrastructure.SqlServer.Migrations
 
                     b.HasIndex("AssignedToUserId");
 
+                    b.HasIndex("ClosedAtUtc");
+
                     b.HasIndex("CustomerId");
+
+                    b.HasIndex("ExpectedCloseDateUtc");
+
+                    b.HasIndex("ForecastCategory");
 
                     b.HasIndex("Stage");
 
@@ -3759,6 +5373,3475 @@ namespace Darwin.Infrastructure.SqlServer.Migrations
                     b.HasIndex("VariantId");
 
                     b.ToTable("VariantOptionValues", "Catalog");
+                });
+
+            modelBuilder.Entity("Darwin.Domain.Entities.Foundation.Activity", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("ActivityType")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("nvarchar(128)");
+
+                    b.Property<Guid?>("ActorUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("CreatedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("EntityId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("EntityType")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("nvarchar(128)");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("MetadataJson")
+                        .IsRequired()
+                        .HasMaxLength(4000)
+                        .HasColumnType("nvarchar(4000)");
+
+                    b.Property<DateTime?>("ModifiedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("ModifiedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("OccurredAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
+                    b.Property<string>("Summary")
+                        .HasMaxLength(2000)
+                        .HasColumnType("nvarchar(2000)");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(300)
+                        .HasColumnType("nvarchar(300)");
+
+                    b.Property<string>("Visibility")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("nvarchar(32)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("EntityType", "EntityId", "OccurredAtUtc")
+                        .HasDatabaseName("IX_Activities_EntityType_EntityId_OccurredAtUtc");
+
+                    b.ToTable("Activities", "Foundation");
+                });
+
+            modelBuilder.Entity("Darwin.Domain.Entities.Foundation.AiActionApproval", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("AiActionDraftId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("CreatedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("DecidedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("DecidedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Decision")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("nvarchar(32)");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("MetadataJson")
+                        .IsRequired()
+                        .HasMaxLength(4000)
+                        .HasColumnType("nvarchar(4000)");
+
+                    b.Property<DateTime?>("ModifiedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("ModifiedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Reason")
+                        .IsRequired()
+                        .HasMaxLength(1024)
+                        .HasColumnType("nvarchar(1024)");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AiActionDraftId", "DecidedAtUtc")
+                        .HasDatabaseName("IX_AiActionApprovals_Draft_DecidedAtUtc");
+
+                    b.ToTable("AiActionApprovals", "Foundation");
+                });
+
+            modelBuilder.Entity("Darwin.Domain.Entities.Foundation.AiActionDraft", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime?>("ApprovedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid?>("ApprovedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid?>("BusinessId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("CommandPayloadJson")
+                        .IsRequired()
+                        .HasMaxLength(8000)
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("CommandType")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("CreatedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime?>("ExecutedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid?>("ExecutionEventId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("FeatureAreaCode")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("nvarchar(128)");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("MetadataJson")
+                        .IsRequired()
+                        .HasMaxLength(4000)
+                        .HasColumnType("nvarchar(4000)");
+
+                    b.Property<DateTime?>("ModifiedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("ModifiedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid?>("RecommendationId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime?>("RejectedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid?>("RejectedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("ReviewReason")
+                        .HasMaxLength(1024)
+                        .HasColumnType("nvarchar(1024)");
+
+                    b.Property<string>("RiskLevel")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("nvarchar(32)");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("nvarchar(32)");
+
+                    b.Property<DateTime?>("SubmittedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid?>("SubmittedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Summary")
+                        .IsRequired()
+                        .HasMaxLength(2000)
+                        .HasColumnType("nvarchar(2000)");
+
+                    b.Property<Guid?>("TargetEntityId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("TargetEntityType")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("nvarchar(128)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("RecommendationId")
+                        .HasDatabaseName("IX_AiActionDrafts_RecommendationId");
+
+                    b.HasIndex("TargetEntityType", "TargetEntityId")
+                        .HasDatabaseName("IX_AiActionDrafts_TargetEntity");
+
+                    b.HasIndex("BusinessId", "Status", "CreatedAtUtc")
+                        .HasDatabaseName("IX_AiActionDrafts_Business_Status_CreatedAtUtc");
+
+                    b.ToTable("AiActionDrafts", "Foundation");
+                });
+
+            modelBuilder.Entity("Darwin.Domain.Entities.Foundation.AiRecommendation", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid?>("BusinessId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int>("ConfidenceScore")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("CreatedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime?>("ExpiresAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("FeatureAreaCode")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("nvarchar(128)");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("MetadataJson")
+                        .IsRequired()
+                        .HasMaxLength(4000)
+                        .HasColumnType("nvarchar(4000)");
+
+                    b.Property<DateTime?>("ModifiedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("ModifiedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Rationale")
+                        .IsRequired()
+                        .HasMaxLength(4000)
+                        .HasColumnType("nvarchar(4000)");
+
+                    b.Property<string>("RecommendationType")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("nvarchar(128)");
+
+                    b.Property<string>("ReviewReason")
+                        .HasMaxLength(1024)
+                        .HasColumnType("nvarchar(1024)");
+
+                    b.Property<DateTime?>("ReviewedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid?>("ReviewedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
+                    b.Property<Guid?>("SourceEntityId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("SourceEntityType")
+                        .HasMaxLength(128)
+                        .HasColumnType("nvarchar(128)");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("nvarchar(32)");
+
+                    b.Property<string>("Summary")
+                        .IsRequired()
+                        .HasMaxLength(2000)
+                        .HasColumnType("nvarchar(2000)");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(300)
+                        .HasColumnType("nvarchar(300)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("SourceEntityType", "SourceEntityId")
+                        .HasDatabaseName("IX_AiRecommendations_SourceEntity");
+
+                    b.HasIndex("BusinessId", "Status", "CreatedAtUtc")
+                        .HasDatabaseName("IX_AiRecommendations_Business_Status_CreatedAtUtc");
+
+                    b.ToTable("AiRecommendations", "Foundation");
+                });
+
+            modelBuilder.Entity("Darwin.Domain.Entities.Foundation.AiSensitiveFieldPolicy", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid?>("BusinessId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("CreatedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("DataCategory")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)");
+
+                    b.Property<string>("Decision")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("nvarchar(32)");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(1024)
+                        .HasColumnType("nvarchar(1024)");
+
+                    b.Property<string>("EntityType")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("nvarchar(128)");
+
+                    b.Property<string>("FieldPath")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
+                    b.Property<bool>("IsActive")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(true);
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("MetadataJson")
+                        .IsRequired()
+                        .HasMaxLength(4000)
+                        .HasColumnType("nvarchar(4000)");
+
+                    b.Property<DateTime?>("ModifiedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("ModifiedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("PurposeKey")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("nvarchar(128)");
+
+                    b.Property<string>("RedactionRule")
+                        .HasMaxLength(512)
+                        .HasColumnType("nvarchar(512)");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
+                    b.Property<string>("SensitivityLevel")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("nvarchar(32)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("EntityType", "FieldPath", "IsActive")
+                        .HasDatabaseName("IX_AiSensitiveFieldPolicies_Field_Active");
+
+                    b.HasIndex("BusinessId", "EntityType", "FieldPath", "PurposeKey")
+                        .IsUnique()
+                        .HasDatabaseName("UX_AiSensitiveFieldPolicies_Scope_Field_Purpose")
+                        .HasFilter("[IsDeleted] = 0");
+
+                    b.ToTable("AiSensitiveFieldPolicies", "Foundation");
+                });
+
+            modelBuilder.Entity("Darwin.Domain.Entities.Foundation.AuditTrail", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Action")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("nvarchar(32)");
+
+                    b.Property<Guid?>("ActorUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid?>("BusinessEventId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid?>("BusinessId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("ChangeSetJson")
+                        .IsRequired()
+                        .HasMaxLength(4000)
+                        .HasColumnType("nvarchar(4000)");
+
+                    b.Property<string>("CorrelationId")
+                        .HasMaxLength(128)
+                        .HasColumnType("nvarchar(128)");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("CreatedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("EntityId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("EntityType")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("nvarchar(128)");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("MetadataJson")
+                        .IsRequired()
+                        .HasMaxLength(4000)
+                        .HasColumnType("nvarchar(4000)");
+
+                    b.Property<DateTime?>("ModifiedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("ModifiedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("OccurredAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Reason")
+                        .HasMaxLength(2000)
+                        .HasColumnType("nvarchar(2000)");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BusinessEventId")
+                        .HasDatabaseName("IX_AuditTrails_BusinessEventId");
+
+                    b.HasIndex("CorrelationId")
+                        .HasDatabaseName("IX_AuditTrails_CorrelationId");
+
+                    b.HasIndex("BusinessId", "OccurredAtUtc")
+                        .HasDatabaseName("IX_AuditTrails_BusinessId_OccurredAtUtc");
+
+                    b.HasIndex("EntityType", "EntityId", "OccurredAtUtc")
+                        .HasDatabaseName("IX_AuditTrails_EntityType_EntityId_OccurredAtUtc");
+
+                    b.ToTable("AuditTrails", "Foundation");
+                });
+
+            modelBuilder.Entity("Darwin.Domain.Entities.Foundation.BusinessEvent", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid?>("ActorUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid?>("BusinessId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("CausationId")
+                        .HasMaxLength(128)
+                        .HasColumnType("nvarchar(128)");
+
+                    b.Property<string>("CorrelationId")
+                        .HasMaxLength(128)
+                        .HasColumnType("nvarchar(128)");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("CreatedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid?>("EntityId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("EntityType")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("nvarchar(128)");
+
+                    b.Property<string>("EventKey")
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
+                    b.Property<string>("EventType")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("nvarchar(128)");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("MetadataJson")
+                        .IsRequired()
+                        .HasMaxLength(4000)
+                        .HasColumnType("nvarchar(4000)");
+
+                    b.Property<DateTime?>("ModifiedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("ModifiedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("OccurredAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("PayloadJson")
+                        .IsRequired()
+                        .HasMaxLength(4000)
+                        .HasColumnType("nvarchar(4000)");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
+                    b.Property<string>("Severity")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("nvarchar(32)");
+
+                    b.Property<string>("Source")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("nvarchar(32)");
+
+                    b.Property<string>("Summary")
+                        .HasMaxLength(2000)
+                        .HasColumnType("nvarchar(2000)");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(300)
+                        .HasColumnType("nvarchar(300)");
+
+                    b.Property<string>("Visibility")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("nvarchar(32)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CorrelationId")
+                        .HasDatabaseName("IX_BusinessEvents_CorrelationId");
+
+                    b.HasIndex("EventKey")
+                        .IsUnique()
+                        .HasDatabaseName("UX_BusinessEvents_EventKey")
+                        .HasFilter("[EventKey] IS NOT NULL AND [IsDeleted] = 0");
+
+                    b.HasIndex("BusinessId", "OccurredAtUtc")
+                        .HasDatabaseName("IX_BusinessEvents_BusinessId_OccurredAtUtc");
+
+                    b.HasIndex("EntityType", "EntityId", "OccurredAtUtc")
+                        .HasDatabaseName("IX_BusinessEvents_EntityType_EntityId_OccurredAtUtc");
+
+                    b.ToTable("BusinessEvents", "Foundation");
+                });
+
+            modelBuilder.Entity("Darwin.Domain.Entities.Foundation.BusinessFeatureOverride", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("BusinessId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("CreatedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime?>("EffectiveFromUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("EffectiveToUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("FeatureAreaId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsEnabled")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("MetadataJson")
+                        .IsRequired()
+                        .HasMaxLength(4000)
+                        .HasColumnType("nvarchar(4000)");
+
+                    b.Property<DateTime?>("ModifiedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("ModifiedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Reason")
+                        .HasMaxLength(1024)
+                        .HasColumnType("nvarchar(1024)");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BusinessId", "FeatureAreaId")
+                        .IsUnique()
+                        .HasDatabaseName("UX_BusinessFeatureOverrides_Business_Feature")
+                        .HasFilter("[IsDeleted] = 0");
+
+                    b.HasIndex("BusinessId", "IsEnabled")
+                        .HasDatabaseName("IX_BusinessFeatureOverrides_Business_IsEnabled");
+
+                    b.ToTable("BusinessFeatureOverrides", "Foundation");
+                });
+
+            modelBuilder.Entity("Darwin.Domain.Entities.Foundation.CustomFieldDefinition", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid?>("BusinessId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("CreatedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("DataType")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("nvarchar(32)");
+
+                    b.Property<bool>("IsActive")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(true);
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsRequired")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Key")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("nvarchar(128)");
+
+                    b.Property<string>("Label")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<string>("MetadataJson")
+                        .IsRequired()
+                        .HasMaxLength(4000)
+                        .HasColumnType("nvarchar(4000)");
+
+                    b.Property<DateTime?>("ModifiedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("ModifiedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
+                    b.Property<string>("TargetEntityType")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("nvarchar(128)");
+
+                    b.Property<string>("ValidationJson")
+                        .IsRequired()
+                        .HasMaxLength(4000)
+                        .HasColumnType("nvarchar(4000)");
+
+                    b.Property<string>("Visibility")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("nvarchar(32)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TargetEntityType", "Key")
+                        .IsUnique()
+                        .HasDatabaseName("UX_CustomFieldDefinitions_Global_Target_Key")
+                        .HasFilter("[BusinessId] IS NULL AND [IsDeleted] = 0");
+
+                    b.HasIndex("BusinessId", "TargetEntityType", "Key")
+                        .IsUnique()
+                        .HasDatabaseName("UX_CustomFieldDefinitions_Business_Target_Key")
+                        .HasFilter("[BusinessId] IS NOT NULL AND [IsDeleted] = 0");
+
+                    b.ToTable("CustomFieldDefinitions", "Foundation");
+                });
+
+            modelBuilder.Entity("Darwin.Domain.Entities.Foundation.CustomFieldValue", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<bool?>("BooleanValue")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("CreatedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime?>("DateValue")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("DefinitionId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("EntityId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("EntityType")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("nvarchar(128)");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("JsonValue")
+                        .HasMaxLength(4000)
+                        .HasColumnType("nvarchar(4000)");
+
+                    b.Property<string>("MetadataJson")
+                        .IsRequired()
+                        .HasMaxLength(4000)
+                        .HasColumnType("nvarchar(4000)");
+
+                    b.Property<DateTime?>("ModifiedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("ModifiedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<decimal?>("NumberValue")
+                        .HasPrecision(18, 4)
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
+                    b.Property<string>("StringValue")
+                        .HasMaxLength(4000)
+                        .HasColumnType("nvarchar(4000)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("EntityType", "EntityId")
+                        .HasDatabaseName("IX_CustomFieldValues_EntityType_EntityId");
+
+                    b.HasIndex("DefinitionId", "EntityType", "EntityId")
+                        .IsUnique()
+                        .HasDatabaseName("UX_CustomFieldValues_Definition_Entity")
+                        .HasFilter("[IsDeleted] = 0");
+
+                    b.ToTable("CustomFieldValues", "Foundation");
+                });
+
+            modelBuilder.Entity("Darwin.Domain.Entities.Foundation.DocumentRecord", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("ContentHash")
+                        .HasMaxLength(128)
+                        .HasColumnType("nvarchar(128)");
+
+                    b.Property<string>("ContentType")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("nvarchar(128)");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("CreatedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("DocumentKind")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("nvarchar(32)");
+
+                    b.Property<Guid>("EntityId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("EntityType")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("nvarchar(128)");
+
+                    b.Property<string>("FileName")
+                        .IsRequired()
+                        .HasMaxLength(260)
+                        .HasColumnType("nvarchar(260)");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<Guid?>("MediaAssetId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("MetadataJson")
+                        .IsRequired()
+                        .HasMaxLength(4000)
+                        .HasColumnType("nvarchar(4000)");
+
+                    b.Property<DateTime?>("ModifiedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("ModifiedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
+                    b.Property<long?>("SizeBytes")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("StorageContainer")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
+                    b.Property<string>("StorageKey")
+                        .IsRequired()
+                        .HasMaxLength(1024)
+                        .HasColumnType("nvarchar(1024)");
+
+                    b.Property<string>("StorageProvider")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(300)
+                        .HasColumnType("nvarchar(300)");
+
+                    b.Property<string>("Visibility")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("nvarchar(32)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("MediaAssetId")
+                        .HasDatabaseName("IX_DocumentRecords_MediaAssetId");
+
+                    b.HasIndex("EntityType", "EntityId")
+                        .HasDatabaseName("IX_DocumentRecords_EntityType_EntityId");
+
+                    b.ToTable("DocumentRecords", "Foundation");
+                });
+
+            modelBuilder.Entity("Darwin.Domain.Entities.Foundation.FeatureArea", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Category")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("nvarchar(32)");
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("nvarchar(128)");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("CreatedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<bool>("DefaultEnabled")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(true);
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(1024)
+                        .HasColumnType("nvarchar(1024)");
+
+                    b.Property<bool>("IsActive")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(true);
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("MetadataJson")
+                        .IsRequired()
+                        .HasMaxLength(4000)
+                        .HasColumnType("nvarchar(4000)");
+
+                    b.Property<DateTime?>("ModifiedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("ModifiedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<string>("RequiredPermissionKey")
+                        .HasMaxLength(128)
+                        .HasColumnType("nvarchar(128)");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
+                    b.Property<int>("SortOrder")
+                        .HasColumnType("int");
+
+                    b.Property<string>("VisibilityScope")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("nvarchar(32)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Code")
+                        .IsUnique()
+                        .HasDatabaseName("UX_FeatureAreas_Code")
+                        .HasFilter("[Code] IS NOT NULL AND [IsActive] = 1 AND [IsDeleted] = 0");
+
+                    b.HasIndex("Category", "SortOrder")
+                        .HasDatabaseName("IX_FeatureAreas_Category_SortOrder");
+
+                    b.ToTable("FeatureAreas", "Foundation");
+                });
+
+            modelBuilder.Entity("Darwin.Domain.Entities.Foundation.InternalFollowUpTask", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid?>("AssignedToUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid?>("BusinessId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("CancellationReason")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<DateTime?>("CancelledAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid?>("CancelledByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime?>("CompletedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid?>("CompletedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("CompletionNotes")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("CreatedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(2000)
+                        .HasColumnType("nvarchar(2000)");
+
+                    b.Property<DateTime?>("DueAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("FeatureAreaCode")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("nvarchar(128)");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("MetadataJson")
+                        .IsRequired()
+                        .HasMaxLength(4000)
+                        .HasColumnType("nvarchar(4000)");
+
+                    b.Property<DateTime?>("ModifiedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("ModifiedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Priority")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("nvarchar(32)");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
+                    b.Property<Guid?>("SourceAiActionDraftId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime?>("StartedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("nvarchar(32)");
+
+                    b.Property<Guid>("TargetEntityId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("TargetEntityType")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("nvarchar(128)");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(300)
+                        .HasColumnType("nvarchar(300)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AssignedToUserId")
+                        .HasDatabaseName("IX_InternalFollowUpTasks_AssignedToUserId");
+
+                    b.HasIndex("SourceAiActionDraftId")
+                        .HasDatabaseName("IX_InternalFollowUpTasks_SourceAiActionDraftId");
+
+                    b.HasIndex("TargetEntityType", "TargetEntityId")
+                        .HasDatabaseName("IX_InternalFollowUpTasks_Target");
+
+                    b.HasIndex("BusinessId", "Status", "DueAtUtc")
+                        .HasDatabaseName("IX_InternalFollowUpTasks_Business_Status_DueAtUtc");
+
+                    b.ToTable("InternalFollowUpTasks", "Foundation");
+                });
+
+            modelBuilder.Entity("Darwin.Domain.Entities.Foundation.Note", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Body")
+                        .IsRequired()
+                        .HasMaxLength(4000)
+                        .HasColumnType("nvarchar(4000)");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("CreatedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("EntityId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("EntityType")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("nvarchar(128)");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsPinned")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("MetadataJson")
+                        .IsRequired()
+                        .HasMaxLength(4000)
+                        .HasColumnType("nvarchar(4000)");
+
+                    b.Property<DateTime?>("ModifiedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("ModifiedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
+                    b.Property<string>("Visibility")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("nvarchar(32)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("EntityType", "EntityId", "CreatedAtUtc")
+                        .HasDatabaseName("IX_Notes_EntityType_EntityId_CreatedAtUtc");
+
+                    b.ToTable("Notes", "Foundation");
+                });
+
+            modelBuilder.Entity("Darwin.Domain.Entities.Foundation.NumberSequence", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid?>("BusinessId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("CreatedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("CurrentPeriodKey")
+                        .HasMaxLength(32)
+                        .HasColumnType("nvarchar(32)");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(1024)
+                        .HasColumnType("nvarchar(1024)");
+
+                    b.Property<string>("DocumentType")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("nvarchar(32)");
+
+                    b.Property<bool>("IsActive")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(true);
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("MetadataJson")
+                        .IsRequired()
+                        .HasMaxLength(4000)
+                        .HasColumnType("nvarchar(4000)");
+
+                    b.Property<DateTime?>("ModifiedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("ModifiedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<long>("NextValue")
+                        .HasColumnType("bigint");
+
+                    b.Property<int>("PaddingLength")
+                        .HasColumnType("int");
+
+                    b.Property<string>("PrefixPattern")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<string>("ResetPolicy")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("nvarchar(32)");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
+                    b.Property<string>("ScopeKey")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("nvarchar(128)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("DocumentType", "ScopeKey")
+                        .IsUnique()
+                        .HasDatabaseName("UX_NumberSequences_Global_DocumentType_Scope")
+                        .HasFilter("[BusinessId] IS NULL AND [IsDeleted] = 0");
+
+                    b.HasIndex("BusinessId", "DocumentType", "ScopeKey")
+                        .IsUnique()
+                        .HasDatabaseName("UX_NumberSequences_Business_DocumentType_Scope")
+                        .HasFilter("[BusinessId] IS NOT NULL AND [IsDeleted] = 0");
+
+                    b.ToTable("NumberSequences", "Foundation");
+                });
+
+            modelBuilder.Entity("Darwin.Domain.Entities.HumanResources.AbsenceRecord", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int>("AbsenceMinutes")
+                        .HasColumnType("int");
+
+                    b.Property<string>("AbsenceType")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)");
+
+                    b.Property<Guid>("BusinessId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("CreatedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("EmployeeId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("EndDateUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("InternalNotes")
+                        .HasMaxLength(4000)
+                        .HasColumnType("nvarchar(4000)");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<Guid?>("LeaveRequestId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("MetadataJson")
+                        .HasMaxLength(8000)
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("ModifiedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("ModifiedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("PrivacyClassification")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
+                    b.Property<DateTime>("StartDateUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AbsenceType");
+
+                    b.HasIndex("BusinessId");
+
+                    b.HasIndex("EmployeeId");
+
+                    b.HasIndex("EndDateUtc");
+
+                    b.HasIndex("LeaveRequestId");
+
+                    b.HasIndex("StartDateUtc");
+
+                    b.HasIndex("Status");
+
+                    b.ToTable("AbsenceRecords", "HumanResources");
+                });
+
+            modelBuilder.Entity("Darwin.Domain.Entities.HumanResources.AttendanceEvent", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("BusinessId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("CreatedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("EmployeeId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("EventType")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)");
+
+                    b.Property<string>("InternalNotes")
+                        .HasMaxLength(4000)
+                        .HasColumnType("nvarchar(4000)");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("MetadataJson")
+                        .HasMaxLength(8000)
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("ModifiedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("ModifiedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("OccurredAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
+                    b.Property<string>("SourceReference")
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BusinessId");
+
+                    b.HasIndex("EmployeeId");
+
+                    b.HasIndex("EventType");
+
+                    b.HasIndex("OccurredAtUtc");
+
+                    b.ToTable("AttendanceEvents", "HumanResources");
+                });
+
+            modelBuilder.Entity("Darwin.Domain.Entities.HumanResources.Department", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("BusinessId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("CreatedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<string>("DisplayName")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("MetadataJson")
+                        .HasMaxLength(8000)
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("ModifiedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("ModifiedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid?>("ParentDepartmentId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
+                    b.Property<int>("SortOrder")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BusinessId");
+
+                    b.HasIndex("ParentDepartmentId");
+
+                    b.HasIndex("SortOrder");
+
+                    b.HasIndex("Status");
+
+                    b.HasIndex("BusinessId", "Code")
+                        .IsUnique()
+                        .HasFilter("[IsDeleted] = 0");
+
+                    b.ToTable("Departments", "HumanResources");
+                });
+
+            modelBuilder.Entity("Darwin.Domain.Entities.HumanResources.Employee", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("BusinessId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid?>("BusinessMemberId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("CreatedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid?>("DepartmentId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("EmployeeNumber")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)");
+
+                    b.Property<string>("FirstName")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<DateTime?>("HireDateUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("InternalNotes")
+                        .HasMaxLength(4000)
+                        .HasColumnType("nvarchar(4000)");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("LastName")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("MetadataJson")
+                        .HasMaxLength(8000)
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("ModifiedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("ModifiedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid?>("PositionId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("PreferredName")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("PrivacyClassification")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)");
+
+                    b.Property<DateTime?>("TerminationDateUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("WorkEmail")
+                        .HasMaxLength(254)
+                        .HasColumnType("nvarchar(254)");
+
+                    b.Property<string>("WorkPhone")
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BusinessId");
+
+                    b.HasIndex("BusinessMemberId");
+
+                    b.HasIndex("DepartmentId");
+
+                    b.HasIndex("HireDateUtc");
+
+                    b.HasIndex("PositionId");
+
+                    b.HasIndex("Status");
+
+                    b.HasIndex("TerminationDateUtc");
+
+                    b.HasIndex("BusinessId", "EmployeeNumber")
+                        .IsUnique()
+                        .HasFilter("[IsDeleted] = 0");
+
+                    b.ToTable("Employees", "HumanResources");
+                });
+
+            modelBuilder.Entity("Darwin.Domain.Entities.HumanResources.EmploymentContract", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("BusinessId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("ContractNumber")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("CreatedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("EmployeeId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("EmploymentType")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)");
+
+                    b.Property<DateTime?>("EndDateUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("InternalNotes")
+                        .HasMaxLength(4000)
+                        .HasColumnType("nvarchar(4000)");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("MetadataJson")
+                        .HasMaxLength(8000)
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("ModifiedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("ModifiedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("PrivacyClassification")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
+                    b.Property<DateTime>("StartDateUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)");
+
+                    b.Property<int?>("WeeklyHoursMinor")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BusinessId");
+
+                    b.HasIndex("EmployeeId");
+
+                    b.HasIndex("EndDateUtc");
+
+                    b.HasIndex("StartDateUtc");
+
+                    b.HasIndex("Status");
+
+                    b.HasIndex("BusinessId", "ContractNumber")
+                        .IsUnique()
+                        .HasFilter("[IsDeleted] = 0");
+
+                    b.ToTable("EmploymentContracts", "HumanResources");
+                });
+
+            modelBuilder.Entity("Darwin.Domain.Entities.HumanResources.LeaveRequest", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("BusinessId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("CreatedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("EmployeeId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("EndDateUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("InternalNotes")
+                        .HasMaxLength(4000)
+                        .HasColumnType("nvarchar(4000)");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("LeaveType")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)");
+
+                    b.Property<string>("MetadataJson")
+                        .HasMaxLength(8000)
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("ModifiedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("ModifiedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("PrivacyClassification")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)");
+
+                    b.Property<string>("RequestNumber")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<int>("RequestedMinutes")
+                        .HasColumnType("int");
+
+                    b.Property<string>("ReviewNotes")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<DateTime?>("ReviewedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid?>("ReviewedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
+                    b.Property<DateTime>("StartDateUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)");
+
+                    b.Property<DateTime?>("SubmittedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BusinessId");
+
+                    b.HasIndex("EmployeeId");
+
+                    b.HasIndex("EndDateUtc");
+
+                    b.HasIndex("LeaveType");
+
+                    b.HasIndex("StartDateUtc");
+
+                    b.HasIndex("Status");
+
+                    b.HasIndex("BusinessId", "EmployeeId", "RequestNumber")
+                        .IsUnique()
+                        .HasFilter("[IsDeleted] = 0");
+
+                    b.ToTable("LeaveRequests", "HumanResources");
+                });
+
+            modelBuilder.Entity("Darwin.Domain.Entities.HumanResources.PayrollPayment", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime?>("BankSettledAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid?>("BankSettlementJournalEntryId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("BankSettlementNotes")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<Guid?>("BankSettlementReconciliationMatchId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("BusinessId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime?>("CancelledAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("CreatedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Currency")
+                        .IsRequired()
+                        .HasMaxLength(3)
+                        .HasColumnType("nvarchar(3)");
+
+                    b.Property<string>("InternalNotes")
+                        .HasMaxLength(4000)
+                        .HasColumnType("nvarchar(4000)");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("MetadataJson")
+                        .HasMaxLength(8000)
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("ModifiedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("ModifiedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("PaymentDateUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("PaymentMethod")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)");
+
+                    b.Property<string>("PaymentNumber")
+                        .HasMaxLength(120)
+                        .HasColumnType("nvarchar(120)");
+
+                    b.Property<Guid>("PayrollRunId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime?>("PostedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid?>("PostingJournalEntryId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Reference")
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
+                    b.Property<Guid?>("ReversalJournalEntryId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("ReversalReason")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<DateTime?>("ReversedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)");
+
+                    b.Property<long>("TotalAmountMinor")
+                        .HasColumnType("bigint");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BankSettledAtUtc");
+
+                    b.HasIndex("BankSettlementJournalEntryId");
+
+                    b.HasIndex("BankSettlementReconciliationMatchId");
+
+                    b.HasIndex("BusinessId");
+
+                    b.HasIndex("PaymentDateUtc");
+
+                    b.HasIndex("PayrollRunId");
+
+                    b.HasIndex("PostedAtUtc");
+
+                    b.HasIndex("PostingJournalEntryId");
+
+                    b.HasIndex("ReversalJournalEntryId");
+
+                    b.HasIndex("ReversedAtUtc");
+
+                    b.HasIndex("Status");
+
+                    b.HasIndex("BusinessId", "PaymentNumber")
+                        .IsUnique()
+                        .HasFilter("[IsDeleted] = 0 AND [PaymentNumber] IS NOT NULL");
+
+                    b.ToTable("PayrollPayments", "HumanResources");
+                });
+
+            modelBuilder.Entity("Darwin.Domain.Entities.HumanResources.PayrollPaymentAllocation", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<long>("AmountMinor")
+                        .HasColumnType("bigint");
+
+                    b.Property<Guid>("BusinessId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("CreatedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("EmployeeId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Memo")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<DateTime?>("ModifiedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("ModifiedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("PayrollPaymentId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("PayrollRunId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("PayrollRunLineId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BusinessId");
+
+                    b.HasIndex("EmployeeId");
+
+                    b.HasIndex("PayrollPaymentId");
+
+                    b.HasIndex("PayrollRunId");
+
+                    b.HasIndex("PayrollRunLineId");
+
+                    b.HasIndex("PayrollPaymentId", "PayrollRunLineId")
+                        .IsUnique()
+                        .HasFilter("[IsDeleted] = 0");
+
+                    b.ToTable("PayrollPaymentAllocations", "HumanResources");
+                });
+
+            modelBuilder.Entity("Darwin.Domain.Entities.HumanResources.PayrollPaymentBankCorrection", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<long>("AmountMinor")
+                        .HasColumnType("bigint");
+
+                    b.Property<Guid>("BankReconciliationMatchId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid?>("BankStatementLineId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("BusinessId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime?>("CancelledAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("CorrectionDateUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid?>("CorrectionJournalEntryId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("CorrectionType")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("CreatedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Currency")
+                        .IsRequired()
+                        .HasMaxLength(3)
+                        .HasColumnType("nvarchar(3)");
+
+                    b.Property<string>("InternalNotes")
+                        .HasMaxLength(4000)
+                        .HasColumnType("nvarchar(4000)");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("MetadataJson")
+                        .HasMaxLength(8000)
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("ModifiedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("ModifiedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid?>("OriginalBankSettlementJournalEntryId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("PayrollPaymentId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime?>("PostedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Reason")
+                        .IsRequired()
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BankReconciliationMatchId");
+
+                    b.HasIndex("BankStatementLineId");
+
+                    b.HasIndex("BusinessId");
+
+                    b.HasIndex("CorrectionDateUtc");
+
+                    b.HasIndex("CorrectionJournalEntryId");
+
+                    b.HasIndex("OriginalBankSettlementJournalEntryId");
+
+                    b.HasIndex("PayrollPaymentId");
+
+                    b.HasIndex("PostedAtUtc");
+
+                    b.HasIndex("Status");
+
+                    b.HasIndex("PayrollPaymentId", "CorrectionType", "BankReconciliationMatchId")
+                        .IsUnique()
+                        .HasDatabaseName("UX_PayrollPaymentBankCorrections_Payment_Type_Reconciliation_Active")
+                        .HasFilter("[IsDeleted] = 0 AND [Status] <> 'Cancelled'");
+
+                    b.ToTable("PayrollPaymentBankCorrections", "HumanResources");
+                });
+
+            modelBuilder.Entity("Darwin.Domain.Entities.HumanResources.PayrollPayslip", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("BusinessId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("CreatedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Currency")
+                        .IsRequired()
+                        .HasMaxLength(3)
+                        .HasColumnType("nvarchar(3)");
+
+                    b.Property<Guid>("DocumentRecordId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<long>("EmployeeDeductionMinor")
+                        .HasColumnType("bigint");
+
+                    b.Property<Guid>("EmployeeId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<long>("EmployerCostMinor")
+                        .HasColumnType("bigint");
+
+                    b.Property<DateTime>("GeneratedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<long>("GrossPayMinor")
+                        .HasColumnType("bigint");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("MetadataJson")
+                        .HasMaxLength(8000)
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("ModifiedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("ModifiedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<long>("NetPayMinor")
+                        .HasColumnType("bigint");
+
+                    b.Property<Guid>("PayrollRunId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("PayrollRunLineId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("PayslipNumber")
+                        .IsRequired()
+                        .HasMaxLength(120)
+                        .HasColumnType("nvarchar(120)");
+
+                    b.Property<DateTime>("PeriodEndUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("PeriodStartUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
+                    b.Property<string>("SnapshotJson")
+                        .HasMaxLength(32000)
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BusinessId");
+
+                    b.HasIndex("DocumentRecordId");
+
+                    b.HasIndex("EmployeeId");
+
+                    b.HasIndex("GeneratedAtUtc");
+
+                    b.HasIndex("PayrollRunId");
+
+                    b.HasIndex("PayrollRunLineId")
+                        .IsUnique()
+                        .HasFilter("[IsDeleted] = 0");
+
+                    b.HasIndex("Status");
+
+                    b.HasIndex("BusinessId", "PayslipNumber")
+                        .IsUnique()
+                        .HasFilter("[IsDeleted] = 0");
+
+                    b.ToTable("PayrollPayslips", "HumanResources");
+                });
+
+            modelBuilder.Entity("Darwin.Domain.Entities.HumanResources.PayrollPeriod", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime?>("ApprovedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("BusinessId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("CreatedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int>("EmployeeCount")
+                        .HasColumnType("int");
+
+                    b.Property<string>("InternalNotes")
+                        .HasMaxLength(4000)
+                        .HasColumnType("nvarchar(4000)");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("MetadataJson")
+                        .HasMaxLength(8000)
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("ModifiedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("ModifiedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("PeriodCode")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<DateTime>("PeriodEndUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("PeriodStartUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("PreparedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("ReviewNotes")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<DateTime?>("ReviewedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)");
+
+                    b.Property<int>("TotalAbsenceMinutes")
+                        .HasColumnType("int");
+
+                    b.Property<int>("TotalBreakMinutes")
+                        .HasColumnType("int");
+
+                    b.Property<int>("TotalWorkMinutes")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BusinessId");
+
+                    b.HasIndex("PeriodEndUtc");
+
+                    b.HasIndex("PeriodStartUtc");
+
+                    b.HasIndex("Status");
+
+                    b.HasIndex("BusinessId", "PeriodCode")
+                        .IsUnique()
+                        .HasFilter("[IsDeleted] = 0");
+
+                    b.HasIndex("BusinessId", "PeriodStartUtc", "PeriodEndUtc")
+                        .IsUnique()
+                        .HasFilter("[IsDeleted] = 0");
+
+                    b.ToTable("PayrollPeriods", "HumanResources");
+                });
+
+            modelBuilder.Entity("Darwin.Domain.Entities.HumanResources.PayrollPeriodLine", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int>("AbsenceMinutes")
+                        .HasColumnType("int");
+
+                    b.Property<int>("ApprovedTimesheetCount")
+                        .HasColumnType("int");
+
+                    b.Property<int>("BreakMinutes")
+                        .HasColumnType("int");
+
+                    b.Property<Guid>("BusinessId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int>("ConfirmedAbsenceCount")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("CreatedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("EmployeeId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTime?>("ModifiedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("ModifiedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("PayrollPeriodId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
+                    b.Property<string>("SummaryJson")
+                        .HasMaxLength(8000)
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("WorkMinutes")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BusinessId");
+
+                    b.HasIndex("EmployeeId");
+
+                    b.HasIndex("PayrollPeriodId");
+
+                    b.HasIndex("PayrollPeriodId", "EmployeeId")
+                        .IsUnique()
+                        .HasFilter("[IsDeleted] = 0");
+
+                    b.ToTable("PayrollPeriodLines", "HumanResources");
+                });
+
+            modelBuilder.Entity("Darwin.Domain.Entities.HumanResources.PayrollRuleComponent", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<long?>("AmountMinor")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("Basis")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)");
+
+                    b.Property<Guid>("BusinessId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("CalculationMethod")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)");
+
+                    b.Property<string>("ComponentCode")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)");
+
+                    b.Property<string>("ComponentType")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("CreatedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("DisplayName")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsEmployerCost")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("MetadataJson")
+                        .HasMaxLength(8000)
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("ModifiedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("ModifiedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("PayrollRuleSetId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int?>("RateBasisPoints")
+                        .HasColumnType("int");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
+                    b.Property<int>("SortOrder")
+                        .HasColumnType("int");
+
+                    b.Property<string>("ThresholdJson")
+                        .HasMaxLength(8000)
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BusinessId");
+
+                    b.HasIndex("ComponentType");
+
+                    b.HasIndex("PayrollRuleSetId");
+
+                    b.HasIndex("SortOrder");
+
+                    b.HasIndex("PayrollRuleSetId", "ComponentCode")
+                        .IsUnique()
+                        .HasFilter("[IsDeleted] = 0");
+
+                    b.ToTable("PayrollRuleComponents", "HumanResources");
+                });
+
+            modelBuilder.Entity("Darwin.Domain.Entities.HumanResources.PayrollRuleSet", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("BusinessId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("CreatedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Currency")
+                        .IsRequired()
+                        .HasMaxLength(3)
+                        .HasColumnType("nvarchar(3)");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<string>("DisplayName")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<DateTime>("EffectiveFromUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("EffectiveToUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("JurisdictionCode")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("nvarchar(16)");
+
+                    b.Property<string>("MetadataJson")
+                        .HasMaxLength(8000)
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("ModifiedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("ModifiedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
+                    b.Property<string>("RuleSetCode")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)");
+
+                    b.Property<string>("RuleVersion")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BusinessId");
+
+                    b.HasIndex("EffectiveFromUtc");
+
+                    b.HasIndex("EffectiveToUtc");
+
+                    b.HasIndex("JurisdictionCode");
+
+                    b.HasIndex("RuleSetCode");
+
+                    b.HasIndex("Status");
+
+                    b.HasIndex("BusinessId", "JurisdictionCode", "RuleSetCode", "RuleVersion")
+                        .IsUnique()
+                        .HasFilter("[IsDeleted] = 0");
+
+                    b.ToTable("PayrollRuleSets", "HumanResources");
+                });
+
+            modelBuilder.Entity("Darwin.Domain.Entities.HumanResources.PayrollRun", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime?>("ApprovedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("BusinessId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime?>("CalculatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("CreatedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Currency")
+                        .IsRequired()
+                        .HasMaxLength(3)
+                        .HasColumnType("nvarchar(3)");
+
+                    b.Property<int>("EmployeeCount")
+                        .HasColumnType("int");
+
+                    b.Property<long>("EmployeeDeductionMinor")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("EmployerCostMinor")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("GrossPayMinor")
+                        .HasColumnType("bigint");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("JurisdictionCode")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("nvarchar(16)");
+
+                    b.Property<string>("MetadataJson")
+                        .HasMaxLength(8000)
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("ModifiedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("ModifiedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<long>("NetPayMinor")
+                        .HasColumnType("bigint");
+
+                    b.Property<Guid>("PayrollPeriodId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("PayrollRuleSetId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("PeriodEndUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("PeriodStartUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("PostedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid?>("PostingJournalEntryId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("ReviewNotes")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<DateTime?>("ReviewedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
+                    b.Property<string>("RuleSetCode")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)");
+
+                    b.Property<string>("RuleVersion")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)");
+
+                    b.Property<string>("RunNumber")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("SourceSnapshotJson")
+                        .HasMaxLength(16000)
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BusinessId");
+
+                    b.HasIndex("PayrollPeriodId");
+
+                    b.HasIndex("PayrollRuleSetId");
+
+                    b.HasIndex("PeriodEndUtc");
+
+                    b.HasIndex("PeriodStartUtc");
+
+                    b.HasIndex("PostedAtUtc");
+
+                    b.HasIndex("PostingJournalEntryId");
+
+                    b.HasIndex("Status");
+
+                    b.HasIndex("BusinessId", "RunNumber")
+                        .IsUnique()
+                        .HasFilter("[IsDeleted] = 0");
+
+                    b.HasIndex("BusinessId", "PayrollPeriodId", "PayrollRuleSetId")
+                        .IsUnique()
+                        .HasFilter("[IsDeleted] = 0");
+
+                    b.ToTable("PayrollRuns", "HumanResources");
+                });
+
+            modelBuilder.Entity("Darwin.Domain.Entities.HumanResources.PayrollRunLine", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int>("AbsenceMinutes")
+                        .HasColumnType("int");
+
+                    b.Property<int>("BreakMinutes")
+                        .HasColumnType("int");
+
+                    b.Property<Guid>("BusinessId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("ContractSnapshotJson")
+                        .HasMaxLength(16000)
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("CreatedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<long>("EmployeeDeductionMinor")
+                        .HasColumnType("bigint");
+
+                    b.Property<Guid>("EmployeeId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("EmployeeName")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<string>("EmployeeNumber")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)");
+
+                    b.Property<string>("EmployeeSnapshotJson")
+                        .HasMaxLength(16000)
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<long>("EmployerCostMinor")
+                        .HasColumnType("bigint");
+
+                    b.Property<Guid?>("EmploymentContractId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<long>("GrossPayMinor")
+                        .HasColumnType("bigint");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTime?>("ModifiedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("ModifiedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<long>("NetPayMinor")
+                        .HasColumnType("bigint");
+
+                    b.Property<Guid>("PayrollRunId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("PeriodLineSnapshotJson")
+                        .HasMaxLength(16000)
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
+                    b.Property<int>("WorkMinutes")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BusinessId");
+
+                    b.HasIndex("EmployeeId");
+
+                    b.HasIndex("EmploymentContractId");
+
+                    b.HasIndex("PayrollRunId");
+
+                    b.HasIndex("PayrollRunId", "EmployeeId")
+                        .IsUnique()
+                        .HasFilter("[IsDeleted] = 0");
+
+                    b.ToTable("PayrollRunLines", "HumanResources");
+                });
+
+            modelBuilder.Entity("Darwin.Domain.Entities.HumanResources.PayrollRunLineComponent", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<long>("AmountMinor")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("Basis")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)");
+
+                    b.Property<Guid>("BusinessId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("CalculationMethod")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)");
+
+                    b.Property<string>("ComponentCode")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)");
+
+                    b.Property<string>("ComponentType")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("CreatedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("DisplayName")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsEmployerCost")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTime?>("ModifiedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("ModifiedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("PayrollRuleComponentId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("PayrollRunId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("PayrollRunLineId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
+                    b.Property<string>("RuleSnapshotJson")
+                        .HasMaxLength(16000)
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("SortOrder")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BusinessId");
+
+                    b.HasIndex("ComponentType");
+
+                    b.HasIndex("PayrollRuleComponentId");
+
+                    b.HasIndex("PayrollRunId");
+
+                    b.HasIndex("PayrollRunLineId");
+
+                    b.HasIndex("SortOrder");
+
+                    b.ToTable("PayrollRunLineComponents", "HumanResources");
+                });
+
+            modelBuilder.Entity("Darwin.Domain.Entities.HumanResources.Position", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("BusinessId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("CreatedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid?>("DepartmentId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<string>("DisplayName")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("MetadataJson")
+                        .HasMaxLength(8000)
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("ModifiedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("ModifiedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
+                    b.Property<int>("SortOrder")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BusinessId");
+
+                    b.HasIndex("DepartmentId");
+
+                    b.HasIndex("SortOrder");
+
+                    b.HasIndex("Status");
+
+                    b.HasIndex("BusinessId", "Code")
+                        .IsUnique()
+                        .HasFilter("[IsDeleted] = 0");
+
+                    b.ToTable("Positions", "HumanResources");
+                });
+
+            modelBuilder.Entity("Darwin.Domain.Entities.HumanResources.TimeEntry", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int>("BreakMinutes")
+                        .HasColumnType("int");
+
+                    b.Property<Guid>("BusinessId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("CreatedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<int>("DurationMinutes")
+                        .HasColumnType("int");
+
+                    b.Property<Guid>("EmployeeId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("InternalNotes")
+                        .HasMaxLength(4000)
+                        .HasColumnType("nvarchar(4000)");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("MetadataJson")
+                        .HasMaxLength(8000)
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("ModifiedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("ModifiedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("RejectionReason")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
+                    b.Property<string>("Source")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)");
+
+                    b.Property<DateTime>("WorkDateUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid?>("WorkScheduleId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("WorkType")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BusinessId");
+
+                    b.HasIndex("EmployeeId");
+
+                    b.HasIndex("Status");
+
+                    b.HasIndex("WorkDateUtc");
+
+                    b.HasIndex("WorkScheduleId");
+
+                    b.ToTable("TimeEntries", "HumanResources");
+                });
+
+            modelBuilder.Entity("Darwin.Domain.Entities.HumanResources.Timesheet", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("BusinessId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("CreatedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("EmployeeId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("InternalNotes")
+                        .HasMaxLength(4000)
+                        .HasColumnType("nvarchar(4000)");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("MetadataJson")
+                        .HasMaxLength(8000)
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("ModifiedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("ModifiedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("PeriodEndUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("PeriodStartUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("ReviewNotes")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<DateTime?>("ReviewedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid?>("ReviewedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)");
+
+                    b.Property<DateTime?>("SubmittedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("TimesheetNumber")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<int>("TotalBreakMinutes")
+                        .HasColumnType("int");
+
+                    b.Property<int>("TotalWorkMinutes")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BusinessId");
+
+                    b.HasIndex("EmployeeId");
+
+                    b.HasIndex("PeriodEndUtc");
+
+                    b.HasIndex("PeriodStartUtc");
+
+                    b.HasIndex("Status");
+
+                    b.HasIndex("BusinessId", "EmployeeId", "TimesheetNumber")
+                        .IsUnique()
+                        .HasFilter("[IsDeleted] = 0");
+
+                    b.HasIndex("BusinessId", "EmployeeId", "PeriodStartUtc", "PeriodEndUtc")
+                        .IsUnique()
+                        .HasFilter("[IsDeleted] = 0");
+
+                    b.ToTable("Timesheets", "HumanResources");
+                });
+
+            modelBuilder.Entity("Darwin.Domain.Entities.HumanResources.TimesheetLine", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int>("BreakMinutes")
+                        .HasColumnType("int");
+
+                    b.Property<Guid>("BusinessId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("CreatedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int>("DurationMinutes")
+                        .HasColumnType("int");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTime?>("ModifiedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("ModifiedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
+                    b.Property<int>("SortOrder")
+                        .HasColumnType("int");
+
+                    b.Property<Guid>("TimeEntryId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("TimesheetId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("WorkDateUtc")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BusinessId");
+
+                    b.HasIndex("TimeEntryId");
+
+                    b.HasIndex("TimesheetId");
+
+                    b.HasIndex("TimesheetId", "TimeEntryId")
+                        .IsUnique()
+                        .HasFilter("[IsDeleted] = 0");
+
+                    b.ToTable("TimesheetLines", "HumanResources");
+                });
+
+            modelBuilder.Entity("Darwin.Domain.Entities.HumanResources.WorkSchedule", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("BusinessId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("CreatedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("EffectiveFromUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("EffectiveToUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("EmployeeId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int>("FridayMinutes")
+                        .HasColumnType("int");
+
+                    b.Property<string>("InternalNotes")
+                        .HasMaxLength(4000)
+                        .HasColumnType("nvarchar(4000)");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("MetadataJson")
+                        .HasMaxLength(8000)
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("ModifiedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("ModifiedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int>("MondayMinutes")
+                        .HasColumnType("int");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
+                    b.Property<int>("SaturdayMinutes")
+                        .HasColumnType("int");
+
+                    b.Property<string>("ScheduleCode")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)");
+
+                    b.Property<int>("SundayMinutes")
+                        .HasColumnType("int");
+
+                    b.Property<int>("ThursdayMinutes")
+                        .HasColumnType("int");
+
+                    b.Property<int>("TuesdayMinutes")
+                        .HasColumnType("int");
+
+                    b.Property<int>("WednesdayMinutes")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BusinessId");
+
+                    b.HasIndex("EffectiveFromUtc");
+
+                    b.HasIndex("EffectiveToUtc");
+
+                    b.HasIndex("EmployeeId");
+
+                    b.HasIndex("Status");
+
+                    b.HasIndex("BusinessId", "EmployeeId", "ScheduleCode")
+                        .IsUnique()
+                        .HasFilter("[IsDeleted] = 0");
+
+                    b.ToTable("WorkSchedules", "HumanResources");
+                });
+
+            modelBuilder.Entity("Darwin.Domain.Entities.HumanResources.WorkScheduleException", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("BusinessId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("CreatedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("InternalNotes")
+                        .HasMaxLength(4000)
+                        .HasColumnType("nvarchar(4000)");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("MetadataJson")
+                        .HasMaxLength(8000)
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("ModifiedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("ModifiedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Reason")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
+                    b.Property<int>("ScheduledMinutes")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("WorkDateUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("WorkScheduleId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BusinessId");
+
+                    b.HasIndex("WorkDateUtc");
+
+                    b.HasIndex("WorkScheduleId");
+
+                    b.HasIndex("WorkScheduleId", "WorkDateUtc")
+                        .IsUnique()
+                        .HasFilter("[IsDeleted] = 0");
+
+                    b.ToTable("WorkScheduleExceptions", "HumanResources");
                 });
 
             modelBuilder.Entity("Darwin.Domain.Entities.Identity.Address", b =>
@@ -5323,6 +10406,162 @@ namespace Darwin.Infrastructure.SqlServer.Migrations
                     b.ToTable("EventLogs", "Integration");
                 });
 
+            modelBuilder.Entity("Darwin.Domain.Entities.Integration.ExternalReference", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("CreatedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("EntityId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("EntityType")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("nvarchar(128)");
+
+                    b.Property<string>("ExternalDisplayId")
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
+                    b.Property<string>("ExternalId")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
+                    b.Property<Guid>("ExternalSystemId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<bool>("IsActive")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(true);
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsPrimary")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTime?>("LastSeenAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("MetadataJson")
+                        .IsRequired()
+                        .HasMaxLength(4000)
+                        .HasColumnType("nvarchar(4000)");
+
+                    b.Property<DateTime?>("ModifiedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("ModifiedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("ReferenceKind")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("nvarchar(32)");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
+                    b.Property<string>("SourceOfTruth")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("nvarchar(32)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("EntityType", "EntityId")
+                        .HasDatabaseName("IX_ExternalReferences_EntityType_EntityId");
+
+                    b.HasIndex("ExternalSystemId", "EntityType", "ReferenceKind", "ExternalId")
+                        .IsUnique()
+                        .HasDatabaseName("UX_ExternalReferences_System_EntityType_Kind_ExternalId")
+                        .HasFilter("[IsDeleted] = 0");
+
+                    b.ToTable("ExternalReferences", "Integration");
+                });
+
+            modelBuilder.Entity("Darwin.Domain.Entities.Integration.ExternalSystem", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("BaseUrl")
+                        .HasMaxLength(1024)
+                        .HasColumnType("nvarchar(1024)");
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("CreatedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(1024)
+                        .HasColumnType("nvarchar(1024)");
+
+                    b.Property<bool>("IsActive")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(true);
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Kind")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("nvarchar(32)");
+
+                    b.Property<string>("MetadataJson")
+                        .IsRequired()
+                        .HasMaxLength(4000)
+                        .HasColumnType("nvarchar(4000)");
+
+                    b.Property<DateTime?>("ModifiedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("ModifiedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Code")
+                        .IsUnique()
+                        .HasDatabaseName("UX_ExternalSystems_Code")
+                        .HasFilter("[IsDeleted] = 0");
+
+                    b.ToTable("ExternalSystems", "Integration");
+                });
+
             modelBuilder.Entity("Darwin.Domain.Entities.Integration.ProviderCallbackInboxMessage", b =>
                 {
                     b.Property<Guid>("Id")
@@ -5471,6 +10710,218 @@ namespace Darwin.Infrastructure.SqlServer.Migrations
                     b.ToTable("ShipmentProviderOperations", "Integration");
                 });
 
+            modelBuilder.Entity("Darwin.Domain.Entities.Integration.SyncConflict", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("ConflictKey")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("CreatedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("DarwinValueSummary")
+                        .HasMaxLength(1024)
+                        .HasColumnType("nvarchar(1024)");
+
+                    b.Property<DateTime>("DetectedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Direction")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("nvarchar(32)");
+
+                    b.Property<Guid>("EntityId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("EntityType")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("nvarchar(128)");
+
+                    b.Property<Guid>("ExternalSystemId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("ExternalValueSummary")
+                        .HasMaxLength(1024)
+                        .HasColumnType("nvarchar(1024)");
+
+                    b.Property<string>("FieldPath")
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("MetadataJson")
+                        .IsRequired()
+                        .HasMaxLength(4000)
+                        .HasColumnType("nvarchar(4000)");
+
+                    b.Property<DateTime?>("ModifiedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("ModifiedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Resolution")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("nvarchar(32)");
+
+                    b.Property<string>("ResolutionSummary")
+                        .HasMaxLength(1024)
+                        .HasColumnType("nvarchar(1024)");
+
+                    b.Property<DateTime?>("ResolvedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid?>("ResolvedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("nvarchar(32)");
+
+                    b.Property<Guid>("SyncStateId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("EntityType", "EntityId")
+                        .HasDatabaseName("IX_SyncConflicts_EntityType_EntityId");
+
+                    b.HasIndex("SyncStateId", "Status")
+                        .HasDatabaseName("IX_SyncConflicts_State_Status");
+
+                    b.HasIndex("ExternalSystemId", "Status", "DetectedAtUtc")
+                        .HasDatabaseName("IX_SyncConflicts_System_Status_Detected");
+
+                    b.HasIndex("ExternalSystemId", "EntityType", "EntityId", "ConflictKey")
+                        .IsUnique()
+                        .HasDatabaseName("UX_SyncConflicts_System_Entity_Key")
+                        .HasFilter("[IsDeleted] = 0");
+
+                    b.ToTable("SyncConflicts", "Integration");
+                });
+
+            modelBuilder.Entity("Darwin.Domain.Entities.Integration.SyncState", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int>("AttemptCount")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("CreatedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Direction")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("nvarchar(32)");
+
+                    b.Property<Guid>("EntityId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("EntityType")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("nvarchar(128)");
+
+                    b.Property<Guid>("ExternalSystemId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTime?>("LastAttemptAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("LastErrorCode")
+                        .HasMaxLength(128)
+                        .HasColumnType("nvarchar(128)");
+
+                    b.Property<string>("LastErrorSummary")
+                        .HasMaxLength(1024)
+                        .HasColumnType("nvarchar(1024)");
+
+                    b.Property<DateTime?>("LastSuccessfulSyncAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("LocalVersion")
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
+                    b.Property<string>("MetadataJson")
+                        .IsRequired()
+                        .HasMaxLength(4000)
+                        .HasColumnType("nvarchar(4000)");
+
+                    b.Property<DateTime?>("ModifiedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("ModifiedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime?>("NextRetryAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("RemoteVersion")
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("nvarchar(32)");
+
+                    b.Property<string>("SyncScope")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("EntityType", "EntityId")
+                        .HasDatabaseName("IX_SyncStates_EntityType_EntityId");
+
+                    b.HasIndex("ExternalSystemId", "Status", "NextRetryAtUtc")
+                        .HasDatabaseName("IX_SyncStates_System_Status_NextRetry");
+
+                    b.HasIndex("ExternalSystemId", "EntityType", "EntityId", "Direction", "SyncScope")
+                        .IsUnique()
+                        .HasDatabaseName("UX_SyncStates_System_Entity_Direction_Scope")
+                        .HasFilter("[IsDeleted] = 0");
+
+                    b.ToTable("SyncStates", "Integration");
+                });
+
             modelBuilder.Entity("Darwin.Domain.Entities.Integration.WebhookDelivery", b =>
                 {
                     b.Property<Guid>("Id")
@@ -5583,6 +11034,595 @@ namespace Darwin.Infrastructure.SqlServer.Migrations
                     b.ToTable("WebhookSubscriptions", "Integration");
                 });
 
+            modelBuilder.Entity("Darwin.Domain.Entities.Inventory.GoodsReceipt", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("BusinessId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime?>("CancelledAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("CreatedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("GoodsReceiptNumber")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<DateTime?>("InspectedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("InternalNotes")
+                        .HasMaxLength(4000)
+                        .HasColumnType("nvarchar(4000)");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("MetadataJson")
+                        .HasMaxLength(8000)
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("ModifiedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("ModifiedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime?>("PostedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("PurchaseOrderId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime?>("ReceivedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
+                    b.Property<short>("Status")
+                        .HasColumnType("smallint");
+
+                    b.Property<Guid>("SupplierId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("WarehouseId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BusinessId");
+
+                    b.HasIndex("PostedAtUtc");
+
+                    b.HasIndex("PurchaseOrderId");
+
+                    b.HasIndex("ReceivedAtUtc");
+
+                    b.HasIndex("Status");
+
+                    b.HasIndex("SupplierId");
+
+                    b.HasIndex("WarehouseId");
+
+                    b.HasIndex("BusinessId", "GoodsReceiptNumber")
+                        .IsUnique()
+                        .HasFilter("[GoodsReceiptNumber] IS NOT NULL AND [IsDeleted] = 0");
+
+                    b.ToTable("GoodsReceipts", "Inventory");
+                });
+
+            modelBuilder.Entity("Darwin.Domain.Entities.Inventory.GoodsReceiptLine", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int>("AcceptedQuantity")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("CreatedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int>("DamagedQuantity")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<Guid>("GoodsReceiptId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTime?>("ModifiedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("ModifiedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int>("OrderedQuantity")
+                        .HasColumnType("int");
+
+                    b.Property<int>("PreviouslyReceivedQuantity")
+                        .HasColumnType("int");
+
+                    b.Property<Guid>("ProductVariantId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("PurchaseOrderLineId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int>("ReceivedQuantity")
+                        .HasColumnType("int");
+
+                    b.Property<int>("RejectedQuantity")
+                        .HasColumnType("int");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
+                    b.Property<int>("SortOrder")
+                        .HasColumnType("int");
+
+                    b.Property<string>("SupplierSku")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<long>("TotalCostMinor")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("UnitCostMinor")
+                        .HasColumnType("bigint");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("GoodsReceiptId");
+
+                    b.HasIndex("ProductVariantId");
+
+                    b.HasIndex("PurchaseOrderLineId");
+
+                    b.ToTable("GoodsReceiptLines", "Inventory");
+                });
+
+            modelBuilder.Entity("Darwin.Domain.Entities.Inventory.GoodsReceiptLineIdentity", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("CreatedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime?>("ExpiryDateUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("GoodsReceiptLineId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("HandlingUnitCodeSnapshot")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<Guid?>("HandlingUnitId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid?>("InventoryLotId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid?>("InventorySerialUnitId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("LotCodeSnapshot")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("MetadataJson")
+                        .HasMaxLength(8000)
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("ModifiedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("ModifiedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("ProductVariantId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int>("Quantity")
+                        .HasColumnType("int");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
+                    b.Property<string>("SerialNumberSnapshot")
+                        .HasMaxLength(128)
+                        .HasColumnType("nvarchar(128)");
+
+                    b.Property<int>("SortOrder")
+                        .HasColumnType("int");
+
+                    b.Property<string>("SupplierLotCodeSnapshot")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ExpiryDateUtc");
+
+                    b.HasIndex("GoodsReceiptLineId");
+
+                    b.HasIndex("HandlingUnitId");
+
+                    b.HasIndex("InventoryLotId");
+
+                    b.HasIndex("InventorySerialUnitId");
+
+                    b.HasIndex("ProductVariantId");
+
+                    b.HasIndex("GoodsReceiptLineId", "InventorySerialUnitId")
+                        .IsUnique()
+                        .HasFilter("[InventorySerialUnitId] IS NOT NULL AND [IsDeleted] = 0");
+
+                    b.ToTable("GoodsReceiptLineIdentities", "Inventory");
+                });
+
+            modelBuilder.Entity("Darwin.Domain.Entities.Inventory.HandlingUnit", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Barcode")
+                        .HasMaxLength(128)
+                        .HasColumnType("nvarchar(128)");
+
+                    b.Property<Guid>("BusinessId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("CreatedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("DisplayName")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<string>("HandlingUnitType")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<Guid?>("LocationId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("MetadataJson")
+                        .HasMaxLength(8000)
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("ModifiedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("ModifiedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Notes")
+                        .HasMaxLength(2000)
+                        .HasColumnType("nvarchar(2000)");
+
+                    b.Property<Guid?>("ParentHandlingUnitId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)");
+
+                    b.Property<Guid?>("WarehouseId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Barcode");
+
+                    b.HasIndex("BusinessId");
+
+                    b.HasIndex("HandlingUnitType");
+
+                    b.HasIndex("LocationId");
+
+                    b.HasIndex("ParentHandlingUnitId");
+
+                    b.HasIndex("Status");
+
+                    b.HasIndex("WarehouseId");
+
+                    b.HasIndex("BusinessId", "Code")
+                        .IsUnique()
+                        .HasFilter("[IsDeleted] = 0");
+
+                    b.ToTable("HandlingUnits", "Inventory");
+                });
+
+            modelBuilder.Entity("Darwin.Domain.Entities.Inventory.HandlingUnitContent", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("CreatedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<Guid>("HandlingUnitId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid?>("InventoryLotId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid?>("InventorySerialUnitId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("MetadataJson")
+                        .HasMaxLength(8000)
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("ModifiedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("ModifiedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("ProductVariantId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int>("Quantity")
+                        .HasColumnType("int");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
+                    b.Property<string>("SkuSnapshot")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<int>("SortOrder")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("HandlingUnitId");
+
+                    b.HasIndex("InventoryLotId");
+
+                    b.HasIndex("InventorySerialUnitId");
+
+                    b.HasIndex("ProductVariantId");
+
+                    b.HasIndex("SortOrder");
+
+                    b.ToTable("HandlingUnitContents", "Inventory");
+                });
+
+            modelBuilder.Entity("Darwin.Domain.Entities.Inventory.InventoryLot", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("BusinessId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("CreatedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime?>("ExpiryDateUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("LotCode")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<DateTime?>("ManufactureDateUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("MetadataJson")
+                        .HasMaxLength(8000)
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("ModifiedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("ModifiedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Notes")
+                        .HasMaxLength(2000)
+                        .HasColumnType("nvarchar(2000)");
+
+                    b.Property<Guid>("ProductVariantId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)");
+
+                    b.Property<string>("SupplierLotCode")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BusinessId");
+
+                    b.HasIndex("ExpiryDateUtc");
+
+                    b.HasIndex("ProductVariantId");
+
+                    b.HasIndex("Status");
+
+                    b.HasIndex("SupplierLotCode");
+
+                    b.HasIndex("BusinessId", "ProductVariantId", "LotCode")
+                        .IsUnique()
+                        .HasFilter("[IsDeleted] = 0");
+
+                    b.ToTable("InventoryLots", "Inventory");
+                });
+
+            modelBuilder.Entity("Darwin.Domain.Entities.Inventory.InventorySerialUnit", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("BusinessId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("CreatedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime?>("ExpiryDateUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid?>("InventoryLotId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTime?>("ManufactureDateUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("MetadataJson")
+                        .HasMaxLength(8000)
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("ModifiedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("ModifiedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Notes")
+                        .HasMaxLength(2000)
+                        .HasColumnType("nvarchar(2000)");
+
+                    b.Property<Guid>("ProductVariantId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
+                    b.Property<string>("SerialNumber")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("nvarchar(128)");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BusinessId");
+
+                    b.HasIndex("ExpiryDateUtc");
+
+                    b.HasIndex("InventoryLotId");
+
+                    b.HasIndex("ProductVariantId");
+
+                    b.HasIndex("Status");
+
+                    b.HasIndex("BusinessId", "ProductVariantId", "SerialNumber")
+                        .IsUnique()
+                        .HasFilter("[IsDeleted] = 0");
+
+                    b.ToTable("InventorySerialUnits", "Inventory");
+                });
+
             modelBuilder.Entity("Darwin.Domain.Entities.Inventory.InventoryTransaction", b =>
                 {
                     b.Property<Guid>("Id")
@@ -5638,7 +11678,7 @@ namespace Darwin.Infrastructure.SqlServer.Migrations
                     b.ToTable("InventoryTransactions", "Inventory");
                 });
 
-            modelBuilder.Entity("Darwin.Domain.Entities.Inventory.PurchaseOrder", b =>
+            modelBuilder.Entity("Darwin.Domain.Entities.Inventory.ProductTrackingPolicy", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -5656,6 +11696,103 @@ namespace Darwin.Infrastructure.SqlServer.Migrations
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("bit");
 
+                    b.Property<string>("MetadataJson")
+                        .HasMaxLength(8000)
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("ModifiedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("ModifiedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Notes")
+                        .HasMaxLength(2000)
+                        .HasColumnType("nvarchar(2000)");
+
+                    b.Property<Guid>("ProductVariantId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<bool>("RequiresExpiryDate")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("RequiresHandlingUnit")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("RequiresSupplierLot")
+                        .HasColumnType("bit");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)");
+
+                    b.Property<string>("TrackingMode")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BusinessId");
+
+                    b.HasIndex("ProductVariantId");
+
+                    b.HasIndex("Status");
+
+                    b.HasIndex("TrackingMode");
+
+                    b.HasIndex("BusinessId", "ProductVariantId")
+                        .IsUnique()
+                        .HasFilter("[IsDeleted] = 0");
+
+                    b.ToTable("ProductTrackingPolicies", "Inventory");
+                });
+
+            modelBuilder.Entity("Darwin.Domain.Entities.Inventory.PurchaseOrder", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("BusinessId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime?>("CancelledAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("CreatedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Currency")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(3)
+                        .HasColumnType("nvarchar(3)")
+                        .HasDefaultValue("EUR");
+
+                    b.Property<DateTime?>("ExpectedDeliveryDateUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("InternalNotes")
+                        .HasMaxLength(4000)
+                        .HasColumnType("nvarchar(4000)");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTime?>("IssuedAtUtc")
+                        .HasColumnType("datetime2");
+
                     b.Property<DateTime?>("ModifiedAtUtc")
                         .HasColumnType("datetime2");
 
@@ -5668,6 +11805,9 @@ namespace Darwin.Infrastructure.SqlServer.Migrations
                         .HasColumnType("nvarchar(100)");
 
                     b.Property<DateTime>("OrderedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("ReceivedAtUtc")
                         .HasColumnType("datetime2");
 
                     b.Property<byte[]>("RowVersion")
@@ -5686,6 +11826,16 @@ namespace Darwin.Infrastructure.SqlServer.Migrations
 
                     b.HasIndex("BusinessId");
 
+                    b.HasIndex("CancelledAtUtc");
+
+                    b.HasIndex("ExpectedDeliveryDateUtc");
+
+                    b.HasIndex("IssuedAtUtc");
+
+                    b.HasIndex("ReceivedAtUtc");
+
+                    b.HasIndex("Status");
+
                     b.HasIndex("SupplierId");
 
                     b.HasIndex("BusinessId", "OrderNumber")
@@ -5701,11 +11851,18 @@ namespace Darwin.Infrastructure.SqlServer.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<int>("CancelledQuantity")
+                        .HasColumnType("int");
+
                     b.Property<DateTime>("CreatedAtUtc")
                         .HasColumnType("datetime2");
 
                     b.Property<Guid>("CreatedByUserId")
                         .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
 
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("bit");
@@ -5725,11 +11882,18 @@ namespace Darwin.Infrastructure.SqlServer.Migrations
                     b.Property<int>("Quantity")
                         .HasColumnType("int");
 
+                    b.Property<int>("ReceivedQuantity")
+                        .HasColumnType("int");
+
                     b.Property<byte[]>("RowVersion")
                         .IsConcurrencyToken()
                         .IsRequired()
                         .ValueGeneratedOnAddOrUpdate()
                         .HasColumnType("rowversion");
+
+                    b.Property<string>("SupplierSku")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
 
                     b.Property<long>("TotalCostMinor")
                         .HasColumnType("bigint");
@@ -5744,6 +11908,310 @@ namespace Darwin.Infrastructure.SqlServer.Migrations
                     b.HasIndex("PurchaseOrderId");
 
                     b.ToTable("PurchaseOrderLines", "Inventory");
+                });
+
+            modelBuilder.Entity("Darwin.Domain.Entities.Inventory.StockCountLine", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<bool>("AdjustmentPosted")
+                        .HasColumnType("bit");
+
+                    b.Property<int>("CountedQuantity")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("CreatedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<int>("ExpectedQuantity")
+                        .HasColumnType("int");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<Guid?>("LocationId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("MetadataJson")
+                        .HasMaxLength(8000)
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("ModifiedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("ModifiedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("ProductVariantId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("ReviewNotes")
+                        .HasMaxLength(2000)
+                        .HasColumnType("nvarchar(2000)");
+
+                    b.Property<string>("ReviewStatus")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
+                    b.Property<string>("SkuSnapshot")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<int>("SortOrder")
+                        .HasColumnType("int");
+
+                    b.Property<Guid>("StockCountSessionId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int>("VarianceQuantity")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AdjustmentPosted");
+
+                    b.HasIndex("LocationId");
+
+                    b.HasIndex("ProductVariantId");
+
+                    b.HasIndex("ReviewStatus");
+
+                    b.HasIndex("SortOrder");
+
+                    b.HasIndex("StockCountSessionId");
+
+                    b.HasIndex("StockCountSessionId", "ProductVariantId")
+                        .IsUnique()
+                        .HasFilter("[IsDeleted] = 0");
+
+                    b.ToTable("StockCountLines", "Inventory");
+                });
+
+            modelBuilder.Entity("Darwin.Domain.Entities.Inventory.StockCountLineIdentity", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("CreatedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime?>("ExpiryDateUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("HandlingUnitCodeSnapshot")
+                        .HasMaxLength(128)
+                        .HasColumnType("nvarchar(128)");
+
+                    b.Property<Guid?>("HandlingUnitId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid?>("InventoryLotId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid?>("InventorySerialUnitId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("LotCodeSnapshot")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("MetadataJson")
+                        .HasMaxLength(8000)
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("ModifiedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("ModifiedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int>("Quantity")
+                        .HasColumnType("int");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
+                    b.Property<string>("SerialNumberSnapshot")
+                        .HasMaxLength(128)
+                        .HasColumnType("nvarchar(128)");
+
+                    b.Property<int>("SortOrder")
+                        .HasColumnType("int");
+
+                    b.Property<Guid>("StockCountLineId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("SupplierLotCodeSnapshot")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("HandlingUnitId");
+
+                    b.HasIndex("InventoryLotId");
+
+                    b.HasIndex("InventorySerialUnitId");
+
+                    b.HasIndex("SortOrder");
+
+                    b.HasIndex("StockCountLineId");
+
+                    b.ToTable("StockCountLineIdentities", "Inventory");
+                });
+
+            modelBuilder.Entity("Darwin.Domain.Entities.Inventory.StockCountSession", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime?>("ApprovedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid?>("AssignedToUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("BusinessId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime?>("CancelledAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("CountNumber")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("CountType")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)");
+
+                    b.Property<DateTime?>("CountWindowEndUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("CountWindowStartUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("CountedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("CreatedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("InternalNotes")
+                        .HasMaxLength(4000)
+                        .HasColumnType("nvarchar(4000)");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<Guid?>("LocationId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("MetadataJson")
+                        .HasMaxLength(8000)
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("ModifiedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("ModifiedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime?>("PostedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("PreparedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("RejectedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("ReviewNotes")
+                        .HasMaxLength(2000)
+                        .HasColumnType("nvarchar(2000)");
+
+                    b.Property<DateTime?>("ReviewRequestedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
+                    b.Property<DateTime?>("StartedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<Guid>("WarehouseId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AssignedToUserId");
+
+                    b.HasIndex("BusinessId");
+
+                    b.HasIndex("CountType");
+
+                    b.HasIndex("CountWindowStartUtc");
+
+                    b.HasIndex("LocationId");
+
+                    b.HasIndex("PostedAtUtc");
+
+                    b.HasIndex("PreparedAtUtc");
+
+                    b.HasIndex("Status");
+
+                    b.HasIndex("WarehouseId");
+
+                    b.HasIndex("BusinessId", "CountNumber")
+                        .IsUnique()
+                        .HasFilter("[CountNumber] IS NOT NULL AND [IsDeleted] = 0");
+
+                    b.ToTable("StockCountSessions", "Inventory");
                 });
 
             modelBuilder.Entity("Darwin.Domain.Entities.Inventory.StockLevel", b =>
@@ -5899,6 +12367,89 @@ namespace Darwin.Infrastructure.SqlServer.Migrations
                     b.ToTable("StockTransferLines", "Inventory");
                 });
 
+            modelBuilder.Entity("Darwin.Domain.Entities.Inventory.StockTransferLineIdentity", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("CreatedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime?>("ExpiryDateUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("HandlingUnitCodeSnapshot")
+                        .HasMaxLength(128)
+                        .HasColumnType("nvarchar(128)");
+
+                    b.Property<Guid?>("HandlingUnitId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid?>("InventoryLotId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid?>("InventorySerialUnitId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("LotCodeSnapshot")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("MetadataJson")
+                        .HasMaxLength(8000)
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("ModifiedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("ModifiedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int>("Quantity")
+                        .HasColumnType("int");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
+                    b.Property<string>("SerialNumberSnapshot")
+                        .HasMaxLength(128)
+                        .HasColumnType("nvarchar(128)");
+
+                    b.Property<int>("SortOrder")
+                        .HasColumnType("int");
+
+                    b.Property<Guid>("StockTransferLineId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("SupplierLotCodeSnapshot")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("HandlingUnitId");
+
+                    b.HasIndex("InventoryLotId");
+
+                    b.HasIndex("InventorySerialUnitId");
+
+                    b.HasIndex("SortOrder");
+
+                    b.HasIndex("StockTransferLineId");
+
+                    b.ToTable("StockTransferLineIdentities", "Inventory");
+                });
+
             modelBuilder.Entity("Darwin.Domain.Entities.Inventory.Supplier", b =>
                 {
                     b.Property<Guid>("Id")
@@ -5912,6 +12463,10 @@ namespace Darwin.Infrastructure.SqlServer.Migrations
                     b.Property<Guid>("BusinessId")
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<string>("Code")
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)");
+
                     b.Property<DateTime>("CreatedAtUtc")
                         .HasColumnType("datetime2");
 
@@ -5923,8 +12478,15 @@ namespace Darwin.Infrastructure.SqlServer.Migrations
                         .HasMaxLength(320)
                         .HasColumnType("nvarchar(320)");
 
+                    b.Property<string>("ExternalNotes")
+                        .HasMaxLength(2000)
+                        .HasColumnType("nvarchar(2000)");
+
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("bit");
+
+                    b.Property<int?>("LeadTimeDays")
+                        .HasColumnType("int");
 
                     b.Property<DateTime?>("ModifiedAtUtc")
                         .HasColumnType("datetime2");
@@ -5941,10 +12503,17 @@ namespace Darwin.Infrastructure.SqlServer.Migrations
                         .HasMaxLength(4000)
                         .HasColumnType("nvarchar(4000)");
 
+                    b.Property<int?>("PaymentTermDays")
+                        .HasColumnType("int");
+
                     b.Property<string>("Phone")
                         .IsRequired()
                         .HasMaxLength(50)
                         .HasColumnType("nvarchar(50)");
+
+                    b.Property<string>("PreferredCurrency")
+                        .HasMaxLength(3)
+                        .HasColumnType("nvarchar(3)");
 
                     b.Property<byte[]>("RowVersion")
                         .IsConcurrencyToken()
@@ -5952,13 +12521,113 @@ namespace Darwin.Infrastructure.SqlServer.Migrations
                         .ValueGeneratedOnAddOrUpdate()
                         .HasColumnType("rowversion");
 
+                    b.Property<short>("Status")
+                        .HasColumnType("smallint");
+
+                    b.Property<string>("TaxRegistrationNumber")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("Website")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
                     b.HasKey("Id");
 
                     b.HasIndex("BusinessId");
 
+                    b.HasIndex("BusinessId", "Code")
+                        .IsUnique()
+                        .HasFilter("[Code] IS NOT NULL AND [IsDeleted] = 0");
+
                     b.HasIndex("BusinessId", "Name");
 
+                    b.HasIndex("BusinessId", "Status");
+
                     b.ToTable("Suppliers", "Inventory");
+                });
+
+            modelBuilder.Entity("Darwin.Domain.Entities.Inventory.SupplierContact", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("BusinessId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("CreatedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Email")
+                        .HasMaxLength(320)
+                        .HasColumnType("nvarchar(320)");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsPrimary")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("JobTitle")
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<string>("LanguageCode")
+                        .HasMaxLength(16)
+                        .HasColumnType("nvarchar(16)");
+
+                    b.Property<DateTime?>("ModifiedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("ModifiedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<string>("Notes")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<string>("Phone")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<string>("Role")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
+                    b.Property<Guid>("SupplierId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BusinessId");
+
+                    b.HasIndex("Role");
+
+                    b.HasIndex("SupplierId");
+
+                    b.HasIndex("SupplierId", "IsPrimary");
+
+                    b.HasIndex("BusinessId", "SupplierId", "Role", "Email")
+                        .IsUnique()
+                        .HasFilter("[Email] IS NOT NULL AND [IsDeleted] = 0");
+
+                    b.ToTable("SupplierContacts", "Inventory");
                 });
 
             modelBuilder.Entity("Darwin.Domain.Entities.Inventory.Warehouse", b =>
@@ -6018,6 +12687,501 @@ namespace Darwin.Infrastructure.SqlServer.Migrations
                         .HasFilter("[IsDeleted] = 0");
 
                     b.ToTable("Warehouses", "Inventory");
+                });
+
+            modelBuilder.Entity("Darwin.Domain.Entities.Inventory.WarehouseLabelTemplate", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("BusinessId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("ContentTemplate")
+                        .IsRequired()
+                        .HasMaxLength(8000)
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("CreatedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<string>("Format")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)");
+
+                    b.Property<int>("HeightMm")
+                        .HasColumnType("int");
+
+                    b.Property<bool>("IsDefault")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("MetadataJson")
+                        .HasMaxLength(8000)
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("ModifiedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("ModifiedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)");
+
+                    b.Property<string>("TemplateKey")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<int>("WidthMm")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BusinessId");
+
+                    b.HasIndex("Format");
+
+                    b.HasIndex("Status");
+
+                    b.HasIndex("BusinessId", "IsDefault");
+
+                    b.HasIndex("BusinessId", "TemplateKey")
+                        .IsUnique()
+                        .HasFilter("[IsDeleted] = 0");
+
+                    b.ToTable("WarehouseLabelTemplates", "Inventory");
+                });
+
+            modelBuilder.Entity("Darwin.Domain.Entities.Inventory.WarehouseLocation", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Barcode")
+                        .HasMaxLength(128)
+                        .HasColumnType("nvarchar(128)");
+
+                    b.Property<Guid>("BusinessId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("CreatedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<string>("DisplayName")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("LocationType")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)");
+
+                    b.Property<string>("MetadataJson")
+                        .HasMaxLength(8000)
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("ModifiedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("ModifiedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid?>("ParentLocationId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
+                    b.Property<int>("SortOrder")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)");
+
+                    b.Property<Guid>("WarehouseId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Barcode");
+
+                    b.HasIndex("BusinessId");
+
+                    b.HasIndex("LocationType");
+
+                    b.HasIndex("ParentLocationId");
+
+                    b.HasIndex("SortOrder");
+
+                    b.HasIndex("Status");
+
+                    b.HasIndex("WarehouseId");
+
+                    b.HasIndex("BusinessId", "WarehouseId", "Code")
+                        .IsUnique()
+                        .HasFilter("[IsDeleted] = 0");
+
+                    b.ToTable("WarehouseLocations", "Inventory");
+                });
+
+            modelBuilder.Entity("Darwin.Domain.Entities.Inventory.WarehouseTask", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime?>("AssignedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid?>("AssignedToUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("BusinessId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime?>("CancelledAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("CompletedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("CreatedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime?>("DueAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid?>("FromLocationId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("InternalNotes")
+                        .HasMaxLength(4000)
+                        .HasColumnType("nvarchar(4000)");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("MetadataJson")
+                        .HasMaxLength(8000)
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("ModifiedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("ModifiedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Priority")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)");
+
+                    b.Property<DateTime?>("ReadyAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
+                    b.Property<Guid?>("SourceEntityId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("SourceType")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)");
+
+                    b.Property<DateTime?>("StartedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)");
+
+                    b.Property<string>("TaskNumber")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("TaskType")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<Guid?>("ToLocationId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("WarehouseId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AssignedToUserId");
+
+                    b.HasIndex("BusinessId");
+
+                    b.HasIndex("CompletedAtUtc");
+
+                    b.HasIndex("DueAtUtc");
+
+                    b.HasIndex("FromLocationId");
+
+                    b.HasIndex("Priority");
+
+                    b.HasIndex("ReadyAtUtc");
+
+                    b.HasIndex("SourceEntityId");
+
+                    b.HasIndex("SourceType");
+
+                    b.HasIndex("Status");
+
+                    b.HasIndex("TaskType");
+
+                    b.HasIndex("ToLocationId");
+
+                    b.HasIndex("WarehouseId");
+
+                    b.HasIndex("BusinessId", "TaskNumber")
+                        .IsUnique()
+                        .HasFilter("[TaskNumber] IS NOT NULL AND [IsDeleted] = 0");
+
+                    b.ToTable("WarehouseTasks", "Inventory");
+                });
+
+            modelBuilder.Entity("Darwin.Domain.Entities.Inventory.WarehouseTaskLine", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int>("CompletedQuantity")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("CreatedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<Guid?>("FromLocationId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("MetadataJson")
+                        .HasMaxLength(8000)
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("ModifiedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("ModifiedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid?>("ProductVariantId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int>("RequestedQuantity")
+                        .HasColumnType("int");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
+                    b.Property<int>("ShortQuantity")
+                        .HasColumnType("int");
+
+                    b.Property<string>("ShortReason")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<string>("SkuSnapshot")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<int>("SortOrder")
+                        .HasColumnType("int");
+
+                    b.Property<Guid?>("SourceLineId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("SourceLineType")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<Guid?>("ToLocationId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("WarehouseTaskId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("FromLocationId");
+
+                    b.HasIndex("ProductVariantId");
+
+                    b.HasIndex("ShortQuantity");
+
+                    b.HasIndex("SortOrder");
+
+                    b.HasIndex("SourceLineId");
+
+                    b.HasIndex("ToLocationId");
+
+                    b.HasIndex("WarehouseTaskId");
+
+                    b.ToTable("WarehouseTaskLines", "Inventory");
+                });
+
+            modelBuilder.Entity("Darwin.Domain.Entities.Inventory.WarehouseTaskLineIdentity", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("CreatedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime?>("ExpiryDateUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("HandlingUnitCodeSnapshot")
+                        .HasMaxLength(128)
+                        .HasColumnType("nvarchar(128)");
+
+                    b.Property<Guid?>("HandlingUnitId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid?>("InventoryLotId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid?>("InventorySerialUnitId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("LotCodeSnapshot")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("MetadataJson")
+                        .HasMaxLength(8000)
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("ModifiedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("ModifiedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int>("Quantity")
+                        .HasColumnType("int");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
+                    b.Property<string>("SerialNumberSnapshot")
+                        .HasMaxLength(128)
+                        .HasColumnType("nvarchar(128)");
+
+                    b.Property<int>("SortOrder")
+                        .HasColumnType("int");
+
+                    b.Property<string>("SupplierLotCodeSnapshot")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<Guid>("WarehouseTaskLineId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("HandlingUnitId");
+
+                    b.HasIndex("InventoryLotId");
+
+                    b.HasIndex("InventorySerialUnitId");
+
+                    b.HasIndex("SortOrder");
+
+                    b.HasIndex("WarehouseTaskLineId");
+
+                    b.ToTable("WarehouseTaskLineIdentities", "Inventory");
                 });
 
             modelBuilder.Entity("Darwin.Domain.Entities.Loyalty.LoyaltyAccount", b =>
@@ -6836,6 +14000,9 @@ namespace Darwin.Infrastructure.SqlServer.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<Guid?>("BusinessId")
+                        .HasColumnType("uniqueidentifier");
+
                     b.Property<DateTime>("CreatedAtUtc")
                         .HasColumnType("datetime2");
 
@@ -6845,6 +14012,9 @@ namespace Darwin.Infrastructure.SqlServer.Migrations
                     b.Property<string>("Currency")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<Guid?>("CustomerId")
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<long>("DiscountTotalMinor")
                         .HasColumnType("bigint");
@@ -6869,6 +14039,9 @@ namespace Darwin.Infrastructure.SqlServer.Migrations
                         .HasMaxLength(50)
                         .HasColumnType("nvarchar(50)");
 
+                    b.Property<DateTime>("OrderedAtUtc")
+                        .HasColumnType("datetime2");
+
                     b.Property<bool>("PricesIncludeTax")
                         .HasColumnType("bit");
 
@@ -6877,6 +14050,9 @@ namespace Darwin.Infrastructure.SqlServer.Migrations
                         .IsRequired()
                         .ValueGeneratedOnAddOrUpdate()
                         .HasColumnType("rowversion");
+
+                    b.Property<int>("SalesChannel")
+                        .HasColumnType("int");
 
                     b.Property<string>("ShippingAddressJson")
                         .IsRequired()
@@ -6914,9 +14090,21 @@ namespace Darwin.Infrastructure.SqlServer.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("BusinessId")
+                        .HasDatabaseName("IX_Orders_BusinessId");
+
+                    b.HasIndex("CustomerId")
+                        .HasDatabaseName("IX_Orders_CustomerId");
+
                     b.HasIndex("OrderNumber")
                         .IsUnique()
                         .HasFilter("[IsDeleted] = 0");
+
+                    b.HasIndex("OrderedAtUtc")
+                        .HasDatabaseName("IX_Orders_OrderedAtUtc");
+
+                    b.HasIndex("SalesChannel")
+                        .HasDatabaseName("IX_Orders_SalesChannel");
 
                     b.HasIndex("ShippingMethodId")
                         .HasDatabaseName("IX_Orders_ShippingMethodId");
@@ -6985,7 +14173,7 @@ namespace Darwin.Infrastructure.SqlServer.Migrations
                     b.Property<long>("UnitPriceNetMinor")
                         .HasColumnType("bigint");
 
-                    b.Property<Guid>("VariantId")
+                    b.Property<Guid?>("VariantId")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<decimal>("VatRate")
@@ -7524,6 +14712,1208 @@ namespace Darwin.Infrastructure.SqlServer.Migrations
                         .HasFilter("[IsDeleted] = 0");
 
                     b.ToTable("RedirectRules", "SEO");
+                });
+
+            modelBuilder.Entity("Darwin.Domain.Entities.Sales.CreditNote", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime?>("ArchiveGeneratedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("ArchivePurgeReason")
+                        .HasMaxLength(160)
+                        .HasColumnType("nvarchar(160)");
+
+                    b.Property<DateTime?>("ArchivePurgedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("ArchiveRetainUntilUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("ArchiveRetentionPolicyVersion")
+                        .HasMaxLength(80)
+                        .HasColumnType("nvarchar(80)");
+
+                    b.Property<Guid?>("BusinessId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime?>("CancelledAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid?>("CancelledByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("CreatedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("CreditNoteNumber")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<string>("Currency")
+                        .IsRequired()
+                        .HasMaxLength(3)
+                        .HasColumnType("nvarchar(3)");
+
+                    b.Property<Guid?>("CustomerId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("InternalNotes")
+                        .HasMaxLength(2000)
+                        .HasColumnType("nvarchar(2000)");
+
+                    b.Property<Guid>("InvoiceId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTime?>("IssuedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid?>("IssuedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("MetadataJson")
+                        .IsRequired()
+                        .HasMaxLength(16000)
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("ModifiedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("ModifiedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("OriginalInvoiceNumber")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<Guid?>("PostingJournalEntryId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Reason")
+                        .IsRequired()
+                        .HasMaxLength(48)
+                        .HasColumnType("nvarchar(48)");
+
+                    b.Property<Guid?>("RefundId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid?>("ReturnOrderId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
+                    b.Property<string>("SourceModelHashSha256")
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)");
+
+                    b.Property<string>("SourceModelJson")
+                        .IsRequired()
+                        .HasMaxLength(32000)
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("nvarchar(32)");
+
+                    b.Property<long>("TotalGrossMinor")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("TotalNetMinor")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("TotalTaxMinor")
+                        .HasColumnType("bigint");
+
+                    b.Property<DateTime?>("VoidedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid?>("VoidedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ArchivePurgedAtUtc")
+                        .HasDatabaseName("IX_CreditNotes_ArchivePurgedAtUtc");
+
+                    b.HasIndex("ArchiveRetainUntilUtc")
+                        .HasDatabaseName("IX_CreditNotes_ArchiveRetainUntilUtc");
+
+                    b.HasIndex("BusinessId")
+                        .HasDatabaseName("IX_CreditNotes_BusinessId");
+
+                    b.HasIndex("CancelledByUserId");
+
+                    b.HasIndex("CreditNoteNumber")
+                        .IsUnique()
+                        .HasDatabaseName("IX_CreditNotes_CreditNoteNumber")
+                        .HasFilter("[CreditNoteNumber] IS NOT NULL AND [IsDeleted] = 0");
+
+                    b.HasIndex("CustomerId")
+                        .HasDatabaseName("IX_CreditNotes_CustomerId");
+
+                    b.HasIndex("InvoiceId")
+                        .HasDatabaseName("IX_CreditNotes_InvoiceId");
+
+                    b.HasIndex("IssuedAtUtc")
+                        .HasDatabaseName("IX_CreditNotes_IssuedAtUtc");
+
+                    b.HasIndex("IssuedByUserId");
+
+                    b.HasIndex("PostingJournalEntryId");
+
+                    b.HasIndex("RefundId")
+                        .HasDatabaseName("IX_CreditNotes_RefundId");
+
+                    b.HasIndex("ReturnOrderId")
+                        .HasDatabaseName("IX_CreditNotes_ReturnOrderId");
+
+                    b.HasIndex("Status")
+                        .HasDatabaseName("IX_CreditNotes_Status");
+
+                    b.HasIndex("VoidedByUserId");
+
+                    b.ToTable("CreditNotes", "Sales");
+                });
+
+            modelBuilder.Entity("Darwin.Domain.Entities.Sales.CreditNoteLine", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("CreatedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("CreditNoteId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int>("CreditedQuantity")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasMaxLength(400)
+                        .HasColumnType("nvarchar(400)");
+
+                    b.Property<Guid?>("InvoiceLineId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTime?>("ModifiedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("ModifiedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int>("OriginalQuantity")
+                        .HasColumnType("int");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
+                    b.Property<int>("SortOrder")
+                        .HasColumnType("int");
+
+                    b.Property<string>("SourceLineJson")
+                        .IsRequired()
+                        .HasMaxLength(16000)
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<decimal>("TaxRate")
+                        .HasPrecision(18, 4)
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<long>("TotalGrossMinor")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("TotalNetMinor")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("TotalTaxMinor")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("UnitPriceNetMinor")
+                        .HasColumnType("bigint");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CreditNoteId")
+                        .HasDatabaseName("IX_CreditNoteLines_CreditNoteId");
+
+                    b.HasIndex("InvoiceLineId")
+                        .HasDatabaseName("IX_CreditNoteLines_InvoiceLineId");
+
+                    b.HasIndex("CreditNoteId", "SortOrder")
+                        .HasDatabaseName("IX_CreditNoteLines_CreditNote_SortOrder");
+
+                    b.ToTable("CreditNoteLines", "Sales");
+                });
+
+            modelBuilder.Entity("Darwin.Domain.Entities.Sales.DeliveryNote", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid?>("BusinessId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime?>("CancelledAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid?>("CancelledByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Carrier")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("CreatedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Currency")
+                        .IsRequired()
+                        .HasMaxLength(3)
+                        .HasColumnType("nvarchar(3)");
+
+                    b.Property<Guid?>("CustomerId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime?>("DeliveredAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid?>("DeliveredByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("DeliveryNoteNumber")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<string>("InternalNotes")
+                        .HasMaxLength(2000)
+                        .HasColumnType("nvarchar(2000)");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTime?>("IssuedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid?>("IssuedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("MetadataJson")
+                        .IsRequired()
+                        .HasMaxLength(16000)
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("ModifiedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("ModifiedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("OrderId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime?>("PreparedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid?>("PreparedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("ProviderShipmentReference")
+                        .HasMaxLength(160)
+                        .HasColumnType("nvarchar(160)");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
+                    b.Property<string>("Service")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<Guid>("ShipmentId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime?>("ShippedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid?>("ShippedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("ShippingAddressJson")
+                        .IsRequired()
+                        .HasMaxLength(16000)
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("nvarchar(32)");
+
+                    b.Property<long>("TotalGrossMinor")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("TotalNetMinor")
+                        .HasColumnType("bigint");
+
+                    b.Property<int>("TotalQuantity")
+                        .HasColumnType("int");
+
+                    b.Property<long>("TotalTaxMinor")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("TrackingNumber")
+                        .HasMaxLength(120)
+                        .HasColumnType("nvarchar(120)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BusinessId")
+                        .HasDatabaseName("IX_DeliveryNotes_BusinessId");
+
+                    b.HasIndex("CancelledByUserId");
+
+                    b.HasIndex("CreatedAtUtc")
+                        .HasDatabaseName("IX_DeliveryNotes_CreatedAtUtc");
+
+                    b.HasIndex("CustomerId")
+                        .HasDatabaseName("IX_DeliveryNotes_CustomerId");
+
+                    b.HasIndex("DeliveredByUserId");
+
+                    b.HasIndex("DeliveryNoteNumber")
+                        .IsUnique()
+                        .HasDatabaseName("IX_DeliveryNotes_DeliveryNoteNumber")
+                        .HasFilter("[DeliveryNoteNumber] IS NOT NULL AND [IsDeleted] = 0");
+
+                    b.HasIndex("IssuedAtUtc")
+                        .HasDatabaseName("IX_DeliveryNotes_IssuedAtUtc");
+
+                    b.HasIndex("IssuedByUserId");
+
+                    b.HasIndex("OrderId")
+                        .HasDatabaseName("IX_DeliveryNotes_OrderId");
+
+                    b.HasIndex("PreparedByUserId");
+
+                    b.HasIndex("ShipmentId")
+                        .IsUnique()
+                        .HasDatabaseName("IX_DeliveryNotes_ShipmentId")
+                        .HasFilter("[IsDeleted] = 0");
+
+                    b.HasIndex("ShippedByUserId");
+
+                    b.HasIndex("Status")
+                        .HasDatabaseName("IX_DeliveryNotes_Status");
+
+                    b.ToTable("DeliveryNotes", "Sales");
+                });
+
+            modelBuilder.Entity("Darwin.Domain.Entities.Sales.DeliveryNoteLine", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("CreatedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("DeliveryNoteId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTime?>("ModifiedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("ModifiedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(250)
+                        .HasColumnType("nvarchar(250)");
+
+                    b.Property<Guid>("OrderLineId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid?>("ProductVariantId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int>("Quantity")
+                        .HasColumnType("int");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
+                    b.Property<string>("Sku")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<int>("SortOrder")
+                        .HasColumnType("int");
+
+                    b.Property<decimal>("TaxRate")
+                        .HasPrecision(18, 4)
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<long>("TotalGrossMinor")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("TotalNetMinor")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("TotalTaxMinor")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("UnitPriceGrossMinor")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("UnitPriceNetMinor")
+                        .HasColumnType("bigint");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("DeliveryNoteId")
+                        .HasDatabaseName("IX_DeliveryNoteLines_DeliveryNoteId");
+
+                    b.HasIndex("OrderLineId")
+                        .HasDatabaseName("IX_DeliveryNoteLines_OrderLineId");
+
+                    b.HasIndex("ProductVariantId")
+                        .HasDatabaseName("IX_DeliveryNoteLines_ProductVariantId");
+
+                    b.HasIndex("DeliveryNoteId", "SortOrder")
+                        .HasDatabaseName("IX_DeliveryNoteLines_Note_SortOrder");
+
+                    b.ToTable("DeliveryNoteLines", "Sales");
+                });
+
+            modelBuilder.Entity("Darwin.Domain.Entities.Sales.ReturnOrder", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<long>("AcceptedGrossMinor")
+                        .HasColumnType("bigint");
+
+                    b.Property<int>("AcceptedQuantity")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("ApprovedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid?>("ApprovedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<long>("ApprovedGrossMinor")
+                        .HasColumnType("bigint");
+
+                    b.Property<int>("ApprovedQuantity")
+                        .HasColumnType("int");
+
+                    b.Property<Guid?>("BusinessId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime?>("CancelledAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid?>("CancelledByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime?>("ClosedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid?>("ClosedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("CreatedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Currency")
+                        .IsRequired()
+                        .HasMaxLength(3)
+                        .HasColumnType("nvarchar(3)");
+
+                    b.Property<Guid?>("CustomerId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("CustomerSnapshotJson")
+                        .IsRequired()
+                        .HasMaxLength(16000)
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("InspectedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid?>("InspectedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("InternalNotes")
+                        .HasMaxLength(2000)
+                        .HasColumnType("nvarchar(2000)");
+
+                    b.Property<Guid?>("InvoiceId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("MetadataJson")
+                        .IsRequired()
+                        .HasMaxLength(16000)
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("ModifiedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("ModifiedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("OrderId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime?>("ReceivedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid?>("ReceivedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int>("ReceivedQuantity")
+                        .HasColumnType("int");
+
+                    b.Property<long>("RefundEligibleGrossMinor")
+                        .HasColumnType("bigint");
+
+                    b.Property<DateTime?>("RefundReadyAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid?>("RefundReadyByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime?>("RefundedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid?>("RefundedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime?>("RejectedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid?>("RejectedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int>("RejectedQuantity")
+                        .HasColumnType("int");
+
+                    b.Property<Guid?>("RequestedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<long>("RequestedGrossMinor")
+                        .HasColumnType("bigint");
+
+                    b.Property<int>("RequestedQuantity")
+                        .HasColumnType("int");
+
+                    b.Property<int>("RestockQuantity")
+                        .HasColumnType("int");
+
+                    b.Property<string>("ReturnOrderNumber")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<DateTime?>("ReturnShipmentQueuedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid?>("ReturnShipmentQueuedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
+                    b.Property<int>("ScrappedQuantity")
+                        .HasColumnType("int");
+
+                    b.Property<Guid?>("ShipmentId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("ShippingAddressJson")
+                        .IsRequired()
+                        .HasMaxLength(16000)
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("nvarchar(32)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ApprovedAtUtc")
+                        .HasDatabaseName("IX_ReturnOrders_ApprovedAtUtc");
+
+                    b.HasIndex("ApprovedByUserId");
+
+                    b.HasIndex("BusinessId")
+                        .HasDatabaseName("IX_ReturnOrders_BusinessId");
+
+                    b.HasIndex("CancelledByUserId");
+
+                    b.HasIndex("ClosedByUserId");
+
+                    b.HasIndex("CreatedAtUtc")
+                        .HasDatabaseName("IX_ReturnOrders_CreatedAtUtc");
+
+                    b.HasIndex("CustomerId")
+                        .HasDatabaseName("IX_ReturnOrders_CustomerId");
+
+                    b.HasIndex("InspectedAtUtc")
+                        .HasDatabaseName("IX_ReturnOrders_InspectedAtUtc");
+
+                    b.HasIndex("InspectedByUserId");
+
+                    b.HasIndex("InvoiceId")
+                        .HasDatabaseName("IX_ReturnOrders_InvoiceId");
+
+                    b.HasIndex("OrderId")
+                        .HasDatabaseName("IX_ReturnOrders_OrderId");
+
+                    b.HasIndex("ReceivedAtUtc")
+                        .HasDatabaseName("IX_ReturnOrders_ReceivedAtUtc");
+
+                    b.HasIndex("ReceivedByUserId");
+
+                    b.HasIndex("RefundReadyByUserId");
+
+                    b.HasIndex("RefundedAtUtc")
+                        .HasDatabaseName("IX_ReturnOrders_RefundedAtUtc");
+
+                    b.HasIndex("RefundedByUserId");
+
+                    b.HasIndex("RejectedByUserId");
+
+                    b.HasIndex("RequestedByUserId");
+
+                    b.HasIndex("ReturnOrderNumber")
+                        .IsUnique()
+                        .HasDatabaseName("IX_ReturnOrders_ReturnOrderNumber")
+                        .HasFilter("[ReturnOrderNumber] IS NOT NULL AND [IsDeleted] = 0");
+
+                    b.HasIndex("ReturnShipmentQueuedByUserId");
+
+                    b.HasIndex("ShipmentId")
+                        .HasDatabaseName("IX_ReturnOrders_ShipmentId");
+
+                    b.HasIndex("Status")
+                        .HasDatabaseName("IX_ReturnOrders_Status");
+
+                    b.ToTable("ReturnOrders", "Sales");
+                });
+
+            modelBuilder.Entity("Darwin.Domain.Entities.Sales.ReturnOrderLine", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<long>("AcceptedGrossMinor")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("AcceptedNetMinor")
+                        .HasColumnType("bigint");
+
+                    b.Property<int>("AcceptedQuantity")
+                        .HasColumnType("int");
+
+                    b.Property<long>("AcceptedTaxMinor")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("ApprovedGrossMinor")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("ApprovedNetMinor")
+                        .HasColumnType("bigint");
+
+                    b.Property<int>("ApprovedQuantity")
+                        .HasColumnType("int");
+
+                    b.Property<long>("ApprovedTaxMinor")
+                        .HasColumnType("bigint");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("CreatedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<string>("Disposition")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("nvarchar(32)");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTime?>("ModifiedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("ModifiedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(250)
+                        .HasColumnType("nvarchar(250)");
+
+                    b.Property<Guid>("OrderLineId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid?>("ProductVariantId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int>("ReceivedQuantity")
+                        .HasColumnType("int");
+
+                    b.Property<int>("RejectedQuantity")
+                        .HasColumnType("int");
+
+                    b.Property<long>("RequestedGrossMinor")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("RequestedNetMinor")
+                        .HasColumnType("bigint");
+
+                    b.Property<int>("RequestedQuantity")
+                        .HasColumnType("int");
+
+                    b.Property<long>("RequestedTaxMinor")
+                        .HasColumnType("bigint");
+
+                    b.Property<int>("RestockQuantity")
+                        .HasColumnType("int");
+
+                    b.Property<Guid?>("RestockWarehouseId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("ReturnOrderId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
+                    b.Property<int>("ScrappedQuantity")
+                        .HasColumnType("int");
+
+                    b.Property<Guid?>("ShipmentLineId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Sku")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<int>("SortOrder")
+                        .HasColumnType("int");
+
+                    b.Property<decimal>("TaxRate")
+                        .HasPrecision(18, 4)
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<long>("UnitPriceGrossMinor")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("UnitPriceNetMinor")
+                        .HasColumnType("bigint");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("OrderLineId")
+                        .HasDatabaseName("IX_ReturnOrderLines_OrderLineId");
+
+                    b.HasIndex("ProductVariantId")
+                        .HasDatabaseName("IX_ReturnOrderLines_ProductVariantId");
+
+                    b.HasIndex("RestockWarehouseId")
+                        .HasDatabaseName("IX_ReturnOrderLines_RestockWarehouseId");
+
+                    b.HasIndex("ReturnOrderId")
+                        .HasDatabaseName("IX_ReturnOrderLines_ReturnOrderId");
+
+                    b.HasIndex("ShipmentLineId")
+                        .HasDatabaseName("IX_ReturnOrderLines_ShipmentLineId");
+
+                    b.HasIndex("ReturnOrderId", "SortOrder")
+                        .HasDatabaseName("IX_ReturnOrderLines_ReturnOrder_SortOrder");
+
+                    b.ToTable("ReturnOrderLines", "Sales");
+                });
+
+            modelBuilder.Entity("Darwin.Domain.Entities.Sales.ReturnOrderRefundLink", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<long>("AmountMinor")
+                        .HasColumnType("bigint");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("CreatedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Currency")
+                        .IsRequired()
+                        .HasMaxLength(3)
+                        .HasColumnType("nvarchar(3)");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTime?>("ModifiedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("ModifiedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Notes")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<Guid>("RefundId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("ReturnOrderId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("RefundId")
+                        .HasDatabaseName("IX_ReturnOrderRefundLinks_RefundId");
+
+                    b.HasIndex("ReturnOrderId")
+                        .HasDatabaseName("IX_ReturnOrderRefundLinks_ReturnOrderId");
+
+                    b.HasIndex("ReturnOrderId", "RefundId")
+                        .IsUnique()
+                        .HasDatabaseName("IX_ReturnOrderRefundLinks_ReturnOrder_Refund")
+                        .HasFilter("[IsDeleted] = 0");
+
+                    b.ToTable("ReturnOrderRefundLinks", "Sales");
+                });
+
+            modelBuilder.Entity("Darwin.Domain.Entities.Sales.SalesQuote", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime?>("AcceptedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid?>("AcceptedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("BillingAddressJson")
+                        .IsRequired()
+                        .HasMaxLength(16000)
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<Guid?>("BusinessId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime?>("ConvertedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid?>("ConvertedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid?>("ConvertedOrderId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("CreatedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Currency")
+                        .IsRequired()
+                        .HasMaxLength(3)
+                        .HasColumnType("nvarchar(3)");
+
+                    b.Property<Guid?>("CustomerId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("CustomerSnapshotJson")
+                        .IsRequired()
+                        .HasMaxLength(16000)
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("ExpiredAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("InternalNotes")
+                        .HasMaxLength(2000)
+                        .HasColumnType("nvarchar(2000)");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTime?>("ModifiedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("ModifiedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid?>("OpportunityId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid?>("OwnerUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid?>("PreparedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("QuoteNumber")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<DateTime?>("RejectedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid?>("RejectedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
+                    b.Property<DateTime?>("SentAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid?>("SentByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("ShippingAddressJson")
+                        .IsRequired()
+                        .HasMaxLength(16000)
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("nvarchar(32)");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(250)
+                        .HasColumnType("nvarchar(250)");
+
+                    b.Property<long>("TotalGrossMinor")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("TotalNetMinor")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("TotalTaxMinor")
+                        .HasColumnType("bigint");
+
+                    b.Property<DateTime?>("ValidUntilUtc")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AcceptedByUserId");
+
+                    b.HasIndex("BusinessId")
+                        .HasDatabaseName("IX_SalesQuotes_BusinessId");
+
+                    b.HasIndex("ConvertedByUserId");
+
+                    b.HasIndex("ConvertedOrderId")
+                        .HasDatabaseName("IX_SalesQuotes_ConvertedOrderId");
+
+                    b.HasIndex("CreatedAtUtc")
+                        .HasDatabaseName("IX_SalesQuotes_CreatedAtUtc");
+
+                    b.HasIndex("CustomerId")
+                        .HasDatabaseName("IX_SalesQuotes_CustomerId");
+
+                    b.HasIndex("OpportunityId")
+                        .HasDatabaseName("IX_SalesQuotes_OpportunityId");
+
+                    b.HasIndex("OwnerUserId");
+
+                    b.HasIndex("PreparedByUserId");
+
+                    b.HasIndex("QuoteNumber")
+                        .IsUnique()
+                        .HasDatabaseName("IX_SalesQuotes_QuoteNumber")
+                        .HasFilter("[QuoteNumber] IS NOT NULL AND [IsDeleted] = 0");
+
+                    b.HasIndex("RejectedByUserId");
+
+                    b.HasIndex("SentAtUtc")
+                        .HasDatabaseName("IX_SalesQuotes_SentAtUtc");
+
+                    b.HasIndex("SentByUserId");
+
+                    b.HasIndex("Status")
+                        .HasDatabaseName("IX_SalesQuotes_Status");
+
+                    b.HasIndex("ValidUntilUtc")
+                        .HasDatabaseName("IX_SalesQuotes_ValidUntilUtc");
+
+                    b.ToTable("SalesQuotes", "Sales");
+                });
+
+            modelBuilder.Entity("Darwin.Domain.Entities.Sales.SalesQuoteLine", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("CreatedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTime?>("ModifiedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("ModifiedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(250)
+                        .HasColumnType("nvarchar(250)");
+
+                    b.Property<Guid?>("ProductVariantId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int>("Quantity")
+                        .HasColumnType("int");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
+                    b.Property<Guid>("SalesQuoteId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Sku")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<int>("SortOrder")
+                        .HasColumnType("int");
+
+                    b.Property<decimal>("TaxRate")
+                        .HasPrecision(18, 4)
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<long>("TotalGrossMinor")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("TotalNetMinor")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("TotalTaxMinor")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("UnitPriceGrossMinor")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("UnitPriceNetMinor")
+                        .HasColumnType("bigint");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ProductVariantId")
+                        .HasDatabaseName("IX_SalesQuoteLines_ProductVariantId");
+
+                    b.HasIndex("SalesQuoteId")
+                        .HasDatabaseName("IX_SalesQuoteLines_SalesQuoteId");
+
+                    b.HasIndex("SalesQuoteId", "SortOrder")
+                        .HasDatabaseName("IX_SalesQuoteLines_Quote_SortOrder");
+
+                    b.ToTable("SalesQuoteLines", "Sales");
                 });
 
             modelBuilder.Entity("Darwin.Domain.Entities.Settings.SiteSetting", b =>
@@ -8215,12 +16605,94 @@ namespace Darwin.Infrastructure.SqlServer.Migrations
                     b.ToTable("ShippingRates", "Shipping");
                 });
 
+            modelBuilder.Entity("Darwin.Domain.Entities.Billing.BankAccount", b =>
+                {
+                    b.HasOne("Darwin.Domain.Entities.Billing.FinancialAccount", null)
+                        .WithMany()
+                        .HasForeignKey("FinancialAccountId")
+                        .OnDelete(DeleteBehavior.Restrict);
+                });
+
+            modelBuilder.Entity("Darwin.Domain.Entities.Billing.BankReconciliationMatch", b =>
+                {
+                    b.HasOne("Darwin.Domain.Entities.Billing.BankAccount", null)
+                        .WithMany()
+                        .HasForeignKey("BankAccountId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Darwin.Domain.Entities.Billing.BankReconciliationMatchLine", b =>
+                {
+                    b.HasOne("Darwin.Domain.Entities.Billing.BankReconciliationMatch", null)
+                        .WithMany("Lines")
+                        .HasForeignKey("BankReconciliationMatchId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Darwin.Domain.Entities.Billing.BankStatementLine", null)
+                        .WithMany()
+                        .HasForeignKey("BankStatementLineId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Darwin.Domain.Entities.Billing.JournalEntry", null)
+                        .WithMany()
+                        .HasForeignKey("JournalEntryId")
+                        .OnDelete(DeleteBehavior.Restrict);
+                });
+
+            modelBuilder.Entity("Darwin.Domain.Entities.Billing.BankStatementImport", b =>
+                {
+                    b.HasOne("Darwin.Domain.Entities.Billing.BankAccount", null)
+                        .WithMany()
+                        .HasForeignKey("BankAccountId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Darwin.Domain.Entities.Billing.BankStatementLine", b =>
+                {
+                    b.HasOne("Darwin.Domain.Entities.Billing.BankStatementImport", null)
+                        .WithMany("Lines")
+                        .HasForeignKey("BankStatementImportId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("Darwin.Domain.Entities.Billing.BusinessSubscription", b =>
                 {
                     b.HasOne("Darwin.Domain.Entities.Businesses.Business", null)
                         .WithMany("Subscriptions")
                         .HasForeignKey("BusinessId")
                         .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Darwin.Domain.Entities.Billing.FinanceExportAttempt", b =>
+                {
+                    b.HasOne("Darwin.Domain.Entities.Billing.FinanceExportBatch", null)
+                        .WithMany("Attempts")
+                        .HasForeignKey("FinanceExportBatchId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Darwin.Domain.Entities.Billing.FinanceExportBatch", b =>
+                {
+                    b.HasOne("Darwin.Domain.Entities.Integration.ExternalSystem", null)
+                        .WithMany()
+                        .HasForeignKey("ExternalSystemId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Darwin.Domain.Entities.Billing.FinancePostingAccountMapping", b =>
+                {
+                    b.HasOne("Darwin.Domain.Entities.Billing.FinancialAccount", null)
+                        .WithMany()
+                        .HasForeignKey("FinancialAccountId")
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
                 });
 
@@ -8239,6 +16711,59 @@ namespace Darwin.Infrastructure.SqlServer.Migrations
                         .WithMany("Payments")
                         .HasForeignKey("OrderId")
                         .OnDelete(DeleteBehavior.Cascade);
+                });
+
+            modelBuilder.Entity("Darwin.Domain.Entities.Billing.SupplierAdvanceApplication", b =>
+                {
+                    b.HasOne("Darwin.Domain.Entities.Billing.SupplierAdvance", null)
+                        .WithMany("Applications")
+                        .HasForeignKey("SupplierAdvanceId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Darwin.Domain.Entities.Billing.SupplierInvoice", null)
+                        .WithMany()
+                        .HasForeignKey("SupplierInvoiceId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Darwin.Domain.Entities.Billing.SupplierInvoiceLine", b =>
+                {
+                    b.HasOne("Darwin.Domain.Entities.Billing.SupplierInvoice", null)
+                        .WithMany("Lines")
+                        .HasForeignKey("SupplierInvoiceId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Darwin.Domain.Entities.Billing.SupplierPaymentAllocation", b =>
+                {
+                    b.HasOne("Darwin.Domain.Entities.Billing.SupplierPayment", null)
+                        .WithMany("Allocations")
+                        .HasForeignKey("SupplierPaymentId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Darwin.Domain.Entities.Billing.SupplierPaymentBankCorrection", b =>
+                {
+                    b.HasOne("Darwin.Domain.Entities.Billing.BankReconciliationMatch", null)
+                        .WithMany()
+                        .HasForeignKey("BankReconciliationMatchId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Darwin.Domain.Entities.Billing.BankStatementLine", null)
+                        .WithMany()
+                        .HasForeignKey("BankStatementLineId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Darwin.Domain.Entities.Billing.SupplierPayment", null)
+                        .WithMany()
+                        .HasForeignKey("SupplierPaymentId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("Darwin.Domain.Entities.Businesses.BusinessEngagementStats", b =>
@@ -8419,6 +16944,11 @@ namespace Darwin.Infrastructure.SqlServer.Migrations
 
             modelBuilder.Entity("Darwin.Domain.Entities.CRM.Customer", b =>
                 {
+                    b.HasOne("Darwin.Domain.Entities.Identity.User", null)
+                        .WithMany()
+                        .HasForeignKey("OwnerUserId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.HasOne("Darwin.Domain.Entities.Identity.User", null)
                         .WithMany()
                         .HasForeignKey("UserId")
@@ -8661,6 +17191,292 @@ namespace Darwin.Infrastructure.SqlServer.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("Darwin.Domain.Entities.Foundation.CustomFieldValue", b =>
+                {
+                    b.HasOne("Darwin.Domain.Entities.Foundation.CustomFieldDefinition", "Definition")
+                        .WithMany("Values")
+                        .HasForeignKey("DefinitionId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Definition");
+                });
+
+            modelBuilder.Entity("Darwin.Domain.Entities.Foundation.DocumentRecord", b =>
+                {
+                    b.HasOne("Darwin.Domain.Entities.CMS.MediaAsset", "MediaAsset")
+                        .WithMany()
+                        .HasForeignKey("MediaAssetId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("MediaAsset");
+                });
+
+            modelBuilder.Entity("Darwin.Domain.Entities.HumanResources.AbsenceRecord", b =>
+                {
+                    b.HasOne("Darwin.Domain.Entities.HumanResources.Employee", null)
+                        .WithMany()
+                        .HasForeignKey("EmployeeId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Darwin.Domain.Entities.HumanResources.LeaveRequest", null)
+                        .WithMany()
+                        .HasForeignKey("LeaveRequestId")
+                        .OnDelete(DeleteBehavior.Restrict);
+                });
+
+            modelBuilder.Entity("Darwin.Domain.Entities.HumanResources.AttendanceEvent", b =>
+                {
+                    b.HasOne("Darwin.Domain.Entities.HumanResources.Employee", null)
+                        .WithMany()
+                        .HasForeignKey("EmployeeId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Darwin.Domain.Entities.HumanResources.Department", b =>
+                {
+                    b.HasOne("Darwin.Domain.Entities.HumanResources.Department", null)
+                        .WithMany("Children")
+                        .HasForeignKey("ParentDepartmentId")
+                        .OnDelete(DeleteBehavior.Restrict);
+                });
+
+            modelBuilder.Entity("Darwin.Domain.Entities.HumanResources.Employee", b =>
+                {
+                    b.HasOne("Darwin.Domain.Entities.Businesses.BusinessMember", null)
+                        .WithMany()
+                        .HasForeignKey("BusinessMemberId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Darwin.Domain.Entities.HumanResources.Department", null)
+                        .WithMany()
+                        .HasForeignKey("DepartmentId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Darwin.Domain.Entities.HumanResources.Position", null)
+                        .WithMany()
+                        .HasForeignKey("PositionId")
+                        .OnDelete(DeleteBehavior.Restrict);
+                });
+
+            modelBuilder.Entity("Darwin.Domain.Entities.HumanResources.EmploymentContract", b =>
+                {
+                    b.HasOne("Darwin.Domain.Entities.HumanResources.Employee", null)
+                        .WithMany("EmploymentContracts")
+                        .HasForeignKey("EmployeeId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Darwin.Domain.Entities.HumanResources.LeaveRequest", b =>
+                {
+                    b.HasOne("Darwin.Domain.Entities.HumanResources.Employee", null)
+                        .WithMany()
+                        .HasForeignKey("EmployeeId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Darwin.Domain.Entities.HumanResources.PayrollPayment", b =>
+                {
+                    b.HasOne("Darwin.Domain.Entities.HumanResources.PayrollRun", null)
+                        .WithMany()
+                        .HasForeignKey("PayrollRunId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Darwin.Domain.Entities.HumanResources.PayrollPaymentAllocation", b =>
+                {
+                    b.HasOne("Darwin.Domain.Entities.HumanResources.Employee", null)
+                        .WithMany()
+                        .HasForeignKey("EmployeeId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Darwin.Domain.Entities.HumanResources.PayrollPayment", null)
+                        .WithMany("Allocations")
+                        .HasForeignKey("PayrollPaymentId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Darwin.Domain.Entities.HumanResources.PayrollRun", null)
+                        .WithMany()
+                        .HasForeignKey("PayrollRunId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Darwin.Domain.Entities.HumanResources.PayrollRunLine", null)
+                        .WithMany()
+                        .HasForeignKey("PayrollRunLineId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Darwin.Domain.Entities.HumanResources.PayrollPaymentBankCorrection", b =>
+                {
+                    b.HasOne("Darwin.Domain.Entities.HumanResources.PayrollPayment", null)
+                        .WithMany()
+                        .HasForeignKey("PayrollPaymentId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Darwin.Domain.Entities.HumanResources.PayrollPayslip", b =>
+                {
+                    b.HasOne("Darwin.Domain.Entities.HumanResources.Employee", null)
+                        .WithMany()
+                        .HasForeignKey("EmployeeId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Darwin.Domain.Entities.HumanResources.PayrollRun", null)
+                        .WithMany()
+                        .HasForeignKey("PayrollRunId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Darwin.Domain.Entities.HumanResources.PayrollRunLine", null)
+                        .WithMany()
+                        .HasForeignKey("PayrollRunLineId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Darwin.Domain.Entities.HumanResources.PayrollPeriodLine", b =>
+                {
+                    b.HasOne("Darwin.Domain.Entities.HumanResources.Employee", null)
+                        .WithMany()
+                        .HasForeignKey("EmployeeId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Darwin.Domain.Entities.HumanResources.PayrollPeriod", null)
+                        .WithMany("Lines")
+                        .HasForeignKey("PayrollPeriodId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Darwin.Domain.Entities.HumanResources.PayrollRuleComponent", b =>
+                {
+                    b.HasOne("Darwin.Domain.Entities.HumanResources.PayrollRuleSet", null)
+                        .WithMany("Components")
+                        .HasForeignKey("PayrollRuleSetId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Darwin.Domain.Entities.HumanResources.PayrollRun", b =>
+                {
+                    b.HasOne("Darwin.Domain.Entities.HumanResources.PayrollPeriod", null)
+                        .WithMany()
+                        .HasForeignKey("PayrollPeriodId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Darwin.Domain.Entities.HumanResources.PayrollRuleSet", null)
+                        .WithMany()
+                        .HasForeignKey("PayrollRuleSetId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Darwin.Domain.Entities.HumanResources.PayrollRunLine", b =>
+                {
+                    b.HasOne("Darwin.Domain.Entities.HumanResources.Employee", null)
+                        .WithMany()
+                        .HasForeignKey("EmployeeId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Darwin.Domain.Entities.HumanResources.EmploymentContract", null)
+                        .WithMany()
+                        .HasForeignKey("EmploymentContractId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Darwin.Domain.Entities.HumanResources.PayrollRun", null)
+                        .WithMany("Lines")
+                        .HasForeignKey("PayrollRunId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Darwin.Domain.Entities.HumanResources.PayrollRunLineComponent", b =>
+                {
+                    b.HasOne("Darwin.Domain.Entities.HumanResources.PayrollRunLine", null)
+                        .WithMany("Components")
+                        .HasForeignKey("PayrollRunLineId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Darwin.Domain.Entities.HumanResources.Position", b =>
+                {
+                    b.HasOne("Darwin.Domain.Entities.HumanResources.Department", null)
+                        .WithMany()
+                        .HasForeignKey("DepartmentId")
+                        .OnDelete(DeleteBehavior.Restrict);
+                });
+
+            modelBuilder.Entity("Darwin.Domain.Entities.HumanResources.TimeEntry", b =>
+                {
+                    b.HasOne("Darwin.Domain.Entities.HumanResources.Employee", null)
+                        .WithMany()
+                        .HasForeignKey("EmployeeId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Darwin.Domain.Entities.HumanResources.WorkSchedule", null)
+                        .WithMany()
+                        .HasForeignKey("WorkScheduleId")
+                        .OnDelete(DeleteBehavior.Restrict);
+                });
+
+            modelBuilder.Entity("Darwin.Domain.Entities.HumanResources.Timesheet", b =>
+                {
+                    b.HasOne("Darwin.Domain.Entities.HumanResources.Employee", null)
+                        .WithMany()
+                        .HasForeignKey("EmployeeId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Darwin.Domain.Entities.HumanResources.TimesheetLine", b =>
+                {
+                    b.HasOne("Darwin.Domain.Entities.HumanResources.TimeEntry", null)
+                        .WithMany()
+                        .HasForeignKey("TimeEntryId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Darwin.Domain.Entities.HumanResources.Timesheet", null)
+                        .WithMany("Lines")
+                        .HasForeignKey("TimesheetId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Darwin.Domain.Entities.HumanResources.WorkSchedule", b =>
+                {
+                    b.HasOne("Darwin.Domain.Entities.HumanResources.Employee", null)
+                        .WithMany()
+                        .HasForeignKey("EmployeeId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Darwin.Domain.Entities.HumanResources.WorkScheduleException", b =>
+                {
+                    b.HasOne("Darwin.Domain.Entities.HumanResources.WorkSchedule", null)
+                        .WithMany("Exceptions")
+                        .HasForeignKey("WorkScheduleId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("Darwin.Domain.Entities.Identity.Address", b =>
                 {
                     b.HasOne("Darwin.Domain.Entities.Identity.User", null)
@@ -8789,6 +17605,82 @@ namespace Darwin.Infrastructure.SqlServer.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("Darwin.Domain.Entities.Integration.ExternalReference", b =>
+                {
+                    b.HasOne("Darwin.Domain.Entities.Integration.ExternalSystem", "ExternalSystem")
+                        .WithMany("References")
+                        .HasForeignKey("ExternalSystemId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("ExternalSystem");
+                });
+
+            modelBuilder.Entity("Darwin.Domain.Entities.Integration.SyncConflict", b =>
+                {
+                    b.HasOne("Darwin.Domain.Entities.Integration.ExternalSystem", "ExternalSystem")
+                        .WithMany()
+                        .HasForeignKey("ExternalSystemId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Darwin.Domain.Entities.Integration.SyncState", "SyncState")
+                        .WithMany("Conflicts")
+                        .HasForeignKey("SyncStateId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("ExternalSystem");
+
+                    b.Navigation("SyncState");
+                });
+
+            modelBuilder.Entity("Darwin.Domain.Entities.Integration.SyncState", b =>
+                {
+                    b.HasOne("Darwin.Domain.Entities.Integration.ExternalSystem", "ExternalSystem")
+                        .WithMany()
+                        .HasForeignKey("ExternalSystemId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("ExternalSystem");
+                });
+
+            modelBuilder.Entity("Darwin.Domain.Entities.Inventory.GoodsReceiptLine", b =>
+                {
+                    b.HasOne("Darwin.Domain.Entities.Inventory.GoodsReceipt", null)
+                        .WithMany("Lines")
+                        .HasForeignKey("GoodsReceiptId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Darwin.Domain.Entities.Inventory.GoodsReceiptLineIdentity", b =>
+                {
+                    b.HasOne("Darwin.Domain.Entities.Inventory.GoodsReceiptLine", null)
+                        .WithMany("Identities")
+                        .HasForeignKey("GoodsReceiptLineId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Darwin.Domain.Entities.Inventory.HandlingUnit", b =>
+                {
+                    b.HasOne("Darwin.Domain.Entities.Inventory.HandlingUnit", null)
+                        .WithMany("Children")
+                        .HasForeignKey("ParentHandlingUnitId")
+                        .OnDelete(DeleteBehavior.Restrict);
+                });
+
+            modelBuilder.Entity("Darwin.Domain.Entities.Inventory.HandlingUnitContent", b =>
+                {
+                    b.HasOne("Darwin.Domain.Entities.Inventory.HandlingUnit", null)
+                        .WithMany("Contents")
+                        .HasForeignKey("HandlingUnitId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("Darwin.Domain.Entities.Inventory.PurchaseOrder", b =>
                 {
                     b.HasOne("Darwin.Domain.Entities.Inventory.Supplier", null)
@@ -8807,6 +17699,24 @@ namespace Darwin.Infrastructure.SqlServer.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("Darwin.Domain.Entities.Inventory.StockCountLine", b =>
+                {
+                    b.HasOne("Darwin.Domain.Entities.Inventory.StockCountSession", null)
+                        .WithMany("Lines")
+                        .HasForeignKey("StockCountSessionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Darwin.Domain.Entities.Inventory.StockCountLineIdentity", b =>
+                {
+                    b.HasOne("Darwin.Domain.Entities.Inventory.StockCountLine", null)
+                        .WithMany("Identities")
+                        .HasForeignKey("StockCountLineId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("Darwin.Domain.Entities.Inventory.StockLevel", b =>
                 {
                     b.HasOne("Darwin.Domain.Entities.Inventory.Warehouse", null)
@@ -8821,6 +17731,56 @@ namespace Darwin.Infrastructure.SqlServer.Migrations
                     b.HasOne("Darwin.Domain.Entities.Inventory.StockTransfer", null)
                         .WithMany("Lines")
                         .HasForeignKey("StockTransferId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Darwin.Domain.Entities.Inventory.StockTransferLineIdentity", b =>
+                {
+                    b.HasOne("Darwin.Domain.Entities.Inventory.StockTransferLine", null)
+                        .WithMany("Identities")
+                        .HasForeignKey("StockTransferLineId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Darwin.Domain.Entities.Inventory.SupplierContact", b =>
+                {
+                    b.HasOne("Darwin.Domain.Entities.Inventory.Supplier", null)
+                        .WithMany("Contacts")
+                        .HasForeignKey("SupplierId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Darwin.Domain.Entities.Inventory.WarehouseLocation", b =>
+                {
+                    b.HasOne("Darwin.Domain.Entities.Inventory.WarehouseLocation", null)
+                        .WithMany("Children")
+                        .HasForeignKey("ParentLocationId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Darwin.Domain.Entities.Inventory.Warehouse", null)
+                        .WithMany("Locations")
+                        .HasForeignKey("WarehouseId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Darwin.Domain.Entities.Inventory.WarehouseTaskLine", b =>
+                {
+                    b.HasOne("Darwin.Domain.Entities.Inventory.WarehouseTask", null)
+                        .WithMany("Lines")
+                        .HasForeignKey("WarehouseTaskId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Darwin.Domain.Entities.Inventory.WarehouseTaskLineIdentity", b =>
+                {
+                    b.HasOne("Darwin.Domain.Entities.Inventory.WarehouseTaskLine", null)
+                        .WithMany("Identities")
+                        .HasForeignKey("WarehouseTaskLineId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });
@@ -8929,6 +17889,309 @@ namespace Darwin.Infrastructure.SqlServer.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("Darwin.Domain.Entities.Sales.CreditNote", b =>
+                {
+                    b.HasOne("Darwin.Domain.Entities.Businesses.Business", null)
+                        .WithMany()
+                        .HasForeignKey("BusinessId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Darwin.Domain.Entities.Identity.User", null)
+                        .WithMany()
+                        .HasForeignKey("CancelledByUserId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Darwin.Domain.Entities.CRM.Customer", null)
+                        .WithMany()
+                        .HasForeignKey("CustomerId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Darwin.Domain.Entities.CRM.Invoice", null)
+                        .WithMany()
+                        .HasForeignKey("InvoiceId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Darwin.Domain.Entities.Identity.User", null)
+                        .WithMany()
+                        .HasForeignKey("IssuedByUserId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Darwin.Domain.Entities.Billing.JournalEntry", null)
+                        .WithMany()
+                        .HasForeignKey("PostingJournalEntryId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Darwin.Domain.Entities.Orders.Refund", null)
+                        .WithMany()
+                        .HasForeignKey("RefundId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Darwin.Domain.Entities.Sales.ReturnOrder", null)
+                        .WithMany()
+                        .HasForeignKey("ReturnOrderId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Darwin.Domain.Entities.Identity.User", null)
+                        .WithMany()
+                        .HasForeignKey("VoidedByUserId")
+                        .OnDelete(DeleteBehavior.Restrict);
+                });
+
+            modelBuilder.Entity("Darwin.Domain.Entities.Sales.CreditNoteLine", b =>
+                {
+                    b.HasOne("Darwin.Domain.Entities.Sales.CreditNote", null)
+                        .WithMany("Lines")
+                        .HasForeignKey("CreditNoteId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Darwin.Domain.Entities.CRM.InvoiceLine", null)
+                        .WithMany()
+                        .HasForeignKey("InvoiceLineId")
+                        .OnDelete(DeleteBehavior.Restrict);
+                });
+
+            modelBuilder.Entity("Darwin.Domain.Entities.Sales.DeliveryNote", b =>
+                {
+                    b.HasOne("Darwin.Domain.Entities.Businesses.Business", null)
+                        .WithMany()
+                        .HasForeignKey("BusinessId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Darwin.Domain.Entities.Identity.User", null)
+                        .WithMany()
+                        .HasForeignKey("CancelledByUserId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Darwin.Domain.Entities.CRM.Customer", null)
+                        .WithMany()
+                        .HasForeignKey("CustomerId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Darwin.Domain.Entities.Identity.User", null)
+                        .WithMany()
+                        .HasForeignKey("DeliveredByUserId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Darwin.Domain.Entities.Identity.User", null)
+                        .WithMany()
+                        .HasForeignKey("IssuedByUserId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Darwin.Domain.Entities.Orders.Order", null)
+                        .WithMany()
+                        .HasForeignKey("OrderId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Darwin.Domain.Entities.Identity.User", null)
+                        .WithMany()
+                        .HasForeignKey("PreparedByUserId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Darwin.Domain.Entities.Orders.Shipment", null)
+                        .WithMany()
+                        .HasForeignKey("ShipmentId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Darwin.Domain.Entities.Identity.User", null)
+                        .WithMany()
+                        .HasForeignKey("ShippedByUserId")
+                        .OnDelete(DeleteBehavior.Restrict);
+                });
+
+            modelBuilder.Entity("Darwin.Domain.Entities.Sales.DeliveryNoteLine", b =>
+                {
+                    b.HasOne("Darwin.Domain.Entities.Sales.DeliveryNote", null)
+                        .WithMany("Lines")
+                        .HasForeignKey("DeliveryNoteId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Darwin.Domain.Entities.Sales.ReturnOrder", b =>
+                {
+                    b.HasOne("Darwin.Domain.Entities.Identity.User", null)
+                        .WithMany()
+                        .HasForeignKey("ApprovedByUserId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Darwin.Domain.Entities.Businesses.Business", null)
+                        .WithMany()
+                        .HasForeignKey("BusinessId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Darwin.Domain.Entities.Identity.User", null)
+                        .WithMany()
+                        .HasForeignKey("CancelledByUserId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Darwin.Domain.Entities.Identity.User", null)
+                        .WithMany()
+                        .HasForeignKey("ClosedByUserId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Darwin.Domain.Entities.CRM.Customer", null)
+                        .WithMany()
+                        .HasForeignKey("CustomerId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Darwin.Domain.Entities.Identity.User", null)
+                        .WithMany()
+                        .HasForeignKey("InspectedByUserId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Darwin.Domain.Entities.CRM.Invoice", null)
+                        .WithMany()
+                        .HasForeignKey("InvoiceId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Darwin.Domain.Entities.Orders.Order", null)
+                        .WithMany()
+                        .HasForeignKey("OrderId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Darwin.Domain.Entities.Identity.User", null)
+                        .WithMany()
+                        .HasForeignKey("ReceivedByUserId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Darwin.Domain.Entities.Identity.User", null)
+                        .WithMany()
+                        .HasForeignKey("RefundReadyByUserId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Darwin.Domain.Entities.Identity.User", null)
+                        .WithMany()
+                        .HasForeignKey("RefundedByUserId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Darwin.Domain.Entities.Identity.User", null)
+                        .WithMany()
+                        .HasForeignKey("RejectedByUserId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Darwin.Domain.Entities.Identity.User", null)
+                        .WithMany()
+                        .HasForeignKey("RequestedByUserId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Darwin.Domain.Entities.Identity.User", null)
+                        .WithMany()
+                        .HasForeignKey("ReturnShipmentQueuedByUserId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Darwin.Domain.Entities.Orders.Shipment", null)
+                        .WithMany()
+                        .HasForeignKey("ShipmentId")
+                        .OnDelete(DeleteBehavior.Restrict);
+                });
+
+            modelBuilder.Entity("Darwin.Domain.Entities.Sales.ReturnOrderLine", b =>
+                {
+                    b.HasOne("Darwin.Domain.Entities.Orders.OrderLine", null)
+                        .WithMany()
+                        .HasForeignKey("OrderLineId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Darwin.Domain.Entities.Inventory.Warehouse", null)
+                        .WithMany()
+                        .HasForeignKey("RestockWarehouseId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Darwin.Domain.Entities.Sales.ReturnOrder", null)
+                        .WithMany("Lines")
+                        .HasForeignKey("ReturnOrderId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Darwin.Domain.Entities.Orders.ShipmentLine", null)
+                        .WithMany()
+                        .HasForeignKey("ShipmentLineId")
+                        .OnDelete(DeleteBehavior.Restrict);
+                });
+
+            modelBuilder.Entity("Darwin.Domain.Entities.Sales.ReturnOrderRefundLink", b =>
+                {
+                    b.HasOne("Darwin.Domain.Entities.Orders.Refund", null)
+                        .WithMany()
+                        .HasForeignKey("RefundId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Darwin.Domain.Entities.Sales.ReturnOrder", null)
+                        .WithMany("RefundLinks")
+                        .HasForeignKey("ReturnOrderId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Darwin.Domain.Entities.Sales.SalesQuote", b =>
+                {
+                    b.HasOne("Darwin.Domain.Entities.Identity.User", null)
+                        .WithMany()
+                        .HasForeignKey("AcceptedByUserId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Darwin.Domain.Entities.Businesses.Business", null)
+                        .WithMany()
+                        .HasForeignKey("BusinessId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Darwin.Domain.Entities.Identity.User", null)
+                        .WithMany()
+                        .HasForeignKey("ConvertedByUserId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Darwin.Domain.Entities.Orders.Order", null)
+                        .WithMany()
+                        .HasForeignKey("ConvertedOrderId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Darwin.Domain.Entities.CRM.Customer", null)
+                        .WithMany()
+                        .HasForeignKey("CustomerId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Darwin.Domain.Entities.CRM.Opportunity", null)
+                        .WithMany()
+                        .HasForeignKey("OpportunityId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Darwin.Domain.Entities.Identity.User", null)
+                        .WithMany()
+                        .HasForeignKey("OwnerUserId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Darwin.Domain.Entities.Identity.User", null)
+                        .WithMany()
+                        .HasForeignKey("PreparedByUserId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Darwin.Domain.Entities.Identity.User", null)
+                        .WithMany()
+                        .HasForeignKey("RejectedByUserId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Darwin.Domain.Entities.Identity.User", null)
+                        .WithMany()
+                        .HasForeignKey("SentByUserId")
+                        .OnDelete(DeleteBehavior.Restrict);
+                });
+
+            modelBuilder.Entity("Darwin.Domain.Entities.Sales.SalesQuoteLine", b =>
+                {
+                    b.HasOne("Darwin.Domain.Entities.Sales.SalesQuote", null)
+                        .WithMany("Lines")
+                        .HasForeignKey("SalesQuoteId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("Darwin.Domain.Entities.Shipping.ShippingRate", b =>
                 {
                     b.HasOne("Darwin.Domain.Entities.Shipping.ShippingMethod", null)
@@ -8938,9 +18201,39 @@ namespace Darwin.Infrastructure.SqlServer.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("Darwin.Domain.Entities.Billing.BankReconciliationMatch", b =>
+                {
+                    b.Navigation("Lines");
+                });
+
+            modelBuilder.Entity("Darwin.Domain.Entities.Billing.BankStatementImport", b =>
+                {
+                    b.Navigation("Lines");
+                });
+
+            modelBuilder.Entity("Darwin.Domain.Entities.Billing.FinanceExportBatch", b =>
+                {
+                    b.Navigation("Attempts");
+                });
+
             modelBuilder.Entity("Darwin.Domain.Entities.Billing.JournalEntry", b =>
                 {
                     b.Navigation("Lines");
+                });
+
+            modelBuilder.Entity("Darwin.Domain.Entities.Billing.SupplierAdvance", b =>
+                {
+                    b.Navigation("Applications");
+                });
+
+            modelBuilder.Entity("Darwin.Domain.Entities.Billing.SupplierInvoice", b =>
+                {
+                    b.Navigation("Lines");
+                });
+
+            modelBuilder.Entity("Darwin.Domain.Entities.Billing.SupplierPayment", b =>
+                {
+                    b.Navigation("Allocations");
                 });
 
             modelBuilder.Entity("Darwin.Domain.Entities.Businesses.Business", b =>
@@ -9075,6 +18368,56 @@ namespace Darwin.Infrastructure.SqlServer.Migrations
                     b.Navigation("OptionValues");
                 });
 
+            modelBuilder.Entity("Darwin.Domain.Entities.Foundation.CustomFieldDefinition", b =>
+                {
+                    b.Navigation("Values");
+                });
+
+            modelBuilder.Entity("Darwin.Domain.Entities.HumanResources.Department", b =>
+                {
+                    b.Navigation("Children");
+                });
+
+            modelBuilder.Entity("Darwin.Domain.Entities.HumanResources.Employee", b =>
+                {
+                    b.Navigation("EmploymentContracts");
+                });
+
+            modelBuilder.Entity("Darwin.Domain.Entities.HumanResources.PayrollPayment", b =>
+                {
+                    b.Navigation("Allocations");
+                });
+
+            modelBuilder.Entity("Darwin.Domain.Entities.HumanResources.PayrollPeriod", b =>
+                {
+                    b.Navigation("Lines");
+                });
+
+            modelBuilder.Entity("Darwin.Domain.Entities.HumanResources.PayrollRuleSet", b =>
+                {
+                    b.Navigation("Components");
+                });
+
+            modelBuilder.Entity("Darwin.Domain.Entities.HumanResources.PayrollRun", b =>
+                {
+                    b.Navigation("Lines");
+                });
+
+            modelBuilder.Entity("Darwin.Domain.Entities.HumanResources.PayrollRunLine", b =>
+                {
+                    b.Navigation("Components");
+                });
+
+            modelBuilder.Entity("Darwin.Domain.Entities.HumanResources.Timesheet", b =>
+                {
+                    b.Navigation("Lines");
+                });
+
+            modelBuilder.Entity("Darwin.Domain.Entities.HumanResources.WorkSchedule", b =>
+                {
+                    b.Navigation("Exceptions");
+                });
+
             modelBuilder.Entity("Darwin.Domain.Entities.Identity.Role", b =>
                 {
                     b.Navigation("RolePermissions");
@@ -9103,7 +18446,44 @@ namespace Darwin.Infrastructure.SqlServer.Migrations
                     b.Navigation("UserRoles");
                 });
 
+            modelBuilder.Entity("Darwin.Domain.Entities.Integration.ExternalSystem", b =>
+                {
+                    b.Navigation("References");
+                });
+
+            modelBuilder.Entity("Darwin.Domain.Entities.Integration.SyncState", b =>
+                {
+                    b.Navigation("Conflicts");
+                });
+
+            modelBuilder.Entity("Darwin.Domain.Entities.Inventory.GoodsReceipt", b =>
+                {
+                    b.Navigation("Lines");
+                });
+
+            modelBuilder.Entity("Darwin.Domain.Entities.Inventory.GoodsReceiptLine", b =>
+                {
+                    b.Navigation("Identities");
+                });
+
+            modelBuilder.Entity("Darwin.Domain.Entities.Inventory.HandlingUnit", b =>
+                {
+                    b.Navigation("Children");
+
+                    b.Navigation("Contents");
+                });
+
             modelBuilder.Entity("Darwin.Domain.Entities.Inventory.PurchaseOrder", b =>
+                {
+                    b.Navigation("Lines");
+                });
+
+            modelBuilder.Entity("Darwin.Domain.Entities.Inventory.StockCountLine", b =>
+                {
+                    b.Navigation("Identities");
+                });
+
+            modelBuilder.Entity("Darwin.Domain.Entities.Inventory.StockCountSession", b =>
                 {
                     b.Navigation("Lines");
                 });
@@ -9113,14 +18493,38 @@ namespace Darwin.Infrastructure.SqlServer.Migrations
                     b.Navigation("Lines");
                 });
 
+            modelBuilder.Entity("Darwin.Domain.Entities.Inventory.StockTransferLine", b =>
+                {
+                    b.Navigation("Identities");
+                });
+
             modelBuilder.Entity("Darwin.Domain.Entities.Inventory.Supplier", b =>
                 {
+                    b.Navigation("Contacts");
+
                     b.Navigation("PurchaseOrders");
                 });
 
             modelBuilder.Entity("Darwin.Domain.Entities.Inventory.Warehouse", b =>
                 {
+                    b.Navigation("Locations");
+
                     b.Navigation("StockLevels");
+                });
+
+            modelBuilder.Entity("Darwin.Domain.Entities.Inventory.WarehouseLocation", b =>
+                {
+                    b.Navigation("Children");
+                });
+
+            modelBuilder.Entity("Darwin.Domain.Entities.Inventory.WarehouseTask", b =>
+                {
+                    b.Navigation("Lines");
+                });
+
+            modelBuilder.Entity("Darwin.Domain.Entities.Inventory.WarehouseTaskLine", b =>
+                {
+                    b.Navigation("Identities");
                 });
 
             modelBuilder.Entity("Darwin.Domain.Entities.Loyalty.LoyaltyAccount", b =>
@@ -9148,6 +18552,28 @@ namespace Darwin.Infrastructure.SqlServer.Migrations
                 {
                     b.Navigation("CarrierEvents");
 
+                    b.Navigation("Lines");
+                });
+
+            modelBuilder.Entity("Darwin.Domain.Entities.Sales.CreditNote", b =>
+                {
+                    b.Navigation("Lines");
+                });
+
+            modelBuilder.Entity("Darwin.Domain.Entities.Sales.DeliveryNote", b =>
+                {
+                    b.Navigation("Lines");
+                });
+
+            modelBuilder.Entity("Darwin.Domain.Entities.Sales.ReturnOrder", b =>
+                {
+                    b.Navigation("Lines");
+
+                    b.Navigation("RefundLinks");
+                });
+
+            modelBuilder.Entity("Darwin.Domain.Entities.Sales.SalesQuote", b =>
+                {
                     b.Navigation("Lines");
                 });
 

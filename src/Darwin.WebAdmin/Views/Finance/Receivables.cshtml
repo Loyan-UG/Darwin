@@ -1,0 +1,94 @@
+@model Darwin.Application.Billing.DTOs.FinanceReceivablesPageDto
+@inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
+@{
+    ViewData["Title"] = T.T("FinanceReceivables");
+    string FinanceOverviewUrl(Guid? businessId = null) => Url.Action("Index", "Finance", new { businessId }) ?? string.Empty;
+    string ReceivablesUrl(Guid? businessId = null, string? q = null, int page = 1) => Url.Action("Receivables", "Finance", new { businessId, q, page, pageSize = Model.PageSize }) ?? string.Empty;
+    string PostingsUrl(Guid? businessId = null) => Url.Action("Postings", "Finance", new { businessId }) ?? string.Empty;
+    string AccountMappingsUrl(Guid? businessId = null) => Url.Action("AccountMappings", "Finance", new { businessId }) ?? string.Empty;
+    string ExportsUrl(Guid? businessId = null) => Url.Action("Exports", "Finance", new { businessId }) ?? string.Empty;
+    string Money(long minor) => $"{Model.Currency} {(minor / 100.0M):0.00}";
+    var totalPages = Math.Max(1, (int)Math.Ceiling(Model.Total / (double)Math.Max(1, Model.PageSize)));
+}
+
+<div id="finance-receivables-workspace-shell">
+<partial name="~/Views/Shared/_Alerts.cshtml" />
+<div class="d-flex justify-content-between align-items-start gap-3 mb-4">
+    <div>
+        <h1 class="mb-0"><i class="fa-solid fa-file-invoice-dollar"></i> @T.T("FinanceReceivables")</h1>
+        <div class="text-muted small mt-1">@Model.BusinessName</div>
+    </div>
+    <div class="d-flex gap-2 flex-wrap">
+        <a asp-action="Index" asp-route-businessId="@Model.BusinessId" hx-get="@FinanceOverviewUrl(Model.BusinessId)" hx-target="#finance-receivables-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-outline-secondary">@T.T("Overview")</a>
+        <a asp-action="Postings" asp-route-businessId="@Model.BusinessId" hx-get="@PostingsUrl(Model.BusinessId)" hx-target="#finance-receivables-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-outline-primary">@T.T("FinancePostings")</a>
+        <a asp-action="AccountMappings" asp-route-businessId="@Model.BusinessId" hx-get="@AccountMappingsUrl(Model.BusinessId)" hx-target="#finance-receivables-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-outline-primary">@T.T("FinanceAccountMappings")</a>
+        <a asp-action="Exports" asp-route-businessId="@Model.BusinessId" hx-get="@ExportsUrl(Model.BusinessId)" hx-target="#finance-receivables-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-outline-primary">@T.T("FinanceExports")</a>
+    </div>
+</div>
+
+<form method="get" asp-action="Receivables" class="row g-2 align-items-end mb-3">
+    <div class="col-md-4">
+        <label class="form-label small text-muted">@T.T("Business")</label>
+        <select name="businessId" class="form-select">
+            @foreach (var business in Model.BusinessOptions)
+            {
+                <option value="@business.Id" selected="@(Model.BusinessId == business.Id)">@business.Name</option>
+            }
+        </select>
+    </div>
+    <div class="col-md-5">
+        <label class="form-label small text-muted">@T.T("Search")</label>
+        <input name="q" value="@Model.Query" class="form-control" />
+    </div>
+    <div class="col-md-3">
+        <button type="submit" class="btn btn-primary w-100">@T.T("Apply")</button>
+    </div>
+</form>
+
+<div class="row g-3 mb-4">
+    <div class="col-md-4"><div class="border rounded p-3 h-100"><div class="text-muted small">@T.T("OpenReceivables")</div><div class="fs-4 fw-semibold">@Money(Model.OpenBalanceMinor)</div></div></div>
+    <div class="col-md-4"><div class="border rounded p-3 h-100"><div class="text-muted small">@T.T("ReceivablesDebit")</div><div class="fs-4 fw-semibold">@Money(Model.TotalDebitMinor)</div></div></div>
+    <div class="col-md-4"><div class="border rounded p-3 h-100"><div class="text-muted small">@T.T("ReceivablesCredit")</div><div class="fs-4 fw-semibold">@Money(Model.TotalCreditMinor)</div></div></div>
+</div>
+
+@if (!string.IsNullOrWhiteSpace(Model.ReadinessMessage))
+{
+    <div class="alert alert-warning">@T.T("FinanceReceivablesReadiness") <span class="small">@Model.ReadinessMessage</span></div>
+}
+
+<div class="border rounded p-3">
+    <div class="table-responsive">
+        <table class="table table-sm align-middle mb-0">
+            <thead><tr><th>@T.T("Document")</th><th>@T.T("Source")</th><th class="text-end">@T.T("Debit")</th><th class="text-end">@T.T("Credit")</th><th class="text-end">@T.T("OpenBalance")</th><th>@T.T("LastEntry")</th></tr></thead>
+            <tbody>
+            @if (Model.Items.Count == 0)
+            {
+                <tr><td colspan="6" class="text-center text-muted">@T.T("NoOpenReceivables")</td></tr>
+            }
+            else
+            {
+                foreach (var item in Model.Items)
+                {
+                    <tr>
+                        <td>@(!string.IsNullOrWhiteSpace(item.SourceDocumentNumber) ? item.SourceDocumentNumber : item.SourceEntityId?.ToString("N"))</td>
+                        <td>@item.SourceEntityType</td>
+                        <td class="text-end">@Money(item.DebitMinor)</td>
+                        <td class="text-end">@Money(item.CreditMinor)</td>
+                        <td class="text-end fw-semibold">@Money(item.OpenBalanceMinor)</td>
+                        <td>@item.LastEntryDateUtc.ToString("yyyy-MM-dd")</td>
+                    </tr>
+                }
+            }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="d-flex justify-content-between align-items-center mt-3">
+    <div class="text-muted small">@string.Format(T.T("PaginationSummary"), Model.Page, totalPages, Model.Total)</div>
+    <div class="btn-group">
+        <a class="btn btn-outline-secondary @(Model.Page <= 1 ? "disabled" : string.Empty)" href="@ReceivablesUrl(Model.BusinessId, Model.Query, Model.Page - 1)">@T.T("Previous")</a>
+        <a class="btn btn-outline-secondary @(Model.Page >= totalPages ? "disabled" : string.Empty)" href="@ReceivablesUrl(Model.BusinessId, Model.Query, Model.Page + 1)">@T.T("Next")</a>
+    </div>
+</div>
+</div>

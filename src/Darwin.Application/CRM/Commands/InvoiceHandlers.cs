@@ -1,9 +1,11 @@
 using Darwin.Application.Abstractions.Invoicing;
 using Darwin.Application.Abstractions.Persistence;
 using Darwin.Application.Abstractions.Services;
+using Darwin.Application.Billing.Services;
 using Darwin.Application.Billing.Queries;
 using Darwin.Application.CRM.Services;
 using Darwin.Application.CRM.DTOs;
+using Darwin.Application.Sales.Services;
 using Darwin.Domain.Entities.Billing;
 using Darwin.Domain.Entities.Businesses;
 using Darwin.Domain.Entities.CRM;
@@ -24,16 +26,23 @@ namespace Darwin.Application.CRM.Commands
         private readonly IValidator<InvoiceEditDto> _validator;
         private readonly IClock _clock;
         private readonly IStringLocalizer<ValidationResource> _localizer;
+        private readonly SalesLifecycleEventService? _salesEvents;
+        private readonly FinanceReceivablesPostingService? _financePosting;
 
         public UpdateInvoiceHandler(
             IAppDbContext db,
             IValidator<InvoiceEditDto> validator,
-            IStringLocalizer<ValidationResource>? localizer = null, IClock? clock = null)
+            IStringLocalizer<ValidationResource>? localizer = null,
+            IClock? clock = null,
+            SalesLifecycleEventService? salesEvents = null,
+            FinanceReceivablesPostingService? financePosting = null)
         {
             _db = db ?? throw new ArgumentNullException(nameof(db));
             _validator = validator ?? throw new ArgumentNullException(nameof(validator));
             _clock = clock ?? DefaultHandlerDependencies.DefaultClock;
             _localizer = localizer ?? DefaultHandlerDependencies.DefaultLocalizer;
+            _salesEvents = salesEvents;
+            _financePosting = financePosting;
         }
 
         public async Task HandleAsync(InvoiceEditDto dto, CancellationToken ct = default)
@@ -57,6 +66,8 @@ namespace Darwin.Application.CRM.Commands
             }
 
             var previousPaymentId = invoice.PaymentId;
+            var previousStatus = invoice.Status;
+            Payment? linkedPaymentForPosting = null;
             EnsureIssuedInvoiceFieldsUnchanged(invoice, dto, _localizer);
 
             if (dto.CustomerId.HasValue)
@@ -93,10 +104,13 @@ namespace Darwin.Application.CRM.Commands
                 {
                     payment.CustomerId = dto.CustomerId;
                 }
+
+                payment.BusinessId ??= dto.BusinessId;
+                linkedPaymentForPosting = payment;
             }
 
             var wasDraft = invoice.Status == InvoiceStatus.Draft;
-            if (wasDraft && dto.Status is InvoiceStatus.Open or InvoiceStatus.Paid)
+            if (wasDraft && dto.Status is (InvoiceStatus.Open or InvoiceStatus.Paid))
             {
                 await InvoiceIssueReadinessGuard.ValidateAsync(_db, invoice, dto.CustomerId, _localizer, ct).ConfigureAwait(false);
             }
@@ -113,7 +127,7 @@ namespace Darwin.Application.CRM.Commands
             invoice.DueDateUtc = dto.DueDateUtc;
             var nowUtc = _clock.UtcNow;
             invoice.PaidAtUtc = dto.Status == Darwin.Domain.Enums.InvoiceStatus.Paid ? dto.PaidAtUtc ?? nowUtc : dto.PaidAtUtc;
-            if (wasDraft && dto.Status is InvoiceStatus.Open or InvoiceStatus.Paid)
+            if (wasDraft && dto.Status is (InvoiceStatus.Open or InvoiceStatus.Paid))
             {
                 await InvoiceIssueSnapshotWriter.CaptureIfMissingAsync(_db, invoice, nowUtc, ct).ConfigureAwait(false);
             }
@@ -127,6 +141,52 @@ namespace Darwin.Application.CRM.Commands
                 if (previousPayment is not null && previousPayment.InvoiceId == invoice.Id)
                 {
                     previousPayment.InvoiceId = null;
+                }
+            }
+
+            if (_salesEvents is not null && previousStatus != invoice.Status)
+            {
+                var eventResult = await _salesEvents.RecordInvoiceStatusChangedAsync(
+                    invoice,
+                    previousStatus,
+                    invoice.Status,
+                    nowUtc,
+                    ct)
+                    .ConfigureAwait(false);
+                if (!eventResult.Succeeded)
+                {
+                    throw new ValidationException(eventResult.Error);
+                }
+            }
+
+            if (_financePosting is not null && previousStatus == InvoiceStatus.Draft && invoice.Status is (InvoiceStatus.Open or InvoiceStatus.Paid))
+            {
+                var invoicePosting = await _financePosting.PostInvoiceIssuedAsync(invoice, nowUtc, ct).ConfigureAwait(false);
+                if (!invoicePosting.Succeeded)
+                {
+                    throw new ValidationException(invoicePosting.Error);
+                }
+            }
+
+            if (_financePosting is not null && previousStatus != InvoiceStatus.Draft && invoice.Status == InvoiceStatus.Cancelled)
+            {
+                var reversalPosting = await _financePosting.PostInvoiceCancelledAsync(invoice, nowUtc, ct).ConfigureAwait(false);
+                if (!reversalPosting.Succeeded)
+                {
+                    throw new ValidationException(reversalPosting.Error);
+                }
+            }
+
+            if (_financePosting is not null && linkedPaymentForPosting is not null)
+            {
+                var paymentPosting = await _financePosting.PostPaymentRecordedAsync(
+                    linkedPaymentForPosting,
+                    linkedPaymentForPosting.PaidAtUtc ?? nowUtc,
+                    ct)
+                    .ConfigureAwait(false);
+                if (!paymentPosting.Succeeded)
+                {
+                    throw new ValidationException(paymentPosting.Error);
                 }
             }
 
@@ -177,16 +237,23 @@ namespace Darwin.Application.CRM.Commands
         private readonly IValidator<InvoiceStatusTransitionDto> _validator;
         private readonly IClock _clock;
         private readonly IStringLocalizer<ValidationResource> _localizer;
+        private readonly SalesLifecycleEventService? _salesEvents;
+        private readonly FinanceReceivablesPostingService? _financePosting;
 
         public TransitionInvoiceStatusHandler(
             IAppDbContext db,
             IValidator<InvoiceStatusTransitionDto> validator,
-            IStringLocalizer<ValidationResource>? localizer = null, IClock? clock = null)
+            IStringLocalizer<ValidationResource>? localizer = null,
+            IClock? clock = null,
+            SalesLifecycleEventService? salesEvents = null,
+            FinanceReceivablesPostingService? financePosting = null)
         {
             _db = db ?? throw new ArgumentNullException(nameof(db));
             _validator = validator ?? throw new ArgumentNullException(nameof(validator));
             _clock = clock ?? DefaultHandlerDependencies.DefaultClock;
             _localizer = localizer ?? DefaultHandlerDependencies.DefaultLocalizer;
+            _salesEvents = salesEvents;
+            _financePosting = financePosting;
         }
 
         public async Task HandleAsync(InvoiceStatusTransitionDto dto, CancellationToken ct = default)
@@ -214,6 +281,7 @@ namespace Darwin.Application.CRM.Commands
                     .FirstOrDefaultAsync(x => x.Id == invoice.PaymentId.Value, ct)
                     .ConfigureAwait(false)
                 : null;
+            var previousStatus = invoice.Status;
 
             switch (dto.TargetStatus)
             {
@@ -288,6 +356,52 @@ namespace Darwin.Application.CRM.Commands
 
                 default:
                     throw new InvalidOperationException(_localizer["UnsupportedInvoiceStatusTransition"]);
+            }
+
+            if (_salesEvents is not null && previousStatus != invoice.Status)
+            {
+                var eventResult = await _salesEvents.RecordInvoiceStatusChangedAsync(
+                    invoice,
+                    previousStatus,
+                    invoice.Status,
+                    _clock.UtcNow,
+                    ct)
+                    .ConfigureAwait(false);
+                if (!eventResult.Succeeded)
+                {
+                    throw new ValidationException(eventResult.Error);
+                }
+            }
+
+            if (_financePosting is not null)
+            {
+                if (previousStatus == InvoiceStatus.Draft && invoice.Status is (InvoiceStatus.Open or InvoiceStatus.Paid))
+                {
+                    var invoicePosting = await _financePosting.PostInvoiceIssuedAsync(invoice, _clock.UtcNow, ct).ConfigureAwait(false);
+                    if (!invoicePosting.Succeeded)
+                    {
+                        throw new ValidationException(invoicePosting.Error);
+                    }
+                }
+
+                if (previousStatus != InvoiceStatus.Draft && invoice.Status == InvoiceStatus.Cancelled)
+                {
+                    var reversalPosting = await _financePosting.PostInvoiceCancelledAsync(invoice, _clock.UtcNow, ct).ConfigureAwait(false);
+                    if (!reversalPosting.Succeeded)
+                    {
+                        throw new ValidationException(reversalPosting.Error);
+                    }
+                }
+
+                if (payment is not null)
+                {
+                    var paymentPosting = await _financePosting.PostPaymentRecordedAsync(payment, payment.PaidAtUtc ?? _clock.UtcNow, ct)
+                        .ConfigureAwait(false);
+                    if (!paymentPosting.Succeeded)
+                    {
+                        throw new ValidationException(paymentPosting.Error);
+                    }
+                }
             }
 
             try
@@ -379,16 +493,23 @@ namespace Darwin.Application.CRM.Commands
         private readonly IValidator<InvoiceRefundCreateDto> _validator;
         private readonly IClock _clock;
         private readonly IStringLocalizer<ValidationResource> _localizer;
+        private readonly SalesLifecycleEventService? _salesEvents;
+        private readonly FinanceReceivablesPostingService? _financePosting;
 
         public CreateInvoiceRefundHandler(
             IAppDbContext db,
             IValidator<InvoiceRefundCreateDto> validator,
-            IStringLocalizer<ValidationResource>? localizer = null, IClock? clock = null)
+            IStringLocalizer<ValidationResource>? localizer = null,
+            IClock? clock = null,
+            SalesLifecycleEventService? salesEvents = null,
+            FinanceReceivablesPostingService? financePosting = null)
         {
             _db = db ?? throw new ArgumentNullException(nameof(db));
             _validator = validator ?? throw new ArgumentNullException(nameof(validator));
             _clock = clock ?? DefaultHandlerDependencies.DefaultClock;
             _localizer = localizer ?? DefaultHandlerDependencies.DefaultLocalizer;
+            _salesEvents = salesEvents;
+            _financePosting = financePosting;
         }
 
         public async Task<Guid> HandleAsync(InvoiceRefundCreateDto dto, CancellationToken ct = default)
@@ -429,6 +550,7 @@ namespace Darwin.Application.CRM.Commands
             {
                 throw new ValidationException(_localizer["OnlyCapturedOrCompletedPaymentsCanBeRefunded"]);
             }
+            var previousInvoiceStatus = invoice.Status;
 
             if (!string.Equals(payment.Currency, dto.Currency, StringComparison.OrdinalIgnoreCase) ||
                 !string.Equals(invoice.Currency, dto.Currency, StringComparison.OrdinalIgnoreCase))
@@ -478,6 +600,62 @@ namespace Darwin.Application.CRM.Commands
                 payment.PaidAtUtc = null;
                 invoice.Status = InvoiceStatus.Cancelled;
                 invoice.PaidAtUtc = null;
+            }
+
+            if (_salesEvents is not null)
+            {
+                var refundEvent = await _salesEvents.RecordRefundCreatedAsync(
+                    refund,
+                    payment,
+                    order: null,
+                    invoice,
+                    _clock.UtcNow,
+                    ct)
+                    .ConfigureAwait(false);
+                if (!refundEvent.Succeeded)
+                {
+                    throw new ValidationException(refundEvent.Error);
+                }
+
+                if (previousInvoiceStatus != invoice.Status)
+                {
+                    var invoiceEvent = await _salesEvents.RecordInvoiceStatusChangedAsync(
+                        invoice,
+                        previousInvoiceStatus,
+                        invoice.Status,
+                        _clock.UtcNow,
+                        ct)
+                        .ConfigureAwait(false);
+                    if (!invoiceEvent.Succeeded)
+                    {
+                        throw new ValidationException(invoiceEvent.Error);
+                    }
+                }
+            }
+
+            if (_financePosting is not null)
+            {
+                payment.BusinessId ??= invoice.BusinessId;
+                var refundPosting = await _financePosting.PostRefundRecordedAsync(
+                    refund,
+                    payment,
+                    refund.CompletedAtUtc ?? _clock.UtcNow,
+                    ct)
+                    .ConfigureAwait(false);
+                if (!refundPosting.Succeeded)
+                {
+                    throw new ValidationException(refundPosting.Error);
+                }
+
+                if (previousInvoiceStatus != InvoiceStatus.Draft && invoice.Status == InvoiceStatus.Cancelled)
+                {
+                    var reversalPosting = await _financePosting.PostInvoiceCancelledAsync(invoice, _clock.UtcNow, ct)
+                        .ConfigureAwait(false);
+                    if (!reversalPosting.Succeeded)
+                    {
+                        throw new ValidationException(reversalPosting.Error);
+                    }
+                }
             }
 
             try

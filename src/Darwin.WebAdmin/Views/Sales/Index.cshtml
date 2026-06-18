@@ -1,0 +1,101 @@
+@model Darwin.WebAdmin.ViewModels.Sales.SalesOverviewVm
+@inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
+@{
+    ViewData["Title"] = T.T("SalesOverviewTitle");
+    string SalesOverviewUrl() => Url.Action("Index", "Sales") ?? string.Empty;
+    string SalesQuotesUrl() => Url.Action("Quotes", "Sales") ?? string.Empty;
+    string SalesOrdersUrl() => Url.Action("Orders", "Sales") ?? string.Empty;
+    string SalesInvoicesUrl() => Url.Action("Invoices", "Sales") ?? string.Empty;
+    string ReturnOrdersUrl() => Url.Action("ReturnOrders", "Sales") ?? string.Empty;
+    string CreditNotesUrl() => Url.Action("CreditNotes", "Sales") ?? string.Empty;
+    string SalesOrdersFilterUrl(string filter) => Url.Action("Orders", "Sales", new { filter }) ?? string.Empty;
+    string SalesInvoicesFilterUrl(string filter) => Url.Action("Invoices", "Sales", new { filter }) ?? string.Empty;
+    string ReturnOrdersFilterUrl(string filter) => Url.Action("ReturnOrders", "Sales", new { filter }) ?? string.Empty;
+    string Money(long minor) => $"{Model.Currency} {(minor / 100.0M):0.00}";
+    var attentionCount = Model.QuoteAttentionCount + Model.PaymentAttentionCount + Model.FulfillmentAttentionCount + Model.InvoiceAttentionCount + Model.ReturnOrderAttentionCount;
+    var openOrdersUrl = SalesOrdersFilterUrl("Open");
+    var fulfillmentOrdersUrl = SalesOrdersFilterUrl("FulfillmentAttention");
+    var overdueInvoicesUrl = SalesInvoicesFilterUrl("Overdue");
+    var returnOrdersAttentionUrl = ReturnOrdersFilterUrl("Open");
+}
+
+<div id="sales-overview-workspace-shell">
+<partial name="~/Views/Shared/_Alerts.cshtml" />
+<div class="d-flex justify-content-between align-items-start gap-3 mb-4">
+    <div>
+        <h1 class="mb-0"><i class="fa-solid fa-chart-line"></i> @T.T("SalesOverviewTitle")</h1>
+        <div class="text-muted small mt-1">@T.T("SalesOverviewSubtitle")</div>
+    </div>
+    <div class="d-flex gap-2 flex-wrap">
+        <a asp-action="Orders" hx-get="@SalesOrdersUrl()" hx-target="#sales-overview-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-outline-primary">@T.T("SalesOrders")</a>
+        <a asp-action="Quotes" hx-get="@SalesQuotesUrl()" hx-target="#sales-overview-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-outline-primary">@T.T("SalesQuotes")</a>
+        <a asp-action="ReturnOrders" hx-get="@ReturnOrdersUrl()" hx-target="#sales-overview-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-outline-primary">@T.T("ReturnOrders")</a>
+        <a asp-action="CreditNotes" hx-get="@CreditNotesUrl()" hx-target="#sales-overview-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-outline-primary">@T.T("CreditNotes")</a>
+        <a asp-action="Invoices" hx-get="@SalesInvoicesUrl()" hx-target="#sales-overview-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-outline-secondary">@T.T("SalesInvoices")</a>
+    </div>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-md-4 col-xl-2"><div class="border rounded p-3 h-100"><div class="text-muted small">@T.T("SalesOrders")</div><div class="fs-4 fw-semibold">@Model.OrderCount</div></div></div>
+    <div class="col-md-4 col-xl-2"><div class="border rounded p-3 h-100"><div class="text-muted small">@T.T("SalesQuotes")</div><div class="fs-4 fw-semibold">@Model.QuoteCount</div></div></div>
+    <div class="col-md-4 col-xl-2"><div class="border rounded p-3 h-100"><div class="text-muted small">@T.T("ReturnOrders")</div><div class="fs-4 fw-semibold">@Model.ReturnOrderCount</div></div></div>
+    <div class="col-md-4 col-xl-2"><div class="border rounded p-3 h-100"><div class="text-muted small">@T.T("GrossTotal")</div><div class="fs-4 fw-semibold">@Money(Model.GrossTotalMinor)</div></div></div>
+    <div class="col-md-4 col-xl-2"><div class="border rounded p-3 h-100"><div class="text-muted small">@T.T("TaxTotal")</div><div class="fs-4 fw-semibold">@Money(Model.TaxTotalMinor)</div></div></div>
+    <div class="col-md-4 col-xl-2"><div class="border rounded p-3 h-100"><div class="text-muted small">@T.T("SalesInvoices")</div><div class="fs-4 fw-semibold">@Model.InvoiceCount</div></div></div>
+    <div class="col-md-4 col-xl-2"><div class="border rounded p-3 h-100"><div class="text-muted small">@T.T("OpenInvoiceBalance")</div><div class="fs-4 fw-semibold">@Money(Model.OpenInvoiceBalanceMinor)</div></div></div>
+    <div class="col-md-4 col-xl-2"><div class="border rounded p-3 h-100"><div class="text-muted small">@T.T("NeedsAttention")</div><div class="fs-4 fw-semibold">@attentionCount</div></div></div>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-lg-7">
+        <div class="border rounded p-3 h-100">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h2 class="h6 mb-0">@T.T("SalesChannelBreakdown")</h2>
+                <a asp-action="Orders" hx-get="@SalesOrdersUrl()" hx-target="#sales-overview-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-sm btn-outline-secondary">@T.T("Open")</a>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-sm align-middle mb-0">
+                    <thead><tr><th>@T.T("SalesChannel")</th><th class="text-end">@T.T("Orders")</th><th class="text-end">@T.T("GrossTotal")</th></tr></thead>
+                    <tbody>
+                    @if (Model.ChannelBreakdown.Count == 0)
+                    {
+                        <tr><td colspan="3" class="text-center text-muted">@T.T("NoSalesDocuments")</td></tr>
+                    }
+                    else
+                    {
+                        foreach (var item in Model.ChannelBreakdown)
+                        {
+                            <tr>
+                                <td>@T.T($"SalesChannel{item.SalesChannel}")</td>
+                                <td class="text-end">@item.OrderCount</td>
+                                <td class="text-end">@Money(item.GrossTotalMinor)</td>
+                            </tr>
+                        }
+                    }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-5">
+        <div class="border rounded p-3 h-100">
+            <h2 class="h6 mb-3">@T.T("SalesAttention")</h2>
+            <div class="d-grid gap-2">
+                <a asp-action="Orders" asp-route-filter="Open" hx-get="@openOrdersUrl" hx-target="#sales-overview-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-outline-primary text-start">@T.T("PaymentIssues"): @Model.PaymentAttentionCount</a>
+                <a asp-action="Orders" asp-route-filter="FulfillmentAttention" hx-get="@fulfillmentOrdersUrl" hx-target="#sales-overview-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-outline-warning text-start">@T.T("FulfillmentAttention"): @Model.FulfillmentAttentionCount</a>
+                <a asp-action="Invoices" asp-route-filter="Overdue" hx-get="@overdueInvoicesUrl" hx-target="#sales-overview-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-outline-danger text-start">@T.T("SalesInvoiceAttention"): @Model.InvoiceAttentionCount</a>
+                <a asp-action="ReturnOrders" asp-route-filter="Open" hx-get="@returnOrdersAttentionUrl" hx-target="#sales-overview-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-outline-info text-start">@T.T("ReturnOrderAttention"): @Model.ReturnOrderAttentionCount</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="d-flex gap-2 flex-wrap">
+    <a asp-action="Index" hx-get="@SalesOverviewUrl()" hx-target="#sales-overview-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-outline-secondary">@T.T("Overview")</a>
+    <a asp-action="Quotes" hx-get="@SalesQuotesUrl()" hx-target="#sales-overview-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-outline-primary">@T.T("SalesQuotes")</a>
+    <a asp-action="Orders" hx-get="@SalesOrdersUrl()" hx-target="#sales-overview-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-outline-primary">@T.T("SalesOrders")</a>
+    <a asp-action="ReturnOrders" hx-get="@ReturnOrdersUrl()" hx-target="#sales-overview-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-outline-primary">@T.T("ReturnOrders")</a>
+    <a asp-action="CreditNotes" hx-get="@CreditNotesUrl()" hx-target="#sales-overview-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-outline-primary">@T.T("CreditNotes")</a>
+    <a asp-action="Invoices" hx-get="@SalesInvoicesUrl()" hx-target="#sales-overview-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-outline-primary">@T.T("SalesInvoices")</a>
+</div>
+</div>

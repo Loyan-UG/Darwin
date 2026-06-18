@@ -1,0 +1,74 @@
+@model Darwin.WebAdmin.ViewModels.Inventory.WarehouseLabelTemplatesListVm
+@inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
+@{
+    ViewData["Title"] = T.T("WarehouseLabelTemplates");
+}
+
+<h1 class="mb-3">@T.T("WarehouseLabelTemplates")</h1>
+
+<form method="get" asp-action="LabelTemplates" class="admin-filter-toolbar mb-3" hx-get="@Url.Action("LabelTemplates")" hx-target="#main-content" hx-push-url="true">
+    <select name="businessId" class="form-select" onchange="this.form.requestSubmit()">
+        @foreach (var item in Model.BusinessOptions)
+        {
+            <option value="@item.Value" selected="@item.Selected">@item.Text</option>
+        }
+    </select>
+    <select name="filter" class="form-select" onchange="this.form.requestSubmit()">
+        @foreach (var item in Model.FilterItems)
+        {
+            <option value="@item.Value" selected="@item.Selected">@item.Text</option>
+        }
+    </select>
+    <input type="text" name="q" value="@Model.Query" class="form-control" placeholder="@T.T("SearchTemplates")">
+    <button class="btn btn-primary" type="submit">@T.T("Filter")</button>
+    <a class="btn btn-outline-primary" asp-action="CreateLabelTemplate" asp-route-businessId="@Model.BusinessId" hx-get="@Url.Action("CreateLabelTemplate", new { businessId = Model.BusinessId })" hx-target="#main-content" hx-push-url="true">@T.T("NewWarehouseLabelTemplate")</a>
+</form>
+
+<div class="row g-3 mb-3">
+    <div class="col-md-4"><div class="admin-summary-tile"><span>@T.T("Total")</span><strong>@Model.Summary.TotalCount</strong></div></div>
+    <div class="col-md-4"><div class="admin-summary-tile"><span>@T.T("Active")</span><strong>@Model.Summary.ActiveCount</strong></div></div>
+    <div class="col-md-4"><div class="admin-summary-tile"><span>@T.T("Default")</span><strong>@Model.Summary.DefaultCount</strong></div></div>
+</div>
+
+<div class="table-responsive">
+    <table class="table table-sm align-middle">
+        <thead>
+        <tr>
+            <th>@T.T("Name")</th>
+            <th>@T.T("TemplateKey")</th>
+            <th>@T.T("Format")</th>
+            <th>@T.T("Size")</th>
+            <th>@T.T("Status")</th>
+            <th class="text-end">@T.T("Actions")</th>
+        </tr>
+        </thead>
+        <tbody>
+        @if (Model.Items.Count == 0)
+        {
+            <tr><td colspan="6" class="text-center text-muted">@T.T("NoWarehouseLabelTemplatesFound")</td></tr>
+        }
+        else
+        {
+            foreach (var item in Model.Items)
+            {
+                <tr>
+                    <td>
+                        <div class="fw-semibold">@item.Name</div>
+                        @if (item.IsDefault)
+                        {
+                            <span class="badge text-bg-primary">@T.T("Default")</span>
+                        }
+                    </td>
+                    <td><code>@item.TemplateKey</code></td>
+                    <td>@T.T(item.Format.ToString())</td>
+                    <td>@item.WidthMm x @item.HeightMm mm</td>
+                    <td><span class="badge @(item.Status == Darwin.Domain.Enums.WarehouseLabelTemplateStatus.Active ? "text-bg-success" : "text-bg-secondary")">@T.T(item.Status.ToString())</span></td>
+                    <td class="text-end">
+                        <a class="btn btn-sm btn-outline-primary" asp-action="EditLabelTemplate" asp-route-id="@item.Id" hx-get="@Url.Action("EditLabelTemplate", new { id = item.Id })" hx-target="#main-content" hx-push-url="true">@T.T("Edit")</a>
+                    </td>
+                </tr>
+            }
+        }
+        </tbody>
+    </table>
+</div>

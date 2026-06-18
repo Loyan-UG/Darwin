@@ -5,10 +5,10 @@ It is separate from `Darwin.WebAdmin`, which remains the operational back-office
 
 Current stack, from `package.json`:
 
-- Next.js 16.2.1
-- React 19.2.4
-- React DOM 19.2.4
-- TypeScript 5
+- Next.js 16.2.6
+- React 19.2.6
+- React DOM 19.2.6
+- TypeScript 6
 - Tailwind CSS 4
 
 ## Development
@@ -37,6 +37,7 @@ Run lint and tests:
 ```bash
 npm run lint
 npm run test
+npm audit
 ```
 
 Open [http://localhost:3000](http://localhost:3000).

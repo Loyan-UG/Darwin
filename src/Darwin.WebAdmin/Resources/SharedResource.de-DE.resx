@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <root>
   <resheader name="resmimetype">
     <value>text/microsoft-resx</value>
@@ -13890,16 +13890,691 @@
   <data name="VatValidationFormatHintNegative" xml:space="preserve">
     <value>Formathinweis: Diese USt-IdNr. passt nicht zum erwarteten Laendermuster. Behalten Sie sie in manueller Pruefung, bis ein offizieller Nachweis die richtige Entscheidung bestaetigt.</value>
   </data>
+  <data name="Sales" xml:space="preserve">
+    <value>Sales</value>
+  </data>
+  <data name="SalesOverviewTitle" xml:space="preserve">
+    <value>Sales-Uebersicht</value>
+  </data>
+  <data name="SalesOverviewSubtitle" xml:space="preserve">
+    <value>Kommerzielle Order- und Rechnungsleistung ueber aktuelle Sales-Dokumente.</value>
+  </data>
+  <data name="SalesOrders" xml:space="preserve">
+    <value>Sales Orders</value>
+  </data>
+  <data name="SalesInvoices" xml:space="preserve">
+    <value>Sales Rechnungen</value>
+  </data>
+  <data name="SalesOrder" xml:space="preserve">
+    <value>Sales Order</value>
+  </data>
+  <data name="SalesInvoice" xml:space="preserve">
+    <value>Sales Rechnung</value>
+  </data>
+  <data name="SalesOrdersSubtitle" xml:space="preserve">
+    <value>Read-only Sales-Sicht ueber aktuelle Order-Datensaetze.</value>
+  </data>
+  <data name="SalesInvoicesSubtitle" xml:space="preserve">
+    <value>Read-only Sales-Sicht ueber aktuelle Rechnungsdatensaetze.</value>
+  </data>
+  <data name="SalesOrderReadOnly" xml:space="preserve">
+    <value>Read-only Sales-Projektion; operative Aenderungen bleiben in Orders.</value>
+  </data>
+  <data name="SalesInvoiceReadOnly" xml:space="preserve">
+    <value>Read-only Sales-Projektion; Rechnungsoperationen bleiben in CRM- und Billing-Flows.</value>
+  </data>
+  <data name="SalesChannel" xml:space="preserve">
+    <value>Sales-Kanal</value>
+  </data>
+  <data name="SalesChannelAll" xml:space="preserve">
+    <value>Alle Kanaele</value>
+  </data>
+  <data name="SalesChannelUnknown" xml:space="preserve">
+    <value>Unbekannt</value>
+  </data>
+  <data name="SalesChannelWebStorefront" xml:space="preserve">
+    <value>Web Storefront</value>
+  </data>
+  <data name="SalesChannelAdmin" xml:space="preserve">
+    <value>Admin</value>
+  </data>
+  <data name="SalesChannelImport" xml:space="preserve">
+    <value>Import</value>
+  </data>
+  <data name="SalesChannelApi" xml:space="preserve">
+    <value>API</value>
+  </data>
+  <data name="SalesChannelBreakdown" xml:space="preserve">
+    <value>Kanalaufschluesselung</value>
+  </data>
+  <data name="SalesAttention" xml:space="preserve">
+    <value>Sales Aufmerksamkeit</value>
+  </data>
+  <data name="SalesInvoiceAttention" xml:space="preserve">
+    <value>Rechnungsaufmerksamkeit</value>
+  </data>
+  <data name="GrossTotal" xml:space="preserve">
+    <value>Bruttosumme</value>
+  </data>
+  <data name="OpenInvoiceBalance" xml:space="preserve">
+    <value>Offener Rechnungssaldo</value>
+  </data>
+  <data name="NoSalesDocuments" xml:space="preserve">
+    <value>Keine Sales-Dokumente gefunden.</value>
+  </data>
+  <data name="SalesOrderFilterAll" xml:space="preserve">
+    <value>Alle Orders</value>
+  </data>
+  <data name="SalesOrderFilterOpen" xml:space="preserve">
+    <value>Offen</value>
+  </data>
+  <data name="SalesOrderFilterPaid" xml:space="preserve">
+    <value>Bezahlt</value>
+  </data>
+  <data name="SalesOrderFilterFulfillmentAttention" xml:space="preserve">
+    <value>Fulfillment Aufmerksamkeit</value>
+  </data>
+  <data name="SalesOrderFilterCompleted" xml:space="preserve">
+    <value>Abgeschlossen</value>
+  </data>
+  <data name="SalesOrderFilterCancelled" xml:space="preserve">
+    <value>Storniert</value>
+  </data>
+  <data name="SalesInvoiceFilterAll" xml:space="preserve">
+    <value>Alle Rechnungen</value>
+  </data>
+  <data name="SalesInvoiceFilterDraft" xml:space="preserve">
+    <value>Entwurf</value>
+  </data>
+  <data name="SalesInvoiceFilterOpen" xml:space="preserve">
+    <value>Offen</value>
+  </data>
+  <data name="SalesInvoiceFilterDueSoon" xml:space="preserve">
+    <value>Bald faellig</value>
+  </data>
+  <data name="SalesInvoiceFilterOverdue" xml:space="preserve">
+    <value>Ueberfaellig</value>
+  </data>
+  <data name="SalesInvoiceFilterPaid" xml:space="preserve">
+    <value>Bezahlt</value>
+  </data>
+  <data name="SalesInvoiceFilterArchived" xml:space="preserve">
+    <value>Archiviert</value>
+  </data>
+  <data name="InvoiceNumber" xml:space="preserve">
+    <value>Rechnungsnummer</value>
+  </data>
+  <data name="NotAssigned" xml:space="preserve">
+    <value>Nicht vergeben</value>
+  </data>
+  <data name="Operations" xml:space="preserve">
+    <value>Operationen</value>
+  </data>
+  <data name="References" xml:space="preserve">
+    <value>Referenzen</value>
+  </data>
+  <data name="BackToInvoices" xml:space="preserve">
+    <value>Zurueck zu Rechnungen</value>
+  </data>
+  <data name="IssuedSnapshot" xml:space="preserve">
+    <value>Ausgestellter Snapshot</value>
+  </data>
+  <data name="ArchiveGenerated" xml:space="preserve">
+    <value>Archiv erzeugt</value>
+  </data>
+  <data name="ArchiveRetentionPolicy" xml:space="preserve">
+    <value>Aufbewahrungspolicy</value>
+  </data>
+  <data name="ReviewedAt" xml:space="preserve">
+    <value>Geprueft am</value>
+  </data>
+  <data name="NoRecords" xml:space="preserve">
+    <value>Keine Datensaetze.</value>
+  </data>
+  <data name="SalesQuotes" xml:space="preserve">
+    <value>Sales-Angebote</value>
+  </data>
+  <data name="SalesQuotesSubtitle" xml:space="preserve">
+    <value>Interne Sales-Angebote entwerfen, senden und verfolgen.</value>
+  </data>
+  <data name="NewSalesQuote" xml:space="preserve">
+    <value>Neues Angebot</value>
+  </data>
+  <data name="EditSalesQuote" xml:space="preserve">
+    <value>Angebot bearbeiten</value>
+  </data>
+  <data name="SalesQuote" xml:space="preserve">
+    <value>Sales-Angebot</value>
+  </data>
+  <data name="SalesQuoteEditorSubtitle" xml:space="preserve">
+    <value>Interne Angebotsdaten, Snapshots und Positionspreise pflegen.</value>
+  </data>
+  <data name="QuoteNumber" xml:space="preserve">
+    <value>Angebotsnummer</value>
+  </data>
+  <data name="SearchQuotesPlaceholder" xml:space="preserve">
+    <value>Angebotsnummer oder Titel</value>
+  </data>
+  <data name="NoSalesQuotesFound" xml:space="preserve">
+    <value>Keine Sales-Angebote gefunden.</value>
+  </data>
+  <data name="SalesQuoteStatusDraft" xml:space="preserve">
+    <value>Entwurf</value>
+  </data>
+  <data name="SalesQuoteStatusSent" xml:space="preserve">
+    <value>Gesendet</value>
+  </data>
+  <data name="SalesQuoteStatusAccepted" xml:space="preserve">
+    <value>Angenommen</value>
+  </data>
+  <data name="SalesQuoteStatusRejected" xml:space="preserve">
+    <value>Abgelehnt</value>
+  </data>
+  <data name="SalesQuoteStatusExpired" xml:space="preserve">
+    <value>Abgelaufen</value>
+  </data>
+  <data name="SalesQuoteStatusConverted" xml:space="preserve">
+    <value>Konvertiert</value>
+  </data>
+  <data name="SalesQuoteFilterAll" xml:space="preserve">
+    <value>Alle Angebote</value>
+  </data>
+  <data name="SalesQuoteFilterDraft" xml:space="preserve">
+    <value>Entwurf</value>
+  </data>
+  <data name="SalesQuoteFilterSent" xml:space="preserve">
+    <value>Gesendet</value>
+  </data>
+  <data name="SalesQuoteFilterAccepted" xml:space="preserve">
+    <value>Angenommen</value>
+  </data>
+  <data name="SalesQuoteFilterExpiringSoon" xml:space="preserve">
+    <value>Laeuft bald ab</value>
+  </data>
+  <data name="SalesQuoteFilterConverted" xml:space="preserve">
+    <value>Konvertiert</value>
+  </data>
+  <data name="SalesQuoteFilterClosed" xml:space="preserve">
+    <value>Geschlossen</value>
+  </data>
+  <data name="SendQuote" xml:space="preserve">
+    <value>Angebot senden</value>
+  </data>
+  <data name="AcceptQuote" xml:space="preserve">
+    <value>Angebot annehmen</value>
+  </data>
+  <data name="RejectQuote" xml:space="preserve">
+    <value>Angebot ablehnen</value>
+  </data>
+  <data name="ExpireQuote" xml:space="preserve">
+    <value>Angebot ablaufen lassen</value>
+  </data>
+  <data name="ConvertedOrderId" xml:space="preserve">
+    <value>Konvertierte Order-ID</value>
+  </data>
+  <data name="LinkConvertedOrder" xml:space="preserve">
+    <value>Konvertierte Order verknuepfen</value>
+  </data>
+  <data name="CustomerSnapshotJson" xml:space="preserve">
+    <value>Kundensnapshot JSON</value>
+  </data>
+  <data name="BillingAddressJson" xml:space="preserve">
+    <value>Rechnungsadresse JSON</value>
+  </data>
+  <data name="ShippingAddressJson" xml:space="preserve">
+    <value>Lieferadresse JSON</value>
+  </data>
+  <data name="UnitNet" xml:space="preserve">
+    <value>Einheit netto</value>
+  </data>
+  <data name="UnitGross" xml:space="preserve">
+    <value>Einheit brutto</value>
+  </data>
+  <data name="DocumentLinks" xml:space="preserve">
+    <value>Dokumentverknuepfungen</value>
+  </data>
+  <data name="CreateOrderFromQuote" xml:space="preserve">
+    <value>Order aus Angebot erstellen</value>
+  </data>
+  <data name="SalesQuoteOrderCreated" xml:space="preserve">
+    <value>Order aus Sales-Angebot erstellt.</value>
+  </data>
+  <data name="SalesQuoteOrderCreationRequiresAccepted" xml:space="preserve">
+    <value>Nur angenommene Sales-Angebote koennen Orders erstellen.</value>
+  </data>
+  <data name="SalesQuoteAlreadyConverted" xml:space="preserve">
+    <value>Dieses Sales-Angebot ist bereits konvertiert.</value>
+  </data>
+  <data name="DeliveryNotes" xml:space="preserve">
+    <value>Lieferscheine</value>
+  </data>
+  <data name="DeliveryNote" xml:space="preserve">
+    <value>Lieferschein</value>
+  </data>
+  <data name="DeliveryNotesSubtitle" xml:space="preserve">
+    <value>Sendungsbasierte Lieferdokumente ausstellen und verfolgen.</value>
+  </data>
+  <data name="DeliveryNoteNumber" xml:space="preserve">
+    <value>Lieferscheinnummer</value>
+  </data>
+  <data name="SearchDeliveryNotesPlaceholder" xml:space="preserve">
+    <value>Nummer, Carrier oder Tracking</value>
+  </data>
+  <data name="CreateDeliveryNote" xml:space="preserve">
+    <value>Lieferschein erstellen</value>
+  </data>
+  <data name="DeliveryNoteCreated" xml:space="preserve">
+    <value>Lieferschein erstellt.</value>
+  </data>
+  <data name="DeliveryNoteUpdated" xml:space="preserve">
+    <value>Lieferschein aktualisiert.</value>
+  </data>
+  <data name="DeliveryNoteNotFound" xml:space="preserve">
+    <value>Lieferschein nicht gefunden.</value>
+  </data>
+  <data name="DeliveryNoteAlreadyExistsForShipment" xml:space="preserve">
+    <value>Fuer diese Sendung existiert bereits ein aktiver Lieferschein.</value>
+  </data>
+  <data name="DeliveryNoteRequiresShipmentLines" xml:space="preserve">
+    <value>Lieferschein benoetigt Sendungspositionen.</value>
+  </data>
+  <data name="DeliveryNoteInvalidShipmentQuantity" xml:space="preserve">
+    <value>Sendungsmenge fuer Lieferschein ist ungueltig.</value>
+  </data>
+  <data name="DeliveryNoteInvalidLifecycleTransition" xml:space="preserve">
+    <value>Lieferschein-Lifecycle-Wechsel ist nicht erlaubt.</value>
+  </data>
+  <data name="DeliveryNoteNumberSequenceRequired" xml:space="preserve">
+    <value>Lieferscheinnummernkreis ist erforderlich.</value>
+  </data>
+  <data name="NoDeliveryNotesFound" xml:space="preserve">
+    <value>Keine Lieferscheine gefunden.</value>
+  </data>
+  <data name="PrepareDeliveryNote" xml:space="preserve">
+    <value>Lieferschein vorbereiten</value>
+  </data>
+  <data name="IssueDeliveryNote" xml:space="preserve">
+    <value>Lieferschein ausstellen</value>
+  </data>
+  <data name="CancelDeliveryNote" xml:space="preserve">
+    <value>Lieferschein stornieren</value>
+  </data>
+  <data name="MarkShipped" xml:space="preserve">
+    <value>Als versendet markieren</value>
+  </data>
+  <data name="MarkDelivered" xml:space="preserve">
+    <value>Als geliefert markieren</value>
+  </data>
+  <data name="IssuedFrom" xml:space="preserve">
+    <value>Ausgestellt von</value>
+  </data>
+  <data name="IssuedTo" xml:space="preserve">
+    <value>Ausgestellt bis</value>
+  </data>
+  <data name="IssuedAt" xml:space="preserve">
+    <value>Ausgestellt am</value>
+  </data>
+  <data name="DeliveryNoteStatusDraft" xml:space="preserve">
+    <value>Entwurf</value>
+  </data>
+  <data name="DeliveryNoteStatusPrepared" xml:space="preserve">
+    <value>Vorbereitet</value>
+  </data>
+  <data name="DeliveryNoteStatusIssued" xml:space="preserve">
+    <value>Ausgestellt</value>
+  </data>
+  <data name="DeliveryNoteStatusShipped" xml:space="preserve">
+    <value>Versendet</value>
+  </data>
+  <data name="DeliveryNoteStatusDelivered" xml:space="preserve">
+    <value>Geliefert</value>
+  </data>
+  <data name="DeliveryNoteStatusCancelled" xml:space="preserve">
+    <value>Storniert</value>
+  </data>
+  <data name="DeliveryNoteFilterAll" xml:space="preserve">
+    <value>Alle Lieferscheine</value>
+  </data>
+  <data name="DeliveryNoteFilterDraft" xml:space="preserve">
+    <value>Entwurf</value>
+  </data>
+  <data name="DeliveryNoteFilterPrepared" xml:space="preserve">
+    <value>Vorbereitet</value>
+  </data>
+  <data name="DeliveryNoteFilterIssued" xml:space="preserve">
+    <value>Ausgestellt</value>
+  </data>
+  <data name="DeliveryNoteFilterShipped" xml:space="preserve">
+    <value>Versendet</value>
+  </data>
+  <data name="DeliveryNoteFilterDelivered" xml:space="preserve">
+    <value>Geliefert</value>
+  </data>
+  <data name="DeliveryNoteFilterCancelled" xml:space="preserve">
+    <value>Storniert</value>
+  </data>
+  <data name="DeliveryNoteFilterOpen" xml:space="preserve">
+    <value>Offen</value>
+  </data>
+  <data name="DownloadCreditNoteSourceModel" xml:space="preserve">
+    <value>Quellmodell herunterladen</value>
+  </data>
+  <data name="CreditNoteSourceModelNotAvailable" xml:space="preserve">
+    <value>Das Quellmodell der Gutschrift ist für dieses Dokument nicht verfügbar.</value>
+  </data>
+  <data name="Finance" xml:space="preserve">
+    <value>Finanzen</value>
+  </data>
+  <data name="FinanceOverviewTitle" xml:space="preserve">
+    <value>Finanzübersicht</value>
+  </data>
+  <data name="FinanceOverviewSubtitle" xml:space="preserve">
+    <value>Schreibgeschützte Debitoren-, Buchungs- und Gutschriftabstimmung für das ausgewählte Unternehmen.</value>
+  </data>
+  <data name="FinanceReceivables" xml:space="preserve">
+    <value>Forderungen</value>
+  </data>
+  <data name="FinancePostings" xml:space="preserve">
+    <value>Buchungen</value>
+  </data>
+  <data name="FinanceAccountMappings" xml:space="preserve">
+    <value>Kontenzuordnungen</value>
+  </data>
+  <data name="FinanceAccountMappingUpdated" xml:space="preserve">
+    <value>Die Finanzkontenzuordnung wurde aktualisiert.</value>
+  </data>
+  <data name="FinanceAccountMappingUpdateFailed" xml:space="preserve">
+    <value>Die Finanzkontenzuordnung konnte nicht aktualisiert werden.</value>
+  </data>
+  <data name="FinanceRequiredMappingsMissing" xml:space="preserve">
+    <value>Fehlende Pflichtzuordnungen</value>
+  </data>
+  <data name="FinanceIncompatibleMappings" xml:space="preserve">
+    <value>Inkompatible Zuordnungen</value>
+  </data>
+  <data name="AllowedAccountTypes" xml:space="preserve">
+    <value>Erlaubte Kontotypen</value>
+  </data>
+  <data name="SelectFinancialAccount" xml:space="preserve">
+    <value>Finanzkonto auswählen</value>
+  </data>
+  <data name="FinanceNoCompatibleAccounts" xml:space="preserve">
+    <value>Für diese Rolle existiert kein kompatibles Finanzkonto.</value>
+  </data>
+  <data name="FinanceMappingIncompatible" xml:space="preserve">
+    <value>Die gespeicherte Zuordnung ist mit der ausgewählten Rolle nicht kompatibel.</value>
+  </data>
+  <data name="OpenReceivables" xml:space="preserve">
+    <value>Offene Forderungen</value>
+  </data>
+  <data name="ReceivablesDebit" xml:space="preserve">
+    <value>Forderungen Soll</value>
+  </data>
+  <data name="ReceivablesCredit" xml:space="preserve">
+    <value>Forderungen Haben</value>
+  </data>
+  <data name="FinanceNeedsAttention" xml:space="preserve">
+    <value>Prüfbedarf</value>
+  </data>
+  <data name="FinanceReceivablesReadiness" xml:space="preserve">
+    <value>Forderungsbereitschaft</value>
+  </data>
+  <data name="FinanceReportingNoBusiness" xml:space="preserve">
+    <value>Für die Finanzberichte ist kein Unternehmen verfügbar.</value>
+  </data>
+  <data name="FinancePostingBreakdown" xml:space="preserve">
+    <value>Buchungsaufschlüsselung</value>
+  </data>
+  <data name="LargestOpenReceivables" xml:space="preserve">
+    <value>Größte offene Forderungen</value>
+  </data>
+  <data name="NoFinancePostings" xml:space="preserve">
+    <value>Keine Finanzbuchungen gefunden.</value>
+  </data>
+  <data name="NoOpenReceivables" xml:space="preserve">
+    <value>Keine offenen Forderungen gefunden.</value>
+  </data>
+  <data name="FinanceExports" xml:space="preserve">
+    <value>Exporte</value>
+  </data>
+  <data name="FinanceExportTarget" xml:space="preserve">
+    <value>Buchhaltungsziel</value>
+  </data>
+  <data name="FinanceExportStorageNotConfigured" xml:space="preserve">
+    <value>Der Speicher für Finanzexportpakete ist nicht konfiguriert.</value>
+  </data>
+  <data name="FinanceExportCreateBatch" xml:space="preserve">
+    <value>Export-Batch erstellen</value>
+  </data>
+  <data name="FinanceExportBatchCreated" xml:space="preserve">
+    <value>Der Finanzexport-Batch ist bereit.</value>
+  </data>
+  <data name="FinanceExportBatchCreateFailed" xml:space="preserve">
+    <value>Der Finanzexport-Batch konnte nicht erstellt werden.</value>
+  </data>
+  <data name="FinanceExportPackageGenerated" xml:space="preserve">
+    <value>Das Finanzexportpaket wurde erstellt.</value>
+  </data>
+  <data name="FinanceExportPackageGenerateFailed" xml:space="preserve">
+    <value>Das Finanzexportpaket konnte nicht erstellt werden.</value>
+  </data>
+  <data name="FinanceExportConnectorNotConfigured" xml:space="preserve">
+    <value>Für das ausgewählte Ziel ist kein Buchhaltungs-Connector konfiguriert.</value>
+  </data>
+  <data name="FinanceExportPushPackage" xml:space="preserve">
+    <value>Senden</value>
+  </data>
+  <data name="FinanceExportPushBlocked" xml:space="preserve">
+    <value>Senden gesperrt</value>
+  </data>
+  <data name="FinanceExportPackagePushed" xml:space="preserve">
+    <value>Das Finanzexportpaket wurde zugestellt.</value>
+  </data>
+  <data name="FinanceExportPackagePushFailed" xml:space="preserve">
+    <value>Das Finanzexportpaket konnte nicht zugestellt werden.</value>
+  </data>
+  <data name="FinanceExportDeliveredReference" xml:space="preserve">
+    <value>Zustellreferenz</value>
+  </data>
+  <data name="DeliveredAt" xml:space="preserve">
+    <value>Zugestellt am</value>
+  </data>
+  <data name="NoFinanceExportBatches" xml:space="preserve">
+    <value>Keine Finanzexport-Batches gefunden.</value>
+  </data>
+  <data name="PeriodStart" xml:space="preserve">
+    <value>Periodenbeginn</value>
+  </data>
+  <data name="PeriodEnd" xml:space="preserve">
+    <value>Periodenende</value>
+  </data>
+  <data name="Period" xml:space="preserve">
+    <value>Periode</value>
+  </data>
+  <data name="Package" xml:space="preserve">
+    <value>Paket</value>
+  </data>
+  <data name="Generated" xml:space="preserve">
+    <value>Erstellt</value>
+  </data>
+  <data name="Generate" xml:space="preserve">
+    <value>Erstellen</value>
+  </data>
+  <data name="LastEntry" xml:space="preserve">
+    <value>Letzter Eintrag</value>
+  </data>
+  <data name="SupplierInvoices" xml:space="preserve">
+    <value>Lieferantenrechnungen</value>
+  </data>
+  <data name="SupplierInvoice" xml:space="preserve">
+    <value>Lieferantenrechnung</value>
+  </data>
+  <data name="CreateSupplierInvoice" xml:space="preserve">
+    <value>Lieferantenrechnung erstellen</value>
+  </data>
+  <data name="EditSupplierInvoice" xml:space="preserve">
+    <value>Lieferantenrechnung bearbeiten</value>
+  </data>
+  <data name="SupplierInvoiceCreated" xml:space="preserve">
+    <value>Die Lieferantenrechnung wurde erstellt.</value>
+  </data>
+  <data name="SupplierInvoiceUpdated" xml:space="preserve">
+    <value>Die Lieferantenrechnung wurde aktualisiert.</value>
+  </data>
+  <data name="SupplierInvoicePosted" xml:space="preserve">
+    <value>Die Lieferantenrechnung wurde gebucht.</value>
+  </data>
+  <data name="SupplierInvoicePostFailed" xml:space="preserve">
+    <value>Die Lieferantenrechnung konnte nicht gebucht werden.</value>
+  </data>
+  <data name="SupplierInvoiceCreateFailed" xml:space="preserve">
+    <value>Die Lieferantenrechnung konnte nicht erstellt werden.</value>
+  </data>
+  <data name="SupplierInvoiceUpdateFailed" xml:space="preserve">
+    <value>Die Lieferantenrechnung konnte nicht aktualisiert werden.</value>
+  </data>
+  <data name="SupplierInvoiceNotFound" xml:space="preserve">
+    <value>Die Lieferantenrechnung wurde nicht gefunden.</value>
+  </data>
+  <data name="NoSupplierInvoices" xml:space="preserve">
+    <value>Keine Lieferantenrechnungen gefunden.</value>
+  </data>
+  <data name="PayablePosting" xml:space="preserve">
+    <value>Verbindlichkeitenbuchung</value>
+  </data>
+  <data name="NotPosted" xml:space="preserve">
+    <value>Nicht gebucht</value>
+  </data>
+  <data name="ViewPosting" xml:space="preserve">
+    <value>Buchung anzeigen</value>
+  </data>
+  <data name="PostPayable" xml:space="preserve">
+    <value>Verbindlichkeit buchen</value>
+  </data>
+  <data name="SalesRequired" xml:space="preserve">
+    <value>Für Verkauf erforderlich</value>
+  </data>
+  <data name="PayablesRequired" xml:space="preserve">
+    <value>Für Verbindlichkeiten erforderlich</value>
+  </data>
+  <data name="Posted" xml:space="preserve">
+    <value>Gebucht</value>
+  </data>
+  <data name="SupplierPayments" xml:space="preserve">
+    <value>Lieferantenzahlungen</value>
+  </data>
+  <data name="SupplierPayment" xml:space="preserve">
+    <value>Lieferantenzahlung</value>
+  </data>
+  <data name="CreateSupplierPayment" xml:space="preserve">
+    <value>Lieferantenzahlung erstellen</value>
+  </data>
+  <data name="EditSupplierPayment" xml:space="preserve">
+    <value>Lieferantenzahlung bearbeiten</value>
+  </data>
+  <data name="SupplierPaymentCreated" xml:space="preserve">
+    <value>Lieferantenzahlung wurde erstellt.</value>
+  </data>
+  <data name="SupplierPaymentUpdated" xml:space="preserve">
+    <value>Lieferantenzahlung wurde aktualisiert.</value>
+  </data>
+  <data name="SupplierPaymentPosted" xml:space="preserve">
+    <value>Lieferantenzahlung wurde gebucht.</value>
+  </data>
+  <data name="SupplierPaymentCancelled" xml:space="preserve">
+    <value>Lieferantenzahlung wurde storniert.</value>
+  </data>
+  <data name="SupplierPaymentReversed" xml:space="preserve">
+    <value>Lieferantenzahlung wurde rückgebucht.</value>
+  </data>
+  <data name="SupplierPaymentCreateFailed" xml:space="preserve">
+    <value>Die Lieferantenzahlung konnte nicht erstellt werden.</value>
+  </data>
+  <data name="SupplierPaymentUpdateFailed" xml:space="preserve">
+    <value>Die Lieferantenzahlung konnte nicht aktualisiert werden.</value>
+  </data>
+  <data name="SupplierPaymentPostFailed" xml:space="preserve">
+    <value>Die Lieferantenzahlung konnte nicht gebucht werden.</value>
+  </data>
+  <data name="SupplierPaymentCancelFailed" xml:space="preserve">
+    <value>Die Lieferantenzahlung konnte nicht storniert werden.</value>
+  </data>
+  <data name="SupplierPaymentReverseFailed" xml:space="preserve">
+    <value>Die Lieferantenzahlung konnte nicht rückgebucht werden.</value>
+  </data>
+  <data name="SupplierPaymentNotFound" xml:space="preserve">
+    <value>Die Lieferantenzahlung wurde nicht gefunden.</value>
+  </data>
+  <data name="NoSupplierPayments" xml:space="preserve">
+    <value>Keine Lieferantenzahlungen gefunden.</value>
+  </data>
+  <data name="PaymentNumber" xml:space="preserve">
+    <value>Zahlungsnummer</value>
+  </data>
+  <data name="PaymentDate" xml:space="preserve">
+    <value>Zahlungsdatum</value>
+  </data>
+  <data name="PaymentMethod" xml:space="preserve">
+    <value>Zahlungsart</value>
+  </data>
+  <data name="PaymentPosting" xml:space="preserve">
+    <value>Zahlungsbuchung</value>
+  </data>
+  <data name="PaymentReversal" xml:space="preserve">
+    <value>Zahlungsrückbuchung</value>
+  </data>
+  <data name="NotReversed" xml:space="preserve">
+    <value>Nicht rückgebucht</value>
+  </data>
+  <data name="ViewReversal" xml:space="preserve">
+    <value>Rückbuchung anzeigen</value>
+  </data>
+  <data name="ReversePayment" xml:space="preserve">
+    <value>Zahlung rückbuchen</value>
+  </data>
+  <data name="ReversalReason" xml:space="preserve">
+    <value>Rückbuchungsgrund</value>
+  </data>
+  <data name="PostSupplierPayment" xml:space="preserve">
+    <value>Lieferantenzahlung buchen</value>
+  </data>
+  <data name="SupplierInvoiceId" xml:space="preserve">
+    <value>Lieferantenrechnungs-ID</value>
+  </data>
+  <data name="InvoiceTotal" xml:space="preserve">
+    <value>Rechnungssumme</value>
+  </data>
+  <data name="AlreadyPaid" xml:space="preserve">
+    <value>Bereits bezahlt</value>
+  </data>
+  <data name="OpenAmount" xml:space="preserve">
+    <value>Offener Betrag</value>
+  </data>
+  <data name="BankTransfer" xml:space="preserve">
+    <value>Banküberweisung</value>
+  </data>
+  <data name="Cash" xml:space="preserve">
+    <value>Barzahlung</value>
+  </data>
+  <data name="DirectDebit" xml:space="preserve">
+    <value>Lastschrift</value>
+  </data>
+  <data name="Card" xml:space="preserve">
+    <value>Karte</value>
+  </data>
+  <data name="Other" xml:space="preserve">
+    <value>Sonstige</value>
+  </data>
   <data name="Queued" xml:space="preserve">
-    <value>Eingereiht</value>
+    <value>Queued</value>
   </data>
   <data name="Sending" xml:space="preserve">
-    <value>Wird gesendet</value>
+    <value>Sending</value>
   </data>
   <data name="InvalidToken" xml:space="preserve">
     <value>Ungueltiges Token</value>
   </data>
   <data name="RetryAvailable" xml:space="preserve">
-    <value>Erneuter Versuch verfuegbar</value>
+    <value>Wiederholung verfuegbar</value>
   </data>
 </root>

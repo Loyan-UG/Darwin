@@ -1,8 +1,21 @@
 # E-Invoice Acceptance Checklist
 
-Reviewed: 2026-05-27
+Reviewed: 2026-06-17
 
 This checklist defines the acceptance path before Darwin may expose generated e-invoice artifacts as compliant for a German deployment. It is not legal advice. A deployment owner, tax/accounting reviewer, and where needed legal/compliance reviewer must approve the evidence for the target customer.
+
+Accepted fixture and validation evidence must be referenced from the deployment evidence package defined in [production-readiness-evidence-package.md](production-readiness-evidence-package.md). Do not store generated customer artifacts, private invoice data, validator credentials, provider secrets, or legal sign-off records in source control.
+
+Before compliant generation is treated as production-ready, run the non-secret production preflight:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\check-einvoice-production-readiness.ps1
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\export-einvoice-production-readiness-report.ps1 -Force
+```
+
+The preflight confirms both ZUGFeRD/Factur-X and XRechnung fixture, validation-report, storage/download, and accounting/tax sign-off evidence exists. It does not accept or print generated customer artifacts, private invoice data, validator credentials, provider responses, or legal sign-off documents.
+
+The exported readiness report is only a non-secret summary for the evidence package. It does not replace generated artifacts, validation reports, archive storage/download smoke, or accounting/tax approval records.
 
 ## Current German Baseline
 
@@ -16,8 +29,7 @@ Official references:
 
 Implementation rules for Darwin:
 
-- Primary target: ZUGFeRD/Factur-X with EN 16931 profile support.
-- Secondary target: XRechnung export when a deployment requires it.
+- Required production readiness targets: ZUGFeRD/Factur-X with EN 16931 profile support and XRechnung XML validation readiness.
 - ZUGFeRD/Factur-X `MINIMUM` and `BASIC-WL` profiles must not be accepted as German VAT-compliant e-invoice output.
 - The structured XML part is authoritative for hybrid ZUGFeRD/Factur-X artifacts when it differs from the human-readable PDF representation.
 - Validation is strongly recommended and required by Darwin production policy, even where validation alone is not the only legal condition.
@@ -46,7 +58,8 @@ Create deterministic invoice fixtures for the deployment before compliance sign-
 - Invoice with multiple line items, discounts, shipping/fees if supported, and rounding-sensitive totals.
 - Credit note or invoice correction if the tenant issues corrections through Darwin.
 - Small-value or excluded invoice scenario only if the tenant relies on that exception.
-- B2G/XRechnung scenario only if the tenant invoices public authorities.
+- XRechnung XML fixture for the German readiness path, even when the tenant's first rollout is B2B.
+- Additional B2G/public-authority scenario when the tenant invoices public authorities.
 
 Each fixture must include:
 
@@ -63,7 +76,8 @@ Legal-approved fixtures are created only after the tax/accounting reviewer and, 
 
 1. Confirm scope:
    - Customer is domestic B2B, B2C, B2G, mixed, or cross-border.
-   - Determine whether ZUGFeRD/Factur-X, XRechnung, or both are required.
+   - Confirm that production readiness evidence covers both ZUGFeRD/Factur-X and XRechnung.
+   - Determine recipient-based runtime routing, such as hybrid PDF/XML for typical B2B recipients and XRechnung XML for XML-only or public-authority recipients.
    - Determine whether transition rules allow non-e-invoice output for a limited period.
 
 2. Pin tooling:
@@ -80,8 +94,8 @@ Legal-approved fixtures are created only after the tax/accounting reviewer and, 
    - Configure the `InvoiceArchive` object-storage profile.
 
 4. Generate fixture artifacts:
-   - Generate ZUGFeRD/Factur-X for the approved fixture set.
-   - Generate XRechnung only for approved B2G or XML-only scenarios.
+   - Generate ZUGFeRD/Factur-X for the approved readiness fixture set.
+   - Generate XRechnung for the approved readiness fixture set, with additional B2G-specific fixtures when public-authority invoicing is in scope.
    - Extract and review structured XML.
    - Confirm the PDF visual representation matches the structured XML where applicable.
 
@@ -105,6 +119,7 @@ Legal-approved fixtures are created only after the tax/accounting reviewer and, 
    - Confirm no UI labels JSON/HTML/source-model exports as compliant e-invoices.
    - Confirm generated artifacts are hidden or disabled until validation and sign-off are complete.
    - Record go-live sign-off, rollback plan, and support owner.
+   - Add non-secret references to generated artifacts, validation reports, fixture approvals, storage/download smoke, and reviewer sign-off to the production readiness evidence package.
 
 ## Failure Handling
 

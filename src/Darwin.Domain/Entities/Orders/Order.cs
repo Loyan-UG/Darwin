@@ -14,8 +14,12 @@ namespace Darwin.Domain.Entities.Orders
     {
         public string OrderNumber { get; set; } = string.Empty;
         public Guid? UserId { get; set; }
-    public string Currency { get; set; } = DomainDefaults.DefaultCurrency;
+        public Guid? BusinessId { get; set; }
+        public Guid? CustomerId { get; set; }
+        public string Currency { get; set; } = DomainDefaults.DefaultCurrency;
         public bool PricesIncludeTax { get; set; }
+        public SalesChannel SalesChannel { get; set; } = SalesChannel.Unknown;
+        public DateTime OrderedAtUtc { get; set; }
 
         public long SubtotalNetMinor { get; set; }
         public long TaxTotalMinor { get; set; }
@@ -62,7 +66,7 @@ namespace Darwin.Domain.Entities.Orders
     public sealed class OrderLine : BaseEntity
     {
         public Guid OrderId { get; set; }
-        public Guid VariantId { get; set; }
+        public Guid? VariantId { get; set; }
         /// <summary>
         /// Optional fulfillment warehouse chosen for this line.
         /// Keeping it on the order snapshot prevents later status transitions from

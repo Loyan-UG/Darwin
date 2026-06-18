@@ -14,6 +14,7 @@ using Darwin.Mobile.Shared.Services.Legal;
 using Darwin.Mobile.Shared.Services.Loyalty;
 using Darwin.Mobile.Shared.Services.Notifications;
 using Darwin.Mobile.Shared.Services.Permissions;
+using Darwin.Mobile.Shared.Services.Payroll;
 using Darwin.Mobile.Shared.Services.Profile;
 using Darwin.Mobile.Shared.Storage.Abstractions;
 using Darwin.Mobile.Shared.Storage.Repositories;
@@ -147,6 +148,7 @@ namespace Darwin.Mobile.Shared.Extensions
         services.AddSingleton<IBusinessMediaService, BusinessMediaService>();
             services.AddSingleton<IBusinessAccessService, BusinessAccessService>();
             services.AddSingleton<IMemberCommerceService, MemberCommerceService>();
+            services.AddSingleton<IMemberPayrollService, MemberPayrollService>();
             services.AddSingleton<IProfileService, ProfileService>();
             services.AddSingleton<IPushRegistrationService, PushRegistrationService>();
             services.AddSingleton<INotificationInboxService, NotificationInboxService>();

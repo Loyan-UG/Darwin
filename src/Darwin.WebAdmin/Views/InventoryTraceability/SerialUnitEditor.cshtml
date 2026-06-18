@@ -1,0 +1,39 @@
+@model Darwin.WebAdmin.ViewModels.Inventory.InventorySerialUnitEditVm
+@inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
+@{
+    var isCreate = (bool?)ViewData["IsCreate"] ?? Model.Id == Guid.Empty;
+    ViewData["Title"] = isCreate ? T.T("CreateInventorySerialUnit") : T.T("EditInventorySerialUnit");
+}
+<div id="inventory-traceability-workspace-shell">
+    <h1 class="mb-3">@(isCreate ? T.T("CreateInventorySerialUnit") : T.T("EditInventorySerialUnit"))</h1>
+    <form asp-action="@(isCreate ? "CreateSerialUnit" : "EditSerialUnit")" method="post" hx-post="@Url.Action(isCreate ? "CreateSerialUnit" : "EditSerialUnit", "InventoryTraceability")" hx-target="#inventory-traceability-workspace-shell" hx-swap="outerHTML">
+        @Html.AntiForgeryToken()
+        <input asp-for="Id" type="hidden" />
+        <input asp-for="RowVersion" type="hidden" />
+        <section class="admin-form-section">
+            <h2 class="admin-form-section-title">@T.T("SerialIdentity")</h2>
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            <div class="row g-3">
+                <div class="col-md-4"><label asp-for="BusinessId" class="form-label"></label><select asp-for="BusinessId" asp-items="Model.BusinessOptions" class="form-select"></select></div>
+                <div class="col-md-4"><label asp-for="ProductVariantId" class="form-label"></label><select asp-for="ProductVariantId" asp-items="Model.VariantOptions" class="form-select"></select></div>
+                <div class="col-md-4"><label asp-for="InventoryLotId" class="form-label"></label><select asp-for="InventoryLotId" asp-items="Model.LotOptions" class="form-select"></select></div>
+                <div class="col-md-4"><label asp-for="SerialNumber" class="form-label"></label><input asp-for="SerialNumber" class="form-control" autocomplete="off" /></div>
+                <div class="col-md-4"><label asp-for="Status" class="form-label"></label><select asp-for="Status" asp-items="Model.StatusOptions" class="form-select"></select></div>
+                <div class="col-md-2"><label asp-for="ManufactureDateUtc" class="form-label"></label><input asp-for="ManufactureDateUtc" class="form-control" type="date" /></div>
+                <div class="col-md-2"><label asp-for="ExpiryDateUtc" class="form-label"></label><input asp-for="ExpiryDateUtc" class="form-control" type="date" /></div>
+                <div class="col-md-6"><label asp-for="Notes" class="form-label"></label><textarea asp-for="Notes" class="form-control" rows="3"></textarea></div>
+                <div class="col-md-6"><label asp-for="MetadataJson" class="form-label"></label><textarea asp-for="MetadataJson" class="form-control font-monospace" rows="3"></textarea></div>
+            </div>
+        </section>
+        <div><button class="btn btn-primary" type="submit">@(isCreate ? T.T("Create") : T.T("Save"))</button> <a asp-action="SerialUnits" asp-route-businessId="@Model.BusinessId" class="btn btn-outline-secondary">@T.T("Back")</a></div>
+    </form>
+    @if (!isCreate)
+    {
+        <form asp-action="ArchiveSerialUnit" method="post" class="mt-3">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="Id" value="@Model.Id" />
+            <input type="hidden" name="RowVersion" value="@Convert.ToBase64String(Model.RowVersion ?? Array.Empty<byte>())" />
+            <button class="btn btn-outline-danger" type="submit">@T.T("Archive")</button>
+        </form>
+    }
+</div>

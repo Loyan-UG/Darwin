@@ -1,0 +1,96 @@
+@model Darwin.Application.Billing.DTOs.SupplierInvoiceEditDto
+@using Darwin.Domain.Enums
+@inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
+@{
+    ViewData["Title"] = T.T("SupplierInvoice");
+    var rowVersion = Convert.ToBase64String(Model.RowVersion);
+    string Money(long minor) => $"{Model.Currency} {(minor / 100.0M):0.00}";
+    var postingQuery = $"supplier-invoice-posted:{Model.Id}";
+}
+
+<div id="finance-supplier-invoice-detail-shell">
+<partial name="~/Views/Shared/_Alerts.cshtml" />
+<div class="d-flex justify-content-between align-items-start gap-3 mb-4">
+    <div>
+        <h1 class="mb-0">@T.T("SupplierInvoice") @Model.SupplierInvoiceNumber</h1>
+        <div class="text-muted small">@T.T(Model.Status.ToString()) / @(string.IsNullOrWhiteSpace(Model.InternalInvoiceNumber) ? "-" : Model.InternalInvoiceNumber)</div>
+    </div>
+    <div class="d-flex gap-2">
+        <a asp-action="SupplierInvoices" asp-route-businessId="@Model.BusinessId" class="btn btn-outline-secondary">@T.T("Back")</a>
+        @if (Model.Status == SupplierInvoiceStatus.Draft)
+        {
+            <a asp-action="EditSupplierInvoice" asp-route-id="@Model.Id" class="btn btn-outline-primary">@T.T("Edit")</a>
+        }
+        @if (Model.Status == SupplierInvoiceStatus.Posted)
+        {
+            <a asp-action="CreateSupplierPayment" asp-route-businessId="@Model.BusinessId" asp-route-supplierId="@Model.SupplierId" asp-route-supplierInvoiceId="@Model.Id" class="btn btn-primary">@T.T("CreateSupplierPayment")</a>
+        }
+    </div>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-md-3"><div class="border rounded p-3"><div class="text-muted small">@T.T("InvoiceDate")</div><div class="fw-semibold">@Model.InvoiceDateUtc.ToString("yyyy-MM-dd")</div></div></div>
+    <div class="col-md-3"><div class="border rounded p-3"><div class="text-muted small">@T.T("DueDate")</div><div class="fw-semibold">@(Model.DueDateUtc?.ToString("yyyy-MM-dd") ?? "-")</div></div></div>
+    <div class="col-md-3"><div class="border rounded p-3"><div class="text-muted small">@T.T("Net")</div><div class="fw-semibold">@Money(Model.TotalNetMinor)</div></div></div>
+    <div class="col-md-3"><div class="border rounded p-3"><div class="text-muted small">@T.T("Total")</div><div class="fw-semibold">@Money(Model.TotalGrossMinor)</div></div></div>
+</div>
+
+<div class="border rounded p-3 mb-3">
+    <div class="d-flex justify-content-between align-items-center gap-3">
+        <div>
+            <div class="text-muted small">@T.T("PayablePosting")</div>
+            <div class="fw-semibold">@(Model.PostedAtUtc?.ToString("yyyy-MM-dd HH:mm") ?? T.T("NotPosted"))</div>
+        </div>
+        @if (Model.PostingJournalEntryId.HasValue)
+        {
+            <a asp-action="Postings" asp-route-businessId="@Model.BusinessId" asp-route-q="@postingQuery" class="btn btn-sm btn-outline-secondary">@T.T("ViewPosting")</a>
+        }
+    </div>
+</div>
+
+<div class="table-responsive mb-3">
+    <table class="table table-sm align-middle">
+        <thead><tr><th>@T.T("Line")</th><th>@T.T("Quantity")</th><th class="text-end">@T.T("Net")</th><th class="text-end">@T.T("Tax")</th><th class="text-end">@T.T("Total")</th><th>@T.T("Match")</th></tr></thead>
+        <tbody>
+        @foreach (var line in Model.Lines)
+        {
+            <tr>
+                <td><div class="fw-semibold">@line.Description</div><div class="text-muted small">@(line.SupplierSku ?? "-")</div></td>
+                <td>@line.InvoicedQuantity</td>
+                <td class="text-end">@Money(line.TotalNetMinor)</td>
+                <td class="text-end">@Money(line.TotalTaxMinor)</td>
+                <td class="text-end">@Money(line.TotalGrossMinor)</td>
+                <td><span class="badge text-bg-light">@T.T(line.MatchStatus.ToString())</span>@if (!string.IsNullOrWhiteSpace(line.DiscrepancyReason)){<div class="text-warning small">@line.DiscrepancyReason</div>}</td>
+            </tr>
+        }
+        </tbody>
+    </table>
+</div>
+
+<div class="d-flex gap-2 flex-wrap">
+    <form method="post" asp-action="UpdateSupplierInvoiceLifecycle">
+        @Html.AntiForgeryToken()
+        <input type="hidden" name="Id" value="@Model.Id" />
+        <input type="hidden" name="RowVersion" value="@rowVersion" />
+        <button type="submit" name="Action" value="Match" class="btn btn-primary" disabled="@(Model.Status is SupplierInvoiceStatus.Approved or SupplierInvoiceStatus.Voided or SupplierInvoiceStatus.Posted)">@T.T("Match")</button>
+    </form>
+    <form method="post" asp-action="UpdateSupplierInvoiceLifecycle">
+        @Html.AntiForgeryToken()
+        <input type="hidden" name="Id" value="@Model.Id" />
+        <input type="hidden" name="RowVersion" value="@rowVersion" />
+        <button type="submit" name="Action" value="Approve" class="btn btn-success" disabled="@(Model.Status != SupplierInvoiceStatus.Matched)">@T.T("Approve")</button>
+    </form>
+    <form method="post" asp-action="PostSupplierInvoice">
+        @Html.AntiForgeryToken()
+        <input type="hidden" name="Id" value="@Model.Id" />
+        <input type="hidden" name="RowVersion" value="@rowVersion" />
+        <button type="submit" name="Action" value="Post" class="btn btn-warning" disabled="@(Model.Status != SupplierInvoiceStatus.Approved)">@T.T("PostPayable")</button>
+    </form>
+    <form method="post" asp-action="UpdateSupplierInvoiceLifecycle">
+        @Html.AntiForgeryToken()
+        <input type="hidden" name="Id" value="@Model.Id" />
+        <input type="hidden" name="RowVersion" value="@rowVersion" />
+        <button type="submit" name="Action" value="Void" class="btn btn-outline-danger" disabled="@(Model.Status is SupplierInvoiceStatus.Voided or SupplierInvoiceStatus.Posted)">@T.T("Void")</button>
+    </form>
+</div>
+</div>

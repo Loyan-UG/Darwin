@@ -187,6 +187,83 @@ public sealed class InventoryHandlerTests
         transaction.ReferenceId.Should().Be(referenceId);
     }
 
+    [Fact]
+    public async Task AdjustInventory_Should_BeIdempotent_When_ReferenceAlreadyLedgered()
+    {
+        var db = TestDbFactory.Create();
+        var handler = new AdjustInventoryHandler(db, CreateLocalizer());
+
+        var variantId = Guid.NewGuid();
+        var warehouseId = Guid.NewGuid();
+        var referenceId = Guid.NewGuid();
+
+        await db.Set<Warehouse>().AddAsync(new Warehouse { Id = warehouseId, Name = "WH", IsDefault = true }, TestContext.Current.CancellationToken);
+        await db.Set<ProductVariant>().AddAsync(new ProductVariant { Id = variantId, Sku = "SKU4-IDEMP" }, TestContext.Current.CancellationToken);
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var dto = new InventoryAdjustDto
+        {
+            VariantId = variantId,
+            WarehouseId = warehouseId,
+            QuantityDelta = 15,
+            Reason = " ManualReceipt ",
+            ReferenceId = referenceId
+        };
+
+        await handler.HandleAsync(dto, TestContext.Current.CancellationToken);
+        await handler.HandleAsync(dto, TestContext.Current.CancellationToken);
+
+        var stockLevel = db.Set<StockLevel>().Single(s => s.ProductVariantId == variantId);
+        stockLevel.AvailableQuantity.Should().Be(15);
+        db.Set<InventoryTransaction>().Count(t => t.ReferenceId == referenceId && t.Reason == "ManualReceipt").Should().Be(1);
+    }
+
+    [Fact]
+    public async Task AdjustInventory_Should_RejectSensitiveReason()
+    {
+        var db = TestDbFactory.Create();
+        var handler = new AdjustInventoryHandler(db, CreateLocalizer());
+        var variantId = Guid.NewGuid();
+        var warehouseId = Guid.NewGuid();
+
+        await db.Set<Warehouse>().AddAsync(new Warehouse { Id = warehouseId, Name = "WH", IsDefault = true }, TestContext.Current.CancellationToken);
+        await db.Set<ProductVariant>().AddAsync(new ProductVariant { Id = variantId, Sku = "SKU4-SAFE" }, TestContext.Current.CancellationToken);
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var act = async () => await handler.HandleAsync(new InventoryAdjustDto
+        {
+            VariantId = variantId,
+            WarehouseId = warehouseId,
+            QuantityDelta = 1,
+            Reason = "api token sk-live-secret"
+        }, TestContext.Current.CancellationToken);
+
+        await act.Should().ThrowAsync<ArgumentException>().WithMessage("*InventoryMovementSensitiveReasonRejected*");
+    }
+
+    [Fact]
+    public async Task AdjustInventory_Should_RequireReference_ForSystemOwnedMovementReason()
+    {
+        var db = TestDbFactory.Create();
+        var handler = new AdjustInventoryHandler(db, CreateLocalizer());
+        var variantId = Guid.NewGuid();
+        var warehouseId = Guid.NewGuid();
+
+        await db.Set<Warehouse>().AddAsync(new Warehouse { Id = warehouseId, Name = "WH", IsDefault = true }, TestContext.Current.CancellationToken);
+        await db.Set<ProductVariant>().AddAsync(new ProductVariant { Id = variantId, Sku = "SKU4-REF" }, TestContext.Current.CancellationToken);
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var act = async () => await handler.HandleAsync(new InventoryAdjustDto
+        {
+            VariantId = variantId,
+            WarehouseId = warehouseId,
+            QuantityDelta = 1,
+            Reason = "GoodsReceiptPosted"
+        }, TestContext.Current.CancellationToken);
+
+        await act.Should().ThrowAsync<ArgumentException>().WithMessage("*InventoryMovementReferenceRequired*");
+    }
+
     // ─────────────────────────────────────────────────────────────────────────
     // ReserveInventoryHandler
     // ─────────────────────────────────────────────────────────────────────────

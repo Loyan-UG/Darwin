@@ -1,0 +1,66 @@
+@model Darwin.WebAdmin.ViewModels.HumanResources.HrListVm<Darwin.Application.HumanResources.DTOs.EmployeeListItemDto, Darwin.Application.HumanResources.DTOs.EmployeeQueueFilter>
+@inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
+@{
+    ViewData["Title"] = T.T("Employees");
+}
+
+<div id="hr-employees-shell">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h1 class="mb-0">@T.T("Employees")</h1>
+        <a asp-action="CreateEmployee" asp-route-businessId="@Model.BusinessId" class="btn btn-primary">@T.T("Create")</a>
+    </div>
+
+    <form asp-action="Employees" method="get" class="d-flex gap-2 mb-3">
+        <select name="businessId" asp-items="Model.BusinessOptions" class="form-select"></select>
+        <input type="text" name="q" value="@Model.Query" class="form-control" placeholder="@T.T("Search")" />
+        <select name="filter" asp-items="Model.FilterItems" class="form-select"></select>
+        <button class="btn btn-outline-secondary" type="submit">@T.T("Filter")</button>
+    </form>
+
+    <div class="table-responsive">
+        <table class="table table-sm table-striped align-middle">
+            <thead>
+                <tr>
+                    <th>@T.T("EmployeeNumber")</th>
+                    <th>@T.T("Name")</th>
+                    <th>@T.T("Department")</th>
+                    <th>@T.T("Position")</th>
+                    <th>@T.T("Status")</th>
+                    <th>@T.T("Privacy")</th>
+                    <th class="text-end">@T.T("Actions")</th>
+                </tr>
+            </thead>
+            <tbody>
+            @if (Model.Items.Count == 0)
+            {
+                <tr><td colspan="7" class="text-center text-muted">@T.T("NoItemsFound")</td></tr>
+            }
+            else
+            {
+                foreach (var item in Model.Items)
+                {
+                    <tr>
+                        <td class="fw-semibold">@item.EmployeeNumber</td>
+                        <td>
+                            @item.FullName
+                            @if (!string.IsNullOrWhiteSpace(item.WorkEmail))
+                            {
+                                <div class="small text-muted">@item.WorkEmail</div>
+                            }
+                        </td>
+                        <td>@item.DepartmentName</td>
+                        <td>@item.PositionName</td>
+                        <td><span class="badge text-bg-light">@T.T(item.Status.ToString())</span></td>
+                        <td><span class="badge text-bg-secondary">@T.T(item.PrivacyClassification.ToString())</span></td>
+                        <td class="text-end">
+                            <a asp-action="CreateEmploymentContract" asp-route-businessId="@item.BusinessId" asp-route-employeeId="@item.Id" class="btn btn-sm btn-outline-primary">@T.T("NewContract")</a>
+                            <a asp-action="EditEmployee" asp-route-id="@item.Id" class="btn btn-sm btn-outline-secondary">@T.T("Edit")</a>
+                        </td>
+                    </tr>
+                }
+            }
+            </tbody>
+        </table>
+    </div>
+    <pager page="Model.Page" page-size="Model.PageSize" total="Model.Total" asp-controller="HumanResources" asp-action="Employees" asp-route-businessId="@Model.BusinessId" asp-route-q="@Model.Query" asp-route-filter="@Model.Filter"></pager>
+</div>

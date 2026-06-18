@@ -1,6 +1,6 @@
 # Darwin Go-Live Status
 
-Last reviewed: 2026-06-08
+Last reviewed: 2026-06-18
 
 This document records code-backed readiness. It is not a product overview or marketing status page; use [README.md](../README.md) for the platform summary. This document deliberately separates implemented plumbing from production-complete provider behavior. External smoke inputs and command shapes are documented in [docs/external-smoke-inputs.md](external-smoke-inputs.md).
 
@@ -18,9 +18,10 @@ This document records code-backed readiness. It is not a product overview or mar
 | Brevo | DB-backed transactional email routing, role senders, masked secrets, branded templates, webhook ingestion, callback processing, and Site Settings-backed smoke loading exist. | Production monitoring, periodic inbox-placement checks, and alert ownership. |
 | VIES | `Manual Review + Scheduled Retry` policy exists. Controlled valid/invalid/provider-failure live smoke passed on 2026-05-27. | Production monitoring ownership and periodic smoke after provider or policy changes. |
 | Object storage | Reusable abstraction and providers are implemented; local MinIO smoke passed again on 2026-05-27 against the S3-compatible provider path. Production-like provider smoke execution is guarded behind explicit operator confirmation for profiles, disposable prefix, retention/delete behavior, and operator runbook readiness. | Production Object Lock/retention/legal-hold, backup/restore, monitoring, and selected-provider smoke. |
-| E-invoice | Generation boundary, external-command adapter, local Mustangproject wrapper, storage boundary, WebAdmin download guard, validation-report enforcement option, and local adapter smoke for XRechnung XML plus ZUGFeRD/Factur-X PDF exist. | Legal validation fixtures, production artifact smoke, and sign-off. |
-| Mobile | Implemented Consumer and Business workflows are guarded and usable. Google external-login backend/service support exists. | Signed release artifacts, production mobile config, native Google sign-in UI/device smoke, device/camera smoke, and broader UI coverage. |
+| E-invoice | Generation boundary, external-command adapter, local Mustangproject wrapper, storage boundary, WebAdmin download guard, validation-report enforcement option, local adapter smoke for XRechnung XML plus ZUGFeRD/Factur-X PDF, and production readiness preflight exist. | Legal validation fixtures, production artifact smoke, and sign-off. |
+| Mobile | Implemented Consumer and Business workflows are guarded and usable. Google external-login backend/service support exists. Android is the selected first launch target. | Signed Android release artifacts, production Android Google Maps/Firebase config, native Android Google sign-in UI/device smoke when enabled, Android device/camera smoke, and broader Android UI coverage. iOS and MacCatalyst follow after Android evidence is complete. |
 | Web external identity | Google Identity Services handoff to WebApi external-login is implemented and keeps Darwin session cookies authoritative. | Web OAuth client ID configuration and browser smoke. |
+| Production evidence package | Evidence package rules, production-like staging execution order, generation/validation scripts, non-secret readiness report exporters, and the report-bundle validator are documented in [docs/production-readiness-evidence-package.md](production-readiness-evidence-package.md) and [docs/production-go-live-evidence-execution-plan.md](production-go-live-evidence-execution-plan.md), then linked from production setup and onboarding. The staging preflight now requires separate non-secret references for build/test, migration, rollback, backup/restore, storage, provider, e-invoice, Android, monitoring, and owner sign-off evidence. A local ignored working package and non-secret report bundle were generated on 2026-06-18 for the current branch. | Populate and validate the package for each deployment with non-secret build, migration, staging rehearsal, storage, e-invoice, provider, mobile, monitoring, rollback, and approval evidence. |
 
 ## Implemented Baseline
 
@@ -33,11 +34,12 @@ This document records code-backed readiness. It is not a product overview or mar
 - Brevo email routing is role-based and DB-backed. Transactional/security, billing, support, and admin-alert sender roles are configurable per deployment.
 - Brevo readiness smoke can load Site Settings directly for local/staging validation without printing secrets.
 - VIES provider failures stay `Unknown`/manual review, are retried by the scheduled retry path, and include operator-only format hints that do not replace official validation.
-- Invoice archive/object storage uses provider-neutral abstractions. MinIO is the recommended self-hosted production target; AWS S3 and Azure Blob remain supported alternatives.
+- Invoice archive/object storage uses provider-neutral abstractions. MinIO is the selected first production target; Azure Blob is the next provider-hardening lane after MinIO evidence, and AWS S3 remains a supported alternative.
 - Local MinIO smoke validates the development S3-compatible path, Object Lock-enabled bucket creation, versioning, metadata/hash behavior, temporary URL support, and retained-object cleanup boundaries. It does not prove production immutability.
 - E-invoice generated artifacts route through the invoice archive storage boundary when a generator is configured. Current JSON/HTML/source-model outputs are operational artifacts, not compliant e-invoices.
 - Mobile apps reject broad Android cleartext traffic, avoid Release unsafe certificate trust, and keep mobile-used API routes under source-contract guard.
 - Google external-login support is provider-neutral at the API, Web, and mobile-service boundary. WebApi validates Google identity tokens server-side against Site Settings OAuth client IDs and issues Darwin tokens; provider tokens are not stored or logged.
+- A local production-like evidence working copy and non-secret readiness report bundle were generated on 2026-06-18 under `artifacts\production-readiness\`, which is ignored by git. The report bundle covers production-like staging, local backup package structure, local PostgreSQL restore rehearsal, local .NET release-candidate build/test lanes, Web/Mobile readiness, aggregate go-live dry-run, MinIO, Azure Blob, e-invoice, Android launch, and provider readiness, then refreshes the owner action plan, owner handoff, environment template, local execution summary, and local evidence-package draft. The staging readiness row remains blocked until each staging area has both an owner confirmation and a separate non-secret evidence reference. `scripts\check-production-readiness-report-bundle.ps1` validates report/helper shape, current branch/commit alignment where applicable, release-reference freshness, and sensitive-pattern safety. It does not clear external deployment blockers.
 
 ## Provider Readiness
 
@@ -125,7 +127,7 @@ Not production-complete until:
 - Archive purge worker is explicit opt-in.
 - Database/internal storage is development/internal fallback and must not be described as production immutable.
 - Production archive immutability requires provider-level controls, not just application-level protections.
-- ZUGFeRD/Factur-X remains the primary e-invoice target. Full compliance is not claimed until legal validation evidence and production smoke pass.
+- ZUGFeRD/Factur-X and XRechnung are both required for the selected German e-invoice readiness path. Full compliance is not claimed until legal validation evidence, production artifact storage/download smoke, and accounting/tax sign-off pass for both formats.
 - Current JSON/HTML/CSV/source-model exports are not full e-invoice compliance.
 - The external-command adapter rejects non-PDF ZUGFeRD/Factur-X outputs and malformed XRechnung XML before storage; see docs/e-invoice-tooling-decision.md.
 
@@ -135,7 +137,7 @@ Not production-complete until:
 - Consumer checkout is outside first mobile-app scope; customer payment belongs to web storefront flow when enabled.
 - Business subscription purchase, cancellation, SEPA mandate setup, and manual payment registration stay in web/back-office workflows for first launch.
 - Business app shows read-only subscription/contract status and a management handoff.
-- Store launch still requires signed release packages, production Google Maps/Firebase/APNS configuration, push/device smoke, physical QR camera validation, and broader UI/E2E coverage.
+- Store launch still requires signed release packages, production Google Maps/Firebase/APNS configuration, Android readiness preflight, push/device smoke, physical QR camera validation, and broader UI/E2E coverage.
 - Google sign-in still requires deployment OAuth client IDs, native mobile UI integration, and device smoke before it is a launch-ready mobile feature.
 - Web Google sign-in still requires a Web OAuth client ID and browser smoke before it is launch-ready.
 - Tizen is out of launch scope.
@@ -155,4 +157,5 @@ Not production-complete until:
 - VIES production monitoring ownership and periodic controlled smoke.
 - Production object-storage bucket/container validation.
 - E-invoice legal validation and production artifact smoke.
-- Signed mobile release and device/provider smoke.
+- Signed Android release and device/provider smoke first; iOS and MacCatalyst after Android evidence is complete.
+- Deployment-specific production readiness evidence package with passing validation, owner approvals, rollback plan, monitoring ownership, and non-secret references to smoke evidence.

@@ -18,6 +18,140 @@ namespace Darwin.Mobile.Shared.Tests.Services;
 public sealed class ProfileServiceTests
 {
     [Fact]
+    public async Task GetMeAsync_Should_UseCanonicalMemberProfileRoute()
+    {
+        var userId = Guid.Parse("11111111-2222-3333-4444-555555555555");
+        var api = new FakeApiClient
+        {
+            OnGetAsync = route =>
+            {
+                route.Should().Be(ApiRoutes.Profile.GetMe);
+                return new CustomerProfile
+                {
+                    Id = userId,
+                    Email = "member@example.test",
+                    FirstName = "Ada",
+                    LastName = "Lovelace",
+                    PhoneE164 = "+491111111111",
+                    Locale = "de-DE",
+                    Timezone = "Europe/Berlin",
+                    Currency = "EUR",
+                    RowVersion = [1, 2, 3]
+                };
+            }
+        };
+        var service = new ProfileService(api, new FakeMobileCacheService(), new FakeTokenStore());
+
+        var result = await service.GetMeAsync(TestContext.Current.CancellationToken);
+
+        result.Should().NotBeNull();
+        result!.Id.Should().Be(userId);
+    }
+
+    [Fact]
+    public async Task UpdateMeAsync_Should_UseCanonicalMemberProfileRoute()
+    {
+        var api = new FakeApiClient
+        {
+            OnPutNoContentAsync = (route, request) =>
+            {
+                route.Should().Be(ApiRoutes.Profile.UpdateMe);
+                request.Should().BeOfType<CustomerProfile>();
+                return Result.Ok();
+            }
+        };
+        var service = new ProfileService(api, new FakeMobileCacheService(), new FakeTokenStore());
+
+        var result = await service.UpdateMeAsync(
+            new CustomerProfile
+            {
+                Id = Guid.Parse("11111111-2222-3333-4444-555555555555"),
+                Email = "member@example.test",
+                RowVersion = [1, 2, 3]
+            },
+            TestContext.Current.CancellationToken);
+
+        result.Succeeded.Should().BeTrue();
+    }
+
+    [Theory]
+    [InlineData("customer")]
+    [InlineData("context")]
+    public async Task LinkedCustomerReads_Should_UseCanonicalMemberProfileRoutes(string shape)
+    {
+        var api = new FakeApiClient
+        {
+            OnGetAsync = route =>
+            {
+                if (shape == "customer")
+                {
+                    route.Should().Be(ApiRoutes.Profile.GetLinkedCustomer);
+                    return new LinkedCustomerProfile
+                    {
+                        Id = Guid.Parse("11111111-2222-3333-4444-555555555555"),
+                        UserId = Guid.Parse("66666666-7777-8888-9999-000000000000"),
+                        DisplayName = "Ada Lovelace",
+                        Email = "ada@example.test",
+                        CreatedAtUtc = new DateTime(2030, 1, 1, 0, 0, 0, DateTimeKind.Utc)
+                    };
+                }
+
+                route.Should().Be(ApiRoutes.Profile.GetLinkedCustomerContext);
+                return new MemberCustomerContext
+                {
+                    Id = Guid.Parse("11111111-2222-3333-4444-555555555555"),
+                    UserId = Guid.Parse("66666666-7777-8888-9999-000000000000"),
+                    DisplayName = "Ada Lovelace",
+                    Email = "ada@example.test",
+                    CreatedAtUtc = new DateTime(2030, 1, 1, 0, 0, 0, DateTimeKind.Utc)
+                };
+            }
+        };
+        var service = new ProfileService(api, new FakeMobileCacheService(), new FakeTokenStore());
+
+        if (shape == "customer")
+        {
+            var result = await service.GetLinkedCustomerAsync(TestContext.Current.CancellationToken);
+            result.Should().NotBeNull();
+            result!.Email.Should().Be("ada@example.test");
+        }
+        else
+        {
+            var result = await service.GetLinkedCustomerContextAsync(TestContext.Current.CancellationToken);
+            result.Should().NotBeNull();
+            result!.Email.Should().Be("ada@example.test");
+        }
+    }
+
+    [Fact]
+    public async Task PhoneVerificationAndAccountDeletion_Should_UseCanonicalMemberProfileRoutes()
+    {
+        var seenRoutes = new List<string>();
+        var api = new FakeApiClient
+        {
+            OnPostNoContentAsync = (route, request) =>
+            {
+                seenRoutes.Add(route);
+                request.Should().NotBeNull();
+                return Result.Ok();
+            }
+        };
+        var service = new ProfileService(api, new FakeMobileCacheService(), new FakeTokenStore());
+
+        (await service.RequestPhoneVerificationAsync(new RequestPhoneVerificationRequest { Channel = "sms" }, TestContext.Current.CancellationToken))
+            .Succeeded.Should().BeTrue();
+        (await service.ConfirmPhoneVerificationAsync(new ConfirmPhoneVerificationRequest { Code = "123456" }, TestContext.Current.CancellationToken))
+            .Succeeded.Should().BeTrue();
+        (await service.RequestAccountDeletionAsync(new RequestAccountDeletionRequest(true), TestContext.Current.CancellationToken))
+            .Succeeded.Should().BeTrue();
+
+        seenRoutes.Should().Equal(
+            ApiRoutes.Profile.RequestPhoneVerification,
+            ApiRoutes.Profile.ConfirmPhoneVerification,
+            ApiRoutes.Profile.RequestAccountDeletion);
+    }
+
+    [Fact]
     public async Task GetAddressesAsync_Should_UseCanonicalMemberRoute()
     {
         var api = new FakeApiClient
@@ -106,6 +240,8 @@ public sealed class ProfileServiceTests
     {
         public Func<string, object?>? OnGetAsync { get; init; }
         public Func<string, object, object?>? OnPutResultAsync { get; init; }
+        public Func<string, object, Result>? OnPutNoContentAsync { get; init; }
+        public Func<string, object, Result>? OnPostNoContentAsync { get; init; }
 
         public void SetBearerToken(string? accessToken)
         {
@@ -115,6 +251,9 @@ public sealed class ProfileServiceTests
             => throw new NotSupportedException();
 
         public Task<Result<string>> GetStringResultAsync(string route, CancellationToken ct)
+            => throw new NotSupportedException();
+
+        public Task<Result<ApiFileResult>> GetFileResultAsync(string route, CancellationToken ct)
             => throw new NotSupportedException();
 
         public Task<Result<TResponse>> PostResultAsync<TRequest, TResponse>(string route, TRequest request, CancellationToken ct)
@@ -163,10 +302,24 @@ public sealed class ProfileServiceTests
             => throw new NotSupportedException();
 
         public Task<Result> PutNoContentAsync<TRequest>(string route, TRequest request, CancellationToken ct)
-            => throw new NotSupportedException();
+        {
+            if (OnPutNoContentAsync is null)
+            {
+                return Task.FromResult(Result.Fail("No PUT no-content handler configured."));
+            }
+
+            return Task.FromResult(OnPutNoContentAsync(route, request!));
+        }
 
         public Task<Result> PostNoContentAsync<TRequest>(string route, TRequest request, CancellationToken ct)
-            => throw new NotSupportedException();
+        {
+            if (OnPostNoContentAsync is null)
+            {
+                return Task.FromResult(Result.Fail("No POST no-content handler configured."));
+            }
+
+            return Task.FromResult(OnPostNoContentAsync(route, request!));
+        }
     }
 
     private sealed class FakeMobileCacheService : IMobileCacheService

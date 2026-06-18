@@ -1,8 +1,10 @@
 # External Smoke Inputs
 
-Reviewed: 2026-05-27
+Reviewed: 2026-06-18
 
 This file lists non-committed inputs for external smoke checks. Do not store real secret values in this file or any committed configuration. Do not store real provider secrets, API keys, webhook secrets, access keys, or private signing material in this file.
+
+When a smoke is used for deployment approval, record only non-secret run evidence in [production-readiness-evidence-package.md](production-readiness-evidence-package.md): command, run date, operator, target profile or provider label, high-level result, artifact hash or safe evidence reference when applicable, and owner sign-off. Do not copy provider responses, credentials, private payloads, customer data, bank details, payroll contents, or private document contents into source control.
 
 Run the aggregate dry-run first:
 
@@ -12,8 +14,87 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts\check-go-live-readin
 
 Exit code `2` means one or more checks are blocked by missing operator inputs. That is expected before a provider is fully configured.
 The aggregate dry-run loads Brevo Site Settings from the local PostgreSQL Docker container when available, but still requires non-secret delivery-pipeline confirmations before marking Brevo production-readiness prerequisites complete.
+The aggregate dry-run also runs the production readiness report-bundle validator, so the top-level go-live gate fails fast if the local non-secret report/helper set is missing, unparseable, failed, stale, or unsafe before the filled deployment evidence package is reviewed. Set `DARWIN_PRODUCTION_READINESS_REPORT_BUNDLE_DIRECTORY` only when the bundle lives outside the default ignored `artifacts\production-readiness\` directory.
+
+To keep a non-secret readiness attachment for the evidence package, export the same dry-run to an ignored markdown report:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\export-production-readiness-report-bundle.ps1 -Force
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\check-production-readiness-report-bundle.ps1
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\check-production-readiness-report-bundle-clean-smoke.ps1
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\export-go-live-readiness-report.ps1 -Force
+```
+
+The bundle and aggregate reports are written under `artifacts\production-readiness\` by default. They summarize ready, blocked, and failed checks and include non-secret output only. The bundle exporter also refreshes the owner action plan, owner handoff, environment template, local execution summary, and local evidence-package draft. The bundle validator confirms the expected reports and helpers exist, are non-secret, match the current branch, commit, or release reference where applicable, carry report exit codes consistent with their readiness status, and match the report rows recorded in the bundle index. The clean smoke proves a new bundle can be generated and validated from an empty temporary directory without relying on a previous bundle artifact. A blocked report is valid evidence of current gating; it is not go-live approval.
+
+When a filled production evidence package exists, validate its shape before go-live approval:
+
+```powershell
+$env:DARWIN_PRODUCTION_READINESS_EVIDENCE_PACKAGE_PATH = "artifacts\production-readiness\evidence-package.md"
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\check-production-readiness-evidence-package.ps1
+```
+
+If a `Ready` row in that package references a local readiness bundle or generated helper, the validator checks that the referenced file exists, is secret-free, matches the current branch and commit, and reports `Ready` with exit code `0` when the artifact has readiness metadata. Deployment-specific private evidence can still live outside the repository; those references are checked by the deployment owner, not by the local script.
+
+The validation check rejects placeholder text, unresolved open/blocked/failed result rows, missing required evidence markers, and sensitive value patterns. The required markers include production-like staging rehearsal, explicit MinIO production and Azure Blob readiness preflight rows, dual e-invoice evidence, Android launch evidence, provider smokes, and approval rows. It does not inspect the private evidence repository behind each non-secret reference.
+
+Production-like staging rehearsal preflight:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\check-production-like-staging-readiness.ps1
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\export-production-like-staging-readiness-report.ps1 -Force
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\check-local-backup-readiness.ps1
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\export-local-backup-readiness-report.ps1 -Force
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\check-local-postgres-restore-readiness.ps1
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\export-local-postgres-restore-readiness-report.ps1 -Force
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\check-local-release-candidate-readiness.ps1
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\export-local-release-candidate-readiness-report.ps1 -Force
+```
+
+The local backup report inspects only non-secret backup structure: manifest presence, PostgreSQL dump integrity, MinIO mirror presence, private local configuration group presence, and Docker container inventory. It does not print private file names from the sensitive backup area, credentials, provider payloads, or backup file contents. Use `DARWIN_LOCAL_BACKUP_ROOT` or the `-BackupRoot` parameter when the backup root is not the default local path.
+
+The local PostgreSQL restore report performs a temporary restore from the daily dump using `pg_restore --no-owner`, verifies restored application schema/table presence and the EF migration history table, then removes the temporary database. Use `DARWIN_POSTGRES_CONTAINER` or the `-PostgresContainerName` parameter when the running container name is not auto-detected. Docker restore commands run with a bounded timeout; use `-DockerCommandTimeoutSeconds` only for approved large local restore rehearsals.
+
+The local release-candidate report runs focused .NET build/test lanes for WebAdmin, WebApi, Worker, Contracts compatibility, and Mobile Shared compatibility. Web storefront npm/toolchain evidence remains in the Web/Mobile readiness report so missing `npm` blocks the correct surface instead of hiding inside a backend build summary.
+
+Required non-secret references:
+
+- `DARWIN_STAGING_REHEARSAL_LABEL`
+- `DARWIN_STAGING_RELEASE_REFERENCE`
+- `DARWIN_STAGING_EVIDENCE_REFERENCE`
+- `DARWIN_STAGING_BUILD_TESTS_REFERENCE`
+- `DARWIN_STAGING_MIGRATION_REHEARSAL_REFERENCE`
+- `DARWIN_STAGING_ROLLBACK_REHEARSAL_REFERENCE`
+- `DARWIN_STAGING_DATABASE_BACKUP_RESTORE_REFERENCE`
+- `DARWIN_STAGING_OBJECT_STORAGE_PREFLIGHTS_REFERENCE`
+- `DARWIN_STAGING_PROVIDER_PREFLIGHTS_REFERENCE`
+- `DARWIN_STAGING_EINVOICE_EVIDENCE_REFERENCE`
+- `DARWIN_STAGING_ANDROID_EVIDENCE_REFERENCE`
+- `DARWIN_STAGING_MONITORING_ALERTING_REFERENCE`
+- `DARWIN_STAGING_OWNER_SIGNOFF_REFERENCE`
+
+Required confirmations:
+
+- `DARWIN_STAGING_BUILD_TESTS_CONFIRMED=true`
+- `DARWIN_STAGING_MIGRATION_REHEARSAL_CONFIRMED=true`
+- `DARWIN_STAGING_ROLLBACK_REHEARSAL_CONFIRMED=true`
+- `DARWIN_STAGING_DATABASE_BACKUP_RESTORE_CONFIRMED=true`
+- `DARWIN_STAGING_OBJECT_STORAGE_PREFLIGHTS_CONFIRMED=true`
+- `DARWIN_STAGING_PROVIDER_PREFLIGHTS_CONFIRMED=true`
+- `DARWIN_STAGING_EINVOICE_EVIDENCE_CONFIRMED=true`
+- `DARWIN_STAGING_ANDROID_EVIDENCE_CONFIRMED=true`
+- `DARWIN_STAGING_MONITORING_ALERTING_CONFIRMED=true`
+- `DARWIN_STAGING_OWNER_SIGNOFF_CONFIRMED=true`
 
 ## Stripe Test Mode
+
+Provider readiness summary:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\export-provider-readiness-report.ps1 -Force
+```
+
+The provider readiness report runs non-executing Stripe, DHL, Brevo, and VIES prerequisite checks and writes a non-secret summary under `artifacts\production-readiness\`. It does not execute live charges, create DHL validation requests, send Brevo messages, call VIES, or replace provider-specific smoke evidence.
 
 Secrets must be entered through Site Settings or secure deployment configuration:
 
@@ -30,7 +111,11 @@ Smoke variables:
 - `DARWIN_BUSINESS_API_BEARER_TOKEN`, when using `-CheckBusinessSubscriptionCheckout`
 - `DARWIN_STRIPE_SMOKE_BILLING_PLAN_ID`, when using `-CheckBusinessSubscriptionCheckout`
 - `DARWIN_STRIPE_WEBHOOK_PUBLIC_URL`, when using a public HTTPS endpoint for webhook delivery
+- `DARWIN_STRIPE_WEBHOOK_FORWARDING_REFERENCE`
 - `DARWIN_STRIPE_WEBHOOK_FORWARDING_CONFIRMED=true`, after Dashboard delivery or Stripe CLI forwarding is confirmed
+- `DARWIN_STRIPE_TESTMODE_SMOKE_REFERENCE`
+- `DARWIN_STRIPE_RUNTIME_PIPELINE_REFERENCE`, when requiring runtime-pipeline evidence
+- `DARWIN_STRIPE_WEBHOOK_FINALIZATION_REFERENCE`, when waiting for webhook-finalized payment/subscription state
 - `DARWIN_STRIPE_PROVIDER_CALLBACK_WORKER_CONFIRMED=true`, after callback processing is enabled
 
 Commands:
@@ -57,6 +142,14 @@ This is a checklist before approved live-mode execution. It does not call Stripe
 Required confirmations:
 
 - `DARWIN_STRIPE_LIVE_WEBHOOK_PUBLIC_URL`
+- `DARWIN_STRIPE_LIVE_KEYS_REFERENCE`
+- `DARWIN_STRIPE_LIVE_WEBHOOK_ENDPOINT_REFERENCE`
+- `DARWIN_STRIPE_LIVE_WEBHOOK_EVENTS_REFERENCE`
+- `DARWIN_STRIPE_PROVIDER_CALLBACK_WORKER_REFERENCE`
+- `DARWIN_STRIPE_WEBADMIN_VISIBILITY_REFERENCE`
+- `DARWIN_STRIPE_MONITORING_REFERENCE`
+- `DARWIN_STRIPE_ALERTING_REFERENCE`
+- `DARWIN_STRIPE_REFUND_DISPUTE_PLAYBOOK_REFERENCE`
 - `DARWIN_STRIPE_LIVE_KEYS_CONFIGURED_CONFIRMED=true`
 - `DARWIN_STRIPE_LIVE_WEBHOOK_ENDPOINT_CONFIRMED=true`
 - `DARWIN_STRIPE_LIVE_WEBHOOK_EVENTS_CONFIRMED=true`
@@ -65,6 +158,10 @@ Required confirmations:
 - `DARWIN_STRIPE_MONITORING_CONFIRMED=true`
 - `DARWIN_STRIPE_ALERTING_CONFIRMED=true`
 - `DARWIN_STRIPE_REFUND_DISPUTE_PLAYBOOK_CONFIRMED=true`
+
+`DARWIN_STRIPE_LIVE_WEBHOOK_PUBLIC_URL` must be the public HTTPS webhook URL ending in `/api/v1/public/billing/stripe/webhooks`. Do not include embedded credentials, query strings, fragments, webhook signing secrets, tokens, provider payloads, or live payment details in the URL or readiness inputs.
+
+Stripe evidence references must be non-secret report ids, run labels, tickets, checklist rows, or evidence-package row ids. Do not use checkout URLs, provider responses, webhook secrets, API keys, live payment details, customer data, or private approval records.
 
 Command:
 
@@ -93,10 +190,19 @@ Optional variables:
 Delivery-pipeline confirmations:
 
 - `DARWIN_BREVO_WEBHOOK_PUBLIC_URL`
+- `DARWIN_BREVO_READINESS_SMOKE_REFERENCE`
+- `DARWIN_BREVO_WEBHOOK_REFERENCE`
+- `DARWIN_BREVO_TRANSACTIONAL_EVENTS_REFERENCE`
+- `DARWIN_BREVO_PROVIDER_CALLBACK_WORKER_REFERENCE`
+- `DARWIN_BREVO_EMAIL_DISPATCH_WORKER_REFERENCE`
 - `DARWIN_BREVO_WEBHOOK_CONFIGURED_CONFIRMED=true`
 - `DARWIN_BREVO_TRANSACTIONAL_EVENTS_CONFIRMED=true`
 - `DARWIN_BREVO_PROVIDER_CALLBACK_WORKER_CONFIRMED=true`
 - `DARWIN_BREVO_EMAIL_DISPATCH_WORKER_CONFIRMED=true`
+
+`DARWIN_BREVO_WEBHOOK_PUBLIC_URL` must be the public HTTPS webhook URL ending in `/api/v1/public/notifications/brevo/webhooks`. Do not use a loopback URL, and do not include embedded credentials, query strings, fragments, tokens, provider payloads, or private delivery details in the URL or readiness inputs.
+
+Brevo evidence references must be non-secret delivery report ids, run labels, tickets, or evidence-package row ids. Do not use provider responses, delivery payloads, tokens, secrets, customer data, or private approval records.
 
 Commands:
 
@@ -143,6 +249,11 @@ Required variables:
 
 Runtime confirmations:
 
+- `DARWIN_DHL_LIVE_SMOKE_REFERENCE`
+- `DARWIN_DHL_PROVIDER_OPERATION_WORKER_REFERENCE`
+- `DARWIN_DHL_PROVIDER_CALLBACK_WORKER_REFERENCE`
+- `DARWIN_DHL_SHIPMENT_LABELS_STORAGE_REFERENCE`
+- `DARWIN_DHL_RETURN_SMOKE_REFERENCE`, when return-label smoke is in scope
 - `DARWIN_DHL_SHIPMENT_PROVIDER_OPERATION_WORKER_CONFIRMED=true`
 - `DARWIN_DHL_PROVIDER_CALLBACK_WORKER_CONFIRMED=true`
 - `DARWIN_DHL_SHIPMENT_LABELS_STORAGE_CONFIRMED=true`
@@ -162,6 +273,7 @@ Acceptance:
 - No fake labels, references, or tracking URLs are generated.
 - Labels are stored through configured storage.
 - WebAdmin can inspect and recover failed/stale provider operations.
+- DHL evidence references must be non-secret validation report ids, run labels, tickets, or evidence-package row ids. Do not use labels, tracking payloads, provider responses, API credentials, customer data, or private approval records.
 
 ## VIES
 
@@ -169,6 +281,9 @@ Required variables:
 
 - `DARWIN_VIES_VALID_VAT_ID`
 - `DARWIN_VIES_INVALID_VAT_ID`
+- `DARWIN_VIES_VALID_SMOKE_REFERENCE`
+- `DARWIN_VIES_INVALID_SMOKE_REFERENCE`
+- `DARWIN_VIES_PROVIDER_FAILURE_SMOKE_REFERENCE`, when provider-failure handling is in scope
 
 Optional variables:
 
@@ -191,6 +306,7 @@ Acceptance:
 - Provider failures must remain `Unknown` and require manual review.
 - Scheduled retry may retry provider-generated `Unknown` outcomes, but operator decisions remain authoritative.
 - WebAdmin may show format hints during manual review; format hints are not official VIES confirmation and must not mark a VAT ID valid.
+- VIES evidence references must be non-secret report ids, run labels, tickets, or evidence-package row ids. Do not use VAT result payloads, provider responses, customer data, or private approval records.
 
 ## Object Storage And MinIO
 
@@ -236,8 +352,14 @@ Production MinIO readiness confirmations:
 - `DARWIN_MINIO_INVOICE_ARCHIVE_PROFILE_CONFIRMED=true`
 - `DARWIN_MINIO_SHIPMENT_LABELS_PROFILE_CONFIRMED=true`
 - `DARWIN_MINIO_MEDIA_ASSETS_PROFILE_DECIDED_CONFIRMED=true`
+- `DARWIN_MINIO_FINANCE_EXPORTS_PROFILE_CONFIRMED=true`
+- `DARWIN_MINIO_FINANCE_EXPORT_OUTBOUND_PROFILE_CONFIRMED=true`
+- `DARWIN_MINIO_PERSONNEL_DOCUMENTS_PROFILE_CONFIRMED=true`
+- `DARWIN_MINIO_PAYROLL_PAYSLIPS_PROFILE_CONFIRMED=true`
 - `DARWIN_MINIO_DISPOSABLE_SMOKE_PREFIX_CONFIRMED=true`
 - `DARWIN_MINIO_RETENTION_DELETE_BEHAVIOR_CONFIRMED=true`
+- `DARWIN_MINIO_SELECTED_PROVIDER_SMOKE_CONFIRMED=true`
+- `DARWIN_MINIO_SELECTED_PROVIDER_SMOKE_REFERENCE`
 - `DARWIN_MINIO_OPERATOR_RUNBOOK_CONFIRMED=true`
 
 Commands:
@@ -247,6 +369,43 @@ dotnet test tests\Darwin.Infrastructure.Tests\Darwin.Infrastructure.Tests.csproj
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\smoke-object-storage.ps1
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\smoke-object-storage.ps1 -Execute
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\check-minio-production-readiness.ps1
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\export-minio-production-readiness-report.ps1 -Force
+```
+
+Azure Blob readiness confirmations:
+
+- `DARWIN_AZURE_BLOB_PRODUCTION_ENDPOINT`
+- `DARWIN_AZURE_BLOB_PRODUCTION_CONTAINER`
+- `DARWIN_AZURE_BLOB_PROVIDER_SELECTED_CONFIRMED=true`
+- `DARWIN_AZURE_BLOB_TLS_CONFIRMED=true`
+- `DARWIN_AZURE_BLOB_DEDICATED_IDENTITY_CONFIRMED=true`
+- `DARWIN_AZURE_BLOB_LEAST_PRIVILEGE_POLICY_CONFIRMED=true`
+- `DARWIN_AZURE_BLOB_VERSIONING_CONFIRMED=true`
+- `DARWIN_AZURE_BLOB_IMMUTABILITY_POLICY_CONFIRMED=true`
+- `DARWIN_AZURE_BLOB_LEGAL_HOLD_POLICY_CONFIRMED=true`
+- `DARWIN_AZURE_BLOB_BACKUP_CONFIGURED_CONFIRMED=true`
+- `DARWIN_AZURE_BLOB_RESTORE_TEST_CONFIRMED=true`
+- `DARWIN_AZURE_BLOB_MONITORING_CONFIRMED=true`
+- `DARWIN_AZURE_BLOB_ALERTING_CONFIRMED=true`
+- `DARWIN_AZURE_BLOB_DARWIN_PROFILE_CONFIGURED_CONFIRMED=true`
+- `DARWIN_AZURE_BLOB_INVOICE_ARCHIVE_PROFILE_CONFIRMED=true`
+- `DARWIN_AZURE_BLOB_SHIPMENT_LABELS_PROFILE_CONFIRMED=true`
+- `DARWIN_AZURE_BLOB_MEDIA_ASSETS_PROFILE_DECIDED_CONFIRMED=true`
+- `DARWIN_AZURE_BLOB_FINANCE_EXPORTS_PROFILE_CONFIRMED=true`
+- `DARWIN_AZURE_BLOB_FINANCE_EXPORT_OUTBOUND_PROFILE_CONFIRMED=true`
+- `DARWIN_AZURE_BLOB_PERSONNEL_DOCUMENTS_PROFILE_CONFIRMED=true`
+- `DARWIN_AZURE_BLOB_PAYROLL_PAYSLIPS_PROFILE_CONFIRMED=true`
+- `DARWIN_AZURE_BLOB_DISPOSABLE_SMOKE_PREFIX_CONFIRMED=true`
+- `DARWIN_AZURE_BLOB_RETENTION_DELETE_BEHAVIOR_CONFIRMED=true`
+- `DARWIN_AZURE_BLOB_SELECTED_PROVIDER_SMOKE_CONFIRMED=true`
+- `DARWIN_AZURE_BLOB_SELECTED_PROVIDER_SMOKE_REFERENCE`
+- `DARWIN_AZURE_BLOB_OPERATOR_RUNBOOK_CONFIRMED=true`
+
+Command:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\check-azure-object-storage-readiness.ps1
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\export-azure-object-storage-readiness-report.ps1 -Force
 ```
 
 Acceptance:
@@ -268,24 +427,190 @@ Optional variables:
 
 Production configuration should set `Compliance:EInvoice:ExternalCommand:RequireValidationReport=true` so generated artifacts are rejected unless the selected tool writes a recognized positive validation report.
 
+Production readiness variables:
+
+- `DARWIN_EINVOICE_TOOLING_REFERENCE`
+- `DARWIN_EINVOICE_EVIDENCE_PACKAGE_REFERENCE`
+- `DARWIN_EINVOICE_ZUGFERD_FIXTURE_REFERENCE`
+- `DARWIN_EINVOICE_ZUGFERD_ARTIFACT_REFERENCE`
+- `DARWIN_EINVOICE_ZUGFERD_VALIDATION_REPORT_REFERENCE`
+- `DARWIN_EINVOICE_ZUGFERD_STORAGE_DOWNLOAD_SMOKE_REFERENCE`
+- `DARWIN_EINVOICE_ZUGFERD_ACCOUNTING_SIGNOFF_REFERENCE`
+- `DARWIN_EINVOICE_XRECHNUNG_FIXTURE_REFERENCE`
+- `DARWIN_EINVOICE_XRECHNUNG_ARTIFACT_REFERENCE`
+- `DARWIN_EINVOICE_XRECHNUNG_VALIDATION_REPORT_REFERENCE`
+- `DARWIN_EINVOICE_XRECHNUNG_STORAGE_DOWNLOAD_SMOKE_REFERENCE`
+- `DARWIN_EINVOICE_XRECHNUNG_ACCOUNTING_SIGNOFF_REFERENCE`
+
+Production readiness confirmations:
+
+- `DARWIN_EINVOICE_TOOLING_PINNED_CONFIRMED=true`
+- `DARWIN_EINVOICE_REQUIRE_VALIDATION_REPORT_CONFIRMED=true`
+- `DARWIN_EINVOICE_ARCHIVE_RETENTION_CONFIRMED=true`
+- `DARWIN_EINVOICE_ZUGFERD_FIXTURES_APPROVED_CONFIRMED=true`
+- `DARWIN_EINVOICE_ZUGFERD_ARTIFACT_GENERATED_CONFIRMED=true`
+- `DARWIN_EINVOICE_ZUGFERD_VALIDATION_REPORT_CONFIRMED=true`
+- `DARWIN_EINVOICE_ZUGFERD_STORAGE_DOWNLOAD_SMOKE_CONFIRMED=true`
+- `DARWIN_EINVOICE_ZUGFERD_ACCOUNTING_SIGNOFF_CONFIRMED=true`
+- `DARWIN_EINVOICE_XRECHNUNG_FIXTURES_APPROVED_CONFIRMED=true`
+- `DARWIN_EINVOICE_XRECHNUNG_ARTIFACT_GENERATED_CONFIRMED=true`
+- `DARWIN_EINVOICE_XRECHNUNG_VALIDATION_REPORT_CONFIRMED=true`
+- `DARWIN_EINVOICE_XRECHNUNG_STORAGE_DOWNLOAD_SMOKE_CONFIRMED=true`
+- `DARWIN_EINVOICE_XRECHNUNG_ACCOUNTING_SIGNOFF_CONFIRMED=true`
+
 Commands:
 
 ```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\check-einvoice-production-readiness.ps1
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\export-einvoice-production-readiness-report.ps1 -Force
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\smoke-einvoice-external-command.ps1
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\smoke-einvoice-external-command.ps1 -Execute
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\smoke-einvoice-external-command.ps1 -Execute -RequireValidationReport
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\smoke-einvoice-external-command.ps1 -Format XRechnung -Execute
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\smoke-einvoice-external-command.ps1 -Format XRechnung -Execute -RequireValidationReport
 ```
 
 For the repository-local Mustangproject wrapper, set `DARWIN_EINVOICE_COMMAND_PATH` to an absolute path for `scripts\mustang-einvoice-wrapper.cmd`. Run `scripts\install-mustang-cli.ps1` first if the pinned local jar is missing.
 
 Acceptance:
 
+- The production preflight confirms non-secret evidence references for both selected formats.
+- Per-format references point to approved evidence records, not generated PDF/XML contents, validation-report dumps, customer invoices, provider payloads, or private approval documents.
 - The adapter can call the approved wrapper.
 - Output shape and validation-report handling pass.
+- ZUGFeRD/Factur-X and XRechnung both have fixture, validation-report, storage/download, and reviewer evidence before compliant rollout is claimed.
 - Smoke success does not by itself prove legal e-invoice compliance.
 
 ## Mobile Maps And Push
+
+Android is the first launch target. iOS and MacCatalyst follow after Android signed artifact, maps, push, Google sign-in where enabled, and device/camera smoke evidence is complete.
+
+Web storefront toolchain preflight:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\check-web-toolchain-readiness.ps1
+```
+
+This local check confirms `node` and `npm` are available before the solution-level build invokes the `Darwin.Web` Next.js build. It does not install packages, run `npm run build`, or accept registry credentials.
+
+Web storefront local build preflight:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\check-web-storefront-local-build.ps1
+```
+
+This local build check runs `npm run build` only when `node_modules` is already present from the committed lockfile. It does not run `npm install`, accept npm tokens, read environment files, print registry credentials, or replace deployment runtime smoke.
+
+Web storefront runtime/readiness preflight:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\smoke-web-storefront-routes.ps1
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\smoke-web-storefront-routes.ps1 -Execute
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\check-web-storefront-readiness.ps1
+```
+
+The route smoke sends public GET requests only to configured storefront paths. `DARWIN_WEB_SITE_URL` must be a base deployment URL without embedded credentials, query strings, fragments, API keys, auth tokens, route state, or provider payloads. It prints route status codes only, never response bodies, cookies, customer data, or provider payloads. Non-local endpoints require `DARWIN_WEB_ROUTE_SMOKE_CONFIRMED=true` or `-AllowProductionEndpoint` after the deployment owner approves smoke traffic. Use `DARWIN_WEB_ROUTE_SMOKE_PATHS` to override the default public route list.
+
+Web and mobile readiness summary:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\export-web-mobile-readiness-report.ps1 -Force
+```
+
+The Web/Mobile readiness report runs Web toolchain, local storefront build, Web storefront route-smoke configuration, Web storefront runtime, mobile resource-name, and Android project-metadata prerequisite checks and writes a non-secret summary under `artifacts\production-readiness\`. It does not run package installation, execute route smoke by default, run provider calls, build signed mobile packages, store npm tokens, store environment files, or replace route/device smoke evidence.
+
+Required non-secret URLs:
+
+- `DARWIN_WEBAPI_BASE_URL`
+- `DARWIN_WEB_SITE_URL`
+- `DARWIN_WEB_ROUTE_SMOKE_PATHS`, optional comma-separated public route override. Defaults to `/`, `/catalog`, `/help`, and `/cart`.
+
+`DARWIN_WEBAPI_BASE_URL` and `DARWIN_WEB_SITE_URL` must be base deployment URLs. Do not include embedded credentials, query strings, fragments, API keys, auth tokens, route state, environment file values, customer data, or provider payloads in these readiness inputs.
+
+Required confirmations:
+
+- `DARWIN_WEB_STOREFRONT_BUILD_REFERENCE`
+- `DARWIN_WEB_RUNTIME_CONFIG_SMOKE_REFERENCE`
+- `DARWIN_WEB_PUBLIC_DISCOVERY_SMOKE_REFERENCE`
+- `DARWIN_WEB_MEMBER_PORTAL_ROUTE_SMOKE_REFERENCE`
+- `DARWIN_WEB_CHECKOUT_ROUTE_SMOKE_REFERENCE`
+- `DARWIN_WEB_DEGRADED_API_LOG_REVIEW_REFERENCE`
+- `DARWIN_WEB_STAGING_OWNER_SIGNOFF_REFERENCE`
+- `DARWIN_WEB_STOREFRONT_BUILD_CONFIRMED=true`
+- `DARWIN_WEB_RUNTIME_CONFIG_SMOKE_CONFIRMED=true`
+- `DARWIN_WEB_PUBLIC_DISCOVERY_SMOKE_CONFIRMED=true`
+- `DARWIN_WEB_MEMBER_PORTAL_ROUTE_SMOKE_CONFIRMED=true`
+- `DARWIN_WEB_CHECKOUT_ROUTE_SMOKE_CONFIRMED=true`
+- `DARWIN_WEB_DEGRADED_API_LOG_REVIEWED_CONFIRMED=true`
+- `DARWIN_WEB_STAGING_OWNER_SIGNOFF_CONFIRMED=true`
+
+Web readiness references must be non-secret build report ids, smoke report ids, log-review tickets, sign-off references, or evidence-package row ids. Do not use API keys, auth cookies, environment-file values, npm tokens, registry credentials, private package artifacts, build artifacts, customer data, provider payloads, or private approval records.
+
+If the Web storefront is intentionally pointed at `https://api.loyan.de`, also set `DARWIN_WEB_DEFAULT_PRODUCTION_API_CONFIRMED=true`; otherwise production-like staging should use its own WebApi URL.
+
+Android readiness preflight:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\check-android-launch-readiness.ps1
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\export-android-launch-readiness-report.ps1 -Force
+```
+
+Mobile resource naming readiness:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\check-mobile-resource-names.ps1
+```
+
+Android project readiness:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\check-android-project-readiness.ps1
+```
+
+The Android project preflight validates checked-in Consumer and Business MAUI Android metadata, application identifiers, version fields, manifest transport/backup/camera/notification guards, release Firebase guards, the Consumer Maps guard, and that Firebase mobile configuration files are not tracked in git. It does not read Firebase file contents, signing keys, keystore paths, API keys, OAuth secrets, private package artifacts, provider payloads, customer data, or device logs.
+
+The resource-name check is local and deterministic. It blocks MAUI image, splash, and app-icon assets whose filenames are not lowercase alphanumeric or underscore names, before Android-first launch evidence is accepted.
+
+Required non-secret references:
+
+- `DARWIN_ANDROID_RELEASE_ARTIFACT_REFERENCE`
+- `DARWIN_ANDROID_VERSION_NAME`
+- `DARWIN_ANDROID_VERSION_CODE`
+- `DARWIN_ANDROID_RELEASE_CHANNEL_REFERENCE`
+- `DARWIN_ANDROID_SIGNING_PROFILE_REFERENCE`
+- `DARWIN_ANDROID_SIGNED_ARTIFACT_REFERENCE`
+- `DARWIN_ANDROID_MAPS_CONFIG_REFERENCE`
+- `DARWIN_ANDROID_MAPS_KEY_RESTRICTIONS_REFERENCE`
+- `DARWIN_ANDROID_FIREBASE_CONFIG_REFERENCE`
+- `DARWIN_ANDROID_PUSH_SMOKE_REFERENCE`
+- `DARWIN_ANDROID_CONSUMER_SMOKE_REFERENCE`
+- `DARWIN_ANDROID_BUSINESS_SMOKE_REFERENCE`
+- `DARWIN_ANDROID_CAMERA_QR_SMOKE_REFERENCE`
+- `DARWIN_ANDROID_CLEAR_TEXT_GUARD_REFERENCE`
+- `DARWIN_ANDROID_CERT_TRUST_GUARD_REFERENCE`
+- `DARWIN_ANDROID_ROUTE_COMPATIBILITY_REFERENCE`
+- `DARWIN_ANDROID_EVIDENCE_PACKAGE_REFERENCE`
+
+Required confirmations:
+
+- `DARWIN_ANDROID_RELEASE_CHANNEL_CONFIRMED`
+- `DARWIN_ANDROID_SIGNING_PROFILE_CONFIRMED`
+- `DARWIN_ANDROID_SIGNED_ARTIFACT_CONFIRMED`
+- `DARWIN_ANDROID_MAPS_CONFIG_CONFIRMED`
+- `DARWIN_ANDROID_MAPS_KEY_RESTRICTIONS_CONFIRMED`
+- `DARWIN_ANDROID_FIREBASE_CONFIG_CONFIRMED`
+- `DARWIN_ANDROID_PUSH_SMOKE_CONFIRMED`
+- `DARWIN_ANDROID_CONSUMER_SMOKE_CONFIRMED`
+- `DARWIN_ANDROID_BUSINESS_SMOKE_CONFIRMED`
+- `DARWIN_ANDROID_CAMERA_QR_SMOKE_CONFIRMED`
+- `DARWIN_ANDROID_CLEAR_TEXT_GUARD_CONFIRMED`
+- `DARWIN_ANDROID_CERT_TRUST_GUARD_CONFIRMED`
+- `DARWIN_ANDROID_ROUTE_COMPATIBILITY_CONFIRMED`
+- `DARWIN_ANDROID_EVIDENCE_PACKAGE_CONFIRMED`
+
+When native Google sign-in is enabled, also set `DARWIN_ANDROID_GOOGLE_SIGN_IN_ENABLED=true` and require `DARWIN_ANDROID_GOOGLE_SIGN_IN_SMOKE_REFERENCE` plus `DARWIN_ANDROID_GOOGLE_SIGN_IN_SMOKE_CONFIRMED=true`.
+
+Android launch references must be non-secret evidence labels such as release artifact ids, checksums, approval tickets, signed build records, device-smoke report ids, or evidence-package row ids. Do not use signing keys, keystore paths, Firebase service-account values, API keys, OAuth secrets, private package artifact contents, provider payloads, customer data, raw logs, or device logs.
 
 Android maps:
 
@@ -303,6 +628,9 @@ iOS/MacCatalyst push:
 
 Acceptance:
 
-- Signed release builds include production mobile configuration.
-- Device smoke registers push tokens and verifies logout/account-switch behavior.
-- Physical camera QR scanning is validated with real device/camera input.
+- Signed Android release builds include production mobile configuration before Android launch.
+- `scripts\check-android-project-readiness.ps1` passes against the checked-out release candidate.
+- `scripts\check-android-launch-readiness.ps1` passes in the deployment shell.
+- Android device smoke registers push tokens and verifies logout/account-switch behavior.
+- Android physical camera QR scanning is validated with real device/camera input.
+- iOS/MacCatalyst smoke uses the same acceptance rules after those launch targets enter scope.

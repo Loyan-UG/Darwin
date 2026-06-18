@@ -1,0 +1,11 @@
+@model Darwin.WebAdmin.ViewModels.HumanResources.HrListVm<Darwin.Application.HumanResources.DTOs.TimeEntryListItemDto, Darwin.Application.HumanResources.DTOs.TimeEntryQueueFilter>
+@inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
+@{ ViewData["Title"] = T.T("TimeEntries"); }
+<section class="admin-page">
+    <div class="d-flex justify-content-between align-items-center mb-3"><h1 class="mb-0">@T.T("TimeEntries")</h1><a asp-action="CreateTimeEntry" asp-route-businessId="@Model.BusinessId" class="btn btn-primary">@T.T("Create")</a></div>
+    <form asp-action="TimeEntries" method="get" class="d-flex gap-2 mb-3"><select name="businessId" asp-items="Model.BusinessOptions" class="form-select"></select><input type="text" name="q" value="@Model.Query" class="form-control" placeholder="@T.T("Search")" /><select name="filter" asp-items="Model.FilterItems" class="form-select"></select><button class="btn btn-outline-secondary" type="submit">@T.T("Filter")</button></form>
+    <div class="table-responsive"><table class="table table-sm table-striped align-middle"><thead><tr><th>@T.T("WorkDate")</th><th>@T.T("Employee")</th><th>@T.T("WorkType")</th><th>@T.T("DurationMinutes")</th><th>@T.T("Status")</th><th class="text-end">@T.T("Actions")</th></tr></thead><tbody>
+    @if (!Model.Items.Any()) { <tr><td colspan="6" class="text-muted">@T.T("NoRecords")</td></tr> }
+    else { foreach (var item in Model.Items) { <tr><td>@item.WorkDateUtc.ToString("yyyy-MM-dd")</td><td>@item.EmployeeName</td><td>@item.WorkType</td><td>@item.DurationMinutes</td><td><span class="badge text-bg-light">@T.T(item.Status.ToString())</span></td><td class="text-end"><a asp-action="EditTimeEntry" asp-route-id="@item.Id" class="btn btn-sm btn-outline-secondary">@T.T("Edit")</a></td></tr> } }
+    </tbody></table></div>
+</section>

@@ -4,7 +4,9 @@ using System.Threading;
 using System.Threading.Tasks;
 using Darwin.Application.Abstractions.Persistence;
 using Darwin.Application.Abstractions.Services;
+using Darwin.Application.Billing.Services;
 using Darwin.Application.Orders.DTOs;
+using Darwin.Application.Sales.Services;
 using Darwin.Application.Orders.Validators;
 using Darwin.Domain.Entities.Billing;
 using Darwin.Domain.Entities.Orders;
@@ -26,6 +28,8 @@ namespace Darwin.Application.Orders.Commands
         private readonly IClock _clock;
         private readonly IValidator<PaymentCreateDto> _validator;
         private readonly IStringLocalizer<ValidationResource> _localizer;
+        private readonly SalesLifecycleEventService? _salesEvents;
+        private readonly FinanceReceivablesPostingService? _financePosting;
 
         /// <summary>
         /// Initializes the handler with the application DbContext abstraction.
@@ -34,12 +38,16 @@ namespace Darwin.Application.Orders.Commands
             IAppDbContext db,
             IClock clock,
             IValidator<PaymentCreateDto> validator,
-            IStringLocalizer<ValidationResource> localizer)
+            IStringLocalizer<ValidationResource> localizer,
+            SalesLifecycleEventService? salesEvents = null,
+            FinanceReceivablesPostingService? financePosting = null)
         {
             _db = db ?? throw new ArgumentNullException(nameof(db));
             _clock = clock ?? throw new ArgumentNullException(nameof(clock));
             _validator = validator ?? throw new ArgumentNullException(nameof(validator));
             _localizer = localizer ?? throw new ArgumentNullException(nameof(localizer));
+            _salesEvents = salesEvents;
+            _financePosting = financePosting;
         }
 
         /// <summary>
@@ -71,11 +79,13 @@ namespace Darwin.Application.Orders.Commands
                 throw new ValidationException(_localizer["PaymentCreateStatusInvalid"]);
 
             var nowUtc = _clock.UtcNow;
+            var previousOrderStatus = order.Status;
 
             // Map to domain entity.
             var payment = new Payment
             {
-                BusinessId = null,
+                Id = Guid.NewGuid(),
+                BusinessId = order.BusinessId,
                 OrderId = order.Id,
                 UserId = order.UserId,
                 Provider = dto.Provider,
@@ -95,6 +105,40 @@ namespace Darwin.Application.Orders.Commands
                 (order.Status == OrderStatus.Created || order.Status == OrderStatus.Confirmed))
             {
                 order.Status = OrderStatus.Paid;
+            }
+
+            if (_salesEvents is not null)
+            {
+                var paymentEvent = await _salesEvents.RecordPaymentRecordedAsync(payment, order, nowUtc, ct).ConfigureAwait(false);
+                if (!paymentEvent.Succeeded)
+                {
+                    throw new ValidationException(paymentEvent.Error);
+                }
+
+                if (previousOrderStatus != order.Status)
+                {
+                    var orderEvent = await _salesEvents.RecordOrderStatusChangedAsync(
+                        order,
+                        previousOrderStatus,
+                        order.Status,
+                        nowUtc,
+                        ct)
+                        .ConfigureAwait(false);
+                    if (!orderEvent.Succeeded)
+                    {
+                        throw new ValidationException(orderEvent.Error);
+                    }
+                }
+            }
+
+            if (_financePosting is not null)
+            {
+                var posting = await _financePosting.PostPaymentRecordedAsync(payment, payment.PaidAtUtc ?? nowUtc, ct)
+                    .ConfigureAwait(false);
+                if (!posting.Succeeded)
+                {
+                    throw new ValidationException(posting.Error);
+                }
             }
 
             await _db.SaveChangesAsync(ct);

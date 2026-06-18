@@ -154,6 +154,37 @@ public sealed class CrmEngagementHandlersTests
     }
 
     [Fact]
+    public async Task CreateConsent_Should_PersistComplianceMetadata_WhenProvided()
+    {
+        await using var db = CrmEngagementDbContext.Create();
+        var customerId = Guid.NewGuid();
+
+        db.Set<Customer>().Add(MakeCustomer(customerId));
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var handler = new CreateConsentHandler(
+            db,
+            new ConsentCreateValidator(new TestStringLocalizer()),
+            new TestStringLocalizer());
+
+        var id = await handler.HandleAsync(new ConsentCreateDto
+        {
+            CustomerId = customerId,
+            Type = ConsentType.MarketingEmail,
+            Granted = true,
+            GrantedAtUtc = new DateTime(2030, 6, 1, 0, 0, 0, DateTimeKind.Utc),
+            Source = "  checkout  ",
+            PolicyVersion = "  v1  ",
+            EvidenceJson = " {\"ip\":\"redacted\"} "
+        }, TestContext.Current.CancellationToken);
+
+        var consent = await db.Set<Consent>().SingleAsync(x => x.Id == id, TestContext.Current.CancellationToken);
+        consent.Source.Should().Be("checkout");
+        consent.PolicyVersion.Should().Be("v1");
+        consent.EvidenceJson.Should().Be("{\"ip\":\"redacted\"}");
+    }
+
+    [Fact]
     public async Task CreateConsent_Should_SetRevokedAt_WhenConsentIsRevoked()
     {
         await using var db = CrmEngagementDbContext.Create();
@@ -227,7 +258,33 @@ public sealed class CrmEngagementHandlersTests
 
         var segment = await db.Set<CustomerSegment>().SingleAsync(x => x.Id == id, TestContext.Current.CancellationToken);
         segment.Name.Should().Be("VIP Customers");
+        segment.Code.Should().Be("vip-customers");
+        segment.IsActive.Should().BeTrue();
         segment.Description.Should().Be("High-value frequent buyers");
+    }
+
+    [Fact]
+    public async Task CreateCustomerSegment_Should_NormalizeExplicitCodeAndPersistRuleMetadata()
+    {
+        await using var db = CrmEngagementDbContext.Create();
+
+        var handler = new CreateCustomerSegmentHandler(
+            db,
+            new CustomerSegmentEditValidator(),
+            new TestStringLocalizer());
+
+        var id = await handler.HandleAsync(new CustomerSegmentEditDto
+        {
+            Name = "Priority Buyers",
+            Code = " Priority Buyers ",
+            IsActive = false,
+            RuleJson = " {\"kind\":\"manual\"} "
+        }, TestContext.Current.CancellationToken);
+
+        var segment = await db.Set<CustomerSegment>().SingleAsync(x => x.Id == id, TestContext.Current.CancellationToken);
+        segment.Code.Should().Be("priority-buyers");
+        segment.IsActive.Should().BeFalse();
+        segment.RuleJson.Should().Be("{\"kind\":\"manual\"}");
     }
 
     [Fact]
@@ -371,7 +428,7 @@ public sealed class CrmEngagementHandlersTests
             Description = "Updated description"
         }, TestContext.Current.CancellationToken);
 
-        await act.Should().ThrowAsync<InvalidOperationException>()
+        await act.Should().ThrowAsync<DbUpdateConcurrencyException>()
             .WithMessage("*ConcurrencyConflictDetected*");
     }
 
@@ -670,7 +727,7 @@ public sealed class CrmEngagementHandlersTests
                 b.Property(x => x.LastName).IsRequired();
                 b.Property(x => x.Email).IsRequired();
                 b.Property(x => x.Phone).IsRequired();
-                b.Property(x => x.RowVersion).IsRequired();
+                b.Property(x => x.RowVersion).IsRequired(false);
                 b.Ignore(x => x.CustomerSegments);
                 b.Ignore(x => x.Addresses);
                 b.Ignore(x => x.Interactions);
@@ -683,7 +740,7 @@ public sealed class CrmEngagementHandlersTests
             {
                 b.HasKey(x => x.Id);
                 b.Property(x => x.Name).IsRequired();
-                b.Property(x => x.RowVersion).IsRequired();
+                b.Property(x => x.RowVersion).IsRequired(false);
                 b.Ignore(x => x.Memberships);
             });
 

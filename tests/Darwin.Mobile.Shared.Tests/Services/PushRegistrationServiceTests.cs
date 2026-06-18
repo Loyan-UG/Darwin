@@ -58,6 +58,52 @@ public sealed class PushRegistrationServiceTests
     }
 
     /// <summary>
+    /// Verifies optional push metadata is null-normalized instead of sending whitespace payloads.
+    /// </summary>
+    [Fact]
+    public async Task RegisterDeviceAsync_Should_NullNormalizeBlankOptionalFields()
+    {
+        var registeredAtUtc = new DateTime(2030, 2, 3, 4, 5, 6, DateTimeKind.Utc);
+        var api = new FakeApiClient
+        {
+            OnPostResultAsync = (route, request) =>
+            {
+                route.Should().Be(ApiRoutes.Notifications.RegisterDevice);
+                request.Should().BeOfType<RegisterPushDeviceRequest>();
+
+                var payload = (RegisterPushDeviceRequest)request;
+                payload.DeviceId.Should().Be("device-42");
+                payload.Platform.Should().Be(MobileDevicePlatform.iOS);
+                payload.PushToken.Should().BeNull();
+                payload.NotificationsEnabled.Should().BeFalse();
+                payload.AppVersion.Should().BeNull();
+                payload.DeviceModel.Should().BeNull();
+
+                return Result<RegisterPushDeviceResponse>.Ok(new RegisterPushDeviceResponse
+                {
+                    DeviceId = payload.DeviceId,
+                    RegisteredAtUtc = registeredAtUtc
+                });
+            }
+        };
+        var service = new PushRegistrationService(api);
+
+        var result = await service.RegisterDeviceAsync(
+            " device-42 ",
+            MobileDevicePlatform.iOS,
+            pushToken: " ",
+            notificationsEnabled: false,
+            appVersion: "\t",
+            deviceModel: "  ",
+            TestContext.Current.CancellationToken);
+
+        result.Succeeded.Should().BeTrue();
+        result.Value.Should().NotBeNull();
+        result.Value!.DeviceId.Should().Be("device-42");
+        result.Value.RegisteredAtUtc.Should().Be(registeredAtUtc);
+    }
+
+    /// <summary>
     /// Verifies invalid device identifiers fail before any API call is made.
     /// </summary>
     [Fact]
@@ -130,6 +176,9 @@ public sealed class PushRegistrationServiceTests
             => throw new NotSupportedException();
 
         public Task<Result<string>> GetStringResultAsync(string route, CancellationToken ct)
+            => throw new NotSupportedException();
+
+        public Task<Result<ApiFileResult>> GetFileResultAsync(string route, CancellationToken ct)
             => throw new NotSupportedException();
 
         public Task<Result<TResponse>> GetEnvelopeResultAsync<TResponse>(string route, CancellationToken ct)

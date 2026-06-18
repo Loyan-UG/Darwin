@@ -50,6 +50,41 @@ public sealed class ContractSerializationCompatibilityCommerceAndContentTests : 
                     LineGrossMinor = 2599
                 }
             ],
+            Payments =
+            [
+                new MemberOrderPayment
+                {
+                    Id = Guid.Parse("dddddddd-dddd-dddd-dddd-dddddddddddd"),
+                    Provider = "Stripe",
+                    ProviderReference = "pi_123",
+                    AmountMinor = 2599,
+                    Currency = "EUR",
+                    Status = "Captured",
+                    PaidAtUtc = new DateTime(2030, 1, 2, 12, 0, 0, DateTimeKind.Utc)
+                }
+            ],
+            Shipments =
+            [
+                new MemberOrderShipment
+                {
+                    Id = Guid.Parse("eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee"),
+                    Carrier = "DHL",
+                    Service = "Paket",
+                    TrackingNumber = "TRACK-1",
+                    Status = "Shipped"
+                }
+            ],
+            Invoices =
+            [
+                new MemberOrderInvoice
+                {
+                    Id = Guid.Parse("ffffffff-ffff-ffff-ffff-ffffffffffff"),
+                    Currency = "EUR",
+                    TotalGrossMinor = 2599,
+                    Status = "Issued",
+                    DueDateUtc = new DateTime(2030, 1, 15, 0, 0, 0, DateTimeKind.Utc)
+                }
+            ],
             Actions = new MemberOrderActions
             {
                 CanRetryPayment = true,
@@ -71,11 +106,19 @@ public sealed class ContractSerializationCompatibilityCommerceAndContentTests : 
         json.Should().Contain("\"billingAddressJson\"");
         json.Should().Contain("\"shippingAddressJson\"");
         json.Should().Contain("\"lines\"");
+        json.Should().Contain("\"payments\"");
+        json.Should().Contain("\"shipments\"");
+        json.Should().Contain("\"invoices\"");
         json.Should().Contain("\"actions\"");
         json.Should().Contain("\"canRetryPayment\"");
         json.Should().Contain("\"paymentIntentPath\"");
         json.Should().Contain("\"confirmationPath\"");
         json.Should().Contain("\"documentPath\"");
+        json.Should().NotContain("\"billingAddress\"");
+        json.Should().NotContain("\"shippingAddress\"");
+        json.Should().NotContain("\"salesInvoiceId\"");
+        json.Should().NotContain("\"financeInvoiceId\"");
+        json.Should().NotContain("\"accountingDocumentId\"");
     }
 
 /// <summary>
@@ -112,7 +155,10 @@ public sealed class ContractSerializationCompatibilityCommerceAndContentTests : 
                 CanRetryPayment = false,
                 PaymentIntentPath = null,
                 OrderPath = "/api/v1/member/orders/ffffffff-ffff-ffff-ffff-ffffffffffff",
-                DocumentPath = "/api/v1/member/invoices/dddddddd-dddd-dddd-dddd-dddddddddddd/document"
+                DocumentPath = "/api/v1/member/invoices/dddddddd-dddd-dddd-dddd-dddddddddddd/document",
+                ArchiveDocumentPath = "/api/v1/member/invoices/dddddddd-dddd-dddd-dddd-dddddddddddd/archive-document",
+                StructuredDataPath = "/api/v1/member/invoices/dddddddd-dddd-dddd-dddd-dddddddddddd/structured-data",
+                StructuredXmlPath = "/api/v1/member/invoices/dddddddd-dddd-dddd-dddd-dddddddddddd/structured-xml"
             }
         };
 
@@ -129,6 +175,12 @@ public sealed class ContractSerializationCompatibilityCommerceAndContentTests : 
         json.Should().Contain("\"canRetryPayment\"");
         json.Should().Contain("\"orderPath\"");
         json.Should().Contain("\"documentPath\"");
+        json.Should().Contain("\"archiveDocumentPath\"");
+        json.Should().Contain("\"structuredDataPath\"");
+        json.Should().Contain("\"structuredXmlPath\"");
+        json.Should().NotContain("\"salesInvoiceId\"");
+        json.Should().NotContain("\"financeInvoiceId\"");
+        json.Should().NotContain("\"accountingDocumentId\"");
     }
 
 /// <summary>
@@ -550,7 +602,10 @@ public sealed class ContractSerializationCompatibilityCommerceAndContentTests : 
             CanRetryPayment = true,
             PaymentIntentPath = null,
             OrderPath = null,
-            DocumentPath = "/api/v1/member/invoices/22222222-2222-2222-2222-222222222222/document"
+            DocumentPath = "/api/v1/member/invoices/22222222-2222-2222-2222-222222222222/document",
+            ArchiveDocumentPath = "/api/v1/member/invoices/22222222-2222-2222-2222-222222222222/archive-document",
+            StructuredDataPath = "/api/v1/member/invoices/22222222-2222-2222-2222-222222222222/structured-data",
+            StructuredXmlPath = "/api/v1/member/invoices/22222222-2222-2222-2222-222222222222/structured-xml"
         };
 
         // Act
@@ -562,11 +617,17 @@ public sealed class ContractSerializationCompatibilityCommerceAndContentTests : 
         json.Should().Contain("\"paymentIntentPath\":null");
         json.Should().Contain("\"orderPath\":null");
         json.Should().Contain("\"documentPath\"");
+        json.Should().Contain("\"archiveDocumentPath\"");
+        json.Should().Contain("\"structuredDataPath\"");
+        json.Should().Contain("\"structuredXmlPath\"");
 
         roundTrip.Should().NotBeNull();
         roundTrip!.CanRetryPayment.Should().BeTrue();
         roundTrip.OrderPath.Should().BeNull();
         roundTrip.DocumentPath.Should().Contain("/document");
+        roundTrip.ArchiveDocumentPath.Should().Contain("/archive-document");
+        roundTrip.StructuredDataPath.Should().Contain("/structured-data");
+        roundTrip.StructuredXmlPath.Should().Contain("/structured-xml");
     }
 
 /// <summary>

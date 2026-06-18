@@ -126,6 +126,15 @@ namespace Darwin.Mobile.Shared.Api
         }
 
         /// <summary>
+        /// Employee self-service payroll endpoints.
+        /// </summary>
+        public static class Payroll
+        {
+            public const string GetMyPayslips = "api/v1/member/payroll/payslips";
+            public static string DownloadPayslipDocument(Guid id) => $"api/v1/member/payroll/payslips/{id:D}/document";
+        }
+
+        /// <summary>
         /// Businesses discovery endpoints (WebApi).
         /// </summary>
         public static class Businesses
@@ -153,10 +162,10 @@ namespace Darwin.Mobile.Shared.Api
         public static class Notifications
         {
             public const string RegisterDevice = "api/v1/member/notifications/devices/register";
-            public const string List = "api/v1/notifications";
-            public const string UnreadCount = "api/v1/notifications/unread-count";
-            public static string MarkRead(Guid id) => $"api/v1/notifications/{id:D}/read";
-            public const string MarkAllRead = "api/v1/notifications/read-all";
+            public const string List = "api/v1/member/notifications";
+            public const string UnreadCount = "api/v1/member/notifications/unread-count";
+            public static string MarkRead(Guid id) => $"api/v1/member/notifications/{id:D}/read";
+            public const string MarkAllRead = "api/v1/member/notifications/read-all";
         }
         public static class Billing
         {

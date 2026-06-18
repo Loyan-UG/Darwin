@@ -375,6 +375,419 @@ namespace Darwin.Domain.Entities.Billing
     }
 
     /// <summary>
+    /// Maps a business-specific finance posting role to a concrete financial account.
+    /// </summary>
+    public sealed class FinancePostingAccountMapping : BaseEntity
+    {
+        /// <summary>
+        /// Gets or sets the owning business id.
+        /// </summary>
+        public Guid BusinessId { get; set; }
+
+        /// <summary>
+        /// Gets or sets the finance posting role.
+        /// </summary>
+        public FinancePostingAccountRole Role { get; set; } = FinancePostingAccountRole.Receivables;
+
+        /// <summary>
+        /// Gets or sets the mapped financial account id.
+        /// </summary>
+        public Guid FinancialAccountId { get; set; }
+
+        /// <summary>
+        /// Gets or sets whether this mapping is active for automated resolution.
+        /// </summary>
+        public bool IsActive { get; set; } = true;
+
+        /// <summary>
+        /// Gets or sets an optional operator-facing description.
+        /// </summary>
+        public string? Description { get; set; }
+
+        /// <summary>
+        /// Gets or sets safe, reportable metadata for the mapping.
+        /// </summary>
+        public string MetadataJson { get; set; } = "{}";
+    }
+
+    /// <summary>
+    /// Represents one idempotent accounting export batch for a business and target system.
+    /// </summary>
+    public sealed class FinanceExportBatch : BaseEntity
+    {
+        /// <summary>
+        /// Gets or sets the owning business id.
+        /// </summary>
+        public Guid BusinessId { get; set; }
+
+        /// <summary>
+        /// Gets or sets the target external accounting system id.
+        /// </summary>
+        public Guid ExternalSystemId { get; set; }
+
+        /// <summary>
+        /// Gets or sets the deterministic export key for idempotent batch creation.
+        /// </summary>
+        public string ExportKey { get; set; } = string.Empty;
+
+        /// <summary>
+        /// Gets or sets the inclusive UTC period start for journal entries.
+        /// </summary>
+        public DateTime PeriodStartUtc { get; set; }
+
+        /// <summary>
+        /// Gets or sets the exclusive UTC period end for journal entries.
+        /// </summary>
+        public DateTime PeriodEndUtc { get; set; }
+
+        /// <summary>
+        /// Gets or sets which posting statuses are eligible for the batch.
+        /// </summary>
+        public FinanceExportPostingStatusMode PostingStatusMode { get; set; } = FinanceExportPostingStatusMode.PostedAndReversed;
+
+        /// <summary>
+        /// Gets or sets the batch lifecycle status.
+        /// </summary>
+        public FinanceExportBatchStatus Status { get; set; } = FinanceExportBatchStatus.Draft;
+
+        /// <summary>
+        /// Gets or sets when a package was generated.
+        /// </summary>
+        public DateTime? GeneratedAtUtc { get; set; }
+
+        /// <summary>
+        /// Gets or sets when the batch was delivered to its target.
+        /// </summary>
+        public DateTime? DeliveredAtUtc { get; set; }
+
+        /// <summary>
+        /// Gets or sets when the latest batch-level failure happened.
+        /// </summary>
+        public DateTime? FailedAtUtc { get; set; }
+
+        /// <summary>
+        /// Gets or sets the deterministic package hash when a package is generated.
+        /// </summary>
+        public string? PackageHashSha256 { get; set; }
+
+        /// <summary>
+        /// Gets or sets the package content type when a package is generated.
+        /// </summary>
+        public string? PackageContentType { get; set; }
+
+        /// <summary>
+        /// Gets or sets the package file name when a package is generated.
+        /// </summary>
+        public string? PackageFileName { get; set; }
+
+        /// <summary>
+        /// Gets or sets a safe operator-facing error summary.
+        /// </summary>
+        public string? ErrorSummary { get; set; }
+
+        /// <summary>
+        /// Gets or sets safe, reportable metadata.
+        /// </summary>
+        public string MetadataJson { get; set; } = "{}";
+
+        /// <summary>
+        /// Gets or sets export attempts for this batch.
+        /// </summary>
+        public List<FinanceExportAttempt> Attempts { get; set; } = new();
+    }
+
+    /// <summary>
+    /// Represents one safe retry/delivery attempt for a finance export batch.
+    /// </summary>
+    public sealed class FinanceExportAttempt : BaseEntity
+    {
+        /// <summary>
+        /// Gets or sets the export batch id.
+        /// </summary>
+        public Guid FinanceExportBatchId { get; set; }
+
+        /// <summary>
+        /// Gets or sets the one-based attempt number inside the batch.
+        /// </summary>
+        public int AttemptNumber { get; set; }
+
+        /// <summary>
+        /// Gets or sets the attempt status.
+        /// </summary>
+        public FinanceExportAttemptStatus Status { get; set; } = FinanceExportAttemptStatus.Started;
+
+        /// <summary>
+        /// Gets or sets when the attempt started.
+        /// </summary>
+        public DateTime StartedAtUtc { get; set; }
+
+        /// <summary>
+        /// Gets or sets when the attempt completed successfully.
+        /// </summary>
+        public DateTime? CompletedAtUtc { get; set; }
+
+        /// <summary>
+        /// Gets or sets when the attempt failed.
+        /// </summary>
+        public DateTime? FailedAtUtc { get; set; }
+
+        /// <summary>
+        /// Gets or sets the package hash observed by this attempt.
+        /// </summary>
+        public string? PackageHashSha256 { get; set; }
+
+        /// <summary>
+        /// Gets or sets a safe operator-facing error summary.
+        /// </summary>
+        public string? ErrorSummary { get; set; }
+
+        /// <summary>
+        /// Gets or sets safe, reportable metadata.
+        /// </summary>
+        public string MetadataJson { get; set; } = "{}";
+    }
+
+    public sealed class BankAccount : BaseEntity
+    {
+        public Guid BusinessId { get; set; }
+        public Guid? FinancialAccountId { get; set; }
+        public string Code { get; set; } = string.Empty;
+        public string DisplayName { get; set; } = string.Empty;
+        public string? BankName { get; set; }
+        public string Currency { get; set; } = DomainDefaults.DefaultCurrency;
+        public string? MaskedAccountIdentifier { get; set; }
+        public BankAccountStatus Status { get; set; } = BankAccountStatus.Active;
+        public bool IsDefault { get; set; }
+        public string MetadataJson { get; set; } = "{}";
+    }
+
+    public sealed class BankStatementImport : BaseEntity
+    {
+        public Guid BusinessId { get; set; }
+        public Guid BankAccountId { get; set; }
+        public string StatementReference { get; set; } = string.Empty;
+        public DateTime PeriodStartUtc { get; set; }
+        public DateTime PeriodEndUtc { get; set; }
+        public DateTime ImportedAtUtc { get; set; }
+        public BankStatementImportStatus Status { get; set; } = BankStatementImportStatus.Imported;
+        public int LineCount { get; set; }
+        public long DebitTotalMinor { get; set; }
+        public long CreditTotalMinor { get; set; }
+        public string MetadataJson { get; set; } = "{}";
+        public List<BankStatementLine> Lines { get; set; } = new();
+    }
+
+    public sealed class BankStatementLine : BaseEntity
+    {
+        public Guid BusinessId { get; set; }
+        public Guid BankAccountId { get; set; }
+        public Guid BankStatementImportId { get; set; }
+        public DateTime TransactionDateUtc { get; set; }
+        public DateTime? ValueDateUtc { get; set; }
+        public BankStatementLineDirection Direction { get; set; } = BankStatementLineDirection.Debit;
+        public long AmountMinor { get; set; }
+        public string Currency { get; set; } = DomainDefaults.DefaultCurrency;
+        public string? CounterpartyName { get; set; }
+        public string? CounterpartyReference { get; set; }
+        public string? RemittanceInformation { get; set; }
+        public string NormalizedIdentityKey { get; set; } = string.Empty;
+        public BankStatementLineReviewStatus ReviewStatus { get; set; } = BankStatementLineReviewStatus.Unreviewed;
+        public string MetadataJson { get; set; } = "{}";
+    }
+
+    public sealed class BankReconciliationMatch : BaseEntity
+    {
+        public Guid BusinessId { get; set; }
+        public Guid BankAccountId { get; set; }
+        public string? MatchNumber { get; set; }
+        public BankReconciliationMatchStatus Status { get; set; } = BankReconciliationMatchStatus.Draft;
+        public DateTime MatchDateUtc { get; set; }
+        public string Currency { get; set; } = DomainDefaults.DefaultCurrency;
+        public long BankTotalMinor { get; set; }
+        public long FinanceTotalMinor { get; set; }
+        public long DifferenceMinor { get; set; }
+        public DateTime? MatchedAtUtc { get; set; }
+        public DateTime? CancelledAtUtc { get; set; }
+        public string? ReviewNotes { get; set; }
+        public string MetadataJson { get; set; } = "{}";
+        public List<BankReconciliationMatchLine> Lines { get; set; } = new();
+    }
+
+    public sealed class BankReconciliationMatchLine : BaseEntity
+    {
+        public Guid BankReconciliationMatchId { get; set; }
+        public Guid BankStatementLineId { get; set; }
+        public Guid? JournalEntryId { get; set; }
+        public BankReconciliationSourceType? SourceType { get; set; }
+        public string? SourceEntityType { get; set; }
+        public Guid? SourceEntityId { get; set; }
+        public BankStatementLineDirection Direction { get; set; } = BankStatementLineDirection.Debit;
+        public long AmountMinor { get; set; }
+        public string? Memo { get; set; }
+        public int SortOrder { get; set; }
+        public bool IsActive { get; set; } = true;
+    }
+
+    /// <summary>
+    /// Represents a formal supplier invoice used as the payables source before posting.
+    /// </summary>
+    public sealed class SupplierInvoice : BaseEntity
+    {
+        public Guid BusinessId { get; set; }
+        public Guid SupplierId { get; set; }
+        public Guid? PurchaseOrderId { get; set; }
+        public Guid? GoodsReceiptId { get; set; }
+        public string SupplierInvoiceNumber { get; set; } = string.Empty;
+        public string? InternalInvoiceNumber { get; set; }
+        public SupplierInvoiceStatus Status { get; set; } = SupplierInvoiceStatus.Draft;
+        public DateTime InvoiceDateUtc { get; set; }
+        public DateTime? ReceivedAtUtc { get; set; }
+        public DateTime? DueDateUtc { get; set; }
+        public int? PaymentTermDays { get; set; }
+        public string Currency { get; set; } = DomainDefaults.DefaultCurrency;
+        public long TotalNetMinor { get; set; }
+        public long TotalTaxMinor { get; set; }
+        public long TotalGrossMinor { get; set; }
+        public DateTime? MatchedAtUtc { get; set; }
+        public DateTime? ApprovedAtUtc { get; set; }
+        public DateTime? PostedAtUtc { get; set; }
+        public DateTime? VoidedAtUtc { get; set; }
+        public Guid? PostingJournalEntryId { get; set; }
+        public string? InternalNotes { get; set; }
+        public string MetadataJson { get; set; } = "{}";
+        public List<SupplierInvoiceLine> Lines { get; set; } = new();
+    }
+
+    /// <summary>
+    /// Represents one supplier invoice line snapshot and matching result.
+    /// </summary>
+    public sealed class SupplierInvoiceLine : BaseEntity
+    {
+        public Guid SupplierInvoiceId { get; set; }
+        public Guid? PurchaseOrderLineId { get; set; }
+        public Guid? GoodsReceiptLineId { get; set; }
+        public Guid? ProductVariantId { get; set; }
+        public string? SupplierSku { get; set; }
+        public string Description { get; set; } = string.Empty;
+        public int InvoicedQuantity { get; set; }
+        public long UnitNetMinor { get; set; }
+        public long UnitTaxMinor { get; set; }
+        public long UnitGrossMinor { get; set; }
+        public long TotalNetMinor { get; set; }
+        public long TotalTaxMinor { get; set; }
+        public long TotalGrossMinor { get; set; }
+        public decimal TaxRate { get; set; }
+        public SupplierInvoiceLineMatchStatus MatchStatus { get; set; } = SupplierInvoiceLineMatchStatus.Unmatched;
+        public string? DiscrepancyReason { get; set; }
+        public int SortOrder { get; set; }
+    }
+
+    /// <summary>
+    /// Represents a formal supplier payment settlement for posted payables.
+    /// </summary>
+    public sealed class SupplierPayment : BaseEntity
+    {
+        public Guid BusinessId { get; set; }
+        public Guid SupplierId { get; set; }
+        public string? PaymentNumber { get; set; }
+        public SupplierPaymentStatus Status { get; set; } = SupplierPaymentStatus.Draft;
+        public SupplierPaymentMethod PaymentMethod { get; set; } = SupplierPaymentMethod.BankTransfer;
+        public DateTime PaymentDateUtc { get; set; }
+        public string Currency { get; set; } = DomainDefaults.DefaultCurrency;
+        public long TotalAmountMinor { get; set; }
+        public string? Reference { get; set; }
+        public Guid? PostingJournalEntryId { get; set; }
+        public DateTime? PostedAtUtc { get; set; }
+        public Guid? ReversalJournalEntryId { get; set; }
+        public DateTime? ReversedAtUtc { get; set; }
+        public string? ReversalReason { get; set; }
+        public DateTime? BankSettledAtUtc { get; set; }
+        public Guid? BankSettlementJournalEntryId { get; set; }
+        public Guid? BankSettlementReconciliationMatchId { get; set; }
+        public string? BankSettlementNotes { get; set; }
+        public DateTime? CancelledAtUtc { get; set; }
+        public string? InternalNotes { get; set; }
+        public string MetadataJson { get; set; } = "{}";
+        public List<SupplierPaymentAllocation> Allocations { get; set; } = new();
+    }
+
+    /// <summary>
+    /// Represents one allocation from a supplier payment to a posted supplier invoice.
+    /// </summary>
+    public sealed class SupplierPaymentAllocation : BaseEntity
+    {
+        public Guid SupplierPaymentId { get; set; }
+        public Guid SupplierInvoiceId { get; set; }
+        public long AmountMinor { get; set; }
+        public string? Memo { get; set; }
+    }
+
+    /// <summary>
+    /// Represents evidence-backed correction for bank-settled supplier payments.
+    /// </summary>
+    public sealed class SupplierPaymentBankCorrection : BaseEntity
+    {
+        public Guid BusinessId { get; set; }
+        public Guid SupplierPaymentId { get; set; }
+        public Guid BankReconciliationMatchId { get; set; }
+        public Guid? BankStatementLineId { get; set; }
+        public Guid? OriginalBankSettlementJournalEntryId { get; set; }
+        public Guid? CorrectionJournalEntryId { get; set; }
+        public SupplierPaymentBankCorrectionType CorrectionType { get; set; } = SupplierPaymentBankCorrectionType.ReturnedTransfer;
+        public SupplierPaymentBankCorrectionStatus Status { get; set; } = SupplierPaymentBankCorrectionStatus.Draft;
+        public DateTime CorrectionDateUtc { get; set; }
+        public DateTime? PostedAtUtc { get; set; }
+        public DateTime? CancelledAtUtc { get; set; }
+        public string Currency { get; set; } = DomainDefaults.DefaultCurrency;
+        public long AmountMinor { get; set; }
+        public string Reason { get; set; } = string.Empty;
+        public string? InternalNotes { get; set; }
+        public string MetadataJson { get; set; } = "{}";
+    }
+
+    /// <summary>
+    /// Represents a formal supplier advance asset that can later be applied to posted payables.
+    /// </summary>
+    public sealed class SupplierAdvance : BaseEntity
+    {
+        public Guid BusinessId { get; set; }
+        public Guid SupplierId { get; set; }
+        public string? AdvanceNumber { get; set; }
+        public SupplierAdvanceStatus Status { get; set; } = SupplierAdvanceStatus.Draft;
+        public SupplierPaymentMethod PaymentMethod { get; set; } = SupplierPaymentMethod.BankTransfer;
+        public DateTime AdvanceDateUtc { get; set; }
+        public string Currency { get; set; } = DomainDefaults.DefaultCurrency;
+        public long TotalAmountMinor { get; set; }
+        public long OpenAmountMinor { get; set; }
+        public string? Reference { get; set; }
+        public Guid? PostingJournalEntryId { get; set; }
+        public Guid? ReversalJournalEntryId { get; set; }
+        public DateTime? PostedAtUtc { get; set; }
+        public DateTime? CancelledAtUtc { get; set; }
+        public DateTime? ReversedAtUtc { get; set; }
+        public string? ReversalReason { get; set; }
+        public string? InternalNotes { get; set; }
+        public string MetadataJson { get; set; } = "{}";
+        public List<SupplierAdvanceApplication> Applications { get; set; } = new();
+    }
+
+    /// <summary>
+    /// Represents one formal application of a posted supplier advance to a posted supplier invoice.
+    /// </summary>
+    public sealed class SupplierAdvanceApplication : BaseEntity
+    {
+        public Guid SupplierAdvanceId { get; set; }
+        public Guid SupplierInvoiceId { get; set; }
+        public Guid? PostingJournalEntryId { get; set; }
+        public Guid? ReversalJournalEntryId { get; set; }
+        public DateTime AppliedAtUtc { get; set; }
+        public DateTime? ReversedAtUtc { get; set; }
+        public long AmountMinor { get; set; }
+        public string? Memo { get; set; }
+        public string? ReversalReason { get; set; }
+    }
+
+    /// <summary>
     /// Represents a journal entry that groups balanced debit and credit lines.
     /// </summary>
     public sealed class JournalEntry : BaseEntity
@@ -393,6 +806,61 @@ namespace Darwin.Domain.Entities.Billing
         /// Gets or sets the operator-facing description of the entry.
         /// </summary>
         public string Description { get; set; } = string.Empty;
+
+        /// <summary>
+        /// Gets or sets the posting lifecycle status.
+        /// </summary>
+        public JournalEntryPostingStatus PostingStatus { get; set; } = JournalEntryPostingStatus.Draft;
+
+        /// <summary>
+        /// Gets or sets the category of the source that created the posting.
+        /// </summary>
+        public JournalEntryPostingKind PostingKind { get; set; } = JournalEntryPostingKind.Manual;
+
+        /// <summary>
+        /// Gets or sets the deterministic key used to keep automated postings idempotent.
+        /// </summary>
+        public string? PostingKey { get; set; }
+
+        /// <summary>
+        /// Gets or sets the source entity type that owns the posting.
+        /// </summary>
+        public string? SourceEntityType { get; set; }
+
+        /// <summary>
+        /// Gets or sets the source entity id that owns the posting.
+        /// </summary>
+        public Guid? SourceEntityId { get; set; }
+
+        /// <summary>
+        /// Gets or sets the optional source document number shown to operators.
+        /// </summary>
+        public string? SourceDocumentNumber { get; set; }
+
+        /// <summary>
+        /// Gets or sets the UTC timestamp when the entry was posted.
+        /// </summary>
+        public DateTime? PostedAtUtc { get; set; }
+
+        /// <summary>
+        /// Gets or sets the UTC timestamp when the entry was reversed.
+        /// </summary>
+        public DateTime? ReversedAtUtc { get; set; }
+
+        /// <summary>
+        /// Gets or sets the original journal entry id when this entry reverses another entry.
+        /// </summary>
+        public Guid? ReversalOfJournalEntryId { get; set; }
+
+        /// <summary>
+        /// Gets or sets an optional operator or system reason for the posting.
+        /// </summary>
+        public string? PostingReason { get; set; }
+
+        /// <summary>
+        /// Gets or sets safe, reportable posting metadata.
+        /// </summary>
+        public string MetadataJson { get; set; } = "{}";
 
         /// <summary>
         /// Gets or sets the journal lines.

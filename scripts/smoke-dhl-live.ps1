@@ -16,6 +16,83 @@ function Test-Truthy {
     return @("1", "true", "yes", "y") -contains $Value.Trim().ToLowerInvariant()
 }
 
+function Get-EnvValue {
+    param([Parameter(Mandatory = $true)][string]$Name)
+
+    $value = [Environment]::GetEnvironmentVariable($Name)
+    if ($null -eq $value) {
+        return ""
+    }
+
+    return $value.Trim()
+}
+
+function Assert-SafeEvidenceReference {
+    param(
+        [Parameter(Mandatory = $true)][string]$Name,
+        [Parameter(Mandatory = $true)][string]$Value
+    )
+
+    $blocked = @(
+        "secret",
+        "token",
+        "password",
+        "private key",
+        "api key",
+        "raw payload",
+        "provider payload",
+        "provider response",
+        "label payload",
+        "tracking payload",
+        "customer data",
+        "private approval"
+    )
+
+    foreach ($term in $blocked) {
+        if ($Value.IndexOf($term, [StringComparison]::OrdinalIgnoreCase) -ge 0) {
+            Write-Host "DHL live smoke is blocked."
+            Write-Host "$Name contains sensitive wording. Use a non-secret DHL smoke report id, shipment validation run label, ticket, or evidence-package row id."
+            exit 2
+        }
+    }
+}
+
+function Assert-ReadinessEvidenceReferences {
+    $requiredReferences = @("DARWIN_DHL_LIVE_SMOKE_REFERENCE")
+    if ($RequireRuntimePipeline) {
+        $requiredReferences += @(
+            "DARWIN_DHL_PROVIDER_OPERATION_WORKER_REFERENCE",
+            "DARWIN_DHL_PROVIDER_CALLBACK_WORKER_REFERENCE",
+            "DARWIN_DHL_SHIPMENT_LABELS_STORAGE_REFERENCE"
+        )
+    }
+
+    if ($IncludeReturn) {
+        $requiredReferences += "DARWIN_DHL_RETURN_SMOKE_REFERENCE"
+    }
+
+    $missingReferences = @()
+    foreach ($name in $requiredReferences) {
+        if ([string]::IsNullOrWhiteSpace((Get-EnvValue $name))) {
+            $missingReferences += $name
+        }
+    }
+
+    if ($missingReferences.Count -gt 0) {
+        Write-Host "DHL live smoke is blocked. Configure these environment variables first:"
+        foreach ($name in $missingReferences) {
+            Write-Host " - $name"
+        }
+
+        Write-Host "Use non-secret DHL validation report ids, run labels, tickets, or evidence-package row ids. Do not paste labels, tracking payloads, provider responses, secrets, or customer data."
+        exit 2
+    }
+
+    foreach ($name in $requiredReferences) {
+        Assert-SafeEvidenceReference -Name $name -Value (Get-EnvValue $name)
+    }
+}
+
 function Assert-DhlRuntimePipelineReady {
     $blocked = New-Object System.Collections.Generic.List[string]
 
@@ -105,6 +182,8 @@ if ($RequireRuntimePipeline) {
 }
 
 if (-not $Execute) {
+    Assert-ReadinessEvidenceReferences
+
     Write-Host "DHL live smoke configuration is present."
     if ($RequireRuntimePipeline) {
         Write-Host "DHL runtime pipeline readiness is confirmed."
@@ -112,17 +191,6 @@ if (-not $Execute) {
 
     Write-Host "Run with -Execute to send a real DHL validation request. No secrets are printed."
     exit 0
-}
-
-function Get-EnvValue {
-    param([Parameter(Mandatory = $true)][string]$Name)
-
-    $value = [Environment]::GetEnvironmentVariable($Name)
-    if ($null -eq $value) {
-        return ""
-    }
-
-    return $value.Trim()
 }
 
 function Split-Street {

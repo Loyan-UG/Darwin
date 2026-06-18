@@ -1,0 +1,125 @@
+@model Darwin.Application.Billing.DTOs.FinanceAccountMappingsPageDto
+@inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
+@{
+    ViewData["Title"] = T.T("FinanceAccountMappings");
+    string FinanceOverviewUrl(Guid? businessId = null) => Url.Action("Index", "Finance", new { businessId }) ?? string.Empty;
+    string ReceivablesUrl(Guid? businessId = null) => Url.Action("Receivables", "Finance", new { businessId }) ?? string.Empty;
+    string PostingsUrl(Guid? businessId = null) => Url.Action("Postings", "Finance", new { businessId }) ?? string.Empty;
+    string AccountMappingsUrl(Guid? businessId = null) => Url.Action("AccountMappings", "Finance", new { businessId }) ?? string.Empty;
+    string ExportsUrl(Guid? businessId = null) => Url.Action("Exports", "Finance", new { businessId }) ?? string.Empty;
+    string FinancialAccountsUrl(Guid? businessId = null) => Url.Action("FinancialAccounts", "Billing", new { businessId }) ?? string.Empty;
+}
+
+<div id="finance-account-mappings-workspace-shell">
+<partial name="~/Views/Shared/_Alerts.cshtml" />
+<div class="d-flex justify-content-between align-items-start gap-3 mb-4">
+    <div>
+        <h1 class="mb-0"><i class="fa-solid fa-diagram-project"></i> @T.T("FinanceAccountMappings")</h1>
+        <div class="text-muted small mt-1">@Model.BusinessName</div>
+    </div>
+    <form method="get" asp-action="AccountMappings" class="d-flex gap-2">
+        <select name="businessId" class="form-select form-select-sm">
+            @foreach (var business in Model.BusinessOptions)
+            {
+                <option value="@business.Id" selected="@(Model.BusinessId == business.Id)">@business.Name</option>
+            }
+        </select>
+        <button type="submit" class="btn btn-sm btn-outline-primary">@T.T("Apply")</button>
+    </form>
+</div>
+
+<div class="d-flex gap-2 flex-wrap mb-4">
+    <a asp-action="Index" asp-route-businessId="@Model.BusinessId" hx-get="@FinanceOverviewUrl(Model.BusinessId)" hx-target="#finance-account-mappings-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-outline-secondary">@T.T("Overview")</a>
+    <a asp-action="Receivables" asp-route-businessId="@Model.BusinessId" hx-get="@ReceivablesUrl(Model.BusinessId)" hx-target="#finance-account-mappings-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-outline-primary">@T.T("FinanceReceivables")</a>
+    <a asp-action="Postings" asp-route-businessId="@Model.BusinessId" hx-get="@PostingsUrl(Model.BusinessId)" hx-target="#finance-account-mappings-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-outline-primary">@T.T("FinancePostings")</a>
+    <a asp-action="AccountMappings" asp-route-businessId="@Model.BusinessId" hx-get="@AccountMappingsUrl(Model.BusinessId)" hx-target="#finance-account-mappings-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-outline-dark">@T.T("FinanceAccountMappings")</a>
+    <a asp-action="Exports" asp-route-businessId="@Model.BusinessId" hx-get="@ExportsUrl(Model.BusinessId)" hx-target="#finance-account-mappings-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-outline-primary">@T.T("FinanceExports")</a>
+    <a asp-controller="Billing" asp-action="FinancialAccounts" asp-route-businessId="@Model.BusinessId" hx-get="@FinancialAccountsUrl(Model.BusinessId)" hx-target="#finance-account-mappings-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-outline-secondary">@T.T("FinancialAccounts")</a>
+</div>
+
+@if (!Model.BusinessId.HasValue)
+{
+    <div class="alert alert-info">@T.T("FinanceReportingNoBusiness")</div>
+}
+else
+{
+    <div class="row g-3 mb-4">
+        <div class="col-md-4"><div class="border rounded p-3 h-100"><div class="text-muted small">@T.T("FinanceRequiredMappingsMissing")</div><div class="fs-4 fw-semibold">@Model.MissingRequiredMappingCount</div></div></div>
+        <div class="col-md-4"><div class="border rounded p-3 h-100"><div class="text-muted small">@T.T("FinanceIncompatibleMappings")</div><div class="fs-4 fw-semibold">@Model.IncompatibleMappingCount</div></div></div>
+        <div class="col-md-4"><div class="border rounded p-3 h-100"><div class="text-muted small">@T.T("FinanceAccountMappings")</div><div class="fs-4 fw-semibold">@Model.Rows.Count(x => x.MappingId.HasValue)</div></div></div>
+    </div>
+
+    <div class="border rounded p-3">
+        <div class="table-responsive">
+            <table class="table table-sm align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th>@T.T("Role")</th>
+                        <th>@T.T("AllowedAccountTypes")</th>
+                        <th>@T.T("FinancialAccounts")</th>
+                        <th>@T.T("Status")</th>
+                        <th>@T.T("Description")</th>
+                        <th class="text-end">@T.T("Actions")</th>
+                    </tr>
+                </thead>
+                <tbody>
+                @foreach (var row in Model.Rows)
+                {
+                    <tr>
+                        <td>
+                            <div class="fw-semibold">@row.RoleName</div>
+                            @if (row.IsRequiredForSalesPosting)
+                            {
+                                <span class="badge text-bg-primary">@T.T("SalesRequired")</span>
+                            }
+                            @if (row.IsRequiredForPayablesPosting)
+                            {
+                                <span class="badge text-bg-info">@T.T("PayablesRequired")</span>
+                            }
+                        </td>
+                        <td>@row.AllowedAccountTypesLabel</td>
+                        <td colspan="4">
+                            <form method="post" asp-action="UpsertAccountMapping" class="row g-2 align-items-center">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="BusinessId" value="@Model.BusinessId" />
+                                <input type="hidden" name="Role" value="@row.Role" />
+                                <div class="col-lg-4">
+                                    <select name="FinancialAccountId" class="form-select form-select-sm" required>
+                                        <option value="">@T.T("SelectFinancialAccount")</option>
+                                        @foreach (var account in row.CompatibleAccountOptions)
+                                        {
+                                            <option value="@account.Id" selected="@(row.FinancialAccountId == account.Id)">@account.Label</option>
+                                        }
+                                    </select>
+                                </div>
+                                <div class="col-lg-2">
+                                    <div class="form-check">
+                                        <input type="hidden" name="IsActive" value="false" />
+                                        <input class="form-check-input" type="checkbox" name="IsActive" value="true" checked="@row.IsActive" />
+                                        <label class="form-check-label">@T.T("Active")</label>
+                                    </div>
+                                </div>
+                                <div class="col-lg-4">
+                                    <input name="Description" value="@row.Description" maxlength="500" class="form-control form-control-sm" placeholder="@T.T("Description")" />
+                                </div>
+                                <div class="col-lg-2 text-end">
+                                    <button type="submit" class="btn btn-sm btn-primary" disabled="@(row.CompatibleAccountOptions.Count == 0)">@T.T("Save")</button>
+                                </div>
+                            </form>
+                            @if (row.CompatibleAccountOptions.Count == 0)
+                            {
+                                <div class="text-warning small mt-2">@T.T("FinanceNoCompatibleAccounts")</div>
+                            }
+                            @if (row.MappingId.HasValue && !row.IsCompatible)
+                            {
+                                <div class="text-danger small mt-2">@T.T("FinanceMappingIncompatible")</div>
+                            }
+                        </td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        </div>
+    </div>
+}
+</div>

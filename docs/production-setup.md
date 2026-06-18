@@ -1,10 +1,10 @@
 # Darwin Production Setup
 
-Reviewed: 2026-05-27
+Reviewed: 2026-06-17
 
 This runbook describes production setup at a deployment-neutral level. Do not commit deployment-specific domains, customer names, credentials, keys, webhook secrets, access keys, or signing material.
 
-For repeatable customer rollout steps, approval ownership, and manual sign-off gates, use [docs/customer-deployment-onboarding-checklist.md](customer-deployment-onboarding-checklist.md).
+For repeatable customer rollout steps, approval ownership, and manual sign-off gates, use [docs/customer-deployment-onboarding-checklist.md](customer-deployment-onboarding-checklist.md). For the non-secret go-live evidence package, use [docs/production-readiness-evidence-package.md](production-readiness-evidence-package.md).
 
 ## Configuration Principles
 
@@ -13,6 +13,25 @@ For repeatable customer rollout steps, approval ownership, and manual sign-off g
 - Prefer PostgreSQL for new deployments. SQL Server remains supported.
 - Keep WebAdmin, WebApi, Worker, and front-office settings aligned to the same database and provider configuration.
 - Run all provider smoke scripts in dry-run mode first.
+
+## Production Evidence Package
+
+Before a customer deployment is treated as production-ready, create and validate a non-secret evidence package following [docs/production-readiness-evidence-package.md](production-readiness-evidence-package.md). Use `scripts\new-production-readiness-evidence-package.ps1` to create a consistent working copy from the repository template when needed, run `scripts\export-production-readiness-report-bundle.ps1 -Force` to generate the non-secret readiness report bundle plus the evidence-package validator smoke, owner action plan, owner handoff, environment template, local execution summary, and local evidence-package draft, run `scripts\check-production-readiness-report-bundle.ps1` to validate report/helper shape, current branch/commit alignment, release-reference freshness, and sensitive-pattern safety, run `scripts\check-production-readiness-report-bundle-clean-smoke.ps1` to prove clean bundle generation does not depend on a previous ignored artifact, then run `scripts\check-production-readiness-evidence-package.ps1` against the filled package. The package records proof and owner approvals; the report bundle records local current-state readiness outcomes; the validator smoke proves template/checker alignment; the action plan records owner follow-up with raw missing keys plus a readable evidence checklist; the owner handoff groups follow-up by owner with the same checklist for non-technical owners; the environment template records missing evidence variable placeholders; the local execution summary records the current-branch local report outcome; the local draft records report/helper references and a local supporting-evidence snapshot while keeping deployment evidence blocked. None of these artifacts stores credentials, private endpoint tokens, webhook secrets, raw provider payloads, private documents, bank identifiers, payroll internals, or customer personal data.
+
+The package must include:
+
+- release build/test evidence, migration plan, rollback plan, and support ownership;
+- database backup, restore, monitoring, and alert ownership;
+- object-storage selected-provider preflight, disposable-prefix smoke, retention/legal-hold, backup, restore, and monitoring evidence;
+- e-invoice fixture, validation, storage, download, and reviewer sign-off evidence when e-invoice generation is in scope;
+- provider smoke outcomes for Stripe, DHL, Brevo, VIES, object storage, and mobile push/maps when each provider is in scope;
+- final customer business, accounting/tax, operations, system-admin, legal/compliance where required, and Darwin technical approvals outside source control.
+
+Do not mark production readiness from local smoke alone. Local MinIO, test-mode Stripe, local e-invoice adapter smoke, and parser fixtures prove code paths; they do not prove the selected production provider, retention policy, legal acceptance, or deployment monitoring.
+
+MinIO remains the first production object-storage target for the current rollout path. Azure Blob readiness is prepared through [azure-object-storage-readiness-runbook.md](azure-object-storage-readiness-runbook.md) and `scripts\check-azure-object-storage-readiness.ps1` for Azure-first deployments or the next storage hardening lane after MinIO evidence.
+
+Run the sequence in [production-go-live-evidence-execution-plan.md](production-go-live-evidence-execution-plan.md) before real production execution. The first complete evidence package, readiness report bundle, owner action plan, owner handoff, environment template, local execution summary, and local evidence-package draft should be produced against a production-like staging candidate so migration, rollback, storage, e-invoice, Android, provider, monitoring, and owner evidence are rehearsed before production traffic. The bundle validator proves the generated local reports and helpers are present, parseable where applicable, aligned to the checked-out branch and commit where applicable, non-failed, and non-secret; it does not replace deployment owner approvals or the filled evidence-package validator.
 
 ## Required Runtime Services
 
@@ -154,7 +173,7 @@ Enable retry workers only when the deployment has an operator who owns the manua
 
 ## Object Storage
 
-MinIO is the recommended self-hosted production target through the S3-compatible provider. AWS S3 and Azure Blob Storage remain supported alternatives.
+MinIO is the selected first production target through the S3-compatible provider. Azure Blob Storage is the next provider-hardening target after MinIO evidence is complete. AWS S3 remains a supported alternative.
 
 Production controls:
 
@@ -166,13 +185,35 @@ Production controls:
 - Object Lock, retention, legal hold, or provider equivalent is validated before claiming immutability.
 - Backup, replication/offsite copy, disk monitoring, failed-write monitoring, and restore tests are complete.
 
+Finance export profiles:
+
+- `FinanceExports` stores generated canonical finance export packages. It is the package source used by Finance WebAdmin download and connector delivery.
+- `FinanceExportOutbound` is the outbound delivery destination used by the file-delivery connector. WebAdmin push remains blocked when this profile is missing, invalid, or database-backed.
+- Both profiles are configured through secure deployment configuration. Access keys, secret keys, connection strings, and provider credentials stay in environment variables, user-secrets, or a deployment vault.
+- Profile names, container names, and prefixes are configuration. They must not be taken from batch metadata, attempt metadata, `DocumentRecord` metadata, `ExternalReference` metadata, or package content.
+- The two profiles may share a provider and container with separate prefixes, or use separate containers when the deployment needs clearer operational ownership.
+
+Personnel document profile:
+
+- `PersonnelDocuments` stores internal HR personnel-file binaries linked through `DocumentRecord`.
+- The profile is used only by WebAdmin HR upload, download, and archive flows. It must not be replaced by employee metadata, document metadata, event payloads, notes, or payroll-provider payloads.
+- Use a storage provider with retention and legal-hold behavior appropriate for personnel files. File-system storage is acceptable for local smoke only; production should use a managed object-storage target with backup, monitoring, least-privilege credentials, and retention policy ownership.
+- Access keys, secret keys, connection strings, and private credentials stay in secure configuration and must not appear in HR metadata, audit events, document metadata, docs, or logs.
+
+Payroll payslip profile:
+
+- `PayrollPayslips` stores internal HR payslip artifacts generated from approved payroll run snapshots and linked through `DocumentRecord`.
+- The profile is used only by WebAdmin payroll artifact generation and download flows. It must not be replaced by payroll run metadata, employee metadata, document metadata, event payloads, notes, or payroll-provider payloads.
+- Use a storage provider with retention and legal-hold behavior appropriate for payroll artifacts. File-system storage is acceptable for local smoke only; production should use a managed object-storage target with backup, monitoring, least-privilege credentials, and retention policy ownership.
+- Access keys, secret keys, connection strings, private credentials, raw payroll-provider payloads, and private employee data must not appear in payroll metadata, audit events, document metadata, docs, or logs.
+
 Run:
 
 ```powershell
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\check-minio-production-readiness.ps1
 ```
 
-The readiness preflight requires explicit confirmation for the archive, shipment-label, and media profile decisions, the disposable smoke prefix, retention/delete behavior, and the operator runbook. It does not accept or print access keys, secret keys, bucket policy JSON, object keys, or provider responses.
+The readiness preflight requires explicit confirmation for the archive, shipment-label, media, finance export source, finance export outbound, personnel document, and payroll payslip profile decisions, the disposable smoke prefix, retention/delete behavior, and the operator runbook. It does not accept or print access keys, secret keys, bucket policy JSON, object keys, or provider responses.
 
 Run the selected-provider object-storage smoke against a production-like endpoint only after an operator approves the disposable smoke prefix and cleanup or retention behavior:
 
@@ -183,20 +224,21 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts\smoke-object-storage
 
 Do not set the production smoke confirmation for routine local validation. It exists to prevent accidental writes to a real bucket/container.
 
-See [docs/minio-storage-runbook.md](minio-storage-runbook.md).
+See [docs/minio-storage-runbook.md](minio-storage-runbook.md). For Azure-first deployments or later Azure hardening, see [docs/azure-object-storage-readiness-runbook.md](azure-object-storage-readiness-runbook.md).
 
 ## E-Invoice
 
 Current direction:
 
-- ZUGFeRD/Factur-X is the primary target.
-- XRechnung is secondary unless a deployment requires it earlier.
+- ZUGFeRD/Factur-X and XRechnung are both required for the selected German e-invoice readiness path.
+- A deployment may stay receive-only or defer compliant generation only through an explicit scope decision recorded in the production evidence package.
 - Mustangproject CLI behind the external-command adapter is the selected first implementation path.
 
 Production readiness requires:
 
 - Configure the external-command adapter with a bounded artifact size, for example `"MaxArtifactBytes": 20971520`.
 - Configure `"RequireValidationReport": true` for production so the adapter rejects artifacts when the selected tool does not produce a recognized positive validation report.
+- Run `scripts\check-einvoice-production-readiness.ps1` before compliant e-invoice rollout is claimed.
 - Reject non-PDF ZUGFeRD/Factur-X outputs and malformed XRechnung XML outputs before storage.
 - Treat adapter smoke as not full legal validation.
 - Use [docs/e-invoice-acceptance-checklist.md](e-invoice-acceptance-checklist.md) for German B2B/B2G scope, reviewer approvals, deterministic fixture scenarios, and evidence requirements.
@@ -215,7 +257,8 @@ Current JSON/HTML/source-model exports are operational artifacts and must not be
 Before store release:
 
 - Android Release has approved signing key, Google Maps key restrictions, Firebase mobile config, notification permission UX, and device smoke.
-- iOS/MacCatalyst have Apple Developer signing, provisioning profiles, production APNS, entitlements, and device smoke.
+- `scripts\check-android-launch-readiness.ps1` passes after signed Android artifact, push/maps, route compatibility, and physical device/camera evidence exist.
+- Later iOS/MacCatalyst release scopes require Apple Developer signing, provisioning profiles, production APNS, entitlements, and device smoke after Android launch evidence is complete.
 - No broad cleartext traffic or unsafe certificate trust is allowed in Release.
 - Physical QR camera scanning is validated with real device/camera input.
 - Push registration and logout/account-switch behavior are validated.
@@ -230,7 +273,7 @@ Before store release:
 6. Validate Stripe test-mode or live-mode according to deployment stage.
 7. Validate DHL only after complete account data is available.
 8. Validate VIES policy with controlled valid/invalid/provider-failure cases.
-9. Validate object storage and archive/provider retention behavior.
+9. Validate object storage, archive/provider retention behavior, and finance export outbound delivery readiness when accounting export is in scope.
 10. Validate e-invoice generator only after legal fixtures are approved.
 11. Validate signed mobile artifacts and device/provider flows.
 12. Record final operator sign-off outside source control.

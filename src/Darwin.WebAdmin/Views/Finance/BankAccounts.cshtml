@@ -1,0 +1,103 @@
+@model Darwin.Application.Billing.DTOs.BankAccountsPageDto
+@using Darwin.Domain.Enums
+@inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
+@{
+    ViewData["Title"] = T.T("BankAccounts");
+    string BankAccountsUrl(Guid? businessId = null, string? q = null, BankAccountStatus? status = null) => Url.Action("BankAccounts", "Finance", new { businessId, q, status }) ?? string.Empty;
+}
+
+<section id="finance-bank-accounts-workspace-shell" class="container-fluid py-3">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h1 class="mb-0"><i class="fa-solid fa-building-columns"></i> @T.T("BankAccounts")</h1>
+        <a asp-action="CreateBankAccount" asp-route-businessId="@Model.BusinessId" class="btn btn-primary">@T.T("CreateBankAccount")</a>
+    </div>
+
+    <form method="get" asp-action="BankAccounts" class="row g-2 align-items-end mb-3" hx-get="@BankAccountsUrl()" hx-target="#finance-bank-accounts-workspace-shell" hx-swap="outerHTML" hx-push-url="true">
+        <div class="col-md-4">
+            <label class="form-label small text-muted">@T.T("Business")</label>
+            <select name="businessId" class="form-select">
+                <option value="">@T.T("AllBusinesses")</option>
+                @foreach (var business in Model.BusinessOptions)
+                {
+                    <option value="@business.Id" selected="@(Model.BusinessId == business.Id)">@business.Name</option>
+                }
+            </select>
+        </div>
+        <div class="col-md-4">
+            <label class="form-label small text-muted">@T.T("Search")</label>
+            <input name="q" value="@Model.Query" class="form-control" />
+        </div>
+        <div class="col-md-2">
+            <label class="form-label small text-muted">@T.T("Status")</label>
+            <select name="status" class="form-select">
+                <option value="">@T.T("All")</option>
+                @foreach (var status in Enum.GetValues<BankAccountStatus>())
+                {
+                    <option value="@status" selected="@(Model.Status == status)">@T.T(status.ToString())</option>
+                }
+            </select>
+        </div>
+        <div class="col-md-2">
+            <button class="btn btn-outline-primary w-100" type="submit">@T.T("Filter")</button>
+        </div>
+    </form>
+
+    <div class="d-flex gap-2 mb-3">
+        <span class="badge text-bg-success">@T.T("Active"): @Model.ActiveCount</span>
+        <span class="badge text-bg-secondary">@T.T("Archived"): @Model.ArchivedCount</span>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table table-sm align-middle">
+            <thead>
+            <tr>
+                <th>@T.T("Code")</th>
+                <th>@T.T("Name")</th>
+                <th>@T.T("Bank")</th>
+                <th>@T.T("Currency")</th>
+                <th>@T.T("FinancialAccount")</th>
+                <th>@T.T("Status")</th>
+                <th class="text-end">@T.T("Actions")</th>
+            </tr>
+            </thead>
+            <tbody>
+            @if (Model.Items.Count == 0)
+            {
+                <tr><td colspan="7" class="text-center text-muted">@T.T("NoBankAccounts")</td></tr>
+            }
+            @foreach (var item in Model.Items)
+            {
+                <tr>
+                    <td class="fw-semibold">@item.Code</td>
+                    <td>
+                        @item.DisplayName
+                        @if (item.IsDefault)
+                        {
+                            <span class="badge text-bg-primary ms-1">@T.T("Default")</span>
+                        }
+                        <div class="text-muted small">@item.MaskedAccountIdentifier</div>
+                    </td>
+                    <td>@item.BankName</td>
+                    <td>@item.Currency</td>
+                    <td>@item.FinancialAccountLabel</td>
+                    <td><span class="badge text-bg-light border">@T.T(item.Status.ToString())</span></td>
+                    <td class="text-end">
+                        <a asp-action="EditBankAccount" asp-route-id="@item.Id" class="btn btn-sm btn-outline-secondary">@T.T("Edit")</a>
+                        <a asp-action="BankStatements" asp-route-businessId="@item.BusinessId" asp-route-bankAccountId="@item.Id" class="btn btn-sm btn-outline-primary">@T.T("BankStatements")</a>
+                        @if (item.Status == BankAccountStatus.Active)
+                        {
+                            <form method="post" asp-action="ArchiveBankAccount" class="d-inline">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="Id" value="@item.Id" />
+                                <input type="hidden" name="businessId" value="@item.BusinessId" />
+                                <input type="hidden" name="RowVersion" value="@Convert.ToBase64String(item.RowVersion)" />
+                                <button type="submit" class="btn btn-sm btn-outline-danger">@T.T("Archive")</button>
+                            </form>
+                        }
+                    </td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    </div>
+</section>

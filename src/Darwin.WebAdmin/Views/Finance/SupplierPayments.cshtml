@@ -1,0 +1,72 @@
+@model Darwin.Application.Billing.DTOs.SupplierPaymentsPageDto
+@using Darwin.Domain.Enums
+@inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
+@{
+    ViewData["Title"] = T.T("SupplierPayments");
+    string Money(long minor, string currency) => $"{currency} {(minor / 100.0M):0.00}";
+}
+
+<div id="finance-supplier-payments-shell">
+<partial name="~/Views/Shared/_Alerts.cshtml" />
+<div class="d-flex justify-content-between align-items-start gap-3 mb-4">
+    <div>
+        <h1 class="mb-0"><i class="fa-solid fa-money-bill-transfer"></i> @T.T("SupplierPayments")</h1>
+        <div class="text-muted small">@Model.BusinessName</div>
+    </div>
+    <a asp-action="CreateSupplierPayment" asp-route-businessId="@Model.BusinessId" class="btn btn-primary">@T.T("Create")</a>
+</div>
+
+<div class="row g-3 mb-3">
+    <div class="col-md-3"><div class="border rounded p-3"><div class="text-muted small">@T.T("Draft")</div><div class="h5 mb-0">@Model.DraftCount</div></div></div>
+    <div class="col-md-3"><div class="border rounded p-3"><div class="text-muted small">@T.T("Posted")</div><div class="h5 mb-0">@Model.PostedCount</div></div></div>
+    <div class="col-md-3"><div class="border rounded p-3"><div class="text-muted small">@T.T("Cancelled")</div><div class="h5 mb-0">@Model.CancelledCount</div></div></div>
+    <div class="col-md-3"><div class="border rounded p-3"><div class="text-muted small">@T.T("Reversed")</div><div class="h5 mb-0">@Model.ReversedCount</div></div></div>
+</div>
+
+<form method="get" asp-action="SupplierPayments" class="row g-2 align-items-end mb-3">
+    <div class="col-md-4">
+        <label class="form-label">@T.T("Business")</label>
+        <select name="businessId" class="form-select">
+            @foreach (var option in Model.BusinessOptions)
+            {
+                <option value="@option.Id" selected="@(option.Id == Model.BusinessId)">@option.Name</option>
+            }
+        </select>
+    </div>
+    <div class="col-md-4"><label class="form-label">@T.T("Search")</label><input name="q" value="@Model.Query" class="form-control" /></div>
+    <div class="col-md-2">
+        <label class="form-label">@T.T("Status")</label>
+        <select name="status" class="form-select">
+            <option value="">@T.T("All")</option>
+            @foreach (var status in Enum.GetValues<SupplierPaymentStatus>())
+            {
+                <option value="@status" selected="@(Model.Status == status)">@T.T(status.ToString())</option>
+            }
+        </select>
+    </div>
+    <div class="col-md-2"><button type="submit" class="btn btn-outline-primary w-100">@T.T("Filter")</button></div>
+</form>
+
+<div class="table-responsive">
+    <table class="table table-sm align-middle">
+        <thead><tr><th>@T.T("PaymentNumber")</th><th>@T.T("Supplier")</th><th>@T.T("PaymentDate")</th><th>@T.T("Status")</th><th class="text-end">@T.T("Total")</th><th></th></tr></thead>
+        <tbody>
+        @if (Model.Items.Count == 0)
+        {
+            <tr><td colspan="6" class="text-center text-muted">@T.T("NoSupplierPayments")</td></tr>
+        }
+        @foreach (var item in Model.Items)
+        {
+            <tr>
+                <td><div>@(string.IsNullOrWhiteSpace(item.PaymentNumber) ? "-" : item.PaymentNumber)</div><div class="text-muted small">@item.Reference</div></td>
+                <td>@item.SupplierName</td>
+                <td>@item.PaymentDateUtc.ToString("yyyy-MM-dd")</td>
+                <td><span class="badge text-bg-light">@T.T(item.Status.ToString())</span></td>
+                <td class="text-end">@Money(item.TotalAmountMinor, item.Currency)</td>
+                <td class="text-end"><a asp-action="SupplierPayment" asp-route-id="@item.Id" class="btn btn-sm btn-outline-primary">@T.T("Open")</a></td>
+            </tr>
+        }
+        </tbody>
+    </table>
+</div>
+</div>

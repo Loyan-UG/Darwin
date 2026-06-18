@@ -181,7 +181,7 @@ public sealed class SecurityAndPerformanceApiAndInfrastructureSourceTests : Secu
 
 
     [Fact]
-    public void NotificationsController_Should_KeepAuthenticatedDeviceRegistrationAliases()
+    public void NotificationsController_Should_KeepAuthenticatedDeviceRegistrationCanonicalRoute()
     {
         var source = ReadWebApiFile(Path.Combine("Controllers", "Notifications", "NotificationsController.cs"));
 
@@ -189,7 +189,7 @@ public sealed class SecurityAndPerformanceApiAndInfrastructureSourceTests : Secu
         source.Should().Contain("[Route(\"api/v1/member/notifications\")]");
         source.Should().Contain("public async Task<IActionResult> RegisterDeviceAsync(");
         source.Should().Contain("[HttpPost(\"devices/register\")]");
-        source.Should().Contain("[HttpPost(\"/api/v1/notifications/devices/register\")]");
+        source.Should().NotContain("/api/v1/notifications/devices/register");
         source.Should().Contain("MobileDevicePlatform.Android");
         source.Should().Contain("MobileDevicePlatform.iOS");
     }

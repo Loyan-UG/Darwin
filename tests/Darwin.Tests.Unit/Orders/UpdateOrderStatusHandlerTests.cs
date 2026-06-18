@@ -39,7 +39,7 @@ public sealed class UpdateOrderStatusHandlerTests
         return mock.Object;
     }
 
-    private static UpdateOrderStatusHandler CreateHandler(UpdateOrderStatusTestDbContext db)
+    private static UpdateOrderStatusHandler CreateHandler(IAppDbContext db)
     {
         var localizer = CreateLocalizer();
         var validator = new UpdateOrderStatusValidator(localizer);
@@ -599,7 +599,7 @@ public sealed class UpdateOrderStatusHandlerTests
     [Fact]
     public async Task HandleAsync_Should_ThrowConcurrency_WhenDatabaseRowVersionIsNull()
     {
-        await using var db = UpdateOrderStatusTestDbContext.Create();
+        await using var db = UpdateOrderStatusNullRowVersionTestDbContext.Create();
         var orderId = Guid.NewGuid();
 
         var order = new Order
@@ -837,6 +837,119 @@ public sealed class UpdateOrderStatusHandlerTests
                 b.Property(x => x.QuantityDelta);
                 b.Property(x => x.Reason).HasMaxLength(64).IsRequired();
                 b.Property(x => x.ReferenceId);
+                b.Property(x => x.RowVersion).IsRequired();
+            });
+        }
+    }
+
+    internal sealed class UpdateOrderStatusNullRowVersionTestDbContext : DbContext, IAppDbContext
+    {
+        private UpdateOrderStatusNullRowVersionTestDbContext(DbContextOptions<UpdateOrderStatusNullRowVersionTestDbContext> options)
+            : base(options)
+        {
+        }
+
+        public new DbSet<T> Set<T>() where T : class => base.Set<T>();
+
+        public static UpdateOrderStatusNullRowVersionTestDbContext Create()
+        {
+            var options = new DbContextOptionsBuilder<UpdateOrderStatusNullRowVersionTestDbContext>()
+                .UseInMemoryDatabase($"darwin_update_order_status_null_rowversion_tests_{Guid.NewGuid()}")
+                .Options;
+            return new UpdateOrderStatusNullRowVersionTestDbContext(options);
+        }
+
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            base.OnModelCreating(modelBuilder);
+
+            modelBuilder.Entity<Order>(b =>
+            {
+                b.HasKey(x => x.Id);
+                b.Property(x => x.OrderNumber).IsRequired();
+                b.Property(x => x.Currency).IsRequired();
+                b.Property(x => x.BillingAddressJson).IsRequired();
+                b.Property(x => x.ShippingAddressJson).IsRequired();
+                b.Property(x => x.RowVersion).IsRequired(false);
+                b.HasMany(x => x.Lines).WithOne().HasForeignKey(l => l.OrderId);
+                b.HasMany(x => x.Payments).WithOne().HasForeignKey(p => p.OrderId);
+                b.HasMany(x => x.Shipments).WithOne().HasForeignKey(s => s.OrderId);
+            });
+
+            modelBuilder.Entity<OrderLine>(b =>
+            {
+                b.HasKey(x => x.Id);
+                b.Property(x => x.Name).IsRequired();
+                b.Property(x => x.Sku).IsRequired();
+                b.Property(x => x.AddOnValueIdsJson).IsRequired();
+                b.Property(x => x.RowVersion).IsRequired();
+            });
+
+            modelBuilder.Entity<Payment>(b =>
+            {
+                b.HasKey(x => x.Id);
+                b.Property(x => x.Provider).IsRequired();
+                b.Property(x => x.Currency).IsRequired();
+                b.Property(x => x.RowVersion).IsRequired();
+            });
+
+            modelBuilder.Entity<Shipment>(b =>
+            {
+                b.HasKey(x => x.Id);
+                b.Property(x => x.Carrier).IsRequired();
+                b.Property(x => x.Service).IsRequired();
+                b.Property(x => x.RowVersion).IsRequired();
+                b.HasMany(x => x.Lines).WithOne().HasForeignKey(l => l.ShipmentId);
+                b.Ignore(x => x.CarrierEvents);
+            });
+
+            modelBuilder.Entity<ShipmentLine>(b =>
+            {
+                b.HasKey(x => x.Id);
+                b.Property(x => x.RowVersion).IsRequired();
+            });
+
+            modelBuilder.Entity<Refund>(b =>
+            {
+                b.HasKey(x => x.Id);
+                b.Property(x => x.Currency).IsRequired();
+                b.Property(x => x.Reason).IsRequired();
+                b.Property(x => x.RowVersion).IsRequired();
+            });
+
+            modelBuilder.Entity<Warehouse>(b =>
+            {
+                b.HasKey(x => x.Id);
+                b.Property(x => x.Name).IsRequired();
+                b.Property(x => x.RowVersion).IsRequired();
+                b.Ignore(x => x.StockLevels);
+            });
+
+            modelBuilder.Entity<StockLevel>(b =>
+            {
+                b.HasKey(x => x.Id);
+                b.Property(x => x.WarehouseId).IsRequired();
+                b.Property(x => x.ProductVariantId).IsRequired();
+                b.Property(x => x.AvailableQuantity);
+                b.Property(x => x.ReservedQuantity);
+                b.Property(x => x.InTransitQuantity);
+                b.Property(x => x.RowVersion).IsRequired();
+            });
+
+            modelBuilder.Entity<ProductVariant>(b =>
+            {
+                b.HasKey(x => x.Id);
+                b.Property(x => x.Sku).IsRequired();
+                b.Property(x => x.StockOnHand);
+                b.Property(x => x.StockReserved);
+                b.Property(x => x.RowVersion).IsRequired();
+                b.Ignore(x => x.OptionValues);
+            });
+
+            modelBuilder.Entity<InventoryTransaction>(b =>
+            {
+                b.HasKey(x => x.Id);
+                b.Property(x => x.Reason).IsRequired();
                 b.Property(x => x.RowVersion).IsRequired();
             });
         }

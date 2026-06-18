@@ -55,6 +55,8 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
         private readonly CreateInvoiceRefundHandler _createInvoiceRefund;
         private readonly CreateInteractionHandler _createInteraction;
         private readonly CreateConsentHandler _createConsent;
+        private readonly GetCrmFoundationPanelHandler _getCrmFoundationPanel;
+        private readonly AddCrmFoundationNoteHandler _addCrmFoundationNote;
         private readonly AssignCustomerSegmentHandler _assignCustomerSegment;
         private readonly RemoveCustomerSegmentMembershipHandler _removeCustomerSegmentMembership;
         private readonly AdminReferenceDataService _referenceData;
@@ -99,6 +101,8 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
             CreateInvoiceRefundHandler createInvoiceRefund,
             CreateInteractionHandler createInteraction,
             CreateConsentHandler createConsent,
+            GetCrmFoundationPanelHandler getCrmFoundationPanel,
+            AddCrmFoundationNoteHandler addCrmFoundationNote,
             AssignCustomerSegmentHandler assignCustomerSegment,
             RemoveCustomerSegmentMembershipHandler removeCustomerSegmentMembership,
             AdminReferenceDataService referenceData,
@@ -142,6 +146,8 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
             _createInvoiceRefund = createInvoiceRefund ?? throw new ArgumentNullException(nameof(createInvoiceRefund));
             _createInteraction = createInteraction ?? throw new ArgumentNullException(nameof(createInteraction));
             _createConsent = createConsent ?? throw new ArgumentNullException(nameof(createConsent));
+            _getCrmFoundationPanel = getCrmFoundationPanel ?? throw new ArgumentNullException(nameof(getCrmFoundationPanel));
+            _addCrmFoundationNote = addCrmFoundationNote ?? throw new ArgumentNullException(nameof(addCrmFoundationNote));
             _assignCustomerSegment = assignCustomerSegment ?? throw new ArgumentNullException(nameof(assignCustomerSegment));
             _removeCustomerSegmentMembership = removeCustomerSegmentMembership ?? throw new ArgumentNullException(nameof(removeCustomerSegmentMembership));
             _referenceData = referenceData ?? throw new ArgumentNullException(nameof(referenceData));
@@ -335,6 +341,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
 
             EnsureCustomerAddressRows(vm);
             await PopulateCustomerOptionsAsync(vm, ct).ConfigureAwait(false);
+            await PopulateCrmFoundationPanelAsync(vm, ct).ConfigureAwait(false);
             return RenderCustomerEditor(vm, "EditCustomer");
         }
 
@@ -352,6 +359,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
             {
                 EnsureCustomerAddressRows(vm);
                 await PopulateCustomerOptionsAsync(vm, ct).ConfigureAwait(false);
+                await PopulateCrmFoundationPanelAsync(vm, ct).ConfigureAwait(false);
                 return RenderCustomerEditor(vm, nameof(EditCustomer));
             }
 
@@ -386,6 +394,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
                 AddLocalizedModelError("CustomerUpdateFailedMessage", ex);
                 EnsureCustomerAddressRows(vm);
                 await PopulateCustomerOptionsAsync(vm, ct).ConfigureAwait(false);
+                await PopulateCrmFoundationPanelAsync(vm, ct).ConfigureAwait(false);
                 return RenderCustomerEditor(vm, "EditCustomer");
             }
         }
@@ -862,6 +871,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
             };
 
             await PopulateLeadOptionsAsync(vm, ct).ConfigureAwait(false);
+            await PopulateCrmFoundationPanelAsync(vm, ct).ConfigureAwait(false);
             return RenderLeadEditor(vm, nameof(EditLead));
         }
 
@@ -878,6 +888,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
             if (!ModelState.IsValid)
             {
                 await PopulateLeadOptionsAsync(vm, ct).ConfigureAwait(false);
+                await PopulateCrmFoundationPanelAsync(vm, ct).ConfigureAwait(false);
                 return RenderLeadEditor(vm, nameof(EditLead));
             }
 
@@ -911,6 +922,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
             {
                 AddLocalizedModelError("LeadUpdateFailedMessage", ex);
                 await PopulateLeadOptionsAsync(vm, ct).ConfigureAwait(false);
+                await PopulateCrmFoundationPanelAsync(vm, ct).ConfigureAwait(false);
                 return RenderLeadEditor(vm, nameof(EditLead));
             }
         }
@@ -1156,6 +1168,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
 
             EnsureOpportunityLineRows(vm);
             await PopulateOpportunityOptionsAsync(vm, ct).ConfigureAwait(false);
+            await PopulateCrmFoundationPanelAsync(vm, ct).ConfigureAwait(false);
             return RenderOpportunityEditor(vm, nameof(EditOpportunity));
         }
 
@@ -1175,6 +1188,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
             {
                 EnsureOpportunityLineRows(vm);
                 await PopulateOpportunityOptionsAsync(vm, ct).ConfigureAwait(false);
+                await PopulateCrmFoundationPanelAsync(vm, ct).ConfigureAwait(false);
                 return RenderOpportunityEditor(vm, nameof(EditOpportunity));
             }
 
@@ -1212,8 +1226,66 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
                 AddLocalizedModelError("OpportunityUpdateFailedMessage", ex);
                 EnsureOpportunityLineRows(vm);
                 await PopulateOpportunityOptionsAsync(vm, ct).ConfigureAwait(false);
+                await PopulateCrmFoundationPanelAsync(vm, ct).ConfigureAwait(false);
                 return RenderOpportunityEditor(vm, nameof(EditOpportunity));
             }
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> CrmFoundationPanel(string entityType, Guid entityId, CancellationToken ct = default)
+        {
+            var panel = await BuildCrmFoundationPanelVmAsync(entityType, entityId, ct).ConfigureAwait(false);
+            if (panel is null)
+            {
+                return NotFound();
+            }
+
+            return PartialView("~/Views/Crm/_CrmFoundationPanel.cshtml", panel);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> AddCrmFoundationNote([Bind(Prefix = "NewNote")] CrmFoundationNoteCreateVm vm, CancellationToken ct = default)
+        {
+            if (!ModelState.IsValid)
+            {
+                var invalidPanel = await BuildCrmFoundationPanelVmAsync(vm.EntityType, vm.EntityId, ct).ConfigureAwait(false)
+                    ?? new CrmFoundationPanelVm
+                    {
+                        EntityType = vm.EntityType,
+                        EntityId = vm.EntityId
+                    };
+                invalidPanel.NewNote = vm;
+                return PartialView("~/Views/Crm/_CrmFoundationPanel.cshtml", invalidPanel);
+            }
+
+            var result = await _addCrmFoundationNote.HandleAsync(
+                new AddCrmFoundationNoteCommand(vm.EntityType, vm.EntityId, vm.Body),
+                ct)
+                .ConfigureAwait(false);
+
+            if (!result.Succeeded)
+            {
+                ModelState.AddModelError("NewNote.Body", result.Error ?? T("CrmFoundationNoteAddFailed"));
+            }
+            else
+            {
+                SetSuccessMessage("CrmFoundationNoteAddedMessage");
+            }
+
+            var panel = await BuildCrmFoundationPanelVmAsync(vm.EntityType, vm.EntityId, ct).ConfigureAwait(false)
+                ?? new CrmFoundationPanelVm
+                {
+                    EntityType = vm.EntityType,
+                    EntityId = vm.EntityId
+                };
+
+            if (!result.Succeeded)
+            {
+                panel.NewNote = vm;
+            }
+
+            return PartialView("~/Views/Crm/_CrmFoundationPanel.cshtml", panel);
         }
 
         [HttpGet]
@@ -1688,6 +1760,127 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
             vm.UserOptions = await _referenceData.GetUserOptionsAsync(vm.AssignedToUserId, includeEmpty: true, ct).ConfigureAwait(false);
             vm.VariantOptions = await _referenceData.GetVariantOptionsAsync(null, ct).ConfigureAwait(false);
             vm.NewInteraction.UserOptions = await _referenceData.GetUserOptionsAsync(vm.NewInteraction.UserId, includeEmpty: true, ct).ConfigureAwait(false);
+        }
+
+        private async Task PopulateCrmFoundationPanelAsync(CustomerEditVm vm, CancellationToken ct)
+        {
+            if (vm.Id == Guid.Empty)
+            {
+                return;
+            }
+
+            vm.FoundationPanel = await BuildCrmFoundationPanelVmAsync("Customer", vm.Id, ct).ConfigureAwait(false);
+        }
+
+        private async Task PopulateCrmFoundationPanelAsync(LeadEditVm vm, CancellationToken ct)
+        {
+            if (vm.Id == Guid.Empty)
+            {
+                return;
+            }
+
+            vm.FoundationPanel = await BuildCrmFoundationPanelVmAsync("Lead", vm.Id, ct).ConfigureAwait(false);
+        }
+
+        private async Task PopulateCrmFoundationPanelAsync(OpportunityEditVm vm, CancellationToken ct)
+        {
+            if (vm.Id == Guid.Empty)
+            {
+                return;
+            }
+
+            vm.FoundationPanel = await BuildCrmFoundationPanelVmAsync("Opportunity", vm.Id, ct).ConfigureAwait(false);
+        }
+
+        private async Task<CrmFoundationPanelVm?> BuildCrmFoundationPanelVmAsync(string entityType, Guid entityId, CancellationToken ct)
+        {
+            var result = await _getCrmFoundationPanel.HandleAsync(entityType, entityId, ct).ConfigureAwait(false);
+            return result.Succeeded && result.Value is not null ? MapCrmFoundationPanel(result.Value) : null;
+        }
+
+        private static CrmFoundationPanelVm MapCrmFoundationPanel(CrmFoundationPanelDto dto)
+        {
+            return new CrmFoundationPanelVm
+            {
+                EntityType = dto.EntityType,
+                EntityId = dto.EntityId,
+                NewNote = new CrmFoundationNoteCreateVm
+                {
+                    EntityType = dto.EntityType,
+                    EntityId = dto.EntityId
+                },
+                ExternalReferences = dto.ExternalReferences
+                    .OrderByDescending(x => x.IsPrimary)
+                    .ThenBy(x => x.ReferenceKind.ToString(), StringComparer.Ordinal)
+                    .ThenBy(x => x.ExternalDisplayId ?? x.ExternalId, StringComparer.OrdinalIgnoreCase)
+                    .Select(x => new CrmFoundationReferenceVm
+                    {
+                        ReferenceKind = x.ReferenceKind.ToString(),
+                        ExternalId = x.ExternalId,
+                        ExternalDisplayId = x.ExternalDisplayId,
+                        SourceOfTruth = x.SourceOfTruth.ToString(),
+                        IsPrimary = x.IsPrimary,
+                        LastSeenAtUtc = x.LastSeenAtUtc
+                    })
+                    .ToList(),
+                Activities = dto.Activities
+                    .OrderByDescending(x => x.OccurredAtUtc)
+                    .Select(x => new CrmFoundationActivityVm
+                    {
+                        ActivityType = x.ActivityType,
+                        OccurredAtUtc = x.OccurredAtUtc,
+                        Title = x.Title,
+                        Summary = x.Summary,
+                        Visibility = x.Visibility.ToString()
+                    })
+                    .ToList(),
+                Notes = dto.Notes
+                    .OrderByDescending(x => x.IsPinned)
+                    .ThenByDescending(x => x.CreatedAtUtc)
+                    .Select(x => new CrmFoundationNoteVm
+                    {
+                        Body = x.Body,
+                        Visibility = x.Visibility.ToString(),
+                        IsPinned = x.IsPinned,
+                        CreatedAtUtc = x.CreatedAtUtc
+                    })
+                    .ToList(),
+                Documents = dto.Documents
+                    .OrderBy(x => x.Title, StringComparer.OrdinalIgnoreCase)
+                    .Select(x => new CrmFoundationDocumentVm
+                    {
+                        DocumentKind = x.DocumentKind.ToString(),
+                        Title = x.Title,
+                        FileName = x.FileName,
+                        ContentType = x.ContentType,
+                        SizeBytes = x.SizeBytes,
+                        StorageProvider = x.StorageProvider,
+                        Visibility = x.Visibility.ToString()
+                    })
+                    .ToList(),
+                Events = dto.Events
+                    .OrderByDescending(x => x.OccurredAtUtc)
+                    .Select(x => new CrmFoundationEventVm
+                    {
+                        EventType = x.EventType,
+                        OccurredAtUtc = x.OccurredAtUtc,
+                        Title = x.Title,
+                        Summary = x.Summary,
+                        Source = x.Source.ToString(),
+                        Severity = x.Severity.ToString()
+                    })
+                    .ToList(),
+                AuditTrail = dto.AuditTrail
+                    .OrderByDescending(x => x.OccurredAtUtc)
+                    .Select(x => new CrmFoundationAuditVm
+                    {
+                        Action = x.Action.ToString(),
+                        OccurredAtUtc = x.OccurredAtUtc,
+                        Reason = x.Reason,
+                        CorrelationId = x.CorrelationId
+                    })
+                    .ToList()
+            };
         }
 
         private async Task EnsureOpportunityCurrencyAsync(OpportunityEditVm vm, CancellationToken ct)

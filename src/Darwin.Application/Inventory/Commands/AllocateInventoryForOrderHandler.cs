@@ -4,6 +4,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Collections.Generic;
 using Darwin.Application.Abstractions.Persistence;
+using Darwin.Application.Inventory;
 using Darwin.Application.Inventory.DTOs;
 using Darwin.Application.Inventory.Validators;
 using Darwin.Domain.Entities.Catalog;
@@ -46,6 +47,7 @@ namespace Darwin.Application.Inventory.Commands
         {
             var v = _validator.Validate(dto);
             if (!v.IsValid) throw new ValidationException(v.Errors);
+            InventoryMovementReferencePolicy.EnsureReferencePolicy(InventoryMovementReferencePolicy.ShipmentAllocation, dto.OrderId);
 
             // Load order basics (ensures the order exists and is not soft-deleted)
             var order = await _db.Set<Order>()
@@ -64,9 +66,9 @@ namespace Darwin.Application.Inventory.Commands
             if (existingVariantIds.Count != variantIds.Count)
                 throw new ValidationException(_localizer["InventoryVariantsMissing"]);
 
-            // Idempotency: check existing ledger rows for this order (Reason = ShipmentAllocation)
+            // Idempotency: check existing ledger rows for this order.
             var alreadyAllocated = await _db.Set<InventoryTransaction>()
-                .Where(t => t.ReferenceId == dto.OrderId && t.Reason == "ShipmentAllocation")
+                .Where(t => t.ReferenceId == dto.OrderId && t.Reason == InventoryMovementReferencePolicy.ShipmentAllocation && !t.IsDeleted)
                 .Select(t => new { t.ProductVariantId, t.WarehouseId })
                 .ToListAsync(ct);
 
@@ -94,14 +96,13 @@ namespace Darwin.Application.Inventory.Commands
                 stockLevel.ReservedQuantity -= line.Quantity;
 
                 // Append ledger: negative delta indicates stock leaves on-hand for fulfillment
-                _db.Set<InventoryTransaction>().Add(new InventoryTransaction
-                {
-                    WarehouseId = warehouseId,
-                    ProductVariantId = line.VariantId,
-                    QuantityDelta = -line.Quantity,
-                    Reason = "ShipmentAllocation",
-                    ReferenceId = dto.OrderId
-                });
+                InventoryMovementReferencePolicy.AddLedgerRow(
+                    _db,
+                    warehouseId,
+                    line.VariantId,
+                    -line.Quantity,
+                    InventoryMovementReferencePolicy.ShipmentAllocation,
+                    dto.OrderId);
 
                 await Darwin.Application.Inventory.InventoryStockHelper.RefreshLegacyVariantStockAsync(_db, line.VariantId, _localizer, ct);
             }

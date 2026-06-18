@@ -53,6 +53,39 @@ public sealed class OpportunityHandlerTests
     }
 
     [Fact]
+    public async Task CreateOpportunity_Should_PersistForecastingFields_WhenProvided()
+    {
+        await using var db = OpportunityDbContext.Create();
+        var customerId = Guid.NewGuid();
+
+        db.Set<Customer>().Add(MakeCustomer(customerId));
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var handler = new CreateOpportunityHandler(
+            db,
+            new OpportunityCreateValidator(),
+            new TestStringLocalizer());
+
+        var id = await handler.HandleAsync(new OpportunityCreateDto
+        {
+            CustomerId = customerId,
+            Title = "Forecasted Deal",
+            EstimatedValueMinor = 900000,
+            Currency = "eur",
+            Stage = OpportunityStage.Proposal,
+            ProbabilityPercent = 60,
+            ForecastCategory = OpportunityForecastCategory.BestCase,
+            Source = "  Referral  "
+        }, TestContext.Current.CancellationToken);
+
+        var opportunity = await db.Set<Opportunity>().SingleAsync(x => x.Id == id, TestContext.Current.CancellationToken);
+        opportunity.Currency.Should().Be("EUR");
+        opportunity.ProbabilityPercent.Should().Be(60);
+        opportunity.ForecastCategory.Should().Be(OpportunityForecastCategory.BestCase);
+        opportunity.Source.Should().Be("Referral");
+    }
+
+    [Fact]
     public async Task CreateOpportunity_Should_PersistItems_WhenItemsProvided()
     {
         await using var db = OpportunityDbContext.Create();
@@ -319,7 +352,7 @@ public sealed class OpportunityHandlerTests
             Stage = OpportunityStage.Qualification
         }, TestContext.Current.CancellationToken);
 
-        await act.Should().ThrowAsync<InvalidOperationException>()
+        await act.Should().ThrowAsync<DbUpdateConcurrencyException>()
             .WithMessage("*ConcurrencyConflictDetected*");
     }
 
@@ -451,7 +484,7 @@ public sealed class OpportunityHandlerTests
                 b.Property(x => x.LastName).IsRequired();
                 b.Property(x => x.Email).IsRequired();
                 b.Property(x => x.Phone).IsRequired();
-                b.Property(x => x.RowVersion).IsRequired();
+                b.Property(x => x.RowVersion).IsRequired(false);
                 b.Ignore(x => x.CustomerSegments);
                 b.Ignore(x => x.Addresses);
                 b.Ignore(x => x.Interactions);
@@ -464,7 +497,7 @@ public sealed class OpportunityHandlerTests
             {
                 b.HasKey(x => x.Id);
                 b.Property(x => x.Title).IsRequired();
-                b.Property(x => x.RowVersion).IsRequired();
+                b.Property(x => x.RowVersion).IsRequired(false);
                 b.Ignore(x => x.Interactions);
             });
 

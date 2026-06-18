@@ -1,0 +1,43 @@
+@model Darwin.WebAdmin.ViewModels.Inventory.ProductTrackingPolicyEditVm
+@inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
+@{
+    var isCreate = (bool?)ViewData["IsCreate"] ?? Model.Id == Guid.Empty;
+    ViewData["Title"] = isCreate ? T.T("CreateProductTrackingPolicy") : T.T("EditProductTrackingPolicy");
+}
+<div id="inventory-traceability-workspace-shell">
+    <h1 class="mb-3">@(isCreate ? T.T("CreateProductTrackingPolicy") : T.T("EditProductTrackingPolicy"))</h1>
+    <form asp-action="@(isCreate ? "CreateProductTrackingPolicy" : "EditProductTrackingPolicy")" method="post" hx-post="@Url.Action(isCreate ? "CreateProductTrackingPolicy" : "EditProductTrackingPolicy", "InventoryTraceability")" hx-target="#inventory-traceability-workspace-shell" hx-swap="outerHTML">
+        @Html.AntiForgeryToken()
+        <input asp-for="Id" type="hidden" />
+        <input asp-for="RowVersion" type="hidden" />
+        <section class="admin-form-section">
+            <h2 class="admin-form-section-title">@T.T("Identity")</h2>
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            <div class="row g-3">
+                <div class="col-md-4"><label asp-for="BusinessId" class="form-label"></label><select asp-for="BusinessId" asp-items="Model.BusinessOptions" class="form-select"></select></div>
+                <div class="col-md-8"><label asp-for="ProductVariantId" class="form-label"></label><select asp-for="ProductVariantId" asp-items="Model.VariantOptions" class="form-select"></select></div>
+                <div class="col-md-4"><label asp-for="TrackingMode" class="form-label"></label><select asp-for="TrackingMode" asp-items="Model.TrackingModeOptions" class="form-select"></select></div>
+                <div class="col-md-4"><label asp-for="Status" class="form-label"></label><select asp-for="Status" asp-items="Model.StatusOptions" class="form-select"></select></div>
+                <div class="col-md-4 d-flex align-items-end gap-3">
+                    <div class="form-check"><input asp-for="RequiresSupplierLot" class="form-check-input" /><label asp-for="RequiresSupplierLot" class="form-check-label"></label></div>
+                    <div class="form-check"><input asp-for="RequiresExpiryDate" class="form-check-input" /><label asp-for="RequiresExpiryDate" class="form-check-label"></label></div>
+                    <div class="form-check"><input asp-for="RequiresHandlingUnit" class="form-check-input" /><label asp-for="RequiresHandlingUnit" class="form-check-label"></label></div>
+                </div>
+                <div class="col-md-6"><label asp-for="Notes" class="form-label"></label><textarea asp-for="Notes" class="form-control" rows="3"></textarea></div>
+                <div class="col-md-6"><label asp-for="MetadataJson" class="form-label"></label><textarea asp-for="MetadataJson" class="form-control font-monospace" rows="3"></textarea></div>
+            </div>
+        </section>
+        <div class="d-flex justify-content-between">
+            <div><button class="btn btn-primary" type="submit">@(isCreate ? T.T("Create") : T.T("Save"))</button> <a asp-action="ProductTrackingPolicies" asp-route-businessId="@Model.BusinessId" class="btn btn-outline-secondary">@T.T("Back")</a></div>
+        </div>
+    </form>
+    @if (!isCreate)
+    {
+        <form asp-action="ArchiveProductTrackingPolicy" method="post" class="mt-3">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="Id" value="@Model.Id" />
+            <input type="hidden" name="RowVersion" value="@Convert.ToBase64String(Model.RowVersion ?? Array.Empty<byte>())" />
+            <button class="btn btn-outline-danger" type="submit">@T.T("Archive")</button>
+        </form>
+    }
+</div>

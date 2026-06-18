@@ -1,0 +1,189 @@
+@model Darwin.WebAdmin.ViewModels.Inventory.StockCountEditVm
+@inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
+@{
+    var isCreate = (bool?)ViewData["IsCreate"] ?? Model.Id == Guid.Empty;
+    var formAction = isCreate ? "CreateStockCount" : "EditStockCount";
+    string CountsUrl(object? businessId = null, object? warehouseId = null) => Url.Action("StockCounts", "Inventory", new { businessId, warehouseId }) ?? string.Empty;
+}
+
+<div id="inventory-stock-counts-workspace-shell">
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+        <h1 class="mb-1">@(isCreate ? T.T("NewStockCount") : T.T("StockCountDetail"))</h1>
+        @if (!string.IsNullOrWhiteSpace(Model.CountNumber))
+        {
+            <div class="text-muted">@Model.CountNumber</div>
+        }
+    </div>
+    <a asp-action="StockCounts" asp-route-businessId="@Model.BusinessId" asp-route-warehouseId="@Model.WarehouseId" class="btn btn-outline-secondary"
+       hx-get="@CountsUrl(Model.BusinessId, Model.WarehouseId)"
+       hx-target="#inventory-stock-counts-workspace-shell"
+       hx-swap="outerHTML"
+       hx-push-url="true">@T.T("Back")</a>
+</div>
+
+<form asp-action="@formAction" method="post">
+    @Html.AntiForgeryToken()
+    <input type="hidden" asp-for="Id" />
+    <input type="hidden" asp-for="RowVersion" value="@Convert.ToBase64String(Model.RowVersion ?? Array.Empty<byte>())" />
+    <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+    <section class="admin-form-section">
+        <h2 class="admin-form-section-title">@T.T("StockCount")</h2>
+        <div class="row g-3">
+            <div class="col-md-4">
+                <label asp-for="BusinessId" class="form-label">@T.T("Business")</label>
+                <select asp-for="BusinessId" asp-items="Model.BusinessOptions" class="form-select"></select>
+            </div>
+            <div class="col-md-4">
+                <label asp-for="WarehouseId" class="form-label">@T.T("Warehouse")</label>
+                <select asp-for="WarehouseId" asp-items="Model.WarehouseOptions" class="form-select"></select>
+            </div>
+            <div class="col-md-4">
+                <label asp-for="LocationId" class="form-label">@T.T("Location")</label>
+                <select asp-for="LocationId" asp-items="Model.LocationOptions" class="form-select"></select>
+            </div>
+            <div class="col-md-6">
+                <label asp-for="Title" class="form-label">@T.T("Title")</label>
+                <input asp-for="Title" class="form-control" />
+            </div>
+            <div class="col-md-3">
+                <label asp-for="CountType" class="form-label">@T.T("Type")</label>
+                <select asp-for="CountType" asp-items="Model.CountTypeOptions" class="form-select"></select>
+            </div>
+            <div class="col-md-3">
+                <label asp-for="AssignedToUserId" class="form-label">@T.T("AssignedTo")</label>
+                <select asp-for="AssignedToUserId" asp-items="Model.UserOptions" class="form-select"></select>
+            </div>
+            <div class="col-md-3">
+                <label asp-for="Status" class="form-label">@T.T("Status")</label>
+                <input value="@T.T(Model.Status.ToString())" class="form-control" readonly />
+            </div>
+            <div class="col-md-3">
+                <label asp-for="CountWindowStartUtc" class="form-label">@T.T("Start")</label>
+                <input asp-for="CountWindowStartUtc" type="datetime-local" class="form-control" />
+            </div>
+            <div class="col-md-3">
+                <label asp-for="CountWindowEndUtc" class="form-label">@T.T("End")</label>
+                <input asp-for="CountWindowEndUtc" type="datetime-local" class="form-control" />
+            </div>
+            <div class="col-md-3">
+                <label asp-for="CountNumber" class="form-label">@T.T("Number")</label>
+                <input asp-for="CountNumber" class="form-control" readonly />
+            </div>
+            <div class="col-12">
+                <label asp-for="InternalNotes" class="form-label">@T.T("InternalNotes")</label>
+                <textarea asp-for="InternalNotes" class="form-control" rows="3"></textarea>
+            </div>
+            @if (!string.IsNullOrWhiteSpace(Model.ReviewNotes))
+            {
+                <div class="col-12">
+                    <label asp-for="ReviewNotes" class="form-label">@T.T("ReviewNotes")</label>
+                    <textarea asp-for="ReviewNotes" class="form-control" rows="2" readonly></textarea>
+                </div>
+            }
+        </div>
+    </section>
+
+    <section class="admin-form-section mt-4">
+        <h2 class="admin-form-section-title">@T.T("Lines")</h2>
+        <div class="table-responsive">
+            <table class="table table-sm align-middle">
+                <thead>
+                <tr>
+                    <th>@T.T("ProductVariantId")</th>
+                    <th>@T.T("Location")</th>
+                    <th>@T.T("Description")</th>
+                    <th>@T.T("Sku")</th>
+                    <th>@T.T("Expected")</th>
+                    <th>@T.T("Counted")</th>
+                    <th>@T.T("Variance")</th>
+                    <th>@T.T("Review")</th>
+                    <th>@T.T("SortOrder")</th>
+                </tr>
+                </thead>
+                <tbody>
+                @for (var i = 0; i < Model.Lines.Count; i++)
+                {
+                    <tr>
+                        <td>
+                            <input type="hidden" asp-for="Lines[i].Id" />
+                            <input asp-for="Lines[i].ProductVariantId" class="form-control form-control-sm" />
+                        </td>
+                        <td><select asp-for="Lines[i].LocationId" asp-items="Model.LocationOptions" class="form-select form-select-sm"></select></td>
+                        <td><input asp-for="Lines[i].Description" class="form-control form-control-sm" /></td>
+                        <td><input asp-for="Lines[i].SkuSnapshot" class="form-control form-control-sm" /></td>
+                        <td><input asp-for="Lines[i].ExpectedQuantity" type="number" min="0" class="form-control form-control-sm" readonly="@(!isCreate)" /></td>
+                        <td><input asp-for="Lines[i].CountedQuantity" type="number" min="0" class="form-control form-control-sm" /></td>
+                        <td><input asp-for="Lines[i].VarianceQuantity" class="form-control form-control-sm" readonly /></td>
+                        <td>
+                            <select asp-for="Lines[i].ReviewStatus" class="form-select form-select-sm">
+                                @foreach (var status in Enum.GetValues<Darwin.Domain.Enums.StockCountLineReviewStatus>())
+                                {
+                                    <option value="@status" selected="@(Model.Lines[i].ReviewStatus == status)">@T.T(status.ToString())</option>
+                                }
+                            </select>
+                            <input asp-for="Lines[i].ReviewNotes" class="form-control form-control-sm mt-1" placeholder="@T.T("ReviewNotes")" />
+                        </td>
+                        <td><input asp-for="Lines[i].SortOrder" type="number" min="0" class="form-control form-control-sm" /></td>
+                    </tr>
+                    <tr>
+                        <td colspan="9">
+                            <div class="table-responsive">
+                                <table class="table table-sm align-middle mb-0">
+                                    <thead>
+                                    <tr>
+                                        <th>@T.T("Lot")</th>
+                                        <th>@T.T("SerialUnit")</th>
+                                        <th>@T.T("HandlingUnit")</th>
+                                        <th>@T.T("Quantity")</th>
+                                    </tr>
+                                    </thead>
+                                    <tbody>
+                                    @for (var j = 0; j < Model.Lines[i].Identities.Count; j++)
+                                    {
+                                        <tr>
+                                            <td>
+                                                <input type="hidden" asp-for="Lines[i].Identities[j].Id" />
+                                                <select asp-for="Lines[i].Identities[j].InventoryLotId" asp-items="Model.LotOptions" class="form-select form-select-sm"></select>
+                                            </td>
+                                            <td><select asp-for="Lines[i].Identities[j].InventorySerialUnitId" asp-items="Model.SerialUnitOptions" class="form-select form-select-sm"></select></td>
+                                            <td><select asp-for="Lines[i].Identities[j].HandlingUnitId" asp-items="Model.HandlingUnitOptions" class="form-select form-select-sm"></select></td>
+                                            <td><input asp-for="Lines[i].Identities[j].Quantity" type="number" min="0" class="form-control form-control-sm" /></td>
+                                        </tr>
+                                    }
+                                    </tbody>
+                                </table>
+                            </div>
+                        </td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <div class="d-flex gap-2 mt-4">
+        <button type="submit" class="btn btn-primary">@T.T("Save")</button>
+    </div>
+</form>
+
+@if (!isCreate)
+{
+    <section class="admin-form-section mt-4">
+        <h2 class="admin-form-section-title">@T.T("Lifecycle")</h2>
+        <div class="d-flex flex-wrap gap-2">
+            @foreach (var target in new[] { Darwin.Domain.Enums.StockCountSessionStatus.Prepared, Darwin.Domain.Enums.StockCountSessionStatus.InProgress, Darwin.Domain.Enums.StockCountSessionStatus.Counted, Darwin.Domain.Enums.StockCountSessionStatus.ReviewPending, Darwin.Domain.Enums.StockCountSessionStatus.Approved, Darwin.Domain.Enums.StockCountSessionStatus.Posted, Darwin.Domain.Enums.StockCountSessionStatus.Rejected, Darwin.Domain.Enums.StockCountSessionStatus.Cancelled })
+            {
+                <form asp-action="UpdateStockCountLifecycle" method="post">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="Id" value="@Model.Id" />
+                    <input type="hidden" name="RowVersion" value="@Convert.ToBase64String(Model.RowVersion ?? Array.Empty<byte>())" />
+                    <input type="hidden" name="TargetStatus" value="@target" />
+                    <button type="submit" class="btn btn-sm btn-outline-secondary">@T.T(target.ToString())</button>
+                </form>
+            }
+        </div>
+    </section>
+}
+</div>

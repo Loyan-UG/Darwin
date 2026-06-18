@@ -1,0 +1,27 @@
+@model Darwin.WebAdmin.ViewModels.HumanResources.PositionEditVm
+@inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
+@{ var isCreate = (bool?)ViewData["IsCreate"] ?? Model.Id == Guid.Empty; ViewData["Title"] = isCreate ? T.T("CreatePosition") : T.T("EditPosition"); }
+<div id="hr-position-editor">
+    <h1 class="mb-3">@(isCreate ? T.T("CreatePosition") : T.T("EditPosition"))</h1>
+    <form asp-action="@(isCreate ? "CreatePosition" : "EditPosition")" method="post">
+        @Html.AntiForgeryToken()
+        <input asp-for="Id" type="hidden" /><input asp-for="RowVersion" type="hidden" />
+        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+        <section class="admin-form-section"><h2 class="admin-form-section-title">@T.T("Position")</h2><div class="row g-3">
+            <div class="col-md-4"><label asp-for="BusinessId" class="form-label"></label><select asp-for="BusinessId" asp-items="Model.BusinessOptions" class="form-select"></select></div>
+            <div class="col-md-4"><label asp-for="DepartmentId" class="form-label"></label><select asp-for="DepartmentId" asp-items="Model.DepartmentOptions" class="form-select"></select></div>
+            <div class="col-md-4"><label asp-for="Status" class="form-label"></label><select asp-for="Status" asp-items="Model.StatusOptions" class="form-select"></select></div>
+            <div class="col-md-4"><label asp-for="Code" class="form-label"></label><input asp-for="Code" class="form-control" /></div>
+            <div class="col-md-6"><label asp-for="DisplayName" class="form-label"></label><input asp-for="DisplayName" class="form-control" /></div>
+            <div class="col-md-2"><label asp-for="SortOrder" class="form-label"></label><input asp-for="SortOrder" class="form-control" /></div>
+            <div class="col-md-6"><label asp-for="Description" class="form-label"></label><textarea asp-for="Description" class="form-control" rows="3"></textarea></div>
+            <div class="col-md-6"><label asp-for="MetadataJson" class="form-label"></label><textarea asp-for="MetadataJson" class="form-control font-monospace" rows="3"></textarea></div>
+        </div></section>
+        <button type="submit" class="btn btn-primary">@(isCreate ? T.T("Create") : T.T("Save"))</button>
+        <a asp-action="Positions" asp-route-businessId="@Model.BusinessId" class="btn btn-outline-secondary">@T.T("Back")</a>
+    </form>
+    @if (!isCreate)
+    {
+        <form asp-action="ArchivePosition" method="post" class="mt-3">@Html.AntiForgeryToken()<input type="hidden" name="id" value="@Model.Id" /><input type="hidden" name="businessId" value="@Model.BusinessId" /><input type="hidden" name="rowVersion" value="@Convert.ToBase64String(Model.RowVersion ?? Array.Empty<byte>())" /><button type="submit" class="btn btn-outline-danger">@T.T("Archive")</button></form>
+    }
+</div>

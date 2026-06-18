@@ -1,0 +1,274 @@
+@model Darwin.WebAdmin.ViewModels.HumanResources.PayrollPaymentEditVm
+@inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
+@{
+    var isCreate = Model.Id == Guid.Empty;
+    var rowVersion = Convert.ToBase64String(Model.RowVersion ?? Array.Empty<byte>());
+    ViewData["Title"] = T.T(isCreate ? "CreatePayrollPayment" : "PayrollPayment");
+}
+<section class="admin-page">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h1 class="mb-0">@(isCreate ? T.T("CreatePayrollPayment") : (string.IsNullOrWhiteSpace(Model.PaymentNumber) ? T.T("PayrollPayment") : Model.PaymentNumber))</h1>
+        <span class="badge text-bg-light">@T.T(Model.Status.ToString())</span>
+    </div>
+    <form asp-action="@(isCreate ? "CreatePayrollPayment" : "EditPayrollPayment")" method="post">
+        @Html.AntiForgeryToken()
+        <input type="hidden" asp-for="Id" />
+        <input type="hidden" name="RowVersion" value="@rowVersion" />
+        <input type="hidden" asp-for="PayrollRunId" />
+        <section class="admin-form-section">
+            <div class="row g-3">
+                <div class="col-md-3"><label asp-for="BusinessId" class="form-label"></label><select asp-for="BusinessId" asp-items="Model.BusinessOptions" class="form-select" disabled></select><input type="hidden" asp-for="BusinessId" /></div>
+                <div class="col-md-3"><label asp-for="PaymentDateUtc" class="form-label"></label><input asp-for="PaymentDateUtc" class="form-control" readonly="@(Model.Status != Darwin.Domain.Enums.PayrollPaymentStatus.Draft)" /></div>
+                <div class="col-md-3"><label asp-for="PaymentMethod" class="form-label"></label><select asp-for="PaymentMethod" asp-items="Model.PaymentMethodOptions" class="form-select" disabled="@(Model.Status != Darwin.Domain.Enums.PayrollPaymentStatus.Draft)"></select></div>
+                <div class="col-md-3"><label asp-for="Currency" class="form-label"></label><input asp-for="Currency" class="form-control" readonly /></div>
+                <div class="col-md-3"><label class="form-label">@T.T("PaymentNumber")</label><input class="form-control" value="@Model.PaymentNumber" readonly /></div>
+                <div class="col-md-3"><label class="form-label">@T.T("TotalAmountMinor")</label><input class="form-control" value="@Model.TotalAmountMinor" readonly /></div>
+                <div class="col-md-3"><label class="form-label">@T.T("PostedAtUtc")</label><input class="form-control" value="@Model.PostedAtUtc?.ToString("u")" readonly /></div>
+                <div class="col-md-3"><label class="form-label">@T.T("ReversedAtUtc")</label><input class="form-control" value="@Model.ReversedAtUtc?.ToString("u")" readonly /></div>
+                <div class="col-md-3"><label class="form-label">@T.T("BankSettledAtUtc")</label><input class="form-control" value="@Model.BankSettledAtUtc?.ToString("u")" readonly /></div>
+                <div class="col-md-3">
+                    <label class="form-label">@T.T("PostingJournalEntry")</label>
+                    @if (Model.PostingJournalEntryId.HasValue)
+                    {
+                        <a asp-controller="Billing" asp-action="EditJournalEntry" asp-route-id="@Model.PostingJournalEntryId.Value" class="form-control btn btn-outline-secondary text-start">@Model.PostingJournalEntryId</a>
+                    }
+                    else
+                    {
+                        <input class="form-control" value="@T.T("NotPosted")" readonly />
+                    }
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">@T.T("ReversalJournalEntry")</label>
+                    @if (Model.ReversalJournalEntryId.HasValue)
+                    {
+                        <a asp-controller="Billing" asp-action="EditJournalEntry" asp-route-id="@Model.ReversalJournalEntryId.Value" class="form-control btn btn-outline-secondary text-start">@Model.ReversalJournalEntryId</a>
+                    }
+                    else
+                    {
+                        <input class="form-control" value="@T.T("NotReversed")" readonly />
+                    }
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">@T.T("BankSettlementJournalEntry")</label>
+                    @if (Model.BankSettlementJournalEntryId.HasValue)
+                    {
+                        <a asp-controller="Billing" asp-action="EditJournalEntry" asp-route-id="@Model.BankSettlementJournalEntryId.Value" class="form-control btn btn-outline-secondary text-start">@Model.BankSettlementJournalEntryId</a>
+                    }
+                    else
+                    {
+                        <input class="form-control" value="@T.T("NotSettled")" readonly />
+                    }
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">@T.T("BankReconciliation")</label>
+                    @if (Model.BankSettlementReconciliationMatchId.HasValue)
+                    {
+                        <a asp-controller="Finance" asp-action="BankReconciliationMatch" asp-route-id="@Model.BankSettlementReconciliationMatchId.Value" class="form-control btn btn-outline-secondary text-start">@Model.BankSettlementReconciliationMatchId</a>
+                    }
+                    else
+                    {
+                        <input class="form-control" value="@T.T("NotMatched")" readonly />
+                    }
+                </div>
+                <div class="col-md-6"><label asp-for="Reference" class="form-label"></label><input asp-for="Reference" class="form-control" readonly="@(Model.Status != Darwin.Domain.Enums.PayrollPaymentStatus.Draft)" /></div>
+                <div class="col-md-6"><label asp-for="ReversalReason" class="form-label"></label><input asp-for="ReversalReason" class="form-control" readonly /></div>
+                <div class="col-md-6"><label asp-for="BankSettlementNotes" class="form-label"></label><input asp-for="BankSettlementNotes" class="form-control" readonly /></div>
+                <div class="col-md-6"><label asp-for="InternalNotes" class="form-label"></label><textarea asp-for="InternalNotes" class="form-control" readonly="@(Model.Status != Darwin.Domain.Enums.PayrollPaymentStatus.Draft)"></textarea></div>
+                <div class="col-md-12"><label asp-for="MetadataJson" class="form-label"></label><textarea asp-for="MetadataJson" class="form-control" readonly="@(Model.Status != Darwin.Domain.Enums.PayrollPaymentStatus.Draft)"></textarea></div>
+            </div>
+        </section>
+        <section class="admin-form-section mt-4">
+            <h2 class="admin-form-section-title">@T.T("Allocations")</h2>
+            <div class="table-responsive">
+                <table class="table table-sm align-middle">
+                    <thead><tr><th>@T.T("Employee")</th><th>@T.T("NetPayMinor")</th><th>@T.T("AlreadyPaidMinor")</th><th>@T.T("OpenAmountMinor")</th><th>@T.T("Amount")</th><th>@T.T("Memo")</th></tr></thead>
+                    <tbody>
+                    @if (!Model.Allocations.Any()) { <tr><td colspan="6" class="text-muted">@T.T("NoRecords")</td></tr> }
+                    else {
+                        for (var i = 0; i < Model.Allocations.Count; i++) {
+                            <tr>
+                                <td><input type="hidden" asp-for="Allocations[i].PayrollRunLineId" /><input type="hidden" asp-for="Allocations[i].EmployeeId" /><div class="fw-semibold">@Model.Allocations[i].EmployeeNumber</div><div class="text-muted small">@Model.Allocations[i].EmployeeName</div></td>
+                                <td>@Model.Allocations[i].LineNetPayMinor<input type="hidden" asp-for="Allocations[i].LineNetPayMinor" /></td>
+                                <td>@Model.Allocations[i].AlreadyPaidMinor<input type="hidden" asp-for="Allocations[i].AlreadyPaidMinor" /></td>
+                                <td>@Model.Allocations[i].OpenAmountMinor<input type="hidden" asp-for="Allocations[i].OpenAmountMinor" /></td>
+                                <td><input asp-for="Allocations[i].AmountMinor" class="form-control form-control-sm" readonly="@(Model.Status != Darwin.Domain.Enums.PayrollPaymentStatus.Draft)" /></td>
+                                <td><input asp-for="Allocations[i].Memo" class="form-control form-control-sm" readonly="@(Model.Status != Darwin.Domain.Enums.PayrollPaymentStatus.Draft)" /></td>
+                            </tr>
+                        }
+                    }
+                    </tbody>
+                </table>
+            </div>
+        </section>
+        <div class="d-flex flex-wrap gap-2 mt-3">
+            @if (Model.Status == Darwin.Domain.Enums.PayrollPaymentStatus.Draft)
+            {
+                <button class="btn btn-primary" type="submit">@T.T("Save")</button>
+            }
+            <a asp-action="PayrollPayments" asp-route-businessId="@Model.BusinessId" class="btn btn-outline-secondary">@T.T("Back")</a>
+        </div>
+    </form>
+    @if (!isCreate && Model.Status == Darwin.Domain.Enums.PayrollPaymentStatus.Draft)
+    {
+        <div class="d-flex flex-wrap gap-2 mt-3">
+            <form asp-action="PostPayrollPayment" method="post">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="id" value="@Model.Id" />
+                <input type="hidden" name="rowVersion" value="@rowVersion" />
+                <button class="btn btn-sm btn-outline-success" type="submit">@T.T("PostPayrollPayment")</button>
+            </form>
+            <form asp-action="CancelPayrollPayment" method="post">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="id" value="@Model.Id" />
+                <input type="hidden" name="rowVersion" value="@rowVersion" />
+                <button class="btn btn-sm btn-outline-danger" type="submit">@T.T("Cancel")</button>
+            </form>
+        </div>
+    }
+    @if (!isCreate && Model.Status == Darwin.Domain.Enums.PayrollPaymentStatus.Posted)
+    {
+        @if (!Model.BankSettledAtUtc.HasValue && !Model.BankSettlementJournalEntryId.HasValue && Model.BankSettlementCandidates.Any())
+        {
+            <form asp-action="SettlePayrollPaymentFromBankReconciliation" method="post" class="mt-3">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="id" value="@Model.Id" />
+                <input type="hidden" name="rowVersion" value="@rowVersion" />
+                <div class="row g-2 align-items-end">
+                    <div class="col-md-5">
+                        <label class="form-label">@T.T("BankReconciliation")</label>
+                        <select name="bankReconciliationMatchId" class="form-select" required>
+                            @foreach (var candidate in Model.BankSettlementCandidates)
+                            {
+                                <option value="@candidate.BankReconciliationMatchId">@candidate.MatchNumber - @candidate.BankAccountDisplayName - @candidate.MatchDateUtc.ToString("yyyy-MM-dd") - @candidate.BankTotalMinor @candidate.Currency</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="col-md-5"><label class="form-label">@T.T("BankSettlementNotes")</label><input name="notes" class="form-control" maxlength="1000" /></div>
+                    <div class="col-md-2"><button class="btn btn-sm btn-outline-success" type="submit">@T.T("SettleFromBankReconciliation")</button></div>
+                </div>
+            </form>
+        }
+        else if (!Model.BankSettledAtUtc.HasValue && !Model.BankSettlementJournalEntryId.HasValue)
+        {
+            <div class="text-muted small mt-3">@T.T("BankSettlementNotReady")</div>
+        }
+        @if (!Model.BankSettledAtUtc.HasValue && !Model.BankSettlementJournalEntryId.HasValue)
+        {
+        <form asp-action="ReversePayrollPayment" method="post" class="mt-3">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="id" value="@Model.Id" />
+            <input type="hidden" name="rowVersion" value="@rowVersion" />
+            <div class="row g-2 align-items-end">
+                <div class="col-md-8"><label class="form-label">@T.T("ReversalReason")</label><input name="reason" class="form-control" maxlength="1000" required /></div>
+                <div class="col-md-4"><button class="btn btn-sm btn-outline-danger" type="submit">@T.T("ReversePayrollPayment")</button></div>
+            </div>
+        </form>
+        }
+    }
+    @if (!isCreate && Model.BankSettledAtUtc.HasValue && Model.BankSettlementJournalEntryId.HasValue)
+    {
+        <section class="admin-form-section mt-4">
+            <h2 class="admin-form-section-title">@T.T("PayrollBankCorrections")</h2>
+            <div class="table-responsive">
+                <table class="table table-sm align-middle">
+                    <thead>
+                        <tr>
+                            <th>@T.T("Type")</th>
+                            <th>@T.T("Status")</th>
+                            <th>@T.T("Date")</th>
+                            <th>@T.T("Amount")</th>
+                            <th>@T.T("Reason")</th>
+                            <th>@T.T("JournalEntry")</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    @if (!Model.BankCorrections.Any())
+                    {
+                        <tr><td colspan="7" class="text-muted">@T.T("NoRecords")</td></tr>
+                    }
+                    else
+                    {
+                        foreach (var correction in Model.BankCorrections)
+                        {
+                            var correctionRowVersion = Convert.ToBase64String(correction.RowVersion ?? Array.Empty<byte>());
+                            <tr>
+                                <td>@T.T(correction.CorrectionType.ToString())</td>
+                                <td><span class="badge text-bg-light">@T.T(correction.Status.ToString())</span></td>
+                                <td>@correction.CorrectionDateUtc.ToString("u")</td>
+                                <td>@correction.AmountMinor @correction.Currency</td>
+                                <td>@correction.Reason</td>
+                                <td>
+                                    @if (correction.CorrectionJournalEntryId.HasValue)
+                                    {
+                                        <a asp-controller="Billing" asp-action="EditJournalEntry" asp-route-id="@correction.CorrectionJournalEntryId.Value">@T.T("Open")</a>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">@T.T("NotPosted")</span>
+                                    }
+                                </td>
+                                <td class="text-end">
+                                    @if (correction.Status == Darwin.Domain.Enums.PayrollPaymentBankCorrectionStatus.Draft && correction.CorrectionType == Darwin.Domain.Enums.PayrollPaymentBankCorrectionType.ReturnedTransfer)
+                                    {
+                                        <form asp-action="PostPayrollPaymentBankCorrection" method="post" class="d-inline">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="id" value="@Model.Id" />
+                                            <input type="hidden" name="correctionId" value="@correction.Id" />
+                                            <input type="hidden" name="correctionRowVersion" value="@correctionRowVersion" />
+                                            <button type="submit" class="btn btn-sm btn-outline-success">@T.T("Post")</button>
+                                        </form>
+                                    }
+                                    @if (correction.Status == Darwin.Domain.Enums.PayrollPaymentBankCorrectionStatus.Draft)
+                                    {
+                                        <form asp-action="CancelPayrollPaymentBankCorrection" method="post" class="d-inline">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="id" value="@Model.Id" />
+                                            <input type="hidden" name="correctionId" value="@correction.Id" />
+                                            <input type="hidden" name="correctionRowVersion" value="@correctionRowVersion" />
+                                            <button type="submit" class="btn btn-sm btn-outline-secondary">@T.T("Cancel")</button>
+                                        </form>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    }
+                    </tbody>
+                </table>
+            </div>
+        </section>
+        @if (Model.BankCorrectionCandidates.Any())
+        {
+            <form asp-action="CreatePayrollPaymentBankCorrection" method="post" class="mt-3">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="id" value="@Model.Id" />
+                <input type="hidden" name="rowVersion" value="@rowVersion" />
+                <div class="row g-2 align-items-end">
+                    <div class="col-md-3">
+                        <label class="form-label">@T.T("CorrectionType")</label>
+                        <select name="correctionType" class="form-select">
+                            <option value="@Darwin.Domain.Enums.PayrollPaymentBankCorrectionType.ReturnedTransfer">@T.T("ReturnedTransfer")</option>
+                            <option value="@Darwin.Domain.Enums.PayrollPaymentBankCorrectionType.DuplicatePayment">@T.T("DuplicatePayment")</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">@T.T("BankReconciliation")</label>
+                        <select name="bankReconciliationMatchId" class="form-select" required>
+                            @foreach (var candidate in Model.BankCorrectionCandidates)
+                            {
+                                <option value="@candidate.BankReconciliationMatchId">@candidate.MatchNumber - @candidate.BankAccountDisplayName - @candidate.MatchDateUtc.ToString("yyyy-MM-dd") - @candidate.BankTotalMinor @candidate.Currency</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="col-md-3"><label class="form-label">@T.T("Reason")</label><input name="reason" class="form-control" maxlength="1000" required /></div>
+                    <div class="col-md-2"><button class="btn btn-sm btn-outline-warning" type="submit">@T.T("CreateCorrection")</button></div>
+                    <div class="col-md-12"><label class="form-label">@T.T("InternalNotes")</label><input name="internalNotes" class="form-control" maxlength="4000" /></div>
+                </div>
+            </form>
+        }
+        else
+        {
+            <div class="text-muted small mt-3">@T.T("PayrollBankCorrectionNotReady")</div>
+        }
+    }
+</section>

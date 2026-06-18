@@ -1,0 +1,162 @@
+@model Darwin.Application.Billing.DTOs.SupplierAdvanceEditDto
+@using Darwin.Domain.Enums
+@inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
+@{
+    ViewData["Title"] = T.T("SupplierAdvance");
+    var rowVersion = Convert.ToBase64String(Model.RowVersion);
+    string Money(long minor) => $"{Model.Currency} {(minor / 100.0M):0.00}";
+    var postingQuery = $"supplier-advance-posted:{Model.Id}";
+    var reversalQuery = $"supplier-advance-reversed:{Model.Id}";
+    string ApplicationQuery(Guid id) => $"supplier-advance-applied:{id}";
+    string ApplicationReversalQuery(Guid id) => $"supplier-advance-application-reversed:{id}";
+    var canReverse = Model.Status == SupplierAdvanceStatus.Posted && Model.OpenAmountMinor == Model.TotalAmountMinor && Model.Applications.All(x => x.ReversedAtUtc.HasValue);
+}
+
+<div id="finance-supplier-advance-detail-shell">
+<partial name="~/Views/Shared/_Alerts.cshtml" />
+<div class="d-flex justify-content-between align-items-start gap-3 mb-4">
+    <div>
+        <h1 class="mb-0">@T.T("SupplierAdvance") @(string.IsNullOrWhiteSpace(Model.AdvanceNumber) ? "-" : Model.AdvanceNumber)</h1>
+        <div class="text-muted small">@T.T(Model.Status.ToString()) / @T.T(Model.PaymentMethod.ToString())</div>
+    </div>
+    <div class="d-flex gap-2">
+        <a asp-action="SupplierAdvances" asp-route-businessId="@Model.BusinessId" class="btn btn-outline-secondary">@T.T("Back")</a>
+        @if (Model.Status == SupplierAdvanceStatus.Draft)
+        {
+            <a asp-action="EditSupplierAdvance" asp-route-id="@Model.Id" class="btn btn-outline-primary">@T.T("Edit")</a>
+        }
+    </div>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-md-3"><div class="border rounded p-3"><div class="text-muted small">@T.T("AdvanceDate")</div><div class="fw-semibold">@Model.AdvanceDateUtc.ToString("yyyy-MM-dd")</div></div></div>
+    <div class="col-md-3"><div class="border rounded p-3"><div class="text-muted small">@T.T("Reference")</div><div class="fw-semibold">@(Model.Reference ?? "-")</div></div></div>
+    <div class="col-md-3"><div class="border rounded p-3"><div class="text-muted small">@T.T("Total")</div><div class="fw-semibold">@Money(Model.TotalAmountMinor)</div></div></div>
+    <div class="col-md-3"><div class="border rounded p-3"><div class="text-muted small">@T.T("OpenAmount")</div><div class="fw-semibold">@Money(Model.OpenAmountMinor)</div></div></div>
+</div>
+
+<div class="border rounded p-3 mb-3">
+    <div class="row g-3 align-items-center">
+        <div class="col-md-7">
+            <div class="text-muted small">@T.T("AdvancePosting")</div>
+            <div class="fw-semibold">@(Model.PostedAtUtc?.ToString("yyyy-MM-dd HH:mm") ?? T.T("NotPosted"))</div>
+            @if (Model.PostingJournalEntryId.HasValue)
+            {
+                <a asp-action="Postings" asp-route-businessId="@Model.BusinessId" asp-route-q="@postingQuery" class="btn btn-sm btn-outline-secondary mt-2">@T.T("ViewPosting")</a>
+            }
+            @if (Model.ReversalJournalEntryId.HasValue)
+            {
+                <a asp-action="Postings" asp-route-businessId="@Model.BusinessId" asp-route-q="@reversalQuery" class="btn btn-sm btn-outline-secondary mt-2 ms-2">@T.T("ViewReversalPosting")</a>
+            }
+        </div>
+        <div class="col-md-5 text-md-end">
+            @if (Model.Status == SupplierAdvanceStatus.Draft)
+            {
+                <form method="post" asp-action="PostSupplierAdvance" class="d-inline">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="Id" value="@Model.Id" />
+                    <input type="hidden" name="RowVersion" value="@rowVersion" />
+                    <button type="submit" class="btn btn-success">@T.T("PostAdvance")</button>
+                </form>
+                <form method="post" asp-action="CancelSupplierAdvance" class="d-inline ms-2">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="Id" value="@Model.Id" />
+                    <input type="hidden" name="RowVersion" value="@rowVersion" />
+                    <button type="submit" class="btn btn-outline-danger">@T.T("Cancel")</button>
+                </form>
+            }
+            @if (canReverse)
+            {
+                <form method="post" asp-action="ReverseSupplierAdvance" class="d-inline-block ms-2">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="Id" value="@Model.Id" />
+                    <input type="hidden" name="RowVersion" value="@rowVersion" />
+                    <div class="input-group">
+                        <input name="Reason" class="form-control" maxlength="1000" placeholder="@T.T("Reason")" required />
+                        <button type="submit" class="btn btn-outline-danger">@T.T("ReverseAdvance")</button>
+                    </div>
+                </form>
+            }
+        </div>
+    </div>
+    @if (Model.ReversedAtUtc.HasValue)
+    {
+        <div class="mt-3 small text-muted">@T.T("ReversedAt"): @Model.ReversedAtUtc.Value.ToString("yyyy-MM-dd HH:mm") / @(Model.ReversalReason ?? "-")</div>
+    }
+</div>
+
+@if (Model.Status == SupplierAdvanceStatus.Posted && Model.OpenAmountMinor > 0 && Model.ApplicationCandidates.Count > 0)
+{
+    <div class="border rounded p-3 mb-3">
+        <form method="post" asp-action="ApplySupplierAdvance" class="row g-2 align-items-end">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="Id" value="@Model.Id" />
+            <input type="hidden" name="RowVersion" value="@rowVersion" />
+            <div class="col-md-5">
+                <label class="form-label">@T.T("SupplierInvoice")</label>
+                <select name="SupplierInvoiceId" class="form-select" required>
+                    @foreach (var candidate in Model.ApplicationCandidates)
+                    {
+                        <option value="@candidate.SupplierInvoiceId">@candidate.SupplierInvoiceNumber / @candidate.InternalInvoiceNumber / @Money(candidate.InvoiceOpenAmountMinor)</option>
+                    }
+                </select>
+            </div>
+            <div class="col-md-2"><label class="form-label">@T.T("Amount")</label><input name="AmountMinor" class="form-control text-end" value="@Model.ApplicationCandidates.First().AmountMinor" /></div>
+            <div class="col-md-3"><label class="form-label">@T.T("Memo")</label><input name="Memo" class="form-control" maxlength="1000" /></div>
+            <div class="col-md-2"><button type="submit" class="btn btn-primary w-100">@T.T("ApplyAdvance")</button></div>
+        </form>
+    </div>
+}
+
+<div class="table-responsive">
+    <table class="table table-sm align-middle">
+        <thead><tr><th>@T.T("SupplierInvoice")</th><th>@T.T("AppliedAt")</th><th>@T.T("Status")</th><th class="text-end">@T.T("Amount")</th><th>@T.T("Memo")</th><th></th></tr></thead>
+        <tbody>
+        @if (Model.Applications.Count == 0)
+        {
+            <tr><td colspan="6" class="text-center text-muted">@T.T("NoSupplierAdvanceApplications")</td></tr>
+        }
+        @foreach (var application in Model.Applications)
+        {
+            var applicationIsReversed = application.ReversedAtUtc.HasValue;
+            <tr>
+                <td><a asp-action="SupplierInvoice" asp-route-id="@application.SupplierInvoiceId">@application.SupplierInvoiceNumber</a><div class="text-muted small">@application.InternalInvoiceNumber</div></td>
+                <td>@(application.AppliedAtUtc?.ToString("yyyy-MM-dd HH:mm") ?? "-")</td>
+                <td>
+                    <span class="badge text-bg-light">@(applicationIsReversed ? T.T("Reversed") : T.T("Applied"))</span>
+                    @if (applicationIsReversed)
+                    {
+                        <div class="text-muted small">@application.ReversedAtUtc?.ToString("yyyy-MM-dd HH:mm") / @(application.ReversalReason ?? "-")</div>
+                    }
+                </td>
+                <td class="text-end">@Money(application.AmountMinor)</td>
+                <td>@(application.Memo ?? "-")</td>
+                <td class="text-end">
+                    @if (application.PostingJournalEntryId.HasValue)
+                    {
+                        <a asp-action="Postings" asp-route-businessId="@Model.BusinessId" asp-route-q="@ApplicationQuery(application.Id)" class="btn btn-sm btn-outline-secondary">@T.T("ViewPosting")</a>
+                    }
+                    @if (application.ReversalJournalEntryId.HasValue)
+                    {
+                        <a asp-action="Postings" asp-route-businessId="@Model.BusinessId" asp-route-q="@ApplicationReversalQuery(application.Id)" class="btn btn-sm btn-outline-secondary">@T.T("ViewReversalPosting")</a>
+                    }
+                    @if (!applicationIsReversed)
+                    {
+                        <form method="post" asp-action="ReverseSupplierAdvanceApplication" class="d-inline-block mt-1">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="Id" value="@Model.Id" />
+                            <input type="hidden" name="RowVersion" value="@rowVersion" />
+                            <input type="hidden" name="ApplicationId" value="@application.Id" />
+                            <div class="input-group input-group-sm">
+                                <input name="Reason" class="form-control" maxlength="1000" placeholder="@T.T("Reason")" required />
+                                <button type="submit" class="btn btn-outline-danger">@T.T("ReverseApplication")</button>
+                            </div>
+                        </form>
+                    }
+                </td>
+            </tr>
+        }
+        </tbody>
+    </table>
+</div>
+</div>

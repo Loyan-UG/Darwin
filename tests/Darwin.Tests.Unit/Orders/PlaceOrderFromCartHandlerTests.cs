@@ -1,4 +1,5 @@
 using System.Collections.Concurrent;
+using System.Text.Json;
 using Darwin.Application.Abstractions.Persistence;
 using Darwin.Application;
 using Darwin.Application.CartCheckout.Queries;
@@ -161,6 +162,10 @@ public sealed class PlaceOrderFromCartHandlerTests
         order.ShippingMethodName.Should().Be("DHL Paket");
         order.ShippingCarrier.Should().Be("DHL");
         order.ShippingService.Should().Be("Paket");
+        order.SalesChannel.Should().Be(SalesChannel.WebStorefront);
+        order.OrderedAtUtc.Should().NotBe(default);
+        order.BusinessId.Should().BeNull();
+        order.CustomerId.Should().BeNull();
         order.BillingAddressJson.Should().Contain("Max Mustermann");
         order.ShippingAddressJson.Should().Contain("Musterstrasse 1");
         order.Lines.Should().ContainSingle();
@@ -292,8 +297,14 @@ public sealed class PlaceOrderFromCartHandlerTests
         var order = await db.Set<Order>()
             .SingleAsync(x => x.Id == result.OrderId, TestContext.Current.CancellationToken);
 
-        order.BillingAddressJson.Should().Contain("Friedrichstrasse 12");
-        order.ShippingAddressJson.Should().Contain("Unter den Linden 5");
+        var billingSnapshot = JsonSerializer.Deserialize<CheckoutAddressDto>(order.BillingAddressJson);
+        var shippingSnapshot = JsonSerializer.Deserialize<CheckoutAddressDto>(order.ShippingAddressJson);
+        billingSnapshot.Should().NotBeNull();
+        shippingSnapshot.Should().NotBeNull();
+        billingSnapshot!.Street1.Should().Be("Friedrichstrasse 12");
+        billingSnapshot.CountryCode.Should().Be("DE");
+        shippingSnapshot!.Street1.Should().Be("Unter den Linden 5");
+        shippingSnapshot.CountryCode.Should().Be("DE");
         order.GrandTotalGrossMinor.Should().Be(3165);
         order.ShippingMethodName.Should().Be("DHL Standard");
     }

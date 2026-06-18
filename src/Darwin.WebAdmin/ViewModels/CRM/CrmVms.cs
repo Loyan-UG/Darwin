@@ -152,6 +152,7 @@ namespace Darwin.WebAdmin.ViewModels.CRM
         public ConsentCreateVm NewConsent { get; set; } = new();
         public AssignCustomerSegmentVm SegmentAssignment { get; set; } = new();
         public List<SelectListItem> SegmentOptions { get; set; } = new();
+        public CrmFoundationPanelVm? FoundationPanel { get; set; }
     }
 
     public sealed class LeadsListVm
@@ -234,6 +235,7 @@ namespace Darwin.WebAdmin.ViewModels.CRM
         public List<SelectListItem> UserOptions { get; set; } = new();
         public List<SelectListItem> CustomerOptions { get; set; } = new();
         public InteractionCreateVm NewInteraction { get; set; } = new();
+        public CrmFoundationPanelVm? FoundationPanel { get; set; }
     }
 
     public sealed class ConvertLeadVm
@@ -330,6 +332,90 @@ namespace Darwin.WebAdmin.ViewModels.CRM
         public List<SelectListItem> UserOptions { get; set; } = new();
         public List<SelectListItem> VariantOptions { get; set; } = new();
         public InteractionCreateVm NewInteraction { get; set; } = new();
+        public CrmFoundationPanelVm? FoundationPanel { get; set; }
+    }
+
+    public sealed class CrmFoundationPanelVm
+    {
+        public string EntityType { get; set; } = string.Empty;
+        public Guid EntityId { get; set; }
+        public string AddNoteTargetId => $"crm-foundation-panel-{EntityType.ToLowerInvariant()}-{EntityId:N}";
+        public CrmFoundationNoteCreateVm NewNote { get; set; } = new();
+        public List<CrmFoundationReferenceVm> ExternalReferences { get; set; } = new();
+        public List<CrmFoundationActivityVm> Activities { get; set; } = new();
+        public List<CrmFoundationNoteVm> Notes { get; set; } = new();
+        public List<CrmFoundationDocumentVm> Documents { get; set; } = new();
+        public List<CrmFoundationEventVm> Events { get; set; } = new();
+        public List<CrmFoundationAuditVm> AuditTrail { get; set; } = new();
+    }
+
+    public sealed class CrmFoundationNoteCreateVm
+    {
+        [Required]
+        public string EntityType { get; set; } = string.Empty;
+
+        [Required]
+        public Guid EntityId { get; set; }
+
+        [Required]
+        [StringLength(4000)]
+        public string Body { get; set; } = string.Empty;
+    }
+
+    public sealed class CrmFoundationReferenceVm
+    {
+        public string ReferenceKind { get; set; } = string.Empty;
+        public string ExternalId { get; set; } = string.Empty;
+        public string? ExternalDisplayId { get; set; }
+        public string SourceOfTruth { get; set; } = string.Empty;
+        public bool IsPrimary { get; set; }
+        public DateTime? LastSeenAtUtc { get; set; }
+    }
+
+    public sealed class CrmFoundationActivityVm
+    {
+        public string ActivityType { get; set; } = string.Empty;
+        public DateTime OccurredAtUtc { get; set; }
+        public string Title { get; set; } = string.Empty;
+        public string? Summary { get; set; }
+        public string Visibility { get; set; } = string.Empty;
+    }
+
+    public sealed class CrmFoundationNoteVm
+    {
+        public string Body { get; set; } = string.Empty;
+        public string Visibility { get; set; } = string.Empty;
+        public bool IsPinned { get; set; }
+        public DateTime CreatedAtUtc { get; set; }
+    }
+
+    public sealed class CrmFoundationDocumentVm
+    {
+        public string DocumentKind { get; set; } = string.Empty;
+        public string Title { get; set; } = string.Empty;
+        public string FileName { get; set; } = string.Empty;
+        public string ContentType { get; set; } = string.Empty;
+        public long? SizeBytes { get; set; }
+        public string StorageProvider { get; set; } = string.Empty;
+        public string Visibility { get; set; } = string.Empty;
+    }
+
+    public sealed class CrmFoundationEventVm
+    {
+        public string EventType { get; set; } = string.Empty;
+        public DateTime OccurredAtUtc { get; set; }
+        public string Title { get; set; } = string.Empty;
+        public string? Summary { get; set; }
+        public string Source { get; set; } = string.Empty;
+        public string Severity { get; set; } = string.Empty;
+    }
+
+    public sealed class CrmFoundationAuditVm
+    {
+        public string Action { get; set; } = string.Empty;
+        public DateTime OccurredAtUtc { get; set; }
+        public string? Reason { get; set; }
+        public string? CorrelationId { get; set; }
     }
 
     public sealed class InteractionCreateVm

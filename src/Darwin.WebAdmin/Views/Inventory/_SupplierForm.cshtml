@@ -14,6 +14,25 @@
             <field-help title="@T.T("Name")" content="@T.T("InventorySupplierNameHelp")" placement="right"></field-help>
             <input asp-for="Name" class="form-control" />
         </div>
+        <div class="col-md-4">
+            <label asp-for="Code" class="form-label"></label>
+            <field-help title="@T.T("Code")" content="@T.T("InventorySupplierCodeHelp")" placement="right"></field-help>
+            <input asp-for="Code" class="form-control" />
+        </div>
+        <div class="col-md-4">
+            <label asp-for="Status" class="form-label"></label>
+            <field-help title="@T.T("Status")" content="@T.T("InventorySupplierStatusHelp")" placement="right"></field-help>
+            <select asp-for="Status" class="form-select">
+                <option value="Active">@T.T("Active")</option>
+                <option value="Inactive">@T.T("Inactive")</option>
+                <option value="Blocked">@T.T("Blocked")</option>
+            </select>
+        </div>
+        <div class="col-md-4">
+            <label asp-for="PreferredCurrency" class="form-label"></label>
+            <field-help title="@T.T("Currency")" content="@T.T("InventorySupplierPreferredCurrencyHelp")" placement="right"></field-help>
+            <input asp-for="PreferredCurrency" class="form-control" maxlength="3" />
+        </div>
     </div>
 </section>
 
@@ -35,10 +54,35 @@
             <field-help title="@T.T("Address")" content="@T.T("InventorySupplierAddressHelp")" placement="right"></field-help>
             <input asp-for="Address" class="form-control" />
         </div>
+        <div class="col-md-6">
+            <label asp-for="Website" class="form-label"></label>
+            <field-help title="@T.T("Website")" content="@T.T("InventorySupplierWebsiteHelp")" placement="right"></field-help>
+            <input asp-for="Website" class="form-control" />
+        </div>
+        <div class="col-md-6">
+            <label asp-for="TaxRegistrationNumber" class="form-label"></label>
+            <field-help title="@T.T("TaxRegistrationNumber")" content="@T.T("InventorySupplierTaxRegistrationHelp")" placement="right"></field-help>
+            <input asp-for="TaxRegistrationNumber" class="form-control" />
+        </div>
+        <div class="col-md-6">
+            <label asp-for="PaymentTermDays" class="form-label"></label>
+            <field-help title="@T.T("PaymentTermDays")" content="@T.T("InventorySupplierPaymentTermHelp")" placement="right"></field-help>
+            <input asp-for="PaymentTermDays" class="form-control" />
+        </div>
+        <div class="col-md-6">
+            <label asp-for="LeadTimeDays" class="form-label"></label>
+            <field-help title="@T.T("LeadTimeDays")" content="@T.T("InventorySupplierLeadTimeHelp")" placement="right"></field-help>
+            <input asp-for="LeadTimeDays" class="form-control" />
+        </div>
         <div class="col-12">
             <label asp-for="Notes" class="form-label"></label>
             <field-help title="@T.T("Notes")" content="@T.T("InventorySupplierNotesHelp")" placement="right"></field-help>
             <textarea asp-for="Notes" class="form-control" rows="4"></textarea>
+        </div>
+        <div class="col-12">
+            <label asp-for="ExternalNotes" class="form-label"></label>
+            <field-help title="@T.T("ExternalNotes")" content="@T.T("InventorySupplierExternalNotesHelp")" placement="right"></field-help>
+            <textarea asp-for="ExternalNotes" class="form-control" rows="3"></textarea>
         </div>
     </div>
 </section>

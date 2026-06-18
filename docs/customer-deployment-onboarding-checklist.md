@@ -1,13 +1,15 @@
 # Customer Deployment Onboarding Checklist
 
-Reviewed: 2026-05-27
+Reviewed: 2026-06-17
 
 This checklist defines the repeatable steps for preparing a Darwin deployment for a customer. It is deployment-neutral and must not contain customer names, domains, credentials, API keys, webhook secrets, signing keys, or private infrastructure details.
 
 Use this document together with:
 
 - [docs/production-setup.md](production-setup.md)
+- [docs/production-go-live-evidence-execution-plan.md](production-go-live-evidence-execution-plan.md)
 - [docs/external-smoke-inputs.md](external-smoke-inputs.md)
+- [docs/production-readiness-evidence-package.md](production-readiness-evidence-package.md)
 - [docs/go-live-status.md](go-live-status.md)
 - [docs/module-audit.md](module-audit.md)
 - [docs/e-invoice-acceptance-checklist.md](e-invoice-acceptance-checklist.md)
@@ -34,8 +36,8 @@ Use this document together with:
 - Confirm shipping provider scope and whether DHL live validation is in go-live scope.
 - Confirm communication provider scope and sender roles.
 - Confirm VAT/VIES policy: `Manual Review + Scheduled Retry` is the default for provider failures.
-- Confirm e-invoice scope: receive-only readiness, ZUGFeRD/Factur-X generation, XRechnung export, or deferred.
-- Confirm mobile store scope: Android only, Android+iOS, or broader.
+- Confirm e-invoice scope: compliant German rollout requires both ZUGFeRD/Factur-X and XRechnung evidence; receive-only or deferred generation must be an explicit deployment scope decision.
+- Confirm mobile store scope: Android first, then iOS, then MacCatalyst/follow-up platforms after Android evidence is complete.
 
 Manual approvals:
 
@@ -116,7 +118,11 @@ Approval:
 ### Object Storage
 
 - Run `scripts\check-minio-production-readiness.ps1` or equivalent selected-provider readiness check.
-- Confirm `InvoiceArchive`, `ShipmentLabels`, and `MediaAssets` profile decisions.
+- Confirm `InvoiceArchive`, `ShipmentLabels`, `MediaAssets`, `FinanceExports`, `FinanceExportOutbound`, `PersonnelDocuments`, and `PayrollPayslips` profile decisions.
+- Confirm `FinanceExports` is the generated finance export package source and `FinanceExportOutbound` is the outbound delivery destination when accounting export is in scope.
+- Confirm `PersonnelDocuments` is the internal HR personnel-file binary store and is not replaced by employee metadata, document metadata, notes, or payroll-provider payloads.
+- Confirm `PayrollPayslips` is the internal HR payroll artifact store and is not replaced by payroll run metadata, employee metadata, document metadata, notes, or payroll-provider payloads.
+- Confirm finance export profile configuration comes from secure deployment configuration, not from batch metadata, document metadata, external-reference metadata, or package content.
 - Confirm disposable smoke prefix and retention/delete behavior.
 - Run selected-provider smoke only after explicit production-like smoke confirmation.
 - Run WebAdmin smoke against a disposable object.
@@ -161,12 +167,14 @@ Manual approvals:
 
 ## Phase 6: Mobile Readiness
 
-- Configure Google Maps keys with package/bundle and signing restrictions.
-- Configure Firebase/APNS production push settings.
-- Validate Android/iOS/MacCatalyst signing profiles as required.
-- Run Consumer smoke: login, discovery, map, QR generation, profile/account flows.
-- Run Business smoke: login, access-state gate, home, scan tab, QR session handling.
-- Validate real camera QR scan with two devices or approved camera feed.
+- Configure Android Google Maps key with package and signing restrictions for first launch.
+- Configure Firebase production push settings for Android first; APNS follows when iOS enters launch scope.
+- Run `scripts\check-android-project-readiness.ps1` against the checked-out release candidate before building the signed Android artifact.
+- Validate Android signing profile and release artifact first; iOS/MacCatalyst signing profiles follow after Android evidence is complete.
+- Run `scripts\check-android-launch-readiness.ps1` after signed artifact, maps, push, route, and device smoke evidence exists.
+- Run Android Consumer smoke: login, discovery, map, QR generation, profile/account flows.
+- Run Android Business smoke: login, access-state gate, home, scan tab, QR session handling.
+- Validate real Android camera QR scan with two devices or approved camera feed.
 - Confirm mobile apps do not use broad cleartext HTTP or unsafe Release certificate trust.
 
 Manual approvals:
@@ -192,6 +200,16 @@ Manual approvals:
 
 ## Phase 8: Final Verification
 
+- Create the deployment evidence package described in [docs/production-readiness-evidence-package.md](production-readiness-evidence-package.md), using `scripts\new-production-readiness-evidence-package.ps1` when a fresh non-secret working copy is needed.
+- Generate the non-secret readiness report bundle with `scripts\export-production-readiness-report-bundle.ps1 -Force`, then validate it with `scripts\check-production-readiness-report-bundle.ps1` so stale branch, commit, release-reference, or helper metadata is blocked before attachment.
+- Use the ignored local execution summary and local package draft from the same bundle run when operators need a current local report summary, pre-filled blocked draft, and local supporting-evidence snapshot. The bundle exporter refreshes both artifacts. Do not treat either artifact as final approval.
+- Generate the owner action plan with `scripts\export-production-readiness-action-plan.ps1 -Force` so blocked evidence rows have clear owners, missing evidence keys, and next actions.
+- Generate the owner handoff with `scripts\export-production-readiness-owner-handoff.ps1 -Force` when follow-up needs to be grouped by deployment owner before evidence collection starts.
+- Generate the evidence-package validator smoke with `scripts\export-production-readiness-evidence-validator-smoke.ps1 -Force` when template or validator rules changed and operators need proof that the package contract still blocks only incomplete evidence.
+- Generate the ignored environment helper with `scripts\export-production-readiness-env-template.ps1 -Force` when operators need a de-duplicated local/session template for missing evidence variables. Keep filled copies outside git.
+- Complete the production-like staging rehearsal from [docs/production-go-live-evidence-execution-plan.md](production-go-live-evidence-execution-plan.md) before any production execution.
+- Run `scripts\check-production-like-staging-readiness.ps1` after staging build/test, migration, rollback, storage, provider, e-invoice, Android, monitoring, and owner sign-off evidence exists.
+- Validate the filled package with `scripts\check-production-readiness-evidence-package.ps1` before go-live approval.
 - Run focused build/test lanes for touched components.
 - Run `scripts\check-secrets.ps1`.
 - Run `git diff --check`.
@@ -199,6 +217,8 @@ Manual approvals:
 - Run provider smoke scripts only for providers in scope and only with approved credentials/configuration.
 - Record all blocked items and owner assignments.
 - Record rollback plan and support contact path.
+- Record non-secret references to build/test outputs, provider smoke outputs, object-storage retention/legal-hold proof, e-invoice validation evidence when in scope, signed mobile artifacts when in scope, monitoring/alert ownership, and approval owners.
+- Store customer approvals, legal/tax sign-off, provider dashboard evidence, selected-provider screenshots, and private operational artifacts outside source control.
 
 Go-live is not complete until:
 
@@ -207,3 +227,5 @@ Go-live is not complete until:
 - Backups and restore tests are complete.
 - Monitoring/alerting ownership is assigned.
 - Customer approvals are recorded outside source control.
+- The production readiness evidence package has an owner, a timestamped release/deployment reference, a passing validation check, and no committed secrets or private payloads.
+- The production-like staging rehearsal row in the evidence package is complete and points to non-secret proof for migration, rollback, storage, e-invoice, Android, provider, monitoring, and owner approval checks.

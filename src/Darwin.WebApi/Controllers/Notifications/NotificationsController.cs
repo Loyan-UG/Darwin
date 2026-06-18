@@ -48,7 +48,6 @@ public sealed class NotificationsController : ApiControllerBase
     }
 
     [HttpGet]
-    [HttpGet("/api/v1/notifications")]
     [ProducesResponseType(typeof(NotificationInboxListResponse), StatusCodes.Status200OK)]
     public async Task<IActionResult> ListAsync(
         [FromQuery] NotificationInboxTargetApp targetApp = NotificationInboxTargetApp.Both,
@@ -81,7 +80,6 @@ public sealed class NotificationsController : ApiControllerBase
     }
 
     [HttpGet("unread-count")]
-    [HttpGet("/api/v1/notifications/unread-count")]
     [ProducesResponseType(typeof(NotificationUnreadCountResponse), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetUnreadCountAsync(
         [FromQuery] NotificationInboxTargetApp targetApp = NotificationInboxTargetApp.Both,
@@ -98,7 +96,6 @@ public sealed class NotificationsController : ApiControllerBase
     }
 
     [HttpPost("{id:guid}/read")]
-    [HttpPost("/api/v1/notifications/{id:guid}/read")]
     [ProducesResponseType(typeof(NotificationReadResponse), StatusCodes.Status200OK)]
     public async Task<IActionResult> MarkReadAsync(
         Guid id,
@@ -116,7 +113,6 @@ public sealed class NotificationsController : ApiControllerBase
     }
 
     [HttpPost("read-all")]
-    [HttpPost("/api/v1/notifications/read-all")]
     [ProducesResponseType(typeof(NotificationReadResponse), StatusCodes.Status200OK)]
     public async Task<IActionResult> MarkAllReadAsync(
         [FromQuery] NotificationInboxTargetApp targetApp = NotificationInboxTargetApp.Both,
@@ -136,7 +132,6 @@ public sealed class NotificationsController : ApiControllerBase
     /// Registers or updates the authenticated user's mobile device installation for push delivery.
     /// </summary>
     [HttpPost("devices/register")]
-    [HttpPost("/api/v1/notifications/devices/register")]
     [ProducesResponseType(typeof(RegisterPushDeviceResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(Darwin.Contracts.Common.ProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(Darwin.Contracts.Common.ProblemDetails), StatusCodes.Status401Unauthorized)]

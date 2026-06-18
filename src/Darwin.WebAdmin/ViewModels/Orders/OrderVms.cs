@@ -62,7 +62,7 @@ namespace Darwin.WebAdmin.ViewModels.Orders
 
     public sealed class OrderLineVm
     {
-        public Guid VariantId { get; set; }
+        public Guid? VariantId { get; set; }
         public Guid? WarehouseId { get; set; }
         public string WarehouseName { get; set; } = string.Empty;
         public string Name { get; set; } = string.Empty;

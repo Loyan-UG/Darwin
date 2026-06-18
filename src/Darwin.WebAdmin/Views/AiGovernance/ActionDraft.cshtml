@@ -1,0 +1,128 @@
+@model Darwin.Application.Foundation.AiActionDraftDetailDto
+@using Darwin.Domain.Enums
+@inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
+@{
+    ViewData["Title"] = T.T("AiActionDraft");
+}
+
+<partial name="~/Views/Shared/_Alerts.cshtml" />
+
+<div class="d-flex justify-content-between align-items-start gap-3 mb-4">
+    <div>
+        <h1 class="mb-0">@T.T("AiActionDraft")</h1>
+        <div class="text-muted small">@Model.FeatureAreaCode / @Model.CommandType / @T.T(Model.Status.ToString())</div>
+    </div>
+    <a asp-action="Index" class="btn btn-outline-secondary">@T.T("Back")</a>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-md-3"><div class="border rounded p-3"><div class="text-muted small">@T.T("Risk")</div><div class="fw-semibold">@T.T(Model.RiskLevel.ToString())</div></div></div>
+    <div class="col-md-3"><div class="border rounded p-3"><div class="text-muted small">@T.T("TargetEntity")</div><div class="fw-semibold">@Model.TargetEntityType</div></div></div>
+    <div class="col-md-3"><div class="border rounded p-3"><div class="text-muted small">@T.T("CreatedAt")</div><div class="fw-semibold">@Model.CreatedAtUtc.ToString("yyyy-MM-dd HH:mm")</div></div></div>
+    <div class="col-md-3"><div class="border rounded p-3"><div class="text-muted small">@T.T("SubmittedAt")</div><div class="fw-semibold">@(Model.SubmittedAtUtc?.ToString("yyyy-MM-dd HH:mm") ?? "-")</div></div></div>
+</div>
+
+<div class="border rounded p-3 mb-3">
+    <h2 class="h5">@T.T("Summary")</h2>
+    <p>@Model.Summary</p>
+    <h2 class="h5">@T.T("CommandPayload")</h2>
+    <pre class="bg-light border rounded p-3 small mb-0">@Model.CommandPayloadJson</pre>
+</div>
+
+<div class="border rounded p-3 mb-3">
+    <h2 class="h5">@T.T("Review")</h2>
+    @if (Model.Status == AiActionDraftStatus.Draft)
+    {
+        <form method="post" asp-action="SubmitActionDraft" class="d-inline">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="id" value="@Model.Id" />
+            <input type="hidden" name="rowVersion" value="@Model.RowVersionText" />
+            <button class="btn btn-primary" type="submit">@T.T("SubmitForApproval")</button>
+        </form>
+    }
+    else if (Model.Status == AiActionDraftStatus.PendingApproval)
+    {
+        <div class="row g-3">
+            <div class="col-md-6">
+                <form method="post" asp-action="ApproveActionDraft">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="id" value="@Model.Id" />
+                    <input type="hidden" name="rowVersion" value="@Model.RowVersionText" />
+                    <label class="form-label">@T.T("Reason")</label>
+                    <input name="reason" class="form-control mb-2" maxlength="1024" required />
+                    <button class="btn btn-success w-100" type="submit">@T.T("Approve")</button>
+                </form>
+            </div>
+            <div class="col-md-6">
+                <form method="post" asp-action="RejectActionDraft">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="id" value="@Model.Id" />
+                    <input type="hidden" name="rowVersion" value="@Model.RowVersionText" />
+                    <label class="form-label">@T.T("Reason")</label>
+                    <input name="reason" class="form-control mb-2" maxlength="1024" required />
+                    <button class="btn btn-outline-danger w-100" type="submit">@T.T("Reject")</button>
+                </form>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="text-muted small">@(Model.ReviewReason ?? T.T("NoOpenReviewAction"))</div>
+    }
+</div>
+
+<div class="border rounded p-3 mb-3">
+    <h2 class="h5">@T.T("Execution")</h2>
+    <div class="row g-3 align-items-end">
+        <div class="col-md-3">
+            <div class="text-muted small">@T.T("Status")</div>
+            <div class="fw-semibold">@T.T(Model.ExecutionReadinessMessage)</div>
+        </div>
+        <div class="col-md-3">
+            <div class="text-muted small">@T.T("ExecutedAt")</div>
+            <div class="fw-semibold">@(Model.ExecutedAtUtc?.ToString("yyyy-MM-dd HH:mm") ?? "-")</div>
+        </div>
+        <div class="col-md-3">
+            <div class="text-muted small">@T.T("ExecutionEvent")</div>
+            <div class="fw-semibold">@(Model.ExecutionEventId?.ToString("N") ?? "-")</div>
+        </div>
+        <div class="col-md-3">
+            @if (Model.CanExecute)
+            {
+                <form method="post" asp-action="ExecuteActionDraft">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="id" value="@Model.Id" />
+                    <input type="hidden" name="rowVersion" value="@Model.RowVersionText" />
+                    <label class="form-label">@T.T("Reason")</label>
+                    <input name="reason" class="form-control mb-2" maxlength="1024" required />
+                    <button class="btn btn-primary w-100" type="submit">@T.T("Execute")</button>
+                </form>
+            }
+        </div>
+    </div>
+</div>
+
+<div class="border rounded p-3">
+    <h2 class="h5">@T.T("ApprovalEvidence")</h2>
+    <div class="table-responsive">
+        <table class="table table-sm align-middle mb-0">
+            <thead>
+            <tr>
+                <th>@T.T("Decision")</th>
+                <th>@T.T("DecidedAt")</th>
+                <th>@T.T("Reason")</th>
+            </tr>
+            </thead>
+            <tbody>
+            @foreach (var approval in Model.Approvals)
+            {
+                <tr>
+                    <td>@T.T(approval.Decision.ToString())</td>
+                    <td>@approval.DecidedAtUtc.ToString("yyyy-MM-dd HH:mm")</td>
+                    <td>@approval.Reason</td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    </div>
+</div>

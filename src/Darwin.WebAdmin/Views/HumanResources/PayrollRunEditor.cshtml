@@ -1,0 +1,170 @@
+@model Darwin.WebAdmin.ViewModels.HumanResources.PayrollRunDetailVm
+@inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
+@{
+    var run = Model.Run;
+    var rowVersion = Convert.ToBase64String(run.RowVersion ?? Array.Empty<byte>());
+    var lifecycleTargets = run.Status switch
+    {
+        Darwin.Domain.Enums.PayrollRunStatus.Calculated => new[] { Darwin.Domain.Enums.PayrollRunStatus.Reviewed, Darwin.Domain.Enums.PayrollRunStatus.Approved, Darwin.Domain.Enums.PayrollRunStatus.Cancelled },
+        Darwin.Domain.Enums.PayrollRunStatus.Reviewed => new[] { Darwin.Domain.Enums.PayrollRunStatus.Approved, Darwin.Domain.Enums.PayrollRunStatus.Cancelled },
+        Darwin.Domain.Enums.PayrollRunStatus.Draft => new[] { Darwin.Domain.Enums.PayrollRunStatus.Cancelled },
+        _ => Array.Empty<Darwin.Domain.Enums.PayrollRunStatus>()
+    };
+    ViewData["Title"] = T.T("PayrollRun");
+}
+<section class="admin-page">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h1 class="mb-0">@run.RunNumber</h1>
+        <span class="badge text-bg-light">@T.T(run.Status.ToString())</span>
+    </div>
+    <section class="admin-form-section">
+        <div class="row g-3">
+            <div class="col-md-3"><label class="form-label">@T.T("Period")</label><input class="form-control" value="@run.PeriodCode" readonly /></div>
+            <div class="col-md-3"><label class="form-label">@T.T("RuleSet")</label><input class="form-control" value="@($"{run.RuleSetCode} {run.RuleVersion}")" readonly /></div>
+            <div class="col-md-2"><label class="form-label">@T.T("Jurisdiction")</label><input class="form-control" value="@run.JurisdictionCode" readonly /></div>
+            <div class="col-md-2"><label class="form-label">@T.T("Currency")</label><input class="form-control" value="@run.Currency" readonly /></div>
+            <div class="col-md-2"><label class="form-label">@T.T("Employees")</label><input class="form-control" value="@run.EmployeeCount" readonly /></div>
+            <div class="col-md-3"><label class="form-label">@T.T("GrossPayMinor")</label><input class="form-control" value="@run.GrossPayMinor" readonly /></div>
+            <div class="col-md-3"><label class="form-label">@T.T("EmployeeDeductionMinor")</label><input class="form-control" value="@run.EmployeeDeductionMinor" readonly /></div>
+            <div class="col-md-3"><label class="form-label">@T.T("EmployerCostMinor")</label><input class="form-control" value="@run.EmployerCostMinor" readonly /></div>
+            <div class="col-md-3"><label class="form-label">@T.T("NetPayMinor")</label><input class="form-control" value="@run.NetPayMinor" readonly /></div>
+            <div class="col-md-3"><label class="form-label">@T.T("PostedAtUtc")</label><input class="form-control" value="@run.PostedAtUtc?.ToString("u")" readonly /></div>
+            <div class="col-md-3">
+                <label class="form-label">@T.T("PostingJournalEntry")</label>
+                @if (run.PostingJournalEntryId.HasValue)
+                {
+                    <a asp-controller="Billing" asp-action="EditJournalEntry" asp-route-id="@run.PostingJournalEntryId.Value" class="form-control btn btn-outline-secondary text-start">@run.PostingJournalEntryId</a>
+                }
+                else
+                {
+                    <input class="form-control" value="@T.T("NotPosted")" readonly />
+                }
+            </div>
+            <div class="col-md-6"><label class="form-label">@T.T("ReviewNotes")</label><textarea class="form-control" readonly>@run.ReviewNotes</textarea></div>
+            <div class="col-md-6"><label class="form-label">@T.T("SourceSnapshotJson")</label><textarea class="form-control" readonly>@run.SourceSnapshotJson</textarea></div>
+        </div>
+    </section>
+
+    <section class="admin-form-section mt-4">
+        <h2 class="admin-form-section-title">@T.T("Lifecycle")</h2>
+        <div class="d-flex flex-wrap gap-2">
+            @if (run.Status is Darwin.Domain.Enums.PayrollRunStatus.Draft or Darwin.Domain.Enums.PayrollRunStatus.Calculated or Darwin.Domain.Enums.PayrollRunStatus.Reviewed)
+            {
+                <form asp-action="CalculatePayrollRun" method="post">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="id" value="@run.Id" />
+                    <input type="hidden" name="rowVersion" value="@rowVersion" />
+                    <button class="btn btn-sm btn-outline-primary" type="submit">@T.T("Calculate")</button>
+                </form>
+            }
+            @foreach (var target in lifecycleTargets)
+            {
+                <form asp-action="UpdatePayrollRunLifecycle" method="post">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="id" value="@run.Id" />
+                    <input type="hidden" name="rowVersion" value="@rowVersion" />
+                    <input type="hidden" name="target" value="@target" />
+                    <input type="hidden" name="notes" value="@run.ReviewNotes" />
+                    <button class="btn btn-sm btn-outline-primary" type="submit">@T.T(target.ToString())</button>
+                </form>
+            }
+            @if (run.Status == Darwin.Domain.Enums.PayrollRunStatus.Approved)
+            {
+                <form asp-action="PostPayrollRun" method="post">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="id" value="@run.Id" />
+                    <input type="hidden" name="rowVersion" value="@rowVersion" />
+                    <button class="btn btn-sm btn-outline-success" type="submit">@T.T("PostPayrollRun")</button>
+                </form>
+            }
+            @if (run.Status == Darwin.Domain.Enums.PayrollRunStatus.Posted)
+            {
+                <a asp-action="CreatePayrollPayment" asp-route-businessId="@run.BusinessId" asp-route-payrollRunId="@run.Id" class="btn btn-sm btn-outline-success">@T.T("CreatePayrollPayment")</a>
+            }
+        </div>
+    </section>
+
+    <section class="admin-form-section mt-4">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+            <h2 class="admin-form-section-title mb-0">@T.T("PayrollPayslips")</h2>
+            @if (run.Status == Darwin.Domain.Enums.PayrollRunStatus.Approved && Model.PayslipStorageReady)
+            {
+                <form asp-action="GeneratePayrollPayslips" method="post">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="id" value="@run.Id" />
+                    <input type="hidden" name="rowVersion" value="@rowVersion" />
+                    <button class="btn btn-sm btn-primary" type="submit">@T.T("GeneratePayslips")</button>
+                </form>
+            }
+            else
+            {
+                <span class="badge text-bg-light">@T.T(Model.PayslipStorageReady ? "PayslipGenerationBlocked" : "PayslipStorageNotReady")</span>
+            }
+        </div>
+        <div class="table-responsive">
+            <table class="table table-sm align-middle">
+                <thead><tr><th>@T.T("PayslipNumber")</th><th>@T.T("Employee")</th><th>@T.T("GeneratedAtUtc")</th><th>@T.T("NetPayMinor")</th><th>@T.T("Hash")</th><th></th></tr></thead>
+                <tbody>
+                @if (!Model.Payslips.Any()) { <tr><td colspan="6" class="text-muted">@T.T("NoRecords")</td></tr> }
+                else {
+                    foreach (var payslip in Model.Payslips) {
+                        <tr>
+                            <td>@payslip.PayslipNumber</td>
+                            <td><div class="fw-semibold">@payslip.EmployeeNumber</div><div class="text-muted small">@payslip.EmployeeName</div></td>
+                            <td>@payslip.GeneratedAtUtc.ToString("u")</td>
+                            <td>@payslip.NetPayMinor @payslip.Currency</td>
+                            <td class="small text-muted">@payslip.ContentHash</td>
+                            <td class="text-end"><a asp-action="DownloadPayrollPayslip" asp-route-businessId="@run.BusinessId" asp-route-payslipId="@payslip.Id" class="btn btn-sm btn-outline-secondary">@T.T("Download")</a></td>
+                        </tr>
+                    }
+                }
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <section class="admin-form-section mt-4">
+        <h2 class="admin-form-section-title">@T.T("PayrollRunLines")</h2>
+        <div class="table-responsive">
+            <table class="table table-sm align-middle">
+                <thead><tr><th>@T.T("Employee")</th><th>@T.T("WorkMinutes")</th><th>@T.T("AbsenceMinutes")</th><th>@T.T("GrossPayMinor")</th><th>@T.T("Deductions")</th><th>@T.T("EmployerCostMinor")</th><th>@T.T("NetPayMinor")</th></tr></thead>
+                <tbody>
+                @if (!run.Lines.Any()) { <tr><td colspan="7" class="text-muted">@T.T("NoRecords")</td></tr> }
+                else {
+                    foreach (var line in run.Lines) {
+                        <tr>
+                            <td><div class="fw-semibold">@line.EmployeeNumber</div><div class="text-muted small">@line.EmployeeName</div></td>
+                            <td>@line.WorkMinutes</td>
+                            <td>@line.AbsenceMinutes</td>
+                            <td>@line.GrossPayMinor</td>
+                            <td>@line.EmployeeDeductionMinor</td>
+                            <td>@line.EmployerCostMinor</td>
+                            <td>@line.NetPayMinor</td>
+                        </tr>
+                        if (line.Components.Any())
+                        {
+                            <tr>
+                                <td></td>
+                                <td colspan="6">
+                                    <div class="table-responsive">
+                                        <table class="table table-sm mb-0">
+                                            <thead><tr><th>@T.T("Component")</th><th>@T.T("Type")</th><th>@T.T("Method")</th><th>@T.T("Basis")</th><th>@T.T("AmountMinor")</th></tr></thead>
+                                            <tbody>
+                                            @foreach (var component in line.Components)
+                                            {
+                                                <tr><td>@component.ComponentCode - @component.DisplayName</td><td>@T.T(component.ComponentType.ToString())</td><td>@T.T(component.CalculationMethod.ToString())</td><td>@T.T(component.Basis.ToString())</td><td>@component.AmountMinor</td></tr>
+                                            }
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    }
+                }
+                </tbody>
+            </table>
+        </div>
+    </section>
+    <a asp-action="PayrollRuns" asp-route-businessId="@run.BusinessId" class="btn btn-outline-secondary">@T.T("Back")</a>
+</section>

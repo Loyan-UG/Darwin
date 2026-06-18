@@ -1,0 +1,52 @@
+@model Darwin.WebAdmin.ViewModels.Inventory.ProductTrackingPoliciesListVm
+@inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
+@{
+    ViewData["Title"] = T.T("ProductTrackingPolicies");
+    string ListUrl() => Url.Action("ProductTrackingPolicies", "InventoryTraceability") ?? string.Empty;
+}
+
+<div id="inventory-traceability-workspace-shell">
+    <h1 class="mb-3">@T.T("ProductTrackingPolicies")</h1>
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <form asp-action="ProductTrackingPolicies" method="get" class="d-flex gap-2" hx-get="@ListUrl()" hx-target="#inventory-traceability-workspace-shell" hx-swap="outerHTML" hx-push-url="true">
+            <select name="businessId" asp-items="Model.BusinessOptions" class="form-select"></select>
+            <input type="text" name="q" value="@Model.Query" class="form-control" placeholder="@T.T("Search")">
+            <select name="filter" asp-items="Model.FilterItems" class="form-select"></select>
+            <button class="btn btn-outline-secondary" type="submit">@T.T("Filter")</button>
+        </form>
+        <a asp-action="CreateProductTrackingPolicy" asp-route-businessId="@Model.BusinessId" class="btn btn-primary" hx-get="@Url.Action("CreateProductTrackingPolicy", "InventoryTraceability", new { businessId = Model.BusinessId })" hx-target="#inventory-traceability-workspace-shell" hx-swap="outerHTML" hx-push-url="true">@T.T("NewProductTrackingPolicy")</a>
+    </div>
+    <div class="row g-3 mb-4">
+        <div class="col-md"><div class="card h-100"><div class="card-body"><div class="text-muted small">@T.T("Total")</div><div class="fs-4 fw-semibold">@Model.Summary.TotalCount</div></div></div></div>
+        <div class="col-md"><div class="card h-100 border-success-subtle"><div class="card-body"><div class="text-muted small">@T.T("Active")</div><div class="fs-4 fw-semibold">@Model.Summary.ActiveCount</div></div></div></div>
+        <div class="col-md"><div class="card h-100"><div class="card-body"><div class="text-muted small">@T.T("Tracked")</div><div class="fs-4 fw-semibold">@Model.Summary.TrackedCount</div></div></div></div>
+        <div class="col-md"><div class="card h-100"><div class="card-body"><div class="text-muted small">@T.T("RequiresExpiry")</div><div class="fs-4 fw-semibold">@Model.Summary.RequiresExpiryCount</div></div></div></div>
+        <div class="col-md"><div class="card h-100"><div class="card-body"><div class="text-muted small">@T.T("HandlingUnits")</div><div class="fs-4 fw-semibold">@Model.Summary.RequiresHandlingUnitCount</div></div></div></div>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-sm table-striped align-middle">
+            <thead><tr><th>@T.T("Variant")</th><th>@T.T("Mode")</th><th>@T.T("Status")</th><th>@T.T("Requirements")</th><th class="text-end">@T.T("Actions")</th></tr></thead>
+            <tbody>
+            @if (Model.Items.Count == 0)
+            {
+                <tr><td colspan="5" class="text-center text-muted">@T.T("NoProductTrackingPoliciesFound")</td></tr>
+            }
+            else foreach (var item in Model.Items)
+            {
+                <tr>
+                    <td class="fw-semibold">@item.VariantSku</td>
+                    <td><span class="badge text-bg-light">@T.T(item.TrackingMode.ToString())</span></td>
+                    <td><span class="badge @(item.Status == Darwin.Domain.Enums.ProductTrackingPolicyStatus.Active ? "text-bg-success" : item.Status == Darwin.Domain.Enums.ProductTrackingPolicyStatus.Archived ? "text-bg-secondary" : "text-bg-warning")">@T.T(item.Status.ToString())</span></td>
+                    <td>
+                        @if (item.RequiresSupplierLot) { <span class="badge text-bg-light">@T.T("SupplierLot")</span> }
+                        @if (item.RequiresExpiryDate) { <span class="badge text-bg-light">@T.T("Expiry")</span> }
+                        @if (item.RequiresHandlingUnit) { <span class="badge text-bg-light">@T.T("HandlingUnit")</span> }
+                    </td>
+                    <td class="text-end"><a asp-action="EditProductTrackingPolicy" asp-route-id="@item.Id" class="btn btn-sm btn-outline-secondary" hx-get="@Url.Action("EditProductTrackingPolicy", "InventoryTraceability", new { id = item.Id })" hx-target="#inventory-traceability-workspace-shell" hx-swap="outerHTML" hx-push-url="true">@T.T("Edit")</a></td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    </div>
+    <pager page="Model.Page" page-size="Model.PageSize" total="Model.Total" asp-controller="InventoryTraceability" asp-action="ProductTrackingPolicies" asp-route-businessId="@Model.BusinessId" asp-route-q="@Model.Query" asp-route-filter="@Model.Filter" hx-target="#inventory-traceability-workspace-shell" hx-swap="outerHTML" hx-push-url="true"></pager>
+</div>

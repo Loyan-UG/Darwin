@@ -1,0 +1,114 @@
+@model Darwin.WebAdmin.ViewModels.Sales.DeliveryNotesListVm
+@inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
+@{
+    ViewData["Title"] = T.T("DeliveryNotes");
+    var culture = System.Globalization.CultureInfo.CurrentCulture;
+    string SalesOverviewUrl() => Url.Action("Index", "Sales") ?? string.Empty;
+    string ReturnOrdersUrl() => Url.Action("ReturnOrders", "Sales") ?? string.Empty;
+    string DeliveryNotesBaseUrl() => Url.Action("DeliveryNotes", "Sales") ?? string.Empty;
+    string DeliveryNoteUrl(Guid id) => Url.Action("DeliveryNote", "Sales", new { id }) ?? string.Empty;
+    string Money(string currency, long minor) => $"{currency} {(minor / 100.0M):0.00}";
+    string DateText(DateTime? utc) => utc.HasValue ? utc.Value.ToString("g", culture) : "-";
+}
+
+<div id="sales-delivery-notes-workspace-shell">
+<partial name="~/Views/Shared/_Alerts.cshtml" />
+<div class="d-flex justify-content-between align-items-start gap-3 mb-3">
+    <div>
+        <h1 class="mb-0"><i class="fa-solid fa-truck-ramp-box"></i> @T.T("DeliveryNotes")</h1>
+        <div class="text-muted small mt-1">@T.T("DeliveryNotesSubtitle")</div>
+    </div>
+    <div class="d-flex gap-2 flex-wrap">
+        <a asp-action="Index" hx-get="@SalesOverviewUrl()" hx-target="#sales-delivery-notes-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-outline-secondary">@T.T("Overview")</a>
+        <a asp-action="Orders" hx-get="@Url.Action("Orders", "Sales")" hx-target="#sales-delivery-notes-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-outline-primary">@T.T("SalesOrders")</a>
+        <a asp-action="Quotes" hx-get="@Url.Action("Quotes", "Sales")" hx-target="#sales-delivery-notes-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-outline-primary">@T.T("SalesQuotes")</a>
+        <a asp-action="ReturnOrders" hx-get="@ReturnOrdersUrl()" hx-target="#sales-delivery-notes-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-outline-primary">@T.T("ReturnOrders")</a>
+        <a asp-action="Invoices" hx-get="@Url.Action("Invoices", "Sales")" hx-target="#sales-delivery-notes-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-outline-primary">@T.T("SalesInvoices")</a>
+    </div>
+</div>
+
+<form asp-action="DeliveryNotes" method="get" class="row g-2 align-items-end mb-3" hx-get="@DeliveryNotesBaseUrl()" hx-target="#sales-delivery-notes-workspace-shell" hx-swap="outerHTML" hx-push-url="true">
+    <div class="col-md-3">
+        <label class="form-label small text-muted">@T.T("Search")</label>
+        <input type="text" name="q" value="@Model.Query" class="form-control" placeholder="@T.T("SearchDeliveryNotesPlaceholder")" />
+    </div>
+    <div class="col-md-2">
+        <label class="form-label small text-muted">@T.T("Status")</label>
+        <select name="filter" asp-items="Model.FilterItems" class="form-select"></select>
+    </div>
+    <div class="col-md-2">
+        <label class="form-label small text-muted">@T.T("IssuedFrom")</label>
+        <input type="date" name="issuedFromUtc" value="@Model.IssuedFromUtc?.ToString("yyyy-MM-dd")" class="form-control" />
+    </div>
+    <div class="col-md-2">
+        <label class="form-label small text-muted">@T.T("IssuedTo")</label>
+        <input type="date" name="issuedToUtc" value="@Model.IssuedToUtc?.ToString("yyyy-MM-dd")" class="form-control" />
+    </div>
+    <div class="col-md-3 d-flex gap-2">
+        <button class="btn btn-outline-secondary" type="submit">@T.T("Filter")</button>
+        <a asp-action="DeliveryNotes" hx-get="@DeliveryNotesBaseUrl()" hx-target="#sales-delivery-notes-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-outline-secondary">@T.T("ClearQueueFilters")</a>
+    </div>
+    <input type="hidden" name="businessId" value="@Model.BusinessId" />
+    <input type="hidden" name="customerId" value="@Model.CustomerId" />
+</form>
+
+<div class="border rounded p-3 mb-3">
+    <form asp-action="CreateDeliveryNoteFromShipment" method="post" class="row g-2 align-items-end" hx-post="@Url.Action("CreateDeliveryNoteFromShipment", "Sales")" hx-target="#sales-delivery-notes-workspace-shell" hx-swap="outerHTML">
+        @Html.AntiForgeryToken()
+        <div class="col-md-4">
+            <label class="form-label small text-muted">@T.T("ShipmentId")</label>
+            <input name="ShipmentId" value="@Model.Create.ShipmentId" class="form-control" required />
+        </div>
+        <div class="col-md-6">
+            <label class="form-label small text-muted">@T.T("InternalNotes")</label>
+            <input name="InternalNotes" value="@Model.Create.InternalNotes" class="form-control" maxlength="2000" />
+        </div>
+        <div class="col-md-2">
+            <button type="submit" class="btn btn-primary w-100">@T.T("CreateDeliveryNote")</button>
+        </div>
+    </form>
+</div>
+
+<div class="table-responsive">
+    <table class="table table-sm table-striped align-middle">
+        <thead>
+        <tr>
+            <th>@T.T("DeliveryNoteNumber")</th>
+            <th>@T.T("Status")</th>
+            <th>@T.T("Carrier")</th>
+            <th>@T.T("TrackingNumber")</th>
+            <th class="text-end">@T.T("Quantity")</th>
+            <th class="text-end">@T.T("Total")</th>
+            <th>@T.T("IssuedAt")</th>
+            <th class="text-end">@T.T("Actions")</th>
+        </tr>
+        </thead>
+        <tbody>
+        @if (Model.Items.Count == 0)
+        {
+            <tr><td colspan="8" class="text-center text-muted">@T.T("NoDeliveryNotesFound")</td></tr>
+        }
+        else
+        {
+            foreach (var item in Model.Items)
+            {
+                <tr>
+                    <td>@(item.DeliveryNoteNumber ?? "-")</td>
+                    <td>@T.T($"DeliveryNoteStatus{item.Status}")</td>
+                    <td>@(item.Carrier ?? "-")</td>
+                    <td>@(item.TrackingNumber ?? "-")</td>
+                    <td class="text-end">@item.TotalQuantity</td>
+                    <td class="text-end">@Money(item.Currency, item.TotalGrossMinor)</td>
+                    <td>@DateText(item.IssuedAtUtc)</td>
+                    <td class="text-end">
+                        <a asp-action="DeliveryNote" asp-route-id="@item.Id" hx-get="@DeliveryNoteUrl(item.Id)" hx-target="#sales-delivery-notes-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-sm btn-outline-primary">@T.T("View")</a>
+                    </td>
+                </tr>
+            }
+        }
+        </tbody>
+    </table>
+</div>
+
+<pager page="Model.Page" page-size="Model.PageSize" total="Model.Total" asp-controller="Sales" asp-action="DeliveryNotes" asp-route-q="@Model.Query" asp-route-filter="@Model.Filter" asp-route-issuedFromUtc="@Model.IssuedFromUtc" asp-route-issuedToUtc="@Model.IssuedToUtc" asp-route-businessId="@Model.BusinessId" asp-route-customerId="@Model.CustomerId" hx-target="#sales-delivery-notes-workspace-shell" hx-swap="outerHTML" hx-push-url="true"></pager>
+</div>

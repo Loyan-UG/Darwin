@@ -1,0 +1,407 @@
+@model Darwin.WebAdmin.ViewModels.Inventory.GoodsReceiptDetailVm
+@inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
+@{
+    ViewData["Title"] = T.T("GoodsReceipt");
+    var rowVersion = Convert.ToBase64String(Model.RowVersion);
+    var isDraft = string.Equals(Model.Status, "Draft", StringComparison.OrdinalIgnoreCase);
+    var isReceived = string.Equals(Model.Status, "Received", StringComparison.OrdinalIgnoreCase);
+    var isInspected = string.Equals(Model.Status, "Inspected", StringComparison.OrdinalIgnoreCase);
+    var isPosted = string.Equals(Model.Status, "Posted", StringComparison.OrdinalIgnoreCase);
+    string UpdateUrl() => Url.Action("UpdateGoodsReceiptLifecycle", "Inventory") ?? string.Empty;
+}
+
+<div id="inventory-goods-receipt-detail-shell">
+    <div class="d-flex justify-content-between align-items-start mb-3">
+        <div>
+            <h1 class="mb-1">@T.T("GoodsReceipt") @(Model.GoodsReceiptNumber ?? "-")</h1>
+            <div class="text-muted small">@Model.PurchaseOrderNumber / @Model.SupplierName / @Model.WarehouseName</div>
+        </div>
+        <a asp-action="GoodsReceipts" asp-route-businessId="@Model.BusinessId" class="btn btn-outline-secondary"
+           hx-get="@Url.Action("GoodsReceipts", "Inventory", new { businessId = Model.BusinessId })"
+           hx-target="#inventory-goods-receipt-detail-shell"
+           hx-swap="outerHTML"
+           hx-push-url="true">@T.T("Back")</a>
+    </div>
+
+    <form asp-action="UpdateGoodsReceiptLifecycle" method="post"
+          hx-post="@UpdateUrl()"
+          hx-target="#inventory-goods-receipt-detail-shell"
+          hx-swap="outerHTML">
+        @Html.AntiForgeryToken()
+        <input type="hidden" asp-for="Id" />
+        <input type="hidden" asp-for="BusinessId" />
+        <input type="hidden" name="rowVersion" value="@rowVersion" />
+        <div class="card mb-3">
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-md-2"><div class="text-muted small">@T.T("Status")</div><div class="fw-semibold">@T.T(Model.Status)</div></div>
+                    <div class="col-md-2"><div class="text-muted small">@T.T("Received")</div><div class="fw-semibold">@(Model.ReceivedAtUtc?.ToString("g") ?? "-")</div></div>
+                    <div class="col-md-2"><div class="text-muted small">@T.T("Inspected")</div><div class="fw-semibold">@(Model.InspectedAtUtc?.ToString("g") ?? "-")</div></div>
+                    <div class="col-md-2"><div class="text-muted small">@T.T("Posted")</div><div class="fw-semibold">@(Model.PostedAtUtc?.ToString("g") ?? "-")</div></div>
+                    <div class="col-md-4"><div class="text-muted small">@T.T("InternalNotes")</div><div class="fw-semibold">@(Model.InternalNotes ?? "-")</div></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="table-responsive mb-3">
+            <table class="table table-sm align-middle">
+                <thead>
+                <tr>
+                    <th>@T.T("Line")</th>
+                    <th>@T.T("Ordered")</th>
+                    <th>@T.T("PreviouslyReceived")</th>
+                    <th>@T.T("Received")</th>
+                    <th>@T.T("Accepted")</th>
+                    <th>@T.T("Rejected")</th>
+                    <th>@T.T("Damaged")</th>
+                </tr>
+                </thead>
+                <tbody>
+                @for (var i = 0; i < Model.Lines.Count; i++)
+                {
+                    <tr>
+                        <td>
+                            <input type="hidden" asp-for="Lines[i].Id" />
+                            <input type="hidden" asp-for="Lines[i].PurchaseOrderLineId" />
+                            <input type="hidden" asp-for="Lines[i].ProductVariantId" />
+                            <div class="fw-semibold">@(Model.Lines[i].SupplierSku ?? "-")</div>
+                            <div class="small text-muted">@(Model.Lines[i].Description ?? "-")</div>
+                        </td>
+                        <td>@Model.Lines[i].OrderedQuantity</td>
+                        <td>@Model.Lines[i].PreviouslyReceivedQuantity</td>
+                        <td>
+                            @if (isDraft)
+                            {
+                                <input asp-for="Lines[i].ReceivedQuantity" class="form-control form-control-sm" />
+                            }
+                            else
+                            {
+                                @Model.Lines[i].ReceivedQuantity
+                            }
+                        </td>
+                        <td>
+                            @if (isReceived)
+                            {
+                                <input asp-for="Lines[i].AcceptedQuantity" class="form-control form-control-sm" />
+                            }
+                            else
+                            {
+                                @Model.Lines[i].AcceptedQuantity
+                            }
+                        </td>
+                        <td>
+                            @if (isReceived)
+                            {
+                                <input asp-for="Lines[i].RejectedQuantity" class="form-control form-control-sm" />
+                            }
+                            else
+                            {
+                                @Model.Lines[i].RejectedQuantity
+                            }
+                        </td>
+                        <td>
+                            @if (isReceived)
+                            {
+                                <input asp-for="Lines[i].DamagedQuantity" class="form-control form-control-sm" />
+                            }
+                            else
+                            {
+                                @Model.Lines[i].DamagedQuantity
+                            }
+                        </td>
+                    </tr>
+                    @if (isReceived || Model.Lines[i].Identities.Count > 0)
+                    {
+                        <tr class="table-light">
+                            <td colspan="7">
+                                <div class="fw-semibold mb-2">@T.T("ReceiptIdentityEvidence")</div>
+                                <div class="table-responsive">
+                                    <table class="table table-sm mb-0 align-middle">
+                                        <thead>
+                                        <tr>
+                                            <th>@T.T("Lot")</th>
+                                            <th>@T.T("SerialUnit")</th>
+                                            <th>@T.T("HandlingUnit")</th>
+                                            <th>@T.T("Quantity")</th>
+                                            <th>@T.T("Metadata")</th>
+                                        </tr>
+                                        </thead>
+                                        <tbody>
+                                        @for (var j = 0; j < Model.Lines[i].Identities.Count; j++)
+                                        {
+                                            <tr>
+                                                <td>
+                                                    <input type="hidden" asp-for="Lines[i].Identities[j].Id" />
+                                                    <input type="hidden" asp-for="Lines[i].Identities[j].GoodsReceiptLineId" />
+                                                    <input type="hidden" asp-for="Lines[i].Identities[j].ProductVariantId" />
+                                                    <input type="hidden" asp-for="Lines[i].Identities[j].SortOrder" />
+                                                    @if (isReceived)
+                                                    {
+                                                        <select asp-for="Lines[i].Identities[j].InventoryLotId" asp-items="Model.LotOptions" class="form-select form-select-sm"></select>
+                                                    }
+                                                    else
+                                                    {
+                                                        @(Model.Lines[i].Identities[j].LotCodeSnapshot ?? "-")
+                                                    }
+                                                </td>
+                                                <td>
+                                                    @if (isReceived)
+                                                    {
+                                                        <select asp-for="Lines[i].Identities[j].InventorySerialUnitId" asp-items="Model.SerialUnitOptions" class="form-select form-select-sm"></select>
+                                                    }
+                                                    else
+                                                    {
+                                                        @(Model.Lines[i].Identities[j].SerialNumberSnapshot ?? "-")
+                                                    }
+                                                </td>
+                                                <td>
+                                                    @if (isReceived)
+                                                    {
+                                                        <select asp-for="Lines[i].Identities[j].HandlingUnitId" asp-items="Model.HandlingUnitOptions" class="form-select form-select-sm"></select>
+                                                    }
+                                                    else
+                                                    {
+                                                        @(Model.Lines[i].Identities[j].HandlingUnitCodeSnapshot ?? "-")
+                                                    }
+                                                </td>
+                                                <td>
+                                                    @if (isReceived)
+                                                    {
+                                                        <input asp-for="Lines[i].Identities[j].Quantity" class="form-control form-control-sm" />
+                                                    }
+                                                    else
+                                                    {
+                                                        @Model.Lines[i].Identities[j].Quantity
+                                                    }
+                                                </td>
+                                                <td>
+                                                    @if (isReceived)
+                                                    {
+                                                        <input asp-for="Lines[i].Identities[j].MetadataJson" class="form-control form-control-sm" />
+                                                    }
+                                                    else
+                                                    {
+                                                        @(Model.Lines[i].Identities[j].MetadataJson ?? "-")
+                                                    }
+                                                </td>
+                                            </tr>
+                                        }
+                                        </tbody>
+                                    </table>
+                                </div>
+                                @if (isReceived)
+                                {
+                                    var lotFormId = $"goodsReceiptInlineLot{i}";
+                                    var serialFormId = $"goodsReceiptInlineSerial{i}";
+                                    var handlingUnitFormId = $"goodsReceiptInlineHandlingUnit{i}";
+                                    <div class="row g-2 mt-2">
+                                        <div class="col-lg-4">
+                                            <div class="row g-2 align-items-end">
+                                                <div class="col-md-4">
+                                                    <label class="form-label">@T.T("LotCode")</label>
+                                                    <input name="LotCode" form="@lotFormId" class="form-control form-control-sm" />
+                                                </div>
+                                                <div class="col-md-4">
+                                                    <label class="form-label">@T.T("SupplierLot")</label>
+                                                    <input name="SupplierLotCode" form="@lotFormId" class="form-control form-control-sm" />
+                                                </div>
+                                                <div class="col-md-4">
+                                                    <label class="form-label">@T.T("Expiry")</label>
+                                                    <input name="ExpiryDateUtc" form="@lotFormId" type="date" class="form-control form-control-sm" />
+                                                </div>
+                                                <div class="col-md-4">
+                                                    <label class="form-label">@T.T("Quantity")</label>
+                                                    <input name="Quantity" form="@lotFormId" type="number" min="1" value="1" class="form-control form-control-sm" />
+                                                </div>
+                                                <div class="col-md-8 d-grid">
+                                                    <button type="submit" form="@lotFormId" class="btn btn-outline-primary btn-sm">@T.T("CreateLotIdentity")</button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-lg-4">
+                                            <div class="row g-2 align-items-end">
+                                                <div class="col-md-5">
+                                                    <label class="form-label">@T.T("SerialNumber")</label>
+                                                    <input name="SerialNumber" form="@serialFormId" class="form-control form-control-sm" />
+                                                </div>
+                                                <div class="col-md-5">
+                                                    <label class="form-label">@T.T("Lot")</label>
+                                                    <select name="InventoryLotId" form="@serialFormId" asp-items="Model.LotOptions" class="form-select form-select-sm"></select>
+                                                </div>
+                                                <div class="col-md-2 d-grid">
+                                                    <button type="submit" form="@serialFormId" class="btn btn-outline-primary btn-sm">@T.T("CreateSerial")</button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-lg-4">
+                                            <div class="row g-2 align-items-end">
+                                                <div class="col-md-4">
+                                                    <label class="form-label">@T.T("HandlingUnitCode")</label>
+                                                    <input name="HandlingUnitCode" form="@handlingUnitFormId" class="form-control form-control-sm" />
+                                                </div>
+                                                <div class="col-md-4">
+                                                    <label class="form-label">@T.T("DisplayName")</label>
+                                                    <input name="HandlingUnitDisplayName" form="@handlingUnitFormId" class="form-control form-control-sm" />
+                                                </div>
+                                                <div class="col-md-2">
+                                                    <label class="form-label">@T.T("Quantity")</label>
+                                                    <input name="Quantity" form="@handlingUnitFormId" type="number" min="1" value="1" class="form-control form-control-sm" />
+                                                </div>
+                                                <div class="col-md-2 d-grid">
+                                                    <button type="submit" form="@handlingUnitFormId" class="btn btn-outline-primary btn-sm">@T.T("CreateHU")</button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                }
+                            </td>
+                        </tr>
+                    }
+                }
+                </tbody>
+            </table>
+        </div>
+
+        <div class="d-flex flex-wrap gap-2">
+            @if (isDraft)
+            {
+                <button type="submit" name="action" value="Receive" class="btn btn-success">@T.T("Receive")</button>
+                <button type="submit" name="action" value="Cancel" class="btn btn-outline-danger">@T.T("Cancel")</button>
+            }
+            else if (isReceived)
+            {
+                <button type="submit" name="action" value="Inspect" class="btn btn-primary">@T.T("Inspect")</button>
+                <button type="submit" name="action" value="Cancel" class="btn btn-outline-danger">@T.T("Cancel")</button>
+            }
+            else if (isInspected)
+            {
+                <button type="submit" name="action" value="Post" class="btn btn-warning">@T.T("Post")</button>
+                <button type="submit" name="action" value="Cancel" class="btn btn-outline-danger">@T.T("Cancel")</button>
+            }
+        </div>
+    </form>
+
+    @if (isReceived)
+    {
+        @for (var i = 0; i < Model.Lines.Count; i++)
+        {
+            <form id="goodsReceiptInlineLot@i" asp-action="CreateGoodsReceiptInlineIdentity" method="post"
+                  hx-post="@Url.Action("CreateGoodsReceiptInlineIdentity", "Inventory")"
+                  hx-target="#inventory-goods-receipt-detail-shell"
+                  hx-swap="outerHTML">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="GoodsReceiptId" value="@Model.Id" />
+                <input type="hidden" name="GoodsReceiptLineId" value="@Model.Lines[i].Id" />
+                <input type="hidden" name="IdentityType" value="Lot" />
+                <input type="hidden" name="rowVersion" value="@rowVersion" />
+            </form>
+            <form id="goodsReceiptInlineSerial@i" asp-action="CreateGoodsReceiptInlineIdentity" method="post"
+                  hx-post="@Url.Action("CreateGoodsReceiptInlineIdentity", "Inventory")"
+                  hx-target="#inventory-goods-receipt-detail-shell"
+                  hx-swap="outerHTML">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="GoodsReceiptId" value="@Model.Id" />
+                <input type="hidden" name="GoodsReceiptLineId" value="@Model.Lines[i].Id" />
+                <input type="hidden" name="IdentityType" value="Serial" />
+                <input type="hidden" name="Quantity" value="1" />
+                <input type="hidden" name="rowVersion" value="@rowVersion" />
+            </form>
+            <form id="goodsReceiptInlineHandlingUnit@i" asp-action="CreateGoodsReceiptInlineIdentity" method="post"
+                  hx-post="@Url.Action("CreateGoodsReceiptInlineIdentity", "Inventory")"
+                  hx-target="#inventory-goods-receipt-detail-shell"
+                  hx-swap="outerHTML">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="GoodsReceiptId" value="@Model.Id" />
+                <input type="hidden" name="GoodsReceiptLineId" value="@Model.Lines[i].Id" />
+                <input type="hidden" name="IdentityType" value="HandlingUnit" />
+                <input type="hidden" name="rowVersion" value="@rowVersion" />
+            </form>
+        }
+    }
+
+    @if (isDraft || isReceived || isInspected || isPosted)
+    {
+        <div class="card mt-3">
+            <div class="card-header">@T.T("WarehouseTasks")</div>
+            <div class="card-body">
+                <div class="row g-3">
+                    @if (!isPosted)
+                    {
+                        <div class="col-lg-6">
+                            <form asp-action="CreateReceivingTaskFromGoodsReceipt" method="post"
+                                  hx-post="@Url.Action("CreateReceivingTaskFromGoodsReceipt", "Inventory")"
+                                  hx-target="#inventory-goods-receipt-detail-shell"
+                                  hx-swap="outerHTML">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" asp-for="WarehouseTaskAction.GoodsReceiptId" value="@Model.Id" />
+                                <input type="hidden" asp-for="WarehouseTaskAction.BusinessId" value="@Model.BusinessId" />
+                                <div class="row g-2 align-items-end">
+                                    <div class="col-md-4">
+                                        <label asp-for="WarehouseTaskAction.Priority" class="form-label">@T.T("Priority")</label>
+                                        <select asp-for="WarehouseTaskAction.Priority" class="form-select">
+                                            @foreach (var priority in Enum.GetValues<Darwin.Domain.Enums.WarehouseTaskPriority>())
+                                            {
+                                                <option value="@priority">@T.T(priority.ToString())</option>
+                                            }
+                                        </select>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label asp-for="WarehouseTaskAction.DueAtUtc" class="form-label">@T.T("DueAtUtc")</label>
+                                        <input asp-for="WarehouseTaskAction.DueAtUtc" class="form-control" />
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label asp-for="WarehouseTaskAction.InternalNotes" class="form-label">@T.T("InternalNotes")</label>
+                                        <input asp-for="WarehouseTaskAction.InternalNotes" class="form-control" />
+                                    </div>
+                                    <div class="col-12">
+                                        <button type="submit" class="btn btn-outline-primary">@T.T("CreateReceivingTask")</button>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                    }
+
+                    @if (isPosted)
+                    {
+                        <div class="col-lg-8">
+                            <form asp-action="CreatePutawayTaskFromGoodsReceipt" method="post"
+                                  hx-post="@Url.Action("CreatePutawayTaskFromGoodsReceipt", "Inventory")"
+                                  hx-target="#inventory-goods-receipt-detail-shell"
+                                  hx-swap="outerHTML">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" asp-for="WarehouseTaskAction.GoodsReceiptId" value="@Model.Id" />
+                                <input type="hidden" asp-for="WarehouseTaskAction.BusinessId" value="@Model.BusinessId" />
+                                <div class="row g-2 align-items-end">
+                                    <div class="col-md-4">
+                                        <label asp-for="WarehouseTaskAction.ToLocationId" class="form-label">@T.T("DestinationLocation")</label>
+                                        <select asp-for="WarehouseTaskAction.ToLocationId" asp-items="Model.PutawayLocationOptions" class="form-select"></select>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label asp-for="WarehouseTaskAction.Priority" class="form-label">@T.T("Priority")</label>
+                                        <select asp-for="WarehouseTaskAction.Priority" class="form-select">
+                                            @foreach (var priority in Enum.GetValues<Darwin.Domain.Enums.WarehouseTaskPriority>())
+                                            {
+                                                <option value="@priority">@T.T(priority.ToString())</option>
+                                            }
+                                        </select>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label asp-for="WarehouseTaskAction.DueAtUtc" class="form-label">@T.T("DueAtUtc")</label>
+                                        <input asp-for="WarehouseTaskAction.DueAtUtc" class="form-control" />
+                                    </div>
+                                    <div class="col-md-2 d-grid">
+                                        <button type="submit" class="btn btn-primary">@T.T("CreatePutawayTask")</button>
+                                    </div>
+                                    <div class="col-12">
+                                        <label asp-for="WarehouseTaskAction.InternalNotes" class="form-label">@T.T("InternalNotes")</label>
+                                        <input asp-for="WarehouseTaskAction.InternalNotes" class="form-control" />
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    }
+</div>
