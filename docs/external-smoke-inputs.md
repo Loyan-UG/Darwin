@@ -519,6 +519,13 @@ Required non-secret URLs:
 
 Required confirmations:
 
+- `DARWIN_WEB_STOREFRONT_BUILD_REFERENCE`
+- `DARWIN_WEB_RUNTIME_CONFIG_SMOKE_REFERENCE`
+- `DARWIN_WEB_PUBLIC_DISCOVERY_SMOKE_REFERENCE`
+- `DARWIN_WEB_MEMBER_PORTAL_ROUTE_SMOKE_REFERENCE`
+- `DARWIN_WEB_CHECKOUT_ROUTE_SMOKE_REFERENCE`
+- `DARWIN_WEB_DEGRADED_API_LOG_REVIEW_REFERENCE`
+- `DARWIN_WEB_STAGING_OWNER_SIGNOFF_REFERENCE`
 - `DARWIN_WEB_STOREFRONT_BUILD_CONFIRMED=true`
 - `DARWIN_WEB_RUNTIME_CONFIG_SMOKE_CONFIRMED=true`
 - `DARWIN_WEB_PUBLIC_DISCOVERY_SMOKE_CONFIRMED=true`
@@ -526,6 +533,8 @@ Required confirmations:
 - `DARWIN_WEB_CHECKOUT_ROUTE_SMOKE_CONFIRMED=true`
 - `DARWIN_WEB_DEGRADED_API_LOG_REVIEWED_CONFIRMED=true`
 - `DARWIN_WEB_STAGING_OWNER_SIGNOFF_CONFIRMED=true`
+
+Web readiness references must be non-secret build report ids, smoke report ids, log-review tickets, sign-off references, or evidence-package row ids. Do not use API keys, auth cookies, environment-file values, npm tokens, registry credentials, private package artifacts, build artifacts, customer data, provider payloads, or private approval records.
 
 If the Web storefront is intentionally pointed at `https://api.loyan.de`, also set `DARWIN_WEB_DEFAULT_PRODUCTION_API_CONFIRMED=true`; otherwise production-like staging should use its own WebApi URL.
 

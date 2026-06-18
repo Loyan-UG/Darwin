@@ -115,7 +115,17 @@ JSON, HTML, CSV, and source-model exports are not compliant e-invoice output by 
 
 No fake labels, fake tracking values, fake provider references, fake delivered exports, fake filing submissions, or fake provider success may be recorded as production evidence.
 
-## 7. Mobile Release Evidence
+## 7. Web And Mobile Release Evidence
+
+| Web evidence item | Non-secret reference | Owner | Result |
+| --- | --- | --- | --- |
+| Web storefront build | Pending operator entry | Darwin technical owner | Pending |
+| Web runtime configuration smoke | Pending operator entry | Darwin technical owner | Pending |
+| Public discovery route smoke | Pending operator entry | Darwin technical owner | Pending |
+| Member portal route smoke | Pending operator entry | Darwin technical owner | Pending |
+| Checkout route smoke | Pending operator entry | Darwin technical owner | Pending |
+| Degraded API log review | Pending operator entry | Darwin technical owner | Pending |
+| Web staging owner sign-off | Pending operator entry | Darwin technical owner | Pending |
 
 | Evidence item | Non-secret reference | Owner | Result |
 | --- | --- | --- | --- |

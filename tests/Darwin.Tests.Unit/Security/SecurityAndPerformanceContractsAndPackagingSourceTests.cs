@@ -413,6 +413,9 @@ public sealed class SecurityAndPerformanceContractsAndPackagingSourceTests : Sec
         externalSmokeInputsSource.Should().Contain("scripts\\smoke-web-storefront-routes.ps1");
         externalSmokeInputsSource.Should().Contain("DARWIN_WEB_ROUTE_SMOKE_CONFIRMED");
         externalSmokeInputsSource.Should().Contain("scripts\\check-web-storefront-readiness.ps1");
+        externalSmokeInputsSource.Should().Contain("DARWIN_WEB_STOREFRONT_BUILD_REFERENCE");
+        externalSmokeInputsSource.Should().Contain("DARWIN_WEB_RUNTIME_CONFIG_SMOKE_REFERENCE");
+        externalSmokeInputsSource.Should().Contain("DARWIN_WEB_CHECKOUT_ROUTE_SMOKE_REFERENCE");
         externalSmokeInputsSource.Should().Contain("DARWIN_WEB_RUNTIME_CONFIG_SMOKE_CONFIRMED");
         externalSmokeInputsSource.Should().Contain("DARWIN_WEB_DEFAULT_PRODUCTION_API_CONFIRMED");
         externalSmokeInputsSource.Should().Contain("DARWIN_ANDROID_RELEASE_ARTIFACT_REFERENCE");
@@ -515,6 +518,14 @@ public sealed class SecurityAndPerformanceContractsAndPackagingSourceTests : Sec
             .And.NotContain("Invoke-WebRequest")
             .And.NotContain("whsec_")
             .And.NotContain("StripeSecretKey");
+
+        ReadRepositoryFile(Path.Combine("scripts", "check-web-storefront-readiness.ps1"))
+            .Should()
+            .Contain("DARWIN_WEB_STOREFRONT_BUILD_REFERENCE")
+            .And.Contain("DARWIN_WEB_RUNTIME_CONFIG_SMOKE_REFERENCE")
+            .And.Contain("DARWIN_WEB_CHECKOUT_ROUTE_SMOKE_REFERENCE")
+            .And.Contain("DARWIN_WEB_STAGING_OWNER_SIGNOFF_REFERENCE")
+            .And.Contain("Assert-SafeEvidenceReference");
 
         ReadRepositoryFile(Path.Combine("scripts", "smoke-dhl-live.ps1"))
             .Should()
@@ -2766,6 +2777,13 @@ public sealed class SecurityAndPerformanceContractsAndPackagingSourceTests : Sec
             {
                 ["DARWIN_WEBAPI_BASE_URL"] = "https://api.staging.example.test",
                 ["DARWIN_WEB_SITE_URL"] = "https://web.staging.example.test",
+                ["DARWIN_WEB_STOREFRONT_BUILD_REFERENCE"] = "web-build-ref-001",
+                ["DARWIN_WEB_RUNTIME_CONFIG_SMOKE_REFERENCE"] = "web-runtime-config-smoke-ref-001",
+                ["DARWIN_WEB_PUBLIC_DISCOVERY_SMOKE_REFERENCE"] = "web-public-discovery-smoke-ref-001",
+                ["DARWIN_WEB_MEMBER_PORTAL_ROUTE_SMOKE_REFERENCE"] = "web-member-route-smoke-ref-001",
+                ["DARWIN_WEB_CHECKOUT_ROUTE_SMOKE_REFERENCE"] = "web-checkout-route-smoke-ref-001",
+                ["DARWIN_WEB_DEGRADED_API_LOG_REVIEW_REFERENCE"] = "web-degraded-api-log-review-ref-001",
+                ["DARWIN_WEB_STAGING_OWNER_SIGNOFF_REFERENCE"] = "web-staging-owner-signoff-ref-001",
                 ["DARWIN_WEB_STOREFRONT_BUILD_CONFIRMED"] = "true",
                 ["DARWIN_WEB_RUNTIME_CONFIG_SMOKE_CONFIRMED"] = "true",
                 ["DARWIN_WEB_PUBLIC_DISCOVERY_SMOKE_CONFIRMED"] = "true",
@@ -2853,6 +2871,13 @@ public sealed class SecurityAndPerformanceContractsAndPackagingSourceTests : Sec
         {
             ["DARWIN_WEBAPI_BASE_URL"] = webApiBaseUrl,
             ["DARWIN_WEB_SITE_URL"] = webSiteUrl,
+            ["DARWIN_WEB_STOREFRONT_BUILD_REFERENCE"] = "web-build-ref-001",
+            ["DARWIN_WEB_RUNTIME_CONFIG_SMOKE_REFERENCE"] = "web-runtime-config-smoke-ref-001",
+            ["DARWIN_WEB_PUBLIC_DISCOVERY_SMOKE_REFERENCE"] = "web-public-discovery-smoke-ref-001",
+            ["DARWIN_WEB_MEMBER_PORTAL_ROUTE_SMOKE_REFERENCE"] = "web-member-route-smoke-ref-001",
+            ["DARWIN_WEB_CHECKOUT_ROUTE_SMOKE_REFERENCE"] = "web-checkout-route-smoke-ref-001",
+            ["DARWIN_WEB_DEGRADED_API_LOG_REVIEW_REFERENCE"] = "web-degraded-api-log-review-ref-001",
+            ["DARWIN_WEB_STAGING_OWNER_SIGNOFF_REFERENCE"] = "web-staging-owner-signoff-ref-001",
             ["DARWIN_WEB_STOREFRONT_BUILD_CONFIRMED"] = "true",
             ["DARWIN_WEB_RUNTIME_CONFIG_SMOKE_CONFIRMED"] = "true",
             ["DARWIN_WEB_PUBLIC_DISCOVERY_SMOKE_CONFIRMED"] = "true",
@@ -2968,6 +2993,13 @@ public sealed class SecurityAndPerformanceContractsAndPackagingSourceTests : Sec
             ["DARWIN_PRODUCTION_READINESS_REPORT_BUNDLE_DIRECTORY"] = EnsureReadyProductionReadinessReportBundle(),
             ["DARWIN_WEBAPI_BASE_URL"] = "https://api.staging.example.test",
             ["DARWIN_WEB_SITE_URL"] = "https://web.staging.example.test",
+            ["DARWIN_WEB_STOREFRONT_BUILD_REFERENCE"] = "web-build-ref-001",
+            ["DARWIN_WEB_RUNTIME_CONFIG_SMOKE_REFERENCE"] = "web-runtime-config-smoke-ref-001",
+            ["DARWIN_WEB_PUBLIC_DISCOVERY_SMOKE_REFERENCE"] = "web-public-discovery-smoke-ref-001",
+            ["DARWIN_WEB_MEMBER_PORTAL_ROUTE_SMOKE_REFERENCE"] = "web-member-route-smoke-ref-001",
+            ["DARWIN_WEB_CHECKOUT_ROUTE_SMOKE_REFERENCE"] = "web-checkout-route-smoke-ref-001",
+            ["DARWIN_WEB_DEGRADED_API_LOG_REVIEW_REFERENCE"] = "web-degraded-api-log-review-ref-001",
+            ["DARWIN_WEB_STAGING_OWNER_SIGNOFF_REFERENCE"] = "web-staging-owner-signoff-ref-001",
             ["DARWIN_WEB_STOREFRONT_BUILD_CONFIRMED"] = "true",
             ["DARWIN_WEB_RUNTIME_CONFIG_SMOKE_CONFIRMED"] = "true",
             ["DARWIN_WEB_PUBLIC_DISCOVERY_SMOKE_CONFIRMED"] = "true",

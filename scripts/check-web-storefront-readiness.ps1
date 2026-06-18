@@ -82,9 +82,57 @@ function Assert-SafeUrl {
     }
 }
 
+function Assert-SafeEvidenceReference {
+    param(
+        [Parameter(Mandatory = $true)][string]$Name,
+        [Parameter(Mandatory = $true)][string]$Value
+    )
+
+    $blocked = @(
+        "secret",
+        "token",
+        "credential",
+        "password",
+        "privatekey",
+        "private key",
+        "connectionstring",
+        "connection string",
+        "accesskey",
+        "access key",
+        "auth cookie",
+        "environment file",
+        "npm token",
+        "registry credential",
+        "raw payload",
+        "provider payload",
+        "customer data",
+        "private package artifact",
+        "build artifact",
+        "private approval"
+    )
+
+    foreach ($term in $blocked) {
+        if ($Value.IndexOf($term, [StringComparison]::OrdinalIgnoreCase) -ge 0) {
+            Write-Host "Web storefront readiness is blocked."
+            Write-Host "$Name contains sensitive wording. Use a non-secret build report id, smoke report id, log-review ticket, sign-off reference, or evidence-package row id."
+            exit 2
+        }
+    }
+}
+
 $webApiBaseUrl = Get-EnvValue "DARWIN_WEBAPI_BASE_URL"
 $webSiteUrl = Get-EnvValue "DARWIN_WEB_SITE_URL"
 $defaultProductionApiConfirmed = Test-Truthy (Get-EnvValue "DARWIN_WEB_DEFAULT_PRODUCTION_API_CONFIRMED").ToLowerInvariant()
+
+$requiredReferences = @(
+    "DARWIN_WEB_STOREFRONT_BUILD_REFERENCE",
+    "DARWIN_WEB_RUNTIME_CONFIG_SMOKE_REFERENCE",
+    "DARWIN_WEB_PUBLIC_DISCOVERY_SMOKE_REFERENCE",
+    "DARWIN_WEB_MEMBER_PORTAL_ROUTE_SMOKE_REFERENCE",
+    "DARWIN_WEB_CHECKOUT_ROUTE_SMOKE_REFERENCE",
+    "DARWIN_WEB_DEGRADED_API_LOG_REVIEW_REFERENCE",
+    "DARWIN_WEB_STAGING_OWNER_SIGNOFF_REFERENCE"
+)
 
 $required = @(
     "DARWIN_WEB_STOREFRONT_BUILD_CONFIRMED",
@@ -111,6 +159,12 @@ foreach ($name in $required) {
     }
 }
 
+foreach ($name in $requiredReferences) {
+    if ([string]::IsNullOrWhiteSpace((Get-EnvValue $name))) {
+        $missing += $name
+    }
+}
+
 if ($missing.Count -gt 0) {
     Write-Host "Web storefront readiness is blocked. Configure these environment variables first:"
     foreach ($name in $missing) {
@@ -123,6 +177,9 @@ if ($missing.Count -gt 0) {
 
 Assert-SafeUrl -Name "DARWIN_WEBAPI_BASE_URL" -Value $webApiBaseUrl
 Assert-SafeUrl -Name "DARWIN_WEB_SITE_URL" -Value $webSiteUrl
+foreach ($name in $requiredReferences) {
+    Assert-SafeEvidenceReference -Name $name -Value (Get-EnvValue $name)
+}
 
 if ($webApiBaseUrl.TrimEnd("/") -ieq "https://api.loyan.de" -and -not $defaultProductionApiConfirmed) {
     Write-Host "Web storefront readiness is blocked."

@@ -202,7 +202,7 @@ $requiredSections = @(
     "## 4. Object Storage And Retention",
     "## 5. E-Invoice Acceptance",
     "## 6. Provider Smokes",
-    "## 7. Mobile Release Evidence",
+    "## 7. Web And Mobile Release Evidence",
     "## 8. WebAdmin Operational Readiness",
     "## 9. Final Sign-Off",
     "## 10. Blockers And Owner Assignments"
@@ -238,6 +238,9 @@ $requiredMarkers = @(
     "DHL",
     "Brevo",
     "VIES",
+    "Web storefront build",
+    "Web runtime configuration smoke",
+    "Checkout route smoke",
     "Android signed release artifact",
     "Android readiness preflight",
     "Business scope approval",

@@ -142,10 +142,12 @@ Acceptance:
 - no fake labels, fake tracking values, fake provider references, fake delivered exports, fake filing submissions, or fake AI/provider success are recorded;
 - every provider smoke result is tied to a run date, operator, and non-secret evidence reference.
 
-### 6. Mobile Release Evidence
+### 6. Web And Mobile Release Evidence
 
 Required proof:
 
+- Web storefront build report and runtime configuration smoke reference;
+- public discovery, member portal, checkout route, degraded API log review, and Web staging owner sign-off references;
 - launch target order across Android, iOS, MacCatalyst, and follow-up platforms;
 - signed release artifacts;
 - production push/maps configuration;
