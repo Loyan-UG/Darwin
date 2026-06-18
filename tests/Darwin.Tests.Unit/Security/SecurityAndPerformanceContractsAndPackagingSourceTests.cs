@@ -385,12 +385,16 @@ public sealed class SecurityAndPerformanceContractsAndPackagingSourceTests : Sec
 
         docsIndexSource.Should().Contain("production-go-live-evidence-execution-plan.md");
         docsIndexSource.Should().Contain("check-production-readiness-report-bundle-clean-smoke.ps1");
+        docsIndexSource.Should().Contain("export-production-readiness-local-execution-summary.ps1");
         onboardingChecklistSource.Should().Contain("production-go-live-evidence-execution-plan.md");
         onboardingChecklistSource.Should().Contain("production-like staging rehearsal row");
+        onboardingChecklistSource.Should().Contain("local execution summary");
         evidencePackageSource.Should().Contain("production-like staging rehearsal");
         evidencePackageSource.Should().Contain("check-production-like-staging-readiness.ps1");
+        evidencePackageSource.Should().Contain("local execution summary");
         executionPlanSource.Should().Contain("production-like staging before real production");
         executionPlanSource.Should().Contain("check-production-readiness-report-bundle-clean-smoke.ps1");
+        executionPlanSource.Should().Contain("local execution summary");
         executionPlanSource.Should().Contain("check-production-like-staging-readiness.ps1");
         executionPlanSource.Should().Contain("file-delivery remains the production-safe path");
         executionPlanSource.Should().Contain("SyncState and SyncConflict are foundation only");
