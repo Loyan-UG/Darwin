@@ -35,6 +35,9 @@ This package records non-secret go-live evidence for one Darwin deployment. Do n
 | Build lane | Pending operator entry | Darwin technical owner | Pending |
 | Focused module test lanes | Pending operator entry | Darwin technical owner | Pending |
 | Public/mobile compatibility lanes | Pending operator entry | Darwin technical owner | Pending |
+| Readiness report bundle | Pending operator entry | Darwin technical owner | Pending |
+| Owner action plan | Pending operator entry | Darwin technical owner | Pending |
+| Evidence environment template | Pending operator entry | Darwin technical owner | Pending |
 | Migration plan | Pending operator entry | Migration owner | Pending |
 | Backup checkpoint before migration | Pending operator entry | System admin or DevOps owner | Pending |
 | Rollback plan | Pending operator entry | Darwin technical owner | Pending |
