@@ -171,6 +171,8 @@ Delivery-pipeline confirmations:
 - `DARWIN_BREVO_PROVIDER_CALLBACK_WORKER_CONFIRMED=true`
 - `DARWIN_BREVO_EMAIL_DISPATCH_WORKER_CONFIRMED=true`
 
+`DARWIN_BREVO_WEBHOOK_PUBLIC_URL` must be the public HTTPS webhook URL ending in `/api/v1/public/notifications/brevo/webhooks`. Do not use a loopback URL, and do not include embedded credentials, query strings, fragments, tokens, provider payloads, or private delivery details in the URL or readiness inputs.
+
 Commands:
 
 ```powershell

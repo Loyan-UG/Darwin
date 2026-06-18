@@ -1274,6 +1274,53 @@ public sealed class SecurityAndPerformanceContractsAndPackagingSourceTests : Sec
         output.Should().NotContain("System.Management.Automation.RemoteException");
     }
 
+    [Theory]
+    [InlineData("https://brevo-webhook.example.test/api/v1/public/notifications/brevo/webhooks?token=secret")]
+    [InlineData("https://user:secret@brevo-webhook.example.test/api/v1/public/notifications/brevo/webhooks")]
+    [InlineData("https://brevo-webhook.example.test/api/v1/public/notifications/brevo/webhooks#secret")]
+    [InlineData("https://localhost/api/v1/public/notifications/brevo/webhooks")]
+    public async Task BrevoReadiness_Should_BlockWebhookUrlWithLoopbackUserInfoQueryOrFragment(string webhookUrl)
+    {
+        var root = ResolveRepositoryPath();
+        var startInfo = new ProcessStartInfo
+        {
+            FileName = "powershell",
+            WorkingDirectory = root,
+            RedirectStandardOutput = true,
+            RedirectStandardError = true,
+            UseShellExecute = false
+        };
+        startInfo.ArgumentList.Add("-NoProfile");
+        startInfo.ArgumentList.Add("-ExecutionPolicy");
+        startInfo.ArgumentList.Add("Bypass");
+        startInfo.ArgumentList.Add("-File");
+        startInfo.ArgumentList.Add(Path.Combine("scripts", "smoke-brevo-readiness.ps1"));
+        startInfo.ArgumentList.Add("-RequireDeliveryPipeline");
+
+        foreach (var key in startInfo.Environment.Keys.Cast<string>()
+                     .Where(key => key.StartsWith("DARWIN_", StringComparison.OrdinalIgnoreCase)).ToList())
+        {
+            startInfo.Environment.Remove(key);
+        }
+
+        foreach (var item in BrevoReadinessEnvironment(webhookUrl))
+        {
+            startInfo.Environment[item.Key] = item.Value;
+        }
+
+        using var process = Process.Start(startInfo) ?? throw new InvalidOperationException("Could not start smoke-brevo-readiness.ps1.");
+        var stdoutTask = process.StandardOutput.ReadToEndAsync(TestContext.Current.CancellationToken);
+        var stderrTask = process.StandardError.ReadToEndAsync(TestContext.Current.CancellationToken);
+
+        await process.WaitForExitAsync(TestContext.Current.CancellationToken);
+        var output = $"{await stdoutTask}{Environment.NewLine}{await stderrTask}";
+
+        process.ExitCode.Should().Be(2);
+        output.Should().Contain("Brevo delivery pipeline readiness is blocked.");
+        output.Should().NotContain(webhookUrl);
+        output.Should().NotContain("System.Management.Automation.RemoteException");
+    }
+
     [Fact]
     public async Task StripeSubscriptionCheckoutSmoke_Should_BlockWhenCheckoutPrerequisitesMissing()
     {
@@ -2680,6 +2727,19 @@ public sealed class SecurityAndPerformanceContractsAndPackagingSourceTests : Sec
             ["DARWIN_WEB_CHECKOUT_ROUTE_SMOKE_CONFIRMED"] = "true",
             ["DARWIN_WEB_DEGRADED_API_LOG_REVIEWED_CONFIRMED"] = "true",
             ["DARWIN_WEB_STAGING_OWNER_SIGNOFF_CONFIRMED"] = "true"
+        };
+
+    private static IReadOnlyDictionary<string, string> BrevoReadinessEnvironment(string webhookUrl) =>
+        new Dictionary<string, string>
+        {
+            ["DARWIN_BREVO_API_KEY"] = "local-api-key",
+            ["DARWIN_BREVO_SENDER_EMAIL"] = "sender@example.test",
+            ["DARWIN_BREVO_TEST_RECIPIENT_EMAIL"] = "recipient@example.test",
+            ["DARWIN_BREVO_WEBHOOK_PUBLIC_URL"] = webhookUrl,
+            ["DARWIN_BREVO_WEBHOOK_CONFIGURED_CONFIRMED"] = "true",
+            ["DARWIN_BREVO_TRANSACTIONAL_EVENTS_CONFIRMED"] = "true",
+            ["DARWIN_BREVO_PROVIDER_CALLBACK_WORKER_CONFIRMED"] = "true",
+            ["DARWIN_BREVO_EMAIL_DISPATCH_WORKER_CONFIRMED"] = "true"
         };
 
     private static IReadOnlyDictionary<string, string> AllProviderReadyDryRunEnvironment() =>

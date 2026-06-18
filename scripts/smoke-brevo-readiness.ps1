@@ -93,6 +93,14 @@ function Assert-BrevoDeliveryPipelineReady {
         elseif ($parsedWebhookUrl.Scheme -ne "https") {
             $blocked.Add("DARWIN_BREVO_WEBHOOK_PUBLIC_URL must use HTTPS.")
         }
+        elseif ($parsedWebhookUrl.Host -in @("localhost", "127.0.0.1", "::1")) {
+            $blocked.Add("DARWIN_BREVO_WEBHOOK_PUBLIC_URL must be reachable by Brevo, not a loopback URL.")
+        }
+        elseif (-not [string]::IsNullOrWhiteSpace($parsedWebhookUrl.UserInfo) -or
+            -not [string]::IsNullOrWhiteSpace($parsedWebhookUrl.Query) -or
+            -not [string]::IsNullOrWhiteSpace($parsedWebhookUrl.Fragment)) {
+            $blocked.Add("DARWIN_BREVO_WEBHOOK_PUBLIC_URL must be the public HTTPS webhook URL without embedded credentials, query strings, or fragments.")
+        }
         elseif (-not $parsedWebhookUrl.AbsolutePath.EndsWith("/api/v1/public/notifications/brevo/webhooks", [StringComparison]::OrdinalIgnoreCase)) {
             $blocked.Add("DARWIN_BREVO_WEBHOOK_PUBLIC_URL must end with /api/v1/public/notifications/brevo/webhooks.")
         }
