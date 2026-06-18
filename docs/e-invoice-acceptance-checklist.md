@@ -10,9 +10,12 @@ Before compliant generation is treated as production-ready, run the non-secret p
 
 ```powershell
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\check-einvoice-production-readiness.ps1
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\export-einvoice-production-readiness-report.ps1 -Force
 ```
 
 The preflight confirms both ZUGFeRD/Factur-X and XRechnung fixture, validation-report, storage/download, and accounting/tax sign-off evidence exists. It does not accept or print generated customer artifacts, private invoice data, validator credentials, provider responses, or legal sign-off documents.
+
+The exported readiness report is only a non-secret summary for the evidence package. It does not replace generated artifacts, validation reports, archive storage/download smoke, or accounting/tax approval records.
 
 ## Current German Baseline
 

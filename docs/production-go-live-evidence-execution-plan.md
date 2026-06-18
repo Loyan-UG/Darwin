@@ -49,12 +49,15 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts\check-mobile-resourc
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\export-go-live-readiness-report.ps1 -Force
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\export-minio-production-readiness-report.ps1 -Force
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\export-azure-object-storage-readiness-report.ps1 -Force
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\export-einvoice-production-readiness-report.ps1 -Force
 $env:DARWIN_PRODUCTION_READINESS_EVIDENCE_PACKAGE_PATH = "artifacts\production-readiness\evidence-package.md"
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\check-production-readiness-evidence-package.ps1
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\check-go-live-readiness.ps1
 ```
 
 The central go-live report includes separate MinIO and Azure Blob readiness rows. The dedicated MinIO and Azure reports remain useful as non-secret attachment references for the object-storage evidence rows.
+
+The dedicated e-invoice report is a non-secret attachment reference for accounting or tax evidence. It does not replace the real ZUGFeRD/Factur-X and XRechnung artifact, validation-report, storage/download-smoke, and sign-off records.
 
 ## Current Outcome
 

@@ -376,6 +376,7 @@ Commands:
 
 ```powershell
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\check-einvoice-production-readiness.ps1
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\export-einvoice-production-readiness-report.ps1 -Force
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\smoke-einvoice-external-command.ps1
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\smoke-einvoice-external-command.ps1 -Execute
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\smoke-einvoice-external-command.ps1 -Execute -RequireValidationReport
