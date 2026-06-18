@@ -431,6 +431,14 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts\check-web-toolchain-
 
 This local check confirms `node` and `npm` are available before the solution-level build invokes the `Darwin.Web` Next.js build. It does not install packages, run `npm run build`, or accept registry credentials.
 
+Web storefront local build preflight:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\check-web-storefront-local-build.ps1
+```
+
+This local build check runs `npm run build` only when `node_modules` is already present from the committed lockfile. It does not run `npm install`, accept npm tokens, read environment files, print registry credentials, or replace deployment runtime smoke.
+
 Web storefront runtime/readiness preflight:
 
 ```powershell
@@ -443,7 +451,7 @@ Web and mobile readiness summary:
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\export-web-mobile-readiness-report.ps1 -Force
 ```
 
-The Web/Mobile readiness report runs Web toolchain, Web storefront runtime, and mobile resource-name prerequisite checks and writes a non-secret summary under `artifacts\production-readiness\`. It does not build packages, run provider calls, store npm tokens, store environment files, or replace route/device smoke evidence.
+The Web/Mobile readiness report runs Web toolchain, local storefront build, Web storefront runtime, and mobile resource-name prerequisite checks and writes a non-secret summary under `artifacts\production-readiness\`. It does not run package installation, run provider calls, store npm tokens, store environment files, or replace route/device smoke evidence.
 
 Required non-secret URLs:
 

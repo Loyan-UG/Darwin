@@ -257,6 +257,7 @@ public sealed class SecurityAndPerformanceContractsAndPackagingSourceTests : Sec
             "smoke-einvoice-external-command.ps1",
             "check-einvoice-production-readiness.ps1",
             "check-web-toolchain-readiness.ps1",
+            "check-web-storefront-local-build.ps1",
             "check-web-storefront-readiness.ps1",
             "check-mobile-resource-names.ps1",
             "check-android-launch-readiness.ps1",
@@ -356,6 +357,8 @@ public sealed class SecurityAndPerformanceContractsAndPackagingSourceTests : Sec
         externalSmokeInputsSource.Should().Contain("DARWIN_EINVOICE_EVIDENCE_PACKAGE_REFERENCE");
         externalSmokeInputsSource.Should().Contain("scripts\\check-web-toolchain-readiness.ps1");
         externalSmokeInputsSource.Should().Contain("Web storefront toolchain preflight");
+        externalSmokeInputsSource.Should().Contain("scripts\\check-web-storefront-local-build.ps1");
+        externalSmokeInputsSource.Should().Contain("Web storefront local build preflight");
         externalSmokeInputsSource.Should().Contain("scripts\\check-web-storefront-readiness.ps1");
         externalSmokeInputsSource.Should().Contain("DARWIN_WEB_RUNTIME_CONFIG_SMOKE_CONFIRMED");
         externalSmokeInputsSource.Should().Contain("DARWIN_WEB_DEFAULT_PRODUCTION_API_CONFIRMED");
