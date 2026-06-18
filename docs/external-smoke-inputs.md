@@ -34,6 +34,8 @@ $env:DARWIN_PRODUCTION_READINESS_EVIDENCE_PACKAGE_PATH = "artifacts\production-r
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\check-production-readiness-evidence-package.ps1
 ```
 
+If a `Ready` row in that package references a local readiness bundle or generated helper, the validator checks that the referenced file exists, is secret-free, matches the current branch and commit, and reports `Ready` with exit code `0` when the artifact has readiness metadata. Deployment-specific private evidence can still live outside the repository; those references are checked by the deployment owner, not by the local script.
+
 The validation check rejects placeholder text, unresolved open/blocked/failed result rows, missing required evidence markers, and sensitive value patterns. The required markers include production-like staging rehearsal, explicit MinIO production and Azure Blob readiness preflight rows, dual e-invoice evidence, Android launch evidence, provider smokes, and approval rows. It does not inspect the private evidence repository behind each non-secret reference.
 
 Production-like staging rehearsal preflight:

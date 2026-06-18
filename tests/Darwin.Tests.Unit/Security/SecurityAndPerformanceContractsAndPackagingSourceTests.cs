@@ -893,6 +893,97 @@ public sealed class SecurityAndPerformanceContractsAndPackagingSourceTests : Sec
         blockedOutput.Output.Should().NotContain("System.Management.Automation.RemoteException");
     }
 
+    [Fact]
+    public async Task ProductionReadinessEvidencePackageScript_Should_ValidateReadyLocalArtifactReferences()
+    {
+        var root = ResolveRepositoryPath();
+        var directory = EnsureReadyProductionReadinessReportBundle();
+        var filledPackagePath = EnsureFilledProductionReadinessEvidencePackage();
+        var bundlePath = Path.Combine(directory, "readiness-report-bundle.md");
+        var packageContent = File.ReadAllText(filledPackagePath)
+            .Replace(
+                "| Readiness report bundle | Evidence reference REF-001 | Darwin technical owner | Ready |",
+                $"| Readiness report bundle | {bundlePath} | Darwin technical owner | Ready |",
+                StringComparison.Ordinal);
+        File.WriteAllText(filledPackagePath, packageContent);
+
+        var output = await RunPowerShellScriptAsync(
+            root,
+            "check-production-readiness-evidence-package.ps1",
+            new Dictionary<string, string>
+            {
+                ["DARWIN_PRODUCTION_READINESS_EVIDENCE_PACKAGE_PATH"] = filledPackagePath
+            });
+
+        output.ExitCode.Should().Be(0);
+        output.Output.Should().Contain("Production readiness evidence package validation passed.");
+    }
+
+    [Fact]
+    public async Task ProductionReadinessEvidencePackageScript_Should_BlockStaleReadyLocalArtifactReference()
+    {
+        var root = ResolveRepositoryPath();
+        var directory = EnsureReadyProductionReadinessReportBundle();
+        var filledPackagePath = EnsureFilledProductionReadinessEvidencePackage();
+        var bundlePath = Path.Combine(directory, "readiness-report-bundle.md");
+        var packageContent = File.ReadAllText(filledPackagePath)
+            .Replace(
+                "| Readiness report bundle | Evidence reference REF-001 | Darwin technical owner | Ready |",
+                $"| Readiness report bundle | {bundlePath} | Darwin technical owner | Ready |",
+                StringComparison.Ordinal);
+        File.WriteAllText(filledPackagePath, packageContent);
+
+        var bundleContent = File.ReadAllText(bundlePath)
+            .Replace("Commit: " + ReadGitOutput(root, "rev-parse", "--short=12", "HEAD"), "Commit: 000000000000", StringComparison.Ordinal);
+        File.WriteAllText(bundlePath, bundleContent);
+
+        var output = await RunPowerShellScriptAsync(
+            root,
+            "check-production-readiness-evidence-package.ps1",
+            new Dictionary<string, string>
+            {
+                ["DARWIN_PRODUCTION_READINESS_EVIDENCE_PACKAGE_PATH"] = filledPackagePath
+            });
+
+        output.ExitCode.Should().Be(2);
+        output.Output.Should().Contain("Production readiness evidence package validation is blocked.");
+        output.Output.Should().Contain("Ready local evidence reference commit");
+        output.Output.Should().Contain("readiness-report-bundle.md");
+    }
+
+    [Fact]
+    public async Task ProductionReadinessEvidencePackageScript_Should_BlockNonReadyLocalBundleReference()
+    {
+        var root = ResolveRepositoryPath();
+        var directory = EnsureReadyProductionReadinessReportBundle();
+        var filledPackagePath = EnsureFilledProductionReadinessEvidencePackage();
+        var bundlePath = Path.Combine(directory, "readiness-report-bundle.md");
+        var packageContent = File.ReadAllText(filledPackagePath)
+            .Replace(
+                "| Readiness report bundle | Evidence reference REF-001 | Darwin technical owner | Ready |",
+                $"| Readiness report bundle | {bundlePath} | Darwin technical owner | Ready |",
+                StringComparison.Ordinal);
+        File.WriteAllText(filledPackagePath, packageContent);
+
+        var bundleContent = File.ReadAllText(bundlePath)
+            .Replace("Overall result: Ready", "Overall result: Blocked", StringComparison.Ordinal)
+            .Replace("Exit code: 0", "Exit code: 2", StringComparison.Ordinal);
+        File.WriteAllText(bundlePath, bundleContent);
+
+        var output = await RunPowerShellScriptAsync(
+            root,
+            "check-production-readiness-evidence-package.ps1",
+            new Dictionary<string, string>
+            {
+                ["DARWIN_PRODUCTION_READINESS_EVIDENCE_PACKAGE_PATH"] = filledPackagePath
+            });
+
+        output.ExitCode.Should().Be(2);
+        output.Output.Should().Contain("Production readiness evidence package validation is blocked.");
+        output.Output.Should().Contain("Overall result Ready");
+        output.Output.Should().Contain("Exit code 0");
+    }
+
     [Theory]
     [MemberData(nameof(ProviderSmokeScriptReadyDryRunCases))]
     public async Task ProviderSmokeScripts_Should_ReportReadyDryRunWithoutExecutingExternalCalls(
