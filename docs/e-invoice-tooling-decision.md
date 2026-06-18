@@ -2,7 +2,7 @@
 
 Reviewed: 2026-05-27
 
-Darwin does not yet implement full e-invoice compliance. Current invoice outputs are issued JSON snapshots, printable HTML archive output, structured invoice source-model JSON, and CSV export. The primary target for the next implementation slice is a downloadable ZUGFeRD/Factur-X invoice artifact. XRechnung remains a secondary export target.
+Darwin does not yet implement full e-invoice compliance. Current invoice outputs are issued JSON snapshots, printable HTML archive output, structured invoice source-model JSON, and CSV export. The production readiness target is now dual-format: downloadable ZUGFeRD/Factur-X invoice artifacts and XRechnung XML artifacts must both be validated before German compliant e-invoice rollout is treated as complete.
 
 The application now exposes `IEInvoiceGenerationService` as the provider-neutral generation boundary. The registered default is `NotConfiguredEInvoiceGenerationService`, which returns `NotConfigured` and does not produce fake compliant artifacts. `EInvoiceSourceReadinessValidator` verifies minimum issued-snapshot source fields before any future generator runs; this is a safety gate only and does not validate ZUGFeRD/Factur-X or XRechnung compliance.
 
@@ -21,7 +21,7 @@ Evaluate candidate libraries or tooling against these requirements:
 - Long-term maintenance, licensing, and security posture acceptable for production.
 - Server-side generation that does not require operator desktop tooling.
 - Failure modes that keep the invoice in manual review instead of exposing invalid artifacts.
-- Extensibility for a later XRechnung export path.
+- XRechnung export and validation readiness alongside ZUGFeRD/Factur-X, not as an indefinite later path.
 
 ## Selected Tooling Path
 
@@ -47,10 +47,10 @@ These notes are a shortlist for the next implementation slice, not an approved p
 
 - `ZUGFeRD-csharp`: current NuGet package metadata shows version `18.0.0` and targets .NET 8.0 plus .NET Standard 2.0. It remains a plausible .NET-side XML/model fallback, but Darwin still needs proof of the exact profile support, PDF/A-3 embedding path, validation behavior, license review, and generated sample acceptance before switching away from the selected external-command path. Reference: <https://www.nuget.org/packages/ZUGFeRD-csharp/>.
 - `Mustangproject`: current project documentation describes a Java library/CLI/server that can read, write, validate, and convert ZUGFeRD/Factur-X and XRechnung artifacts. Its 2026 release line documents support for ZUGFeRD 2.4 / Factur-X 1.08 and XRechnung 3.0.x. Darwin selected it as the first external-command path, but production use still requires pinning the artifact, JVM/runtime packaging, command wrapper hardening, and deployment smoke. Reference: <https://www.mustangproject.org/>.
-- `KoSIT XRechnung validator configuration`: relevant for the later XRechnung export path and for German CIUS validation evidence. It is not by itself a ZUGFeRD/Factur-X PDF generator.
+- `KoSIT XRechnung validator configuration`: relevant for XRechnung German CIUS validation evidence. It is not by itself a ZUGFeRD/Factur-X PDF generator.
 - `FeRD ZUGFeRD/Factur-X 2.4 package`: this remains the reference specification and validation artifact source for the target format. Implementation work must align generated profile/version output with the active deployment requirement. Reference: <https://www.ferd-net.de/en/standards/zugferd/factur-x>.
 
-The next implementation slice is a production-evidence package for the selected external-command path: pin the deployment artifact, record deterministic source-to-artifact fixtures, collect selected-tool validation reports, and run artifact storage/download smoke in the target deployment before any WebAdmin download is treated as compliant. Local adapter smoke is already green and confirms process execution plus artifact-shape checks only.
+The next implementation slice is a production-evidence package for the selected external-command path: pin the deployment artifact, record deterministic source-to-artifact fixtures for both ZUGFeRD/Factur-X and XRechnung, collect selected-tool validation reports, and run artifact storage/download smoke in the target deployment before any WebAdmin download is treated as compliant. Local adapter smoke is already green and confirms process execution plus artifact-shape checks only.
 
 ## Implementation Requirements After Selection
 
@@ -58,7 +58,7 @@ The next implementation slice is a production-evidence package for the selected 
 - If the selected tool is operated out-of-process, configure `Compliance:EInvoice:ExternalCommand` with an absolute executable path, bounded timeout, supported formats, and an approved working/temp directory.
 - Set `RequireValidationReport=true` in production so a generated artifact is rejected when the selected tool does not write a recognized positive validation result.
 - Use `scripts/smoke-einvoice-external-command.ps1` to verify the selected external command can be called through Darwin's adapter before wiring it to operator-facing flows. A successful smoke confirms process execution and artifact-shape checks only; it is not legal validation.
-- Keep parser fixtures, smoke fixtures, and future legal-approved fixtures separated; see [docs/e-invoice-validation-fixtures.md](e-invoice-validation-fixtures.md).
+- Keep parser fixtures, smoke fixtures, and future legal-approved fixtures separated for both ZUGFeRD/Factur-X and XRechnung; see [docs/e-invoice-validation-fixtures.md](e-invoice-validation-fixtures.md).
 - Use [docs/e-invoice-acceptance-checklist.md](e-invoice-acceptance-checklist.md) for German deployment approval, reviewer ownership, fixture scenarios, and evidence requirements.
 - Reuse or extend `EInvoiceSourceReadinessValidator` so missing source fields fail before provider-specific generation.
 - Extend the existing issued-snapshot to structured source-model mapping into the selected e-invoice model.
@@ -67,7 +67,7 @@ The next implementation slice is a production-evidence package for the selected 
 - Store the generated artifact through `IEInvoiceArtifactStorage`, which routes to the reusable object-storage `InvoiceArchive` profile when configured.
 - Expose a WebAdmin download action only after generation and validation succeed.
 - Add tests for mapping, validation failure, successful artifact generation, and download authorization.
-- Keep XRechnung as a later export until the primary ZUGFeRD/Factur-X path is stable.
+- Treat XRechnung as part of the production readiness evidence package alongside ZUGFeRD/Factur-X; each format needs its own fixture, validation report, artifact storage/download smoke, and reviewer sign-off.
 
 ## Explicit Non-Goals
 

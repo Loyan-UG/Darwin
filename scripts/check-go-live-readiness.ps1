@@ -27,11 +27,18 @@ $checks = @(
     @{ Name = "DHL live smoke prerequisites"; Command = @("powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", "scripts\smoke-dhl-live.ps1", "-RequireRuntimePipeline"); ExpectedBlockedExitCode = 2 },
     @{ Name = "Brevo readiness smoke prerequisites"; Command = @("powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", "scripts\smoke-brevo-readiness.ps1", "-UseSiteSettings", "-RequireDeliveryPipeline"); ExpectedBlockedExitCode = 2 },
     @{ Name = "VIES live smoke prerequisites"; Command = @("powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", "scripts\smoke-vies-live.ps1"); ExpectedBlockedExitCode = 2 },
+    @{ Name = "Production-like staging readiness prerequisites"; Command = @("powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", "scripts\check-production-like-staging-readiness.ps1"); ExpectedBlockedExitCode = 2 },
+    @{ Name = "Production readiness evidence package"; Command = @("powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", "scripts\check-production-readiness-evidence-package.ps1"); ExpectedBlockedExitCode = 2 },
     @{ Name = "Object storage smoke prerequisites"; Command = @("powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", "scripts\smoke-object-storage.ps1"); ExpectedBlockedExitCode = 2 },
     @{ Name = "Object storage MediaAssets profile prerequisites"; Command = New-ObjectStorageProfileCommand -ProfileName "MediaAssets" -ContainerName $env:DARWIN_OBJECT_STORAGE_MEDIA_CONTAINER -Prefix $env:DARWIN_OBJECT_STORAGE_MEDIA_PREFIX; ExpectedBlockedExitCode = 2 },
     @{ Name = "Object storage ShipmentLabels profile prerequisites"; Command = New-ObjectStorageProfileCommand -ProfileName "ShipmentLabels" -ContainerName $env:DARWIN_OBJECT_STORAGE_SHIPMENT_LABELS_CONTAINER -Prefix $env:DARWIN_OBJECT_STORAGE_SHIPMENT_LABELS_PREFIX; ExpectedBlockedExitCode = 2 },
     @{ Name = "MinIO production readiness prerequisites"; Command = @("powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", "scripts\check-minio-production-readiness.ps1"); ExpectedBlockedExitCode = 2 },
-    @{ Name = "E-invoice external-command smoke prerequisites"; Command = @("powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", "scripts\smoke-einvoice-external-command.ps1"); ExpectedBlockedExitCode = 2 }
+    @{ Name = "E-invoice production readiness prerequisites"; Command = @("powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", "scripts\check-einvoice-production-readiness.ps1"); ExpectedBlockedExitCode = 2 },
+    @{ Name = "E-invoice external-command smoke prerequisites"; Command = @("powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", "scripts\smoke-einvoice-external-command.ps1"); ExpectedBlockedExitCode = 2 },
+    @{ Name = "Web toolchain readiness prerequisites"; Command = @("powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", "scripts\check-web-toolchain-readiness.ps1"); ExpectedBlockedExitCode = 2 },
+    @{ Name = "Web storefront readiness prerequisites"; Command = @("powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", "scripts\check-web-storefront-readiness.ps1"); ExpectedBlockedExitCode = 2 },
+    @{ Name = "Mobile resource naming readiness prerequisites"; Command = @("powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", "scripts\check-mobile-resource-names.ps1"); ExpectedBlockedExitCode = 2 },
+    @{ Name = "Android launch readiness prerequisites"; Command = @("powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", "scripts\check-android-launch-readiness.ps1"); ExpectedBlockedExitCode = 2 }
 )
 
 $results = New-Object System.Collections.Generic.List[object]

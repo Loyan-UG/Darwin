@@ -15,6 +15,40 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts\check-go-live-readin
 Exit code `2` means one or more checks are blocked by missing operator inputs. That is expected before a provider is fully configured.
 The aggregate dry-run loads Brevo Site Settings from the local PostgreSQL Docker container when available, but still requires non-secret delivery-pipeline confirmations before marking Brevo production-readiness prerequisites complete.
 
+When a filled production evidence package exists, validate its shape before go-live approval:
+
+```powershell
+$env:DARWIN_PRODUCTION_READINESS_EVIDENCE_PACKAGE_PATH = "artifacts\production-readiness\evidence-package.md"
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\check-production-readiness-evidence-package.ps1
+```
+
+The validation check rejects placeholder text, unresolved open/blocked/failed result rows, missing required evidence markers, and sensitive value patterns. The required markers include production-like staging rehearsal, explicit MinIO production and Azure Blob readiness preflight rows, dual e-invoice evidence, Android launch evidence, provider smokes, and approval rows. It does not inspect the private evidence repository behind each non-secret reference.
+
+Production-like staging rehearsal preflight:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\check-production-like-staging-readiness.ps1
+```
+
+Required non-secret references:
+
+- `DARWIN_STAGING_REHEARSAL_LABEL`
+- `DARWIN_STAGING_RELEASE_REFERENCE`
+- `DARWIN_STAGING_EVIDENCE_REFERENCE`
+
+Required confirmations:
+
+- `DARWIN_STAGING_BUILD_TESTS_CONFIRMED=true`
+- `DARWIN_STAGING_MIGRATION_REHEARSAL_CONFIRMED=true`
+- `DARWIN_STAGING_ROLLBACK_REHEARSAL_CONFIRMED=true`
+- `DARWIN_STAGING_DATABASE_BACKUP_RESTORE_CONFIRMED=true`
+- `DARWIN_STAGING_OBJECT_STORAGE_PREFLIGHTS_CONFIRMED=true`
+- `DARWIN_STAGING_PROVIDER_PREFLIGHTS_CONFIRMED=true`
+- `DARWIN_STAGING_EINVOICE_EVIDENCE_CONFIRMED=true`
+- `DARWIN_STAGING_ANDROID_EVIDENCE_CONFIRMED=true`
+- `DARWIN_STAGING_MONITORING_ALERTING_CONFIRMED=true`
+- `DARWIN_STAGING_OWNER_SIGNOFF_CONFIRMED=true`
+
 ## Stripe Test Mode
 
 Secrets must be entered through Site Settings or secure deployment configuration:
@@ -238,6 +272,10 @@ Production MinIO readiness confirmations:
 - `DARWIN_MINIO_INVOICE_ARCHIVE_PROFILE_CONFIRMED=true`
 - `DARWIN_MINIO_SHIPMENT_LABELS_PROFILE_CONFIRMED=true`
 - `DARWIN_MINIO_MEDIA_ASSETS_PROFILE_DECIDED_CONFIRMED=true`
+- `DARWIN_MINIO_FINANCE_EXPORTS_PROFILE_CONFIRMED=true`
+- `DARWIN_MINIO_FINANCE_EXPORT_OUTBOUND_PROFILE_CONFIRMED=true`
+- `DARWIN_MINIO_PERSONNEL_DOCUMENTS_PROFILE_CONFIRMED=true`
+- `DARWIN_MINIO_PAYROLL_PAYSLIPS_PROFILE_CONFIRMED=true`
 - `DARWIN_MINIO_DISPOSABLE_SMOKE_PREFIX_CONFIRMED=true`
 - `DARWIN_MINIO_RETENTION_DELETE_BEHAVIOR_CONFIRMED=true`
 - `DARWIN_MINIO_OPERATOR_RUNBOOK_CONFIRMED=true`
@@ -249,6 +287,39 @@ dotnet test tests\Darwin.Infrastructure.Tests\Darwin.Infrastructure.Tests.csproj
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\smoke-object-storage.ps1
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\smoke-object-storage.ps1 -Execute
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\check-minio-production-readiness.ps1
+```
+
+Azure Blob readiness confirmations:
+
+- `DARWIN_AZURE_BLOB_PRODUCTION_ENDPOINT`
+- `DARWIN_AZURE_BLOB_PRODUCTION_CONTAINER`
+- `DARWIN_AZURE_BLOB_PROVIDER_SELECTED_CONFIRMED=true`
+- `DARWIN_AZURE_BLOB_TLS_CONFIRMED=true`
+- `DARWIN_AZURE_BLOB_DEDICATED_IDENTITY_CONFIRMED=true`
+- `DARWIN_AZURE_BLOB_LEAST_PRIVILEGE_POLICY_CONFIRMED=true`
+- `DARWIN_AZURE_BLOB_VERSIONING_CONFIRMED=true`
+- `DARWIN_AZURE_BLOB_IMMUTABILITY_POLICY_CONFIRMED=true`
+- `DARWIN_AZURE_BLOB_LEGAL_HOLD_POLICY_CONFIRMED=true`
+- `DARWIN_AZURE_BLOB_BACKUP_CONFIGURED_CONFIRMED=true`
+- `DARWIN_AZURE_BLOB_RESTORE_TEST_CONFIRMED=true`
+- `DARWIN_AZURE_BLOB_MONITORING_CONFIRMED=true`
+- `DARWIN_AZURE_BLOB_ALERTING_CONFIRMED=true`
+- `DARWIN_AZURE_BLOB_DARWIN_PROFILE_CONFIGURED_CONFIRMED=true`
+- `DARWIN_AZURE_BLOB_INVOICE_ARCHIVE_PROFILE_CONFIRMED=true`
+- `DARWIN_AZURE_BLOB_SHIPMENT_LABELS_PROFILE_CONFIRMED=true`
+- `DARWIN_AZURE_BLOB_MEDIA_ASSETS_PROFILE_DECIDED_CONFIRMED=true`
+- `DARWIN_AZURE_BLOB_FINANCE_EXPORTS_PROFILE_CONFIRMED=true`
+- `DARWIN_AZURE_BLOB_FINANCE_EXPORT_OUTBOUND_PROFILE_CONFIRMED=true`
+- `DARWIN_AZURE_BLOB_PERSONNEL_DOCUMENTS_PROFILE_CONFIRMED=true`
+- `DARWIN_AZURE_BLOB_PAYROLL_PAYSLIPS_PROFILE_CONFIRMED=true`
+- `DARWIN_AZURE_BLOB_DISPOSABLE_SMOKE_PREFIX_CONFIRMED=true`
+- `DARWIN_AZURE_BLOB_RETENTION_DELETE_BEHAVIOR_CONFIRMED=true`
+- `DARWIN_AZURE_BLOB_OPERATOR_RUNBOOK_CONFIRMED=true`
+
+Command:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\check-azure-object-storage-readiness.ps1
 ```
 
 Acceptance:
@@ -270,24 +341,121 @@ Optional variables:
 
 Production configuration should set `Compliance:EInvoice:ExternalCommand:RequireValidationReport=true` so generated artifacts are rejected unless the selected tool writes a recognized positive validation report.
 
+Production readiness variables:
+
+- `DARWIN_EINVOICE_TOOLING_REFERENCE`
+- `DARWIN_EINVOICE_EVIDENCE_PACKAGE_REFERENCE`
+
+Production readiness confirmations:
+
+- `DARWIN_EINVOICE_TOOLING_PINNED_CONFIRMED=true`
+- `DARWIN_EINVOICE_REQUIRE_VALIDATION_REPORT_CONFIRMED=true`
+- `DARWIN_EINVOICE_ARCHIVE_RETENTION_CONFIRMED=true`
+- `DARWIN_EINVOICE_ZUGFERD_FIXTURES_APPROVED_CONFIRMED=true`
+- `DARWIN_EINVOICE_ZUGFERD_ARTIFACT_GENERATED_CONFIRMED=true`
+- `DARWIN_EINVOICE_ZUGFERD_VALIDATION_REPORT_CONFIRMED=true`
+- `DARWIN_EINVOICE_ZUGFERD_STORAGE_DOWNLOAD_SMOKE_CONFIRMED=true`
+- `DARWIN_EINVOICE_ZUGFERD_ACCOUNTING_SIGNOFF_CONFIRMED=true`
+- `DARWIN_EINVOICE_XRECHNUNG_FIXTURES_APPROVED_CONFIRMED=true`
+- `DARWIN_EINVOICE_XRECHNUNG_ARTIFACT_GENERATED_CONFIRMED=true`
+- `DARWIN_EINVOICE_XRECHNUNG_VALIDATION_REPORT_CONFIRMED=true`
+- `DARWIN_EINVOICE_XRECHNUNG_STORAGE_DOWNLOAD_SMOKE_CONFIRMED=true`
+- `DARWIN_EINVOICE_XRECHNUNG_ACCOUNTING_SIGNOFF_CONFIRMED=true`
+
 Commands:
 
 ```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\check-einvoice-production-readiness.ps1
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\smoke-einvoice-external-command.ps1
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\smoke-einvoice-external-command.ps1 -Execute
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\smoke-einvoice-external-command.ps1 -Execute -RequireValidationReport
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\smoke-einvoice-external-command.ps1 -Format XRechnung -Execute
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\smoke-einvoice-external-command.ps1 -Format XRechnung -Execute -RequireValidationReport
 ```
 
 For the repository-local Mustangproject wrapper, set `DARWIN_EINVOICE_COMMAND_PATH` to an absolute path for `scripts\mustang-einvoice-wrapper.cmd`. Run `scripts\install-mustang-cli.ps1` first if the pinned local jar is missing.
 
 Acceptance:
 
+- The production preflight confirms non-secret evidence references for both selected formats.
 - The adapter can call the approved wrapper.
 - Output shape and validation-report handling pass.
+- ZUGFeRD/Factur-X and XRechnung both have fixture, validation-report, storage/download, and reviewer evidence before compliant rollout is claimed.
 - Smoke success does not by itself prove legal e-invoice compliance.
 
 ## Mobile Maps And Push
+
+Android is the first launch target. iOS and MacCatalyst follow after Android signed artifact, maps, push, Google sign-in where enabled, and device/camera smoke evidence is complete.
+
+Web storefront toolchain preflight:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\check-web-toolchain-readiness.ps1
+```
+
+This local check confirms `node` and `npm` are available before the solution-level build invokes the `Darwin.Web` Next.js build. It does not install packages, run `npm run build`, or accept registry credentials.
+
+Web storefront runtime/readiness preflight:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\check-web-storefront-readiness.ps1
+```
+
+Required non-secret URLs:
+
+- `DARWIN_WEBAPI_BASE_URL`
+- `DARWIN_WEB_SITE_URL`
+
+Required confirmations:
+
+- `DARWIN_WEB_STOREFRONT_BUILD_CONFIRMED=true`
+- `DARWIN_WEB_RUNTIME_CONFIG_SMOKE_CONFIRMED=true`
+- `DARWIN_WEB_PUBLIC_DISCOVERY_SMOKE_CONFIRMED=true`
+- `DARWIN_WEB_MEMBER_PORTAL_ROUTE_SMOKE_CONFIRMED=true`
+- `DARWIN_WEB_CHECKOUT_ROUTE_SMOKE_CONFIRMED=true`
+- `DARWIN_WEB_DEGRADED_API_LOG_REVIEWED_CONFIRMED=true`
+- `DARWIN_WEB_STAGING_OWNER_SIGNOFF_CONFIRMED=true`
+
+If the Web storefront is intentionally pointed at `https://api.loyan.de`, also set `DARWIN_WEB_DEFAULT_PRODUCTION_API_CONFIRMED=true`; otherwise production-like staging should use its own WebApi URL.
+
+Android readiness preflight:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\check-android-launch-readiness.ps1
+```
+
+Mobile resource naming readiness:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\check-mobile-resource-names.ps1
+```
+
+The resource-name check is local and deterministic. It blocks MAUI image, splash, and app-icon assets whose filenames are not lowercase alphanumeric or underscore names, before Android-first launch evidence is accepted.
+
+Required non-secret references:
+
+- `DARWIN_ANDROID_RELEASE_ARTIFACT_REFERENCE`
+- `DARWIN_ANDROID_VERSION_NAME`
+- `DARWIN_ANDROID_VERSION_CODE`
+
+Required confirmations:
+
+- `DARWIN_ANDROID_RELEASE_CHANNEL_CONFIRMED`
+- `DARWIN_ANDROID_SIGNING_PROFILE_CONFIRMED`
+- `DARWIN_ANDROID_SIGNED_ARTIFACT_CONFIRMED`
+- `DARWIN_ANDROID_MAPS_CONFIG_CONFIRMED`
+- `DARWIN_ANDROID_MAPS_KEY_RESTRICTIONS_CONFIRMED`
+- `DARWIN_ANDROID_FIREBASE_CONFIG_CONFIRMED`
+- `DARWIN_ANDROID_PUSH_SMOKE_CONFIRMED`
+- `DARWIN_ANDROID_CONSUMER_SMOKE_CONFIRMED`
+- `DARWIN_ANDROID_BUSINESS_SMOKE_CONFIRMED`
+- `DARWIN_ANDROID_CAMERA_QR_SMOKE_CONFIRMED`
+- `DARWIN_ANDROID_CLEAR_TEXT_GUARD_CONFIRMED`
+- `DARWIN_ANDROID_CERT_TRUST_GUARD_CONFIRMED`
+- `DARWIN_ANDROID_ROUTE_COMPATIBILITY_CONFIRMED`
+- `DARWIN_ANDROID_EVIDENCE_PACKAGE_CONFIRMED`
+
+When native Google sign-in is enabled, also set `DARWIN_ANDROID_GOOGLE_SIGN_IN_ENABLED=true` and require `DARWIN_ANDROID_GOOGLE_SIGN_IN_SMOKE_CONFIRMED=true`.
 
 Android maps:
 
@@ -305,6 +473,8 @@ iOS/MacCatalyst push:
 
 Acceptance:
 
-- Signed release builds include production mobile configuration.
-- Device smoke registers push tokens and verifies logout/account-switch behavior.
-- Physical camera QR scanning is validated with real device/camera input.
+- Signed Android release builds include production mobile configuration before Android launch.
+- `scripts\check-android-launch-readiness.ps1` passes in the deployment shell.
+- Android device smoke registers push tokens and verifies logout/account-switch behavior.
+- Android physical camera QR scanning is validated with real device/camera input.
+- iOS/MacCatalyst smoke uses the same acceptance rules after those launch targets enter scope.

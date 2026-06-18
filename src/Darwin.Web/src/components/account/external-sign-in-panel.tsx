@@ -119,8 +119,8 @@ export function ExternalSignInPanel({
 
     const google = window.google?.accounts?.id;
     if (!google) {
-      setError(labels.googleUnavailable);
-      return;
+      const timeoutId = window.setTimeout(() => setError(labels.googleUnavailable), 0);
+      return () => window.clearTimeout(timeoutId);
     }
 
     googleButtonRef.current.replaceChildren();

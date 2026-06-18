@@ -117,7 +117,7 @@ Latest local recheck:
 - Provider smoke command: `powershell -NoProfile -ExecutionPolicy Bypass -File scripts\smoke-object-storage.ps1 -Execute -SmokeRetention`
 - Provider smoke result: save/read/metadata checks completed through the S3-compatible provider path; temporary URL generation was available; cleanup was skipped because retention smoke was enabled.
 - Guarded smoke behavior: local loopback MinIO smoke can execute without production confirmation; production-like endpoints are blocked unless `DARWIN_OBJECT_STORAGE_PRODUCTION_SMOKE_CONFIRMED=true` or `-AllowProductionEndpoint` is supplied.
-- Production readiness preflight result: blocked until the real production endpoint, bucket, TLS, dedicated least-privilege keys, Object Lock, versioning, retention, legal-hold policy, backup, restore, monitoring, alerting, and Darwin profile confirmations are supplied. This is expected and prevents claiming production immutability from local smoke alone.
+- Production readiness preflight result: blocked until the real production endpoint, bucket, TLS, dedicated least-privilege keys, Object Lock, versioning, retention, legal-hold policy, backup, restore, monitoring, alerting, and all required Darwin object-storage profile confirmations are supplied. This includes `InvoiceArchive`, `ShipmentLabels`, `MediaAssets`, `FinanceExports`, `FinanceExportOutbound`, `PersonnelDocuments`, and `PayrollPayslips`. This is expected and prevents claiming production immutability from local smoke alone.
 
 ## WebAdmin Local Smoke Action
 

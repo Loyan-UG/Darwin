@@ -7,6 +7,7 @@ This checklist defines the repeatable steps for preparing a Darwin deployment fo
 Use this document together with:
 
 - [docs/production-setup.md](production-setup.md)
+- [docs/production-go-live-evidence-execution-plan.md](production-go-live-evidence-execution-plan.md)
 - [docs/external-smoke-inputs.md](external-smoke-inputs.md)
 - [docs/production-readiness-evidence-package.md](production-readiness-evidence-package.md)
 - [docs/go-live-status.md](go-live-status.md)
@@ -35,8 +36,8 @@ Use this document together with:
 - Confirm shipping provider scope and whether DHL live validation is in go-live scope.
 - Confirm communication provider scope and sender roles.
 - Confirm VAT/VIES policy: `Manual Review + Scheduled Retry` is the default for provider failures.
-- Confirm e-invoice scope: receive-only readiness, ZUGFeRD/Factur-X generation, XRechnung export, or deferred.
-- Confirm mobile store scope: Android only, Android+iOS, or broader.
+- Confirm e-invoice scope: compliant German rollout requires both ZUGFeRD/Factur-X and XRechnung evidence; receive-only or deferred generation must be an explicit deployment scope decision.
+- Confirm mobile store scope: Android first, then iOS, then MacCatalyst/follow-up platforms after Android evidence is complete.
 
 Manual approvals:
 
@@ -166,12 +167,13 @@ Manual approvals:
 
 ## Phase 6: Mobile Readiness
 
-- Configure Google Maps keys with package/bundle and signing restrictions.
-- Configure Firebase/APNS production push settings.
-- Validate Android/iOS/MacCatalyst signing profiles as required.
-- Run Consumer smoke: login, discovery, map, QR generation, profile/account flows.
-- Run Business smoke: login, access-state gate, home, scan tab, QR session handling.
-- Validate real camera QR scan with two devices or approved camera feed.
+- Configure Android Google Maps key with package and signing restrictions for first launch.
+- Configure Firebase production push settings for Android first; APNS follows when iOS enters launch scope.
+- Validate Android signing profile and release artifact first; iOS/MacCatalyst signing profiles follow after Android evidence is complete.
+- Run `scripts\check-android-launch-readiness.ps1` after signed artifact, maps, push, route, and device smoke evidence exists.
+- Run Android Consumer smoke: login, discovery, map, QR generation, profile/account flows.
+- Run Android Business smoke: login, access-state gate, home, scan tab, QR session handling.
+- Validate real Android camera QR scan with two devices or approved camera feed.
 - Confirm mobile apps do not use broad cleartext HTTP or unsafe Release certificate trust.
 
 Manual approvals:
@@ -197,7 +199,10 @@ Manual approvals:
 
 ## Phase 8: Final Verification
 
-- Create the deployment evidence package described in [docs/production-readiness-evidence-package.md](production-readiness-evidence-package.md).
+- Create the deployment evidence package described in [docs/production-readiness-evidence-package.md](production-readiness-evidence-package.md), using `scripts\new-production-readiness-evidence-package.ps1` when a fresh non-secret working copy is needed.
+- Complete the production-like staging rehearsal from [docs/production-go-live-evidence-execution-plan.md](production-go-live-evidence-execution-plan.md) before any production execution.
+- Run `scripts\check-production-like-staging-readiness.ps1` after staging build/test, migration, rollback, storage, provider, e-invoice, Android, monitoring, and owner sign-off evidence exists.
+- Validate the filled package with `scripts\check-production-readiness-evidence-package.ps1` before go-live approval.
 - Run focused build/test lanes for touched components.
 - Run `scripts\check-secrets.ps1`.
 - Run `git diff --check`.
@@ -215,4 +220,5 @@ Go-live is not complete until:
 - Backups and restore tests are complete.
 - Monitoring/alerting ownership is assigned.
 - Customer approvals are recorded outside source control.
-- The production readiness evidence package has an owner, a timestamped release/deployment reference, and no committed secrets or private payloads.
+- The production readiness evidence package has an owner, a timestamped release/deployment reference, a passing validation check, and no committed secrets or private payloads.
+- The production-like staging rehearsal row in the evidence package is complete and points to non-secret proof for migration, rollback, storage, e-invoice, Android, provider, monitoring, and owner approval checks.

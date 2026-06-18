@@ -233,6 +233,12 @@ public sealed class SecurityAndPerformanceContractsAndPackagingSourceTests : Sec
     public void ProviderSmokeScripts_Should_StayGuardedAndAvoidSecretOutput()
     {
         var externalSmokeInputsSource = ReadRepositoryFile(Path.Combine("docs", "external-smoke-inputs.md"));
+        var docsIndexSource = ReadRepositoryFile(Path.Combine("docs", "README.md"));
+        var onboardingChecklistSource = ReadRepositoryFile(Path.Combine("docs", "customer-deployment-onboarding-checklist.md"));
+        var evidencePackageSource = ReadRepositoryFile(Path.Combine("docs", "production-readiness-evidence-package.md"));
+        var executionPlanSource = ReadRepositoryFile(Path.Combine("docs", "production-go-live-evidence-execution-plan.md"));
+        var evidenceTemplateSource = ReadRepositoryFile(Path.Combine("docs", "templates", "production-readiness-evidence-package-template.md"));
+        var evidenceValidatorSource = ReadRepositoryFile(Path.Combine("scripts", "check-production-readiness-evidence-package.ps1"));
         var scripts = new[]
         {
             "smoke-stripe-testmode.ps1",
@@ -243,7 +249,16 @@ public sealed class SecurityAndPerformanceContractsAndPackagingSourceTests : Sec
             "smoke-brevo-readiness.ps1",
             "smoke-object-storage.ps1",
             "check-minio-production-readiness.ps1",
+            "check-azure-object-storage-readiness.ps1",
+            "check-production-like-staging-readiness.ps1",
             "smoke-einvoice-external-command.ps1",
+            "check-einvoice-production-readiness.ps1",
+            "check-web-toolchain-readiness.ps1",
+            "check-web-storefront-readiness.ps1",
+            "check-mobile-resource-names.ps1",
+            "check-android-launch-readiness.ps1",
+            "check-production-readiness-evidence-package.ps1",
+            "new-production-readiness-evidence-package.ps1",
             "check-go-live-readiness.ps1"
         };
 
@@ -283,9 +298,16 @@ public sealed class SecurityAndPerformanceContractsAndPackagingSourceTests : Sec
             .And.Contain("scripts\\smoke-brevo-readiness.ps1")
             .And.Contain("\"-RequireDeliveryPipeline\"")
             .And.Contain("scripts\\smoke-vies-live.ps1")
+            .And.Contain("scripts\\check-production-like-staging-readiness.ps1")
+            .And.Contain("scripts\\check-production-readiness-evidence-package.ps1")
             .And.Contain("scripts\\smoke-object-storage.ps1")
             .And.Contain("scripts\\check-minio-production-readiness.ps1")
+            .And.Contain("scripts\\check-einvoice-production-readiness.ps1")
             .And.Contain("scripts\\smoke-einvoice-external-command.ps1")
+            .And.Contain("scripts\\check-web-toolchain-readiness.ps1")
+            .And.Contain("scripts\\check-web-storefront-readiness.ps1")
+            .And.Contain("scripts\\check-mobile-resource-names.ps1")
+            .And.Contain("scripts\\check-android-launch-readiness.ps1")
             .And.Contain("docs\\archive-storage-provider-decision.md")
             .And.Contain("docs\\e-invoice-tooling-decision.md")
             .And.Contain("No option is selected yet\\.")
@@ -303,15 +325,41 @@ public sealed class SecurityAndPerformanceContractsAndPackagingSourceTests : Sec
         externalSmokeInputsSource.Should().Contain("DARWIN_OBJECT_STORAGE_PROVIDER");
         externalSmokeInputsSource.Should().Contain("DARWIN_OBJECT_STORAGE_S3_BUCKET");
         externalSmokeInputsSource.Should().Contain("DARWIN_OBJECT_STORAGE_AZURE_CONTAINER");
+        externalSmokeInputsSource.Should().Contain("DARWIN_STAGING_REHEARSAL_LABEL");
+        externalSmokeInputsSource.Should().Contain("DARWIN_STAGING_OWNER_SIGNOFF_CONFIRMED");
+        externalSmokeInputsSource.Should().Contain("DARWIN_PRODUCTION_READINESS_EVIDENCE_PACKAGE_PATH");
         externalSmokeInputsSource.Should().Contain("DARWIN_MINIO_PRODUCTION_ENDPOINT");
         externalSmokeInputsSource.Should().Contain("DARWIN_MINIO_BACKUP_CONFIGURED_CONFIRMED");
+        externalSmokeInputsSource.Should().Contain("DARWIN_AZURE_BLOB_PRODUCTION_ENDPOINT");
         externalSmokeInputsSource.Should().Contain("DARWIN_EINVOICE_COMMAND_PATH");
+        externalSmokeInputsSource.Should().Contain("DARWIN_EINVOICE_EVIDENCE_PACKAGE_REFERENCE");
+        externalSmokeInputsSource.Should().Contain("scripts\\check-web-toolchain-readiness.ps1");
+        externalSmokeInputsSource.Should().Contain("Web storefront toolchain preflight");
+        externalSmokeInputsSource.Should().Contain("scripts\\check-web-storefront-readiness.ps1");
+        externalSmokeInputsSource.Should().Contain("DARWIN_WEB_RUNTIME_CONFIG_SMOKE_CONFIRMED");
+        externalSmokeInputsSource.Should().Contain("DARWIN_WEB_DEFAULT_PRODUCTION_API_CONFIRMED");
+        externalSmokeInputsSource.Should().Contain("DARWIN_ANDROID_RELEASE_ARTIFACT_REFERENCE");
+        externalSmokeInputsSource.Should().Contain("scripts\\check-mobile-resource-names.ps1");
+        externalSmokeInputsSource.Should().Contain("Mobile resource naming readiness");
+        externalSmokeInputsSource.Should().Contain("production-like staging rehearsal");
         externalSmokeInputsSource.Should().Contain("Provider failures must remain `Unknown`");
         externalSmokeInputsSource.Should().NotContain("sk_live_");
         externalSmokeInputsSource.Should().NotContain("sk_test_");
         externalSmokeInputsSource.Should().NotContain("rk_live_");
         externalSmokeInputsSource.Should().NotContain("rk_test_");
         externalSmokeInputsSource.Should().NotContain("whsec_");
+
+        docsIndexSource.Should().Contain("production-go-live-evidence-execution-plan.md");
+        onboardingChecklistSource.Should().Contain("production-go-live-evidence-execution-plan.md");
+        onboardingChecklistSource.Should().Contain("production-like staging rehearsal row");
+        evidencePackageSource.Should().Contain("production-like staging rehearsal");
+        evidencePackageSource.Should().Contain("check-production-like-staging-readiness.ps1");
+        executionPlanSource.Should().Contain("production-like staging before real production");
+        executionPlanSource.Should().Contain("check-production-like-staging-readiness.ps1");
+        executionPlanSource.Should().Contain("file-delivery remains the production-safe path");
+        executionPlanSource.Should().Contain("SyncState and SyncConflict are foundation only");
+        evidenceTemplateSource.Should().Contain("Production-like staging rehearsal");
+        evidenceValidatorSource.Should().Contain("Production-like staging rehearsal");
 
         ReadRepositoryFile(Path.Combine("scripts", "smoke-stripe-testmode.ps1"))
             .Should()
@@ -484,10 +532,17 @@ public sealed class SecurityAndPerformanceContractsAndPackagingSourceTests : Sec
         output.Should().Contain("DHL live smoke prerequisites");
         output.Should().Contain("Brevo readiness smoke prerequisites");
         output.Should().Contain("VIES live smoke prerequisites");
+        output.Should().Contain("Production-like staging readiness prerequisites");
+        output.Should().Contain("Production readiness evidence package");
         output.Should().Contain("Object storage MediaAssets profile prerequisites");
         output.Should().Contain("Object storage ShipmentLabels profile prerequisites");
         output.Should().Contain("MinIO production readiness prerequisites");
+        output.Should().Contain("E-invoice production readiness prerequisites");
         output.Should().Contain("E-invoice external-command smoke prerequisites");
+        output.Should().Contain("Web toolchain readiness prerequisites");
+        output.Should().Contain("Web storefront readiness prerequisites");
+        output.Should().Contain("Mobile resource naming readiness prerequisites");
+        output.Should().Contain("Android launch readiness prerequisites");
         output.Should().NotContain("System.Management.Automation.RemoteException");
 
         var secretPattern = new Regex(@"\b(sk|rk)_(live|test)_[A-Za-z0-9]{12,}\b|\bwhsec_[A-Za-z0-9]{12,}\b", RegexOptions.IgnoreCase);
@@ -522,6 +577,8 @@ public sealed class SecurityAndPerformanceContractsAndPackagingSourceTests : Sec
             startInfo.Environment[item.Key] = item.Value;
         }
 
+        startInfo.Environment["PATH"] = $"{EnsureFakeWebToolchainPath()}{Path.PathSeparator}{startInfo.Environment["PATH"]}";
+
         using var process = Process.Start(startInfo) ?? throw new InvalidOperationException("Could not start go-live readiness script.");
         var stdoutTask = process.StandardOutput.ReadToEndAsync(TestContext.Current.CancellationToken);
         var stderrTask = process.StandardError.ReadToEndAsync(TestContext.Current.CancellationToken);
@@ -536,11 +593,18 @@ public sealed class SecurityAndPerformanceContractsAndPackagingSourceTests : Sec
         output.Should().Contain("DHL live smoke prerequisites: Ready");
         output.Should().Contain("Brevo readiness smoke prerequisites: Ready");
         output.Should().Contain("VIES live smoke prerequisites: Ready");
+        output.Should().Contain("Production-like staging readiness prerequisites: Ready");
+        output.Should().Contain("Production readiness evidence package: Ready");
         output.Should().Contain("Object storage smoke prerequisites: Ready");
         output.Should().Contain("Object storage MediaAssets profile prerequisites: Ready");
         output.Should().Contain("Object storage ShipmentLabels profile prerequisites: Ready");
         output.Should().Contain("MinIO production readiness prerequisites: Ready");
+        output.Should().Contain("E-invoice production readiness prerequisites: Ready");
         output.Should().Contain("E-invoice external-command smoke prerequisites: Ready");
+        output.Should().Contain("Web toolchain readiness prerequisites: Ready");
+        output.Should().Contain("Web storefront readiness prerequisites: Ready");
+        output.Should().Contain("Mobile resource naming readiness prerequisites: Ready");
+        output.Should().Contain("Android launch readiness prerequisites: Ready");
         output.Should().Contain("Invoice archive object-storage provider decision: Ready");
         output.Should().Contain("E-invoice tooling decision: Ready");
         output.Should().Contain("All local readiness checks are ready.");
@@ -559,7 +623,12 @@ public sealed class SecurityAndPerformanceContractsAndPackagingSourceTests : Sec
     [InlineData("smoke-vies-live.ps1", "VIES live smoke is blocked.")]
     [InlineData("smoke-object-storage.ps1", "Object storage smoke is blocked.")]
     [InlineData("check-minio-production-readiness.ps1", "MinIO production readiness is blocked.")]
+    [InlineData("check-azure-object-storage-readiness.ps1", "Azure Blob object-storage readiness is blocked.")]
+    [InlineData("check-production-like-staging-readiness.ps1", "Production-like staging readiness is blocked.")]
     [InlineData("smoke-einvoice-external-command.ps1", "E-invoice external-command smoke is blocked.")]
+    [InlineData("check-einvoice-production-readiness.ps1", "E-invoice production readiness is blocked.")]
+    [InlineData("check-web-storefront-readiness.ps1", "Web storefront readiness is blocked.")]
+    [InlineData("check-android-launch-readiness.ps1", "Android launch readiness is blocked.")]
     public async Task ProviderSmokeScripts_Should_BlockDryRunWhenPrerequisitesAreMissing(
         string scriptName,
         string expectedBlockedMessage)
@@ -599,6 +668,40 @@ public sealed class SecurityAndPerformanceContractsAndPackagingSourceTests : Sec
 
         var secretPattern = new Regex(@"\b(sk|rk)_(live|test)_[A-Za-z0-9]{12,}\b|\bwhsec_[A-Za-z0-9]{12,}\b", RegexOptions.IgnoreCase);
         secretPattern.IsMatch(output).Should().BeFalse($"{scriptName} dry-run output must not print provider secrets");
+    }
+
+    [Fact]
+    public async Task ProductionReadinessEvidencePackageScript_Should_ValidateFilledPackageAndRejectTemplatePlaceholders()
+    {
+        var root = ResolveRepositoryPath();
+        var filledPackagePath = EnsureFilledProductionReadinessEvidencePackage();
+        var templatePath = ResolveRepositoryPath("docs", "templates", "production-readiness-evidence-package-template.md");
+
+        var readyOutput = await RunPowerShellScriptAsync(
+            root,
+            "check-production-readiness-evidence-package.ps1",
+            new Dictionary<string, string>
+            {
+                ["DARWIN_PRODUCTION_READINESS_EVIDENCE_PACKAGE_PATH"] = filledPackagePath
+            });
+
+        readyOutput.ExitCode.Should().Be(0);
+        readyOutput.Output.Should().Contain("Production readiness evidence package validation passed.");
+        readyOutput.Output.Should().Contain("No placeholders or sensitive value patterns were detected.");
+
+        var blockedOutput = await RunPowerShellScriptAsync(
+            root,
+            "check-production-readiness-evidence-package.ps1",
+            new Dictionary<string, string>
+            {
+                ["DARWIN_PRODUCTION_READINESS_EVIDENCE_PACKAGE_PATH"] = templatePath
+            });
+
+        blockedOutput.ExitCode.Should().Be(2);
+        blockedOutput.Output.Should().Contain("Production readiness evidence package validation is blocked.");
+        blockedOutput.Output.Should().Contain("placeholder");
+        blockedOutput.Output.Should().Contain("Pending");
+        blockedOutput.Output.Should().NotContain("System.Management.Automation.RemoteException");
     }
 
     [Theory]
@@ -653,6 +756,11 @@ public sealed class SecurityAndPerformanceContractsAndPackagingSourceTests : Sec
         else if (string.Equals(scriptName, "check-minio-production-readiness.ps1", StringComparison.Ordinal))
         {
             output.Should().Contain("No MinIO access key, secret key");
+        }
+        else if (scriptName.StartsWith("check-", StringComparison.Ordinal))
+        {
+            output.Should().Contain("No ");
+            output.Should().Contain("accepted or printed");
         }
         else
         {
@@ -1699,9 +1807,68 @@ public sealed class SecurityAndPerformanceContractsAndPackagingSourceTests : Sec
                 ["DARWIN_MINIO_INVOICE_ARCHIVE_PROFILE_CONFIRMED"] = "true",
                 ["DARWIN_MINIO_SHIPMENT_LABELS_PROFILE_CONFIRMED"] = "true",
                 ["DARWIN_MINIO_MEDIA_ASSETS_PROFILE_DECIDED_CONFIRMED"] = "true",
+                ["DARWIN_MINIO_FINANCE_EXPORTS_PROFILE_CONFIRMED"] = "true",
+                ["DARWIN_MINIO_FINANCE_EXPORT_OUTBOUND_PROFILE_CONFIRMED"] = "true",
+                ["DARWIN_MINIO_PERSONNEL_DOCUMENTS_PROFILE_CONFIRMED"] = "true",
+                ["DARWIN_MINIO_PAYROLL_PAYSLIPS_PROFILE_CONFIRMED"] = "true",
                 ["DARWIN_MINIO_DISPOSABLE_SMOKE_PREFIX_CONFIRMED"] = "true",
                 ["DARWIN_MINIO_RETENTION_DELETE_BEHAVIOR_CONFIRMED"] = "true",
                 ["DARWIN_MINIO_OPERATOR_RUNBOOK_CONFIRMED"] = "true"
+            }
+        };
+
+        yield return new object[]
+        {
+            "check-azure-object-storage-readiness.ps1",
+            "Azure Blob object-storage readiness prerequisites are present.",
+            new Dictionary<string, string>
+            {
+                ["DARWIN_AZURE_BLOB_PRODUCTION_ENDPOINT"] = "https://storage.example.test",
+                ["DARWIN_AZURE_BLOB_PRODUCTION_CONTAINER"] = "darwin-invoice-archive",
+                ["DARWIN_AZURE_BLOB_PROVIDER_SELECTED_CONFIRMED"] = "true",
+                ["DARWIN_AZURE_BLOB_TLS_CONFIRMED"] = "true",
+                ["DARWIN_AZURE_BLOB_DEDICATED_IDENTITY_CONFIRMED"] = "true",
+                ["DARWIN_AZURE_BLOB_LEAST_PRIVILEGE_POLICY_CONFIRMED"] = "true",
+                ["DARWIN_AZURE_BLOB_VERSIONING_CONFIRMED"] = "true",
+                ["DARWIN_AZURE_BLOB_IMMUTABILITY_POLICY_CONFIRMED"] = "true",
+                ["DARWIN_AZURE_BLOB_LEGAL_HOLD_POLICY_CONFIRMED"] = "true",
+                ["DARWIN_AZURE_BLOB_BACKUP_CONFIGURED_CONFIRMED"] = "true",
+                ["DARWIN_AZURE_BLOB_RESTORE_TEST_CONFIRMED"] = "true",
+                ["DARWIN_AZURE_BLOB_MONITORING_CONFIRMED"] = "true",
+                ["DARWIN_AZURE_BLOB_ALERTING_CONFIRMED"] = "true",
+                ["DARWIN_AZURE_BLOB_DARWIN_PROFILE_CONFIGURED_CONFIRMED"] = "true",
+                ["DARWIN_AZURE_BLOB_INVOICE_ARCHIVE_PROFILE_CONFIRMED"] = "true",
+                ["DARWIN_AZURE_BLOB_SHIPMENT_LABELS_PROFILE_CONFIRMED"] = "true",
+                ["DARWIN_AZURE_BLOB_MEDIA_ASSETS_PROFILE_DECIDED_CONFIRMED"] = "true",
+                ["DARWIN_AZURE_BLOB_FINANCE_EXPORTS_PROFILE_CONFIRMED"] = "true",
+                ["DARWIN_AZURE_BLOB_FINANCE_EXPORT_OUTBOUND_PROFILE_CONFIRMED"] = "true",
+                ["DARWIN_AZURE_BLOB_PERSONNEL_DOCUMENTS_PROFILE_CONFIRMED"] = "true",
+                ["DARWIN_AZURE_BLOB_PAYROLL_PAYSLIPS_PROFILE_CONFIRMED"] = "true",
+                ["DARWIN_AZURE_BLOB_DISPOSABLE_SMOKE_PREFIX_CONFIRMED"] = "true",
+                ["DARWIN_AZURE_BLOB_RETENTION_DELETE_BEHAVIOR_CONFIRMED"] = "true",
+                ["DARWIN_AZURE_BLOB_OPERATOR_RUNBOOK_CONFIRMED"] = "true"
+            }
+        };
+
+        yield return new object[]
+        {
+            "check-production-like-staging-readiness.ps1",
+            "Production-like staging readiness prerequisites are present.",
+            new Dictionary<string, string>
+            {
+                ["DARWIN_STAGING_REHEARSAL_LABEL"] = "production-like-staging",
+                ["DARWIN_STAGING_RELEASE_REFERENCE"] = "release-ref-001",
+                ["DARWIN_STAGING_EVIDENCE_REFERENCE"] = "staging-evidence-ref-001",
+                ["DARWIN_STAGING_BUILD_TESTS_CONFIRMED"] = "true",
+                ["DARWIN_STAGING_MIGRATION_REHEARSAL_CONFIRMED"] = "true",
+                ["DARWIN_STAGING_ROLLBACK_REHEARSAL_CONFIRMED"] = "true",
+                ["DARWIN_STAGING_DATABASE_BACKUP_RESTORE_CONFIRMED"] = "true",
+                ["DARWIN_STAGING_OBJECT_STORAGE_PREFLIGHTS_CONFIRMED"] = "true",
+                ["DARWIN_STAGING_PROVIDER_PREFLIGHTS_CONFIRMED"] = "true",
+                ["DARWIN_STAGING_EINVOICE_EVIDENCE_CONFIRMED"] = "true",
+                ["DARWIN_STAGING_ANDROID_EVIDENCE_CONFIRMED"] = "true",
+                ["DARWIN_STAGING_MONITORING_ALERTING_CONFIRMED"] = "true",
+                ["DARWIN_STAGING_OWNER_SIGNOFF_CONFIRMED"] = "true"
             }
         };
 
@@ -1712,6 +1879,91 @@ public sealed class SecurityAndPerformanceContractsAndPackagingSourceTests : Sec
             new Dictionary<string, string>
             {
                 ["DARWIN_EINVOICE_COMMAND_PATH"] = Environment.ProcessPath ?? "powershell.exe"
+            }
+        };
+
+        yield return new object[]
+        {
+            "check-einvoice-production-readiness.ps1",
+            "E-invoice production readiness prerequisites are present for ZUGFeRD/Factur-X and XRechnung.",
+            new Dictionary<string, string>
+            {
+                ["DARWIN_EINVOICE_TOOLING_REFERENCE"] = "tooling-checksum-ref-001",
+                ["DARWIN_EINVOICE_EVIDENCE_PACKAGE_REFERENCE"] = "evidence-package-ref-001",
+                ["DARWIN_EINVOICE_TOOLING_PINNED_CONFIRMED"] = "true",
+                ["DARWIN_EINVOICE_REQUIRE_VALIDATION_REPORT_CONFIRMED"] = "true",
+                ["DARWIN_EINVOICE_ARCHIVE_RETENTION_CONFIRMED"] = "true",
+                ["DARWIN_EINVOICE_ZUGFERD_FIXTURES_APPROVED_CONFIRMED"] = "true",
+                ["DARWIN_EINVOICE_ZUGFERD_ARTIFACT_GENERATED_CONFIRMED"] = "true",
+                ["DARWIN_EINVOICE_ZUGFERD_VALIDATION_REPORT_CONFIRMED"] = "true",
+                ["DARWIN_EINVOICE_ZUGFERD_STORAGE_DOWNLOAD_SMOKE_CONFIRMED"] = "true",
+                ["DARWIN_EINVOICE_ZUGFERD_ACCOUNTING_SIGNOFF_CONFIRMED"] = "true",
+                ["DARWIN_EINVOICE_XRECHNUNG_FIXTURES_APPROVED_CONFIRMED"] = "true",
+                ["DARWIN_EINVOICE_XRECHNUNG_ARTIFACT_GENERATED_CONFIRMED"] = "true",
+                ["DARWIN_EINVOICE_XRECHNUNG_VALIDATION_REPORT_CONFIRMED"] = "true",
+                ["DARWIN_EINVOICE_XRECHNUNG_STORAGE_DOWNLOAD_SMOKE_CONFIRMED"] = "true",
+                ["DARWIN_EINVOICE_XRECHNUNG_ACCOUNTING_SIGNOFF_CONFIRMED"] = "true"
+            }
+        };
+
+        yield return new object[]
+        {
+            "check-web-toolchain-readiness.ps1",
+            "Web toolchain readiness prerequisites are present.",
+            new Dictionary<string, string>
+            {
+                ["PATH"] = $"{EnsureFakeWebToolchainPath()}{Path.PathSeparator}{Environment.GetEnvironmentVariable("PATH")}"
+            }
+        };
+
+        yield return new object[]
+        {
+            "check-web-storefront-readiness.ps1",
+            "Web storefront readiness prerequisites are present.",
+            new Dictionary<string, string>
+            {
+                ["DARWIN_WEBAPI_BASE_URL"] = "https://api.staging.example.test",
+                ["DARWIN_WEB_SITE_URL"] = "https://web.staging.example.test",
+                ["DARWIN_WEB_STOREFRONT_BUILD_CONFIRMED"] = "true",
+                ["DARWIN_WEB_RUNTIME_CONFIG_SMOKE_CONFIRMED"] = "true",
+                ["DARWIN_WEB_PUBLIC_DISCOVERY_SMOKE_CONFIRMED"] = "true",
+                ["DARWIN_WEB_MEMBER_PORTAL_ROUTE_SMOKE_CONFIRMED"] = "true",
+                ["DARWIN_WEB_CHECKOUT_ROUTE_SMOKE_CONFIRMED"] = "true",
+                ["DARWIN_WEB_DEGRADED_API_LOG_REVIEWED_CONFIRMED"] = "true",
+                ["DARWIN_WEB_STAGING_OWNER_SIGNOFF_CONFIRMED"] = "true"
+            }
+        };
+
+        yield return new object[]
+        {
+            "check-mobile-resource-names.ps1",
+            "Mobile resource naming readiness prerequisites are present.",
+            new Dictionary<string, string>()
+        };
+
+        yield return new object[]
+        {
+            "check-android-launch-readiness.ps1",
+            "Android launch readiness prerequisites are present.",
+            new Dictionary<string, string>
+            {
+                ["DARWIN_ANDROID_RELEASE_ARTIFACT_REFERENCE"] = "android-artifact-ref-001",
+                ["DARWIN_ANDROID_VERSION_NAME"] = "1.0.0",
+                ["DARWIN_ANDROID_VERSION_CODE"] = "100",
+                ["DARWIN_ANDROID_RELEASE_CHANNEL_CONFIRMED"] = "true",
+                ["DARWIN_ANDROID_SIGNING_PROFILE_CONFIRMED"] = "true",
+                ["DARWIN_ANDROID_SIGNED_ARTIFACT_CONFIRMED"] = "true",
+                ["DARWIN_ANDROID_MAPS_CONFIG_CONFIRMED"] = "true",
+                ["DARWIN_ANDROID_MAPS_KEY_RESTRICTIONS_CONFIRMED"] = "true",
+                ["DARWIN_ANDROID_FIREBASE_CONFIG_CONFIRMED"] = "true",
+                ["DARWIN_ANDROID_PUSH_SMOKE_CONFIRMED"] = "true",
+                ["DARWIN_ANDROID_CONSUMER_SMOKE_CONFIRMED"] = "true",
+                ["DARWIN_ANDROID_BUSINESS_SMOKE_CONFIRMED"] = "true",
+                ["DARWIN_ANDROID_CAMERA_QR_SMOKE_CONFIRMED"] = "true",
+                ["DARWIN_ANDROID_CLEAR_TEXT_GUARD_CONFIRMED"] = "true",
+                ["DARWIN_ANDROID_CERT_TRUST_GUARD_CONFIRMED"] = "true",
+                ["DARWIN_ANDROID_ROUTE_COMPATIBILITY_CONFIRMED"] = "true",
+                ["DARWIN_ANDROID_EVIDENCE_PACKAGE_CONFIRMED"] = "true"
             }
         };
     }
@@ -1766,6 +2018,29 @@ public sealed class SecurityAndPerformanceContractsAndPackagingSourceTests : Sec
             ["DARWIN_OBJECT_STORAGE_PROVIDER"] = "FileSystem",
             ["DARWIN_OBJECT_STORAGE_CONTAINER"] = "smoke",
             ["DARWIN_OBJECT_STORAGE_FILE_ROOT"] = Path.Combine(Path.GetTempPath(), "darwin-object-storage-ready-dry-run"),
+            ["DARWIN_STAGING_REHEARSAL_LABEL"] = "production-like-staging",
+            ["DARWIN_STAGING_RELEASE_REFERENCE"] = "release-ref-001",
+            ["DARWIN_STAGING_EVIDENCE_REFERENCE"] = "staging-evidence-ref-001",
+            ["DARWIN_STAGING_BUILD_TESTS_CONFIRMED"] = "true",
+            ["DARWIN_STAGING_MIGRATION_REHEARSAL_CONFIRMED"] = "true",
+            ["DARWIN_STAGING_ROLLBACK_REHEARSAL_CONFIRMED"] = "true",
+            ["DARWIN_STAGING_DATABASE_BACKUP_RESTORE_CONFIRMED"] = "true",
+            ["DARWIN_STAGING_OBJECT_STORAGE_PREFLIGHTS_CONFIRMED"] = "true",
+            ["DARWIN_STAGING_PROVIDER_PREFLIGHTS_CONFIRMED"] = "true",
+            ["DARWIN_STAGING_EINVOICE_EVIDENCE_CONFIRMED"] = "true",
+            ["DARWIN_STAGING_ANDROID_EVIDENCE_CONFIRMED"] = "true",
+            ["DARWIN_STAGING_MONITORING_ALERTING_CONFIRMED"] = "true",
+            ["DARWIN_STAGING_OWNER_SIGNOFF_CONFIRMED"] = "true",
+            ["DARWIN_WEBAPI_BASE_URL"] = "https://api.staging.example.test",
+            ["DARWIN_WEB_SITE_URL"] = "https://web.staging.example.test",
+            ["DARWIN_WEB_STOREFRONT_BUILD_CONFIRMED"] = "true",
+            ["DARWIN_WEB_RUNTIME_CONFIG_SMOKE_CONFIRMED"] = "true",
+            ["DARWIN_WEB_PUBLIC_DISCOVERY_SMOKE_CONFIRMED"] = "true",
+            ["DARWIN_WEB_MEMBER_PORTAL_ROUTE_SMOKE_CONFIRMED"] = "true",
+            ["DARWIN_WEB_CHECKOUT_ROUTE_SMOKE_CONFIRMED"] = "true",
+            ["DARWIN_WEB_DEGRADED_API_LOG_REVIEWED_CONFIRMED"] = "true",
+            ["DARWIN_WEB_STAGING_OWNER_SIGNOFF_CONFIRMED"] = "true",
+            ["DARWIN_PRODUCTION_READINESS_EVIDENCE_PACKAGE_PATH"] = EnsureFilledProductionReadinessEvidencePackage(),
             ["DARWIN_MINIO_PRODUCTION_ENDPOINT"] = "https://minio.example.test",
             ["DARWIN_MINIO_PRODUCTION_BUCKET"] = "darwin-invoice-archive",
             ["DARWIN_MINIO_PRODUCTION_PROVIDER_SELECTED_CONFIRMED"] = "true",
@@ -1785,11 +2060,113 @@ public sealed class SecurityAndPerformanceContractsAndPackagingSourceTests : Sec
             ["DARWIN_MINIO_INVOICE_ARCHIVE_PROFILE_CONFIRMED"] = "true",
             ["DARWIN_MINIO_SHIPMENT_LABELS_PROFILE_CONFIRMED"] = "true",
             ["DARWIN_MINIO_MEDIA_ASSETS_PROFILE_DECIDED_CONFIRMED"] = "true",
+            ["DARWIN_MINIO_FINANCE_EXPORTS_PROFILE_CONFIRMED"] = "true",
+            ["DARWIN_MINIO_FINANCE_EXPORT_OUTBOUND_PROFILE_CONFIRMED"] = "true",
+            ["DARWIN_MINIO_PERSONNEL_DOCUMENTS_PROFILE_CONFIRMED"] = "true",
+            ["DARWIN_MINIO_PAYROLL_PAYSLIPS_PROFILE_CONFIRMED"] = "true",
             ["DARWIN_MINIO_DISPOSABLE_SMOKE_PREFIX_CONFIRMED"] = "true",
             ["DARWIN_MINIO_RETENTION_DELETE_BEHAVIOR_CONFIRMED"] = "true",
             ["DARWIN_MINIO_OPERATOR_RUNBOOK_CONFIRMED"] = "true",
-            ["DARWIN_EINVOICE_COMMAND_PATH"] = Environment.ProcessPath ?? "powershell.exe"
+            ["DARWIN_EINVOICE_TOOLING_REFERENCE"] = "tooling-checksum-ref-001",
+            ["DARWIN_EINVOICE_EVIDENCE_PACKAGE_REFERENCE"] = "evidence-package-ref-001",
+            ["DARWIN_EINVOICE_TOOLING_PINNED_CONFIRMED"] = "true",
+            ["DARWIN_EINVOICE_REQUIRE_VALIDATION_REPORT_CONFIRMED"] = "true",
+            ["DARWIN_EINVOICE_ARCHIVE_RETENTION_CONFIRMED"] = "true",
+            ["DARWIN_EINVOICE_ZUGFERD_FIXTURES_APPROVED_CONFIRMED"] = "true",
+            ["DARWIN_EINVOICE_ZUGFERD_ARTIFACT_GENERATED_CONFIRMED"] = "true",
+            ["DARWIN_EINVOICE_ZUGFERD_VALIDATION_REPORT_CONFIRMED"] = "true",
+            ["DARWIN_EINVOICE_ZUGFERD_STORAGE_DOWNLOAD_SMOKE_CONFIRMED"] = "true",
+            ["DARWIN_EINVOICE_ZUGFERD_ACCOUNTING_SIGNOFF_CONFIRMED"] = "true",
+            ["DARWIN_EINVOICE_XRECHNUNG_FIXTURES_APPROVED_CONFIRMED"] = "true",
+            ["DARWIN_EINVOICE_XRECHNUNG_ARTIFACT_GENERATED_CONFIRMED"] = "true",
+            ["DARWIN_EINVOICE_XRECHNUNG_VALIDATION_REPORT_CONFIRMED"] = "true",
+            ["DARWIN_EINVOICE_XRECHNUNG_STORAGE_DOWNLOAD_SMOKE_CONFIRMED"] = "true",
+            ["DARWIN_EINVOICE_XRECHNUNG_ACCOUNTING_SIGNOFF_CONFIRMED"] = "true",
+            ["DARWIN_EINVOICE_COMMAND_PATH"] = Environment.ProcessPath ?? "powershell.exe",
+            ["DARWIN_ANDROID_RELEASE_ARTIFACT_REFERENCE"] = "android-artifact-ref-001",
+            ["DARWIN_ANDROID_VERSION_NAME"] = "1.0.0",
+            ["DARWIN_ANDROID_VERSION_CODE"] = "100",
+            ["DARWIN_ANDROID_RELEASE_CHANNEL_CONFIRMED"] = "true",
+            ["DARWIN_ANDROID_SIGNING_PROFILE_CONFIRMED"] = "true",
+            ["DARWIN_ANDROID_SIGNED_ARTIFACT_CONFIRMED"] = "true",
+            ["DARWIN_ANDROID_MAPS_CONFIG_CONFIRMED"] = "true",
+            ["DARWIN_ANDROID_MAPS_KEY_RESTRICTIONS_CONFIRMED"] = "true",
+            ["DARWIN_ANDROID_FIREBASE_CONFIG_CONFIRMED"] = "true",
+            ["DARWIN_ANDROID_PUSH_SMOKE_CONFIRMED"] = "true",
+            ["DARWIN_ANDROID_CONSUMER_SMOKE_CONFIRMED"] = "true",
+            ["DARWIN_ANDROID_BUSINESS_SMOKE_CONFIRMED"] = "true",
+            ["DARWIN_ANDROID_CAMERA_QR_SMOKE_CONFIRMED"] = "true",
+            ["DARWIN_ANDROID_CLEAR_TEXT_GUARD_CONFIRMED"] = "true",
+            ["DARWIN_ANDROID_CERT_TRUST_GUARD_CONFIRMED"] = "true",
+            ["DARWIN_ANDROID_ROUTE_COMPATIBILITY_CONFIRMED"] = "true",
+            ["DARWIN_ANDROID_EVIDENCE_PACKAGE_CONFIRMED"] = "true"
         };
+
+    private static string EnsureFakeWebToolchainPath()
+    {
+        var directory = Path.Combine(Path.GetTempPath(), "darwin-web-toolchain-ready-dry-run");
+        Directory.CreateDirectory(directory);
+        File.WriteAllText(Path.Combine(directory, "node.cmd"), "@echo v24.14.0\r\n");
+        File.WriteAllText(Path.Combine(directory, "npm.cmd"), "@echo 10.9.2\r\n");
+        return directory;
+    }
+
+    private static async Task<(int ExitCode, string Output)> RunPowerShellScriptAsync(
+        string root,
+        string scriptName,
+        IReadOnlyDictionary<string, string> environment)
+    {
+        var startInfo = new ProcessStartInfo
+        {
+            FileName = "powershell",
+            WorkingDirectory = root,
+            RedirectStandardOutput = true,
+            RedirectStandardError = true,
+            UseShellExecute = false
+        };
+        startInfo.ArgumentList.Add("-NoProfile");
+        startInfo.ArgumentList.Add("-ExecutionPolicy");
+        startInfo.ArgumentList.Add("Bypass");
+        startInfo.ArgumentList.Add("-File");
+        startInfo.ArgumentList.Add(Path.Combine("scripts", scriptName));
+
+        foreach (var key in startInfo.Environment.Keys.Cast<string>()
+                     .Where(key => key.StartsWith("DARWIN_", StringComparison.OrdinalIgnoreCase)).ToList())
+        {
+            startInfo.Environment.Remove(key);
+        }
+
+        foreach (var item in environment)
+        {
+            startInfo.Environment[item.Key] = item.Value;
+        }
+
+        using var process = Process.Start(startInfo) ?? throw new InvalidOperationException($"Could not start {scriptName}.");
+        var stdoutTask = process.StandardOutput.ReadToEndAsync(TestContext.Current.CancellationToken);
+        var stderrTask = process.StandardError.ReadToEndAsync(TestContext.Current.CancellationToken);
+
+        await process.WaitForExitAsync(TestContext.Current.CancellationToken);
+        return (process.ExitCode, $"{await stdoutTask}{Environment.NewLine}{await stderrTask}");
+    }
+
+    private static string EnsureFilledProductionReadinessEvidencePackage()
+    {
+        var path = Path.Combine(Path.GetTempPath(), "darwin-production-readiness-evidence-package-ready.md");
+        var content = ReadRepositoryFile(Path.Combine("docs", "templates", "production-readiness-evidence-package-template.md"));
+
+        content = content
+            .Replace("{{DEPLOYMENT_LABEL}}", "production-readiness-test", StringComparison.Ordinal)
+            .Replace("{{RELEASE_REFERENCE}}", "release-ref-001", StringComparison.Ordinal)
+            .Replace("{{PREPARED_AT_UTC}}", "2026-06-17T00:00:00Z", StringComparison.Ordinal)
+            .Replace("{{PREPARED_BY}}", "Darwin technical owner", StringComparison.Ordinal)
+            .Replace("Pending operator entry", "Evidence reference REF-001", StringComparison.Ordinal)
+            .Replace("| Pending |", "| Ready |", StringComparison.Ordinal)
+            .Replace("| Pending", "| Ready", StringComparison.Ordinal)
+            .Replace("Pending |", "Ready |", StringComparison.Ordinal);
+
+        File.WriteAllText(path, content);
+        return path;
+    }
 
     [Fact]
     public void RepositoryDocsAndOperationalScripts_Should_AvoidAssistantMentionsAndCommittedSecretPatterns()
@@ -1906,7 +2283,7 @@ public sealed class SecurityAndPerformanceContractsAndPackagingSourceTests : Sec
         applicationSources.Should().NotContain(source => source.Contains("AmazonS3", StringComparison.Ordinal));
 
         providerDecisionSource.Should().Contain("Production provider direction is now selected");
-        providerDecisionSource.Should().Contain("MinIO as the recommended self-hosted production target");
+        providerDecisionSource.Should().Contain("MinIO as the first production target");
         providerDecisionSource.Should().Contain("Immutable retention or legal hold support");
         providerDecisionSource.Should().Contain("Audit logs for create, read, retention-policy change, legal-hold change, and delete/purge attempts.");
         providerDecisionSource.Should().Contain("Darwin must connect to MinIO through the generic S3-compatible provider.");

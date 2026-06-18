@@ -90,6 +90,6 @@ The goal is to lock the professional HR and time-tracking boundaries before addi
 ## Documentation Verification
 
 - `docs/README.md` links this document from the ERP expansion map.
-- `BACKLOG.md` and `erp-expansion-master-status.md` record employee payslip self-service core as complete and move the next implementation gate to `AI-Readiness And Automation Governance`.
+- `BACKLOG.md` and `erp-expansion-master-status.md` record employee payslip self-service core and AI governance as complete, with production go-live evidence execution as the current implementation gate.
 - This document contains no deferred ambiguous decisions for the first HR implementation slice.
 - Restricted vendor/source scans must return no output.

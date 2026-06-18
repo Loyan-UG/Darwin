@@ -79,7 +79,7 @@ The goal is to lock the professional legal payroll boundary before implementatio
 - Payroll provider adapter boundary design is complete for the current phase.
 - Provider submission remains blocked until a real provider target and credential/error contract exist.
 - Employee payslip self-service boundary design and core implementation are complete for the current phase.
-- The next gate is `AI-Readiness And Automation Governance`.
+- AI readiness and automation governance are complete for the current phase. The current gate is production go-live evidence execution unless a real payroll provider target is selected first.
 - Public WebApi, mobile/member, storefront, customer invoice archive/download, finance export package format, supplier finance, customer payment/refund, and invoice archive/download behavior remain unchanged.
 
 ## Compatibility Guards
@@ -93,6 +93,6 @@ The goal is to lock the professional legal payroll boundary before implementatio
 ## Documentation Verification
 
 - `docs/README.md` links this document from the ERP expansion map.
-- `BACKLOG.md` and `erp-expansion-master-status.md` record employee payslip self-service core as complete and move the next gate to `AI-Readiness And Automation Governance`.
+- `BACKLOG.md` and `erp-expansion-master-status.md` record employee payslip self-service core and AI governance as complete, with production go-live evidence execution as the current gate.
 - This document contains no deferred ambiguous decisions for the legal payroll boundary.
 - Restricted vendor/source scans must return no output.

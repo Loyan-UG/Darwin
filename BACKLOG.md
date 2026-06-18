@@ -1,6 +1,6 @@
 # Darwin Backlog
 
-Reviewed: 2026-06-15
+Reviewed: 2026-06-17
 
 This is the active roadmap. Historical implementation notes belong in [docs/implementation-ledger.md](docs/implementation-ledger.md). Code-backed readiness belongs in [docs/go-live-status.md](docs/go-live-status.md) and [docs/module-audit.md](docs/module-audit.md).
 
@@ -12,9 +12,9 @@ These items require external credentials, deployment configuration, provider acc
 - `DHL live validation`: the real client path, provider-operation queue, label persistence, return-label queueing, callback ingestion, WebAdmin recovery surfaces, and focused internal DHL/shipping tests exist. Final account, billing, product-code, shipper/receiver, label, tracking, and return-label validation remain blocked until complete DHL account data is available.
 - `Brevo production operations`: DB-backed email routing, role sender addresses, masked credentials, webhook Basic Auth, branded HTML templates, Site Settings-backed smoke loading, and callback processing exist. Production still needs ongoing inbox-placement checks, DNS/template monitoring, webhook delivery monitoring, and operational alert ownership.
 - `VAT/VIES production monitoring`: controlled valid/invalid/provider-failure live smoke passed, provider-failure mapping remains guarded, and `Manual Review + Scheduled Retry` is implemented. Production still needs periodic smoke ownership and monitoring of the manual-review queue and critical retry alerts.
-- `Production object storage`: MinIO is the recommended self-hosted target through the S3-compatible provider; AWS S3 and Azure Blob are alternatives. Local MinIO smoke passed again on 2026-05-27 and production-like provider smoke now requires explicit operator confirmation for profiles, disposable prefix, retention/delete behavior, and runbook ownership. The production readiness evidence package is documented, but production archive immutability is blocked until the real provider has TLS, dedicated least-privilege keys, versioning, Object Lock or equivalent retention/legal hold, backup, restore testing, monitoring, selected-provider smoke, and recorded deployment evidence.
-- `E-invoice compliance`: structured invoice source-model JSON, minimum source-readiness validation, and a provider-neutral `IEInvoiceGenerationService` boundary now exist. The first tooling path is selected as Mustangproject CLI through the external-command adapter, and local adapter smoke passed for XRechnung XML plus ZUGFeRD/Factur-X PDF artifact shape with required validation reports on 2026-05-27. German acceptance, customer rollout, and production readiness evidence package rules are documented, but full ZUGFeRD/Factur-X compliance is blocked until deterministic/legal validation fixtures, production artifact download/storage smoke, and operator/legal sign-off are complete. XRechnung remains secondary unless a deployment requires it earlier.
-- `Mobile store launch`: implemented Consumer and Business workflows are guarded and usable, but signed Android/iOS/MacCatalyst release artifacts, production Google Maps/Firebase/APNS configuration, push/device smoke, physical camera QR validation, and broader device UI coverage remain required.
+- `Production object storage`: MinIO is the selected first production target through the S3-compatible provider; Azure Blob remains the next provider-hardening target after MinIO evidence is complete, and AWS S3 remains a supported alternative. Local MinIO smoke passed again on 2026-05-27 and production-like provider smoke now requires explicit operator confirmation for profiles, disposable prefix, retention/delete behavior, and runbook ownership. The production readiness evidence package is documented and has a local validation script, but production archive immutability is blocked until the real provider has TLS, dedicated least-privilege keys, versioning, Object Lock or equivalent retention/legal hold, backup, restore testing, monitoring, selected-provider smoke, and recorded deployment evidence.
+- `E-invoice compliance`: structured invoice source-model JSON, minimum source-readiness validation, and a provider-neutral `IEInvoiceGenerationService` boundary now exist. The first tooling path is selected as Mustangproject CLI through the external-command adapter, and local adapter smoke passed for XRechnung XML plus ZUGFeRD/Factur-X PDF artifact shape with required validation reports on 2026-05-27. German acceptance, customer rollout, and production readiness evidence package rules are documented. ZUGFeRD/Factur-X and XRechnung must both be production-ready before compliant e-invoice rollout is treated as complete. Full compliance is blocked until deterministic/legal validation fixtures, production artifact download/storage smoke, and operator/legal sign-off are complete for both formats.
+- `Mobile store launch`: Android is the selected first launch target. Implemented Consumer and Business workflows are guarded and usable, but signed Android release artifacts, production Google Maps/Firebase configuration, push/device smoke, physical camera QR validation, and broader Android UI coverage remain required before Android launch. iOS and MacCatalyst follow after Android launch evidence is complete.
 - `External identity`: Google external-login backend, Site Settings configuration, WebApi endpoint, Web Google Identity Services handoff, and shared mobile service route are implemented. Web OAuth client ID, native mobile Google UI, iOS client ID, and device/browser smoke remain required before this is a launch feature.
 
 ## Completed Internal Baseline
@@ -35,9 +35,9 @@ These items require external credentials, deployment configuration, provider acc
 - Repeat Brevo inbox-placement checks after sender-domain, template, or provider changes; monitor webhook/callback and failed-send queues.
 - Repeat VIES live smoke after VIES provider, retry, or policy changes; keep provider failure as `Unknown`/manual review.
 - Keep local MinIO smoke in the release checklist; run production MinIO readiness and selected-provider smoke only against the final target bucket.
-- Complete e-invoice deterministic fixtures, legal validation evidence, production artifact smoke, and production readiness evidence package references before exposing compliant artifacts.
+- Complete e-invoice deterministic fixtures, legal validation evidence, production artifact smoke, and production readiness evidence package references for both ZUGFeRD/Factur-X and XRechnung before exposing compliant artifacts.
 - Add deeper Consumer and Business ViewModel/UI coverage for auth, profile, business access-state gates, rewards/campaigns, member-commerce invoice artifacts, push registration, and account deletion.
-- Add native Consumer Google sign-in after Android/iOS OAuth client IDs are configured, then validate account linking, new-user registration, logout, and failure states on a physical device/emulator.
+- Add native Consumer Google sign-in first for Android after the Android OAuth client ID is configured, then validate account linking, new-user registration, logout, and failure states on a physical device/emulator. iOS follows after Android launch evidence.
 - Configure the Web OAuth client ID, then run browser smoke for Web Google sign-in and session-cookie handoff.
 - Validate signed mobile release artifacts and production push/maps configuration outside the repository.
 - Keep business subscription and customer checkout in web/back-office workflows for first mobile launch; mobile apps show status and handoff only.
@@ -66,14 +66,19 @@ In progress:
 
 Next gate:
 
-1. `Conditional target selection`: there is no no-decision implementation step for AI provider, operational executor, two-way sync, or accounting API adapter. Each starts only after a concrete target or command family is selected.
+1. `Production go-live evidence execution`: execute the production-like staging rehearsal first, then populate deployment-specific evidence for MinIO, dual-format e-invoice, Android-first mobile launch, and provider smoke ownership. Use [docs/production-go-live-evidence-execution-plan.md](docs/production-go-live-evidence-execution-plan.md) and the evidence package validator. Code-backed `SyncState`/`SyncConflict` foundation is complete; target-specific inbound sync still waits for a concrete integration target.
 
 Remaining ERP expansion order:
 
-1. `AI Target Provider Adapter`: implement only after a real provider/model target, credential owner, payload mapping, rate/cost policy, retry policy, safe error contract, and smoke strategy are selected.
-2. `Operational Module Executor Design`: choose one concrete command family before allowing AI-assisted execution beyond internal evidence and review task routing.
-3. `SyncState And SyncConflict`: design and implement two-way sync only after concrete inbound reconciliation needs exist. Outbound export and external references are already available; they are not a full sync engine.
-4. `Accounting API Target Adapter`: implement only after a real target, credential owner, payload mapping, retry policy, and error contract are selected. Until then, finance export file-delivery remains the production-safe outbound path.
+1. `Production-Like Staging Evidence`: generate and fill a deployment evidence package for the production-like candidate, rehearse build/test, migration, rollback, storage, e-invoice, Android, provider, monitoring, and owner approvals before production execution.
+2. `MinIO Production Evidence`: execute selected-provider readiness and smoke against the real target bucket/container with retention/legal-hold, backup/restore, monitoring, and evidence-package ownership.
+3. `Azure Object Storage Readiness Hardening`: after MinIO evidence, prepare Azure Blob production readiness using the existing Azure provider boundary without changing application storage owners.
+4. `Dual E-Invoice Production Evidence`: make both ZUGFeRD/Factur-X and XRechnung legally/operationally accepted for German rollout with deterministic fixtures, validation reports, storage/download smoke, and sign-off.
+5. `Android-First Mobile Launch Evidence`: validate signed Android artifacts, push/maps configuration, Google sign-in when enabled, and physical QR/device smoke before iOS and MacCatalyst.
+6. `Target-Specific Sync Integration`: use the implemented `SyncState`/`SyncConflict` foundation only after a concrete inbound/two-way target and conflict workflow are selected.
+7. `Accounting API Target Adapter`: implement only after a real target, credential owner, payload mapping, retry policy, and error contract are selected. Future target selection should follow `docs/domain-expansion/finance-export-accounting-api-target-selection-design.md` and prioritize widely used German accounting software while file-delivery remains production-safe.
+8. `AI Target Provider Adapter`: lower priority; implement only after a real provider/model target, credential owner, payload mapping, rate/cost policy, retry policy, safe error contract, and smoke strategy are selected.
+9. `Operational Module Executor Design`: choose one concrete command family before allowing AI-assisted execution beyond internal evidence and review task routing.
 
 Storage rules:
 
@@ -88,16 +93,16 @@ Storage rules:
 - Brevo provider-managed template synchronization, if operations choose provider-side authoring.
 - Self-service business onboarding in the front-office after WebAdmin-assisted onboarding remains stable.
 - Expanded catalog/CMS/search/facet performance work for public storefront scale.
-- Optional XRechnung export after the ZUGFeRD/Factur-X path is legally validated.
+- Keep ZUGFeRD/Factur-X and XRechnung production evidence aligned; both formats need deterministic fixtures, validation reports, storage/download smoke, and accounting/tax sign-off before compliant German rollout is treated as complete.
 - Add persisted operational-alert aggregation if structured logs, WebAdmin queues, and email audits are not enough for production support.
 
 ## Open Decisions
 
-- Exact production object-storage deployment profile, retention/legal-hold policy, and evidence package owner per deployment.
+- Exact MinIO production object-storage deployment profile, retention/legal-hold policy, and evidence package owner per deployment; Azure Blob readiness follows after MinIO evidence.
 - Stripe live-mode execution timing, restricted live key permissions, and monitoring/alert recipients.
 - DHL account/product contract and return-label payload after final account provisioning.
-- E-invoice validation evidence package, legal acceptance criteria, and production readiness evidence references for generated artifacts.
-- Mobile launch target order across Android, iOS, MacCatalyst, and follow-up platforms.
+- E-invoice validation evidence package, legal acceptance criteria, and production readiness evidence references for generated ZUGFeRD/Factur-X and XRechnung artifacts.
+- Android release timing and evidence owner before iOS, MacCatalyst, and follow-up platforms.
 
 ## Active Handoff Summary
 

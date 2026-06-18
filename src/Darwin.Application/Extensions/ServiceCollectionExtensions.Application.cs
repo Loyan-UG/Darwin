@@ -105,6 +105,7 @@ namespace Darwin.Application.Extensions
             services.AddScoped<IAiActionDraftExecutor, AiInternalFollowUpTaskActionDraftExecutor>();
             services.AddScoped<IAiActionDraftExecutor, AiModuleReviewTaskActionDraftExecutor>();
             services.AddScoped<ExternalSystemReferenceService>();
+            services.AddScoped<SyncStateService>();
             services.AddScoped<CrmFoundationPrimitiveService>();
             services.AddScoped<PayrollPayslipArtifactService>();
             services.AddSingleton<EInvoiceSourceReadinessValidator>();

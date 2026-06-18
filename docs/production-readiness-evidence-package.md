@@ -4,7 +4,24 @@ Reviewed: 2026-06-17
 
 This document defines the deployment evidence package that must exist before Darwin is treated as production-ready for a customer. It is deployment-neutral and must not contain customer names, domains, credentials, access keys, webhook secrets, private signing material, raw provider payloads, bank identifiers, payroll internals, or private document contents.
 
-Use this evidence package with [production-setup.md](production-setup.md), [customer-deployment-onboarding-checklist.md](customer-deployment-onboarding-checklist.md), [external-smoke-inputs.md](external-smoke-inputs.md), [go-live-status.md](go-live-status.md), and [e-invoice-acceptance-checklist.md](e-invoice-acceptance-checklist.md).
+Use this evidence package with [production-go-live-evidence-execution-plan.md](production-go-live-evidence-execution-plan.md), [production-setup.md](production-setup.md), [customer-deployment-onboarding-checklist.md](customer-deployment-onboarding-checklist.md), [external-smoke-inputs.md](external-smoke-inputs.md), [go-live-status.md](go-live-status.md), and [e-invoice-acceptance-checklist.md](e-invoice-acceptance-checklist.md).
+
+For a deployment-specific working copy, generate a non-secret package from [templates/production-readiness-evidence-package-template.md](templates/production-readiness-evidence-package-template.md):
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\new-production-readiness-evidence-package.ps1 -OutputPath artifacts\production-readiness\evidence-package.md -DeploymentLabel "production-candidate" -ReleaseReference "release-artifact-id" -PreparedBy "Darwin technical owner"
+```
+
+The generated package belongs in the deployment evidence repository or ignored local `artifacts` folder. Do not commit filled customer evidence, provider reports, legal approvals, private artifacts, or generated e-invoice files to source control.
+
+Validate the filled package before go-live:
+
+```powershell
+$env:DARWIN_PRODUCTION_READINESS_EVIDENCE_PACKAGE_PATH = "artifacts\production-readiness\evidence-package.md"
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\check-production-readiness-evidence-package.ps1
+```
+
+The validation check blocks placeholder text, unresolved open/blocked/failed result rows, missing required sections, missing required evidence markers, and sensitive value patterns. Required markers include production-like staging rehearsal, explicit MinIO production and Azure Blob readiness preflight rows, dual e-invoice formats, provider smokes, Android release evidence, and final approval rows. It proves the package is structurally complete and non-secret; it does not verify the private evidence stored behind each reference.
 
 ## Purpose
 
@@ -17,7 +34,7 @@ The package is the operational proof that the selected deployment is ready. It d
 | Build and migration readiness | Darwin technical owner | Build/test command outputs, migration plan, rollback plan. | Store command summaries and artifact hashes outside source control. |
 | Database readiness | Customer system admin or DevOps owner | Backup schedule, restore test result, migration role/grant review, monitoring ownership. | Store provider screenshots or reports outside source control. |
 | Object storage readiness | Customer system admin or DevOps owner | Selected-provider preflight, disposable-prefix smoke result, retention/legal-hold policy, backup/restore evidence, monitoring ownership. | Store bucket/container names only when approved for the deployment record; never store access keys or bucket policy secrets in docs. |
-| Invoice and e-invoice evidence | Accounting/tax owner with Darwin technical owner | Fixture list, generated artifacts, validation reports, reviewer sign-off, storage/download smoke. | Store artifacts and validation reports in the approved evidence repository or object storage, not in git. |
+| Invoice and e-invoice evidence | Accounting/tax owner with Darwin technical owner | Fixture list, generated ZUGFeRD/Factur-X and XRechnung artifacts, validation reports, reviewer sign-off, storage/download smoke. | Store artifacts and validation reports in the approved evidence repository or object storage, not in git. |
 | Payment provider readiness | Customer business owner with Darwin technical owner | Test-mode smoke, live-readiness preflight, webhook events, callback worker status, refund/dispute playbook approval. | Store only non-secret references and timestamps in the package. |
 | Shipping provider readiness | Operations owner with Darwin technical owner | Account/product validation, label storage smoke, tracking/return-label validation, callback/recovery evidence. | Store labels only in configured storage; package records hashes or operator references. |
 | Communication provider readiness | Operations owner | Sender-domain checks, transactional smoke, webhook/callback monitoring, inbox-placement owner. | Do not store API keys or raw provider responses. |
@@ -49,12 +66,14 @@ Required proof:
 - migration command plan for PostgreSQL or SQL Server;
 - rollback plan for app binaries and database migration failure;
 - support owner and escalation path.
+- production-like staging rehearsal result before production execution, including the preflight result from `scripts\check-production-like-staging-readiness.ps1`.
 
 Acceptance:
 
 - build/test commands pass or every failure has an explicit owner and go-live decision;
 - migration plan names the active provider and backup/restore checkpoint;
-- rollback does not depend on ad hoc database edits.
+- rollback does not depend on ad hoc database edits;
+- production is not the first environment where migration, rollback, storage, e-invoice, Android, provider, or ownership evidence is attempted.
 
 ### 3. Object Storage And Retention
 
@@ -62,6 +81,7 @@ Required proof:
 
 - final decision for `InvoiceArchive`, `ShipmentLabels`, `MediaAssets`, `FinanceExports`, `FinanceExportOutbound`, `PersonnelDocuments`, and `PayrollPayslips`;
 - selected-provider preflight result;
+- Azure Blob readiness preflight result when Azure is the selected provider or the next hardening lane;
 - disposable smoke prefix approval;
 - selected-provider smoke result;
 - Object Lock, retention, legal-hold, backup, restore, failed-write monitoring, and alert ownership;
@@ -79,14 +99,15 @@ Required proof:
 
 - deployment scope for ZUGFeRD/Factur-X and XRechnung;
 - pinned generator/validator tooling and checksum reference outside source control;
+- e-invoice production readiness preflight result from `scripts\check-einvoice-production-readiness.ps1`;
 - deterministic fixture list approved by accounting/tax owner;
-- generated artifact, extracted structured XML, validation report, and reviewer sign-off for each approved scenario;
+- generated ZUGFeRD/Factur-X artifact, generated XRechnung artifact, extracted structured XML where applicable, validation report, and reviewer sign-off for each approved scenario;
 - storage/download smoke through `InvoiceArchive`;
 - explicit statement that JSON, HTML, CSV, and source-model exports are not presented as compliant e-invoices.
 
 Acceptance:
 
-- generated artifacts are exposed as compliant only after validation and review sign-off;
+- generated artifacts are exposed as compliant only after validation and review sign-off for both selected formats;
 - failed validation remains operator evidence and is not customer/member-facing compliance output;
 - retention preserves the structured e-invoice part unchanged for the required period.
 
@@ -113,6 +134,7 @@ Required proof:
 - launch target order across Android, iOS, MacCatalyst, and follow-up platforms;
 - signed release artifacts;
 - production push/maps configuration;
+- Android readiness preflight result from `scripts\check-android-launch-readiness.ps1`;
 - native Google sign-in configuration when enabled;
 - physical camera QR validation with approved devices or camera feed;
 - public/mobile route compatibility test evidence.
@@ -154,6 +176,6 @@ Darwin is not production-ready for a customer deployment until:
 
 ## Current Outcome
 
-The no-target production readiness hardening path is documented. It adds no entity, migration, route, DTO, WebAdmin mutation, public/mobile/storefront contract, provider credential UI, finance export format change, payment/refund change, supplier finance change, invoice archive/download behavior change, bank API, AI provider, or accounting API adapter.
+The no-target production readiness hardening path is documented and now includes a reusable non-secret evidence package template plus local generation and validation scripts. It adds no entity, migration, route, DTO, WebAdmin mutation, public/mobile/storefront contract, provider credential UI, finance export format change, payment/refund change, supplier finance change, invoice archive/download behavior change, bank API, AI provider, or accounting API adapter.
 
 The next implementation work still requires target selection when it involves a real AI provider, direct operational AI command execution, two-way sync, accounting API delivery, Stripe live execution, DHL account/product validation, e-invoice legal acceptance, or mobile store launch.
