@@ -241,7 +241,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts\export-minio-product
 
 The report is written under `artifacts\production-readiness\` by default. It is valid as current-state evidence even when it is blocked; it does not replace real MinIO policy validation, selected-provider smoke, or owner approval.
 
-The preflight checks only non-secret confirmations. It does not accept MinIO access keys, secret keys, bucket policy JSON, object payloads, object keys, or provider responses. A passing preflight means the deployment checklist is complete enough to run the selected-provider smoke and WebAdmin smoke against the production bucket; it is not a production immutability claim by itself.
+The preflight checks only non-secret confirmations. `DARWIN_MINIO_PRODUCTION_ENDPOINT` must be the base HTTPS endpoint only; do not include a bucket path, object key, access key, user info, query string, or fragment. The bucket name belongs in `DARWIN_MINIO_PRODUCTION_BUCKET`. The preflight does not accept MinIO access keys, secret keys, bucket policy JSON, object payloads, object keys, or provider responses. A passing preflight means the deployment checklist is complete enough to run the selected-provider smoke and WebAdmin smoke against the production bucket; it is not a production immutability claim by itself.
 
 The preflight requires separate confirmation that:
 

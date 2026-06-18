@@ -41,6 +41,15 @@ function Assert-AbsoluteHttpsEndpoint {
         Write-Host "$Name must point to the production endpoint, not a loopback URL."
         exit 2
     }
+
+    if (-not [string]::IsNullOrWhiteSpace($parsed.UserInfo) -or
+        -not [string]::IsNullOrWhiteSpace($parsed.Query) -or
+        -not [string]::IsNullOrWhiteSpace($parsed.Fragment) -or
+        ($parsed.AbsolutePath -ne "/" -and -not [string]::IsNullOrWhiteSpace($parsed.AbsolutePath))) {
+        Write-Host "MinIO production readiness is blocked."
+        Write-Host "$Name must be the base HTTPS endpoint only. Put bucket names in DARWIN_MINIO_PRODUCTION_BUCKET and keep access keys, object keys, user info, query strings, and fragments out of readiness input."
+        exit 2
+    }
 }
 
 $endpoint = Get-EnvValue "DARWIN_MINIO_PRODUCTION_ENDPOINT"

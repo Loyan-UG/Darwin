@@ -1555,6 +1555,53 @@ public sealed class SecurityAndPerformanceContractsAndPackagingSourceTests : Sec
     }
 
     [Theory]
+    [InlineData("https://minio.example.test/bucket")]
+    [InlineData("https://minio.example.test?access_key=secret")]
+    [InlineData("https://user:secret@minio.example.test")]
+    [InlineData("https://minio.example.test#fragment")]
+    public async Task MinioProductionReadiness_Should_BlockEndpointWithPathSecretOrFragment(string endpoint)
+    {
+        var root = ResolveRepositoryPath();
+        var startInfo = new ProcessStartInfo
+        {
+            FileName = "powershell",
+            WorkingDirectory = root,
+            RedirectStandardOutput = true,
+            RedirectStandardError = true,
+            UseShellExecute = false
+        };
+        startInfo.ArgumentList.Add("-NoProfile");
+        startInfo.ArgumentList.Add("-ExecutionPolicy");
+        startInfo.ArgumentList.Add("Bypass");
+        startInfo.ArgumentList.Add("-File");
+        startInfo.ArgumentList.Add(Path.Combine("scripts", "check-minio-production-readiness.ps1"));
+
+        foreach (var key in startInfo.Environment.Keys.Cast<string>()
+                     .Where(key => key.StartsWith("DARWIN_", StringComparison.OrdinalIgnoreCase)).ToList())
+        {
+            startInfo.Environment.Remove(key);
+        }
+
+        foreach (var item in MinioReadinessEnvironment(endpoint: endpoint))
+        {
+            startInfo.Environment[item.Key] = item.Value;
+        }
+
+        using var process = Process.Start(startInfo) ?? throw new InvalidOperationException("Could not start check-minio-production-readiness.ps1.");
+        var stdoutTask = process.StandardOutput.ReadToEndAsync(TestContext.Current.CancellationToken);
+        var stderrTask = process.StandardError.ReadToEndAsync(TestContext.Current.CancellationToken);
+
+        await process.WaitForExitAsync(TestContext.Current.CancellationToken);
+        var output = $"{await stdoutTask}{Environment.NewLine}{await stderrTask}";
+
+        process.ExitCode.Should().Be(2);
+        output.Should().Contain("MinIO production readiness is blocked.");
+        output.Should().Contain("base HTTPS endpoint only");
+        output.Should().NotContain(endpoint);
+        output.Should().NotContain("System.Management.Automation.RemoteException");
+    }
+
+    [Theory]
     [InlineData("https://storage.example.test/container")]
     [InlineData("https://storage.example.test?sig=secret")]
     [InlineData("https://user:secret@storage.example.test")]
@@ -2578,6 +2625,39 @@ public sealed class SecurityAndPerformanceContractsAndPackagingSourceTests : Sec
             ["DARWIN_ANDROID_CERT_TRUST_GUARD_CONFIRMED"] = "true",
             ["DARWIN_ANDROID_ROUTE_COMPATIBILITY_CONFIRMED"] = "true",
             ["DARWIN_ANDROID_EVIDENCE_PACKAGE_CONFIRMED"] = "true"
+        };
+
+    private static IReadOnlyDictionary<string, string> MinioReadinessEnvironment(
+        string endpoint = "https://minio.example.test",
+        string bucket = "darwin-invoice-archive") =>
+        new Dictionary<string, string>
+        {
+            ["DARWIN_MINIO_PRODUCTION_ENDPOINT"] = endpoint,
+            ["DARWIN_MINIO_PRODUCTION_BUCKET"] = bucket,
+            ["DARWIN_MINIO_PRODUCTION_PROVIDER_SELECTED_CONFIRMED"] = "true",
+            ["DARWIN_MINIO_TLS_CONFIRMED"] = "true",
+            ["DARWIN_MINIO_DEDICATED_KEYS_CONFIRMED"] = "true",
+            ["DARWIN_MINIO_LEAST_PRIVILEGE_POLICY_CONFIRMED"] = "true",
+            ["DARWIN_MINIO_BUCKET_OBJECT_LOCK_CONFIRMED"] = "true",
+            ["DARWIN_MINIO_BUCKET_VERSIONING_CONFIRMED"] = "true",
+            ["DARWIN_MINIO_DEFAULT_RETENTION_CONFIRMED"] = "true",
+            ["DARWIN_MINIO_RETENTION_MODE_CONFIRMED"] = "true",
+            ["DARWIN_MINIO_LEGAL_HOLD_POLICY_CONFIRMED"] = "true",
+            ["DARWIN_MINIO_BACKUP_CONFIGURED_CONFIRMED"] = "true",
+            ["DARWIN_MINIO_RESTORE_TEST_CONFIRMED"] = "true",
+            ["DARWIN_MINIO_MONITORING_CONFIRMED"] = "true",
+            ["DARWIN_MINIO_ALERTING_CONFIRMED"] = "true",
+            ["DARWIN_MINIO_DARWIN_PROFILE_CONFIGURED_CONFIRMED"] = "true",
+            ["DARWIN_MINIO_INVOICE_ARCHIVE_PROFILE_CONFIRMED"] = "true",
+            ["DARWIN_MINIO_SHIPMENT_LABELS_PROFILE_CONFIRMED"] = "true",
+            ["DARWIN_MINIO_MEDIA_ASSETS_PROFILE_DECIDED_CONFIRMED"] = "true",
+            ["DARWIN_MINIO_FINANCE_EXPORTS_PROFILE_CONFIRMED"] = "true",
+            ["DARWIN_MINIO_FINANCE_EXPORT_OUTBOUND_PROFILE_CONFIRMED"] = "true",
+            ["DARWIN_MINIO_PERSONNEL_DOCUMENTS_PROFILE_CONFIRMED"] = "true",
+            ["DARWIN_MINIO_PAYROLL_PAYSLIPS_PROFILE_CONFIRMED"] = "true",
+            ["DARWIN_MINIO_DISPOSABLE_SMOKE_PREFIX_CONFIRMED"] = "true",
+            ["DARWIN_MINIO_RETENTION_DELETE_BEHAVIOR_CONFIRMED"] = "true",
+            ["DARWIN_MINIO_OPERATOR_RUNBOOK_CONFIRMED"] = "true"
         };
 
     private static IReadOnlyDictionary<string, string> AzureReadinessEnvironment(
