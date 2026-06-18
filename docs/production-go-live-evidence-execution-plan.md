@@ -54,6 +54,8 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts\check-production-rea
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\check-go-live-readiness.ps1
 ```
 
+The central go-live report includes separate MinIO and Azure Blob readiness rows. The dedicated MinIO and Azure reports remain useful as non-secret attachment references for the object-storage evidence rows.
+
 ## Current Outcome
 
 The execution plan is local and target-neutral. A local production-like evidence working copy was generated on 2026-06-18 under the ignored `artifacts\production-readiness\` path, with a non-secret summary covering the current branch, restored local PostgreSQL backup, build, focused test lanes, mobile resource-name preflight, and web toolchain preflight. That working copy is not committed because deployment evidence must remain outside source control.

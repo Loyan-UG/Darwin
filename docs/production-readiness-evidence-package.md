@@ -21,7 +21,7 @@ $env:DARWIN_PRODUCTION_READINESS_EVIDENCE_PACKAGE_PATH = "artifacts\production-r
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\check-production-readiness-evidence-package.ps1
 ```
 
-The validation check blocks placeholder text, unresolved open/blocked/failed result rows, missing required sections, missing required evidence markers, and sensitive value patterns. Required markers include production-like staging rehearsal, explicit MinIO production and Azure Blob readiness preflight rows, dual e-invoice formats, provider smokes, Android release evidence, and final approval rows. It proves the package is structurally complete and non-secret; it does not verify the private evidence stored behind each reference.
+The validation check blocks placeholder text, unresolved open/blocked/failed result rows, missing required sections, missing required evidence markers, and sensitive value patterns. Required markers include production-like staging rehearsal, explicit MinIO production and Azure Blob readiness preflight rows, dual e-invoice formats, provider smokes, Android release evidence, and final approval rows. The central go-live dry-run report records MinIO and Azure Blob as separate readiness checks, while the dedicated storage reports can be attached as non-secret references. The package validator proves the package is structurally complete and non-secret; it does not verify the private evidence stored behind each reference.
 
 ## Purpose
 
