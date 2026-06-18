@@ -7,6 +7,26 @@ function Find-CommandPath {
 
     $command = Get-Command $Name -ErrorAction SilentlyContinue
     if ($null -eq $command) {
+        $candidatePaths = @()
+        if ($Name -in @("node", "node.exe")) {
+            $candidatePaths += Join-Path $env:LOCALAPPDATA "Microsoft\WinGet\Links\node.exe"
+            $candidatePaths += Get-ChildItem (Join-Path $env:LOCALAPPDATA "Microsoft\WinGet\Packages") -Recurse -Filter "node.exe" -ErrorAction SilentlyContinue |
+                Sort-Object FullName -Descending |
+                Select-Object -ExpandProperty FullName
+        }
+        elseif ($Name -in @("npm", "npm.cmd")) {
+            $candidatePaths += Join-Path $env:LOCALAPPDATA "Microsoft\WinGet\Links\npm.cmd"
+            $candidatePaths += Get-ChildItem (Join-Path $env:LOCALAPPDATA "Microsoft\WinGet\Packages") -Recurse -Filter "npm.cmd" -ErrorAction SilentlyContinue |
+                Sort-Object FullName -Descending |
+                Select-Object -ExpandProperty FullName
+        }
+
+        foreach ($candidatePath in $candidatePaths) {
+            if (-not [string]::IsNullOrWhiteSpace($candidatePath) -and (Test-Path -LiteralPath $candidatePath -PathType Leaf)) {
+                return $candidatePath
+            }
+        }
+
         return ""
     }
 
@@ -54,8 +74,8 @@ if ($missing.Count -gt 0) {
     exit 2
 }
 
-$nodeVersion = (& node --version 2>&1 | Select-Object -First 1).ToString().Trim()
-$npmVersion = (& npm --version 2>&1 | Select-Object -First 1).ToString().Trim()
+$nodeVersion = (& $nodePath --version 2>&1 | Select-Object -First 1).ToString().Trim()
+$npmVersion = (& $npmPath --version 2>&1 | Select-Object -First 1).ToString().Trim()
 
 if (-not (Test-SemVer -Value $nodeVersion -MinimumMajor 22)) {
     Write-Host "Web toolchain readiness is blocked."
