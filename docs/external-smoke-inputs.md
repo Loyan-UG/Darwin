@@ -1,6 +1,6 @@
 # External Smoke Inputs
 
-Reviewed: 2026-06-17
+Reviewed: 2026-06-18
 
 This file lists non-committed inputs for external smoke checks. Do not store real secret values in this file or any committed configuration. Do not store real provider secrets, API keys, webhook secrets, access keys, or private signing material in this file.
 
@@ -14,6 +14,14 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts\check-go-live-readin
 
 Exit code `2` means one or more checks are blocked by missing operator inputs. That is expected before a provider is fully configured.
 The aggregate dry-run loads Brevo Site Settings from the local PostgreSQL Docker container when available, but still requires non-secret delivery-pipeline confirmations before marking Brevo production-readiness prerequisites complete.
+
+To keep a non-secret readiness attachment for the evidence package, export the same dry-run to an ignored markdown report:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\export-go-live-readiness-report.ps1 -Force
+```
+
+The report is written under `artifacts\production-readiness\` by default. It summarizes ready, blocked, and failed checks and includes the full non-secret dry-run output. A blocked report is valid evidence of current gating; it is not go-live approval.
 
 When a filled production evidence package exists, validate its shape before go-live approval:
 
