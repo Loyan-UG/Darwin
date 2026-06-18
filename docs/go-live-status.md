@@ -1,6 +1,6 @@
 # Darwin Go-Live Status
 
-Last reviewed: 2026-06-17
+Last reviewed: 2026-06-18
 
 This document records code-backed readiness. It is not a product overview or marketing status page; use [README.md](../README.md) for the platform summary. This document deliberately separates implemented plumbing from production-complete provider behavior. External smoke inputs and command shapes are documented in [docs/external-smoke-inputs.md](external-smoke-inputs.md).
 
@@ -21,7 +21,7 @@ This document records code-backed readiness. It is not a product overview or mar
 | E-invoice | Generation boundary, external-command adapter, local Mustangproject wrapper, storage boundary, WebAdmin download guard, validation-report enforcement option, local adapter smoke for XRechnung XML plus ZUGFeRD/Factur-X PDF, and production readiness preflight exist. | Legal validation fixtures, production artifact smoke, and sign-off. |
 | Mobile | Implemented Consumer and Business workflows are guarded and usable. Google external-login backend/service support exists. Android is the selected first launch target. | Signed Android release artifacts, production Android Google Maps/Firebase config, native Android Google sign-in UI/device smoke when enabled, Android device/camera smoke, and broader Android UI coverage. iOS and MacCatalyst follow after Android evidence is complete. |
 | Web external identity | Google Identity Services handoff to WebApi external-login is implemented and keeps Darwin session cookies authoritative. | Web OAuth client ID configuration and browser smoke. |
-| Production evidence package | Evidence package rules, production-like staging execution order, generation script, and validation script are documented in [docs/production-readiness-evidence-package.md](production-readiness-evidence-package.md) and [docs/production-go-live-evidence-execution-plan.md](production-go-live-evidence-execution-plan.md), then linked from production setup and onboarding. | Populate and validate the package for each deployment with non-secret build, migration, staging rehearsal, storage, e-invoice, provider, mobile, monitoring, rollback, and approval evidence. |
+| Production evidence package | Evidence package rules, production-like staging execution order, generation script, and validation script are documented in [docs/production-readiness-evidence-package.md](production-readiness-evidence-package.md) and [docs/production-go-live-evidence-execution-plan.md](production-go-live-evidence-execution-plan.md), then linked from production setup and onboarding. A local ignored working package and non-secret execution summary were generated on 2026-06-18 for the current branch. | Populate and validate the package for each deployment with non-secret build, migration, staging rehearsal, storage, e-invoice, provider, mobile, monitoring, rollback, and approval evidence. |
 
 ## Implemented Baseline
 
@@ -39,6 +39,7 @@ This document records code-backed readiness. It is not a product overview or mar
 - E-invoice generated artifacts route through the invoice archive storage boundary when a generator is configured. Current JSON/HTML/source-model outputs are operational artifacts, not compliant e-invoices.
 - Mobile apps reject broad Android cleartext traffic, avoid Release unsafe certificate trust, and keep mobile-used API routes under source-contract guard.
 - Google external-login support is provider-neutral at the API, Web, and mobile-service boundary. WebApi validates Google identity tokens server-side against Site Settings OAuth client IDs and issues Darwin tokens; provider tokens are not stored or logged.
+- A local production-like evidence working copy was generated on 2026-06-18 under `artifacts\production-readiness\`, which is ignored by git. The local summary records the current branch, restored PostgreSQL backup, build, focused test lanes, mobile resource-name preflight, and web toolchain preflight. It does not clear external deployment blockers.
 
 ## Provider Readiness
 

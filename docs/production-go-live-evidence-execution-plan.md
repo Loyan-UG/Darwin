@@ -1,6 +1,6 @@
 # Production Go-Live Evidence Execution Plan
 
-Reviewed: 2026-06-17
+Reviewed: 2026-06-18
 
 This plan turns the current production-readiness decisions into an execution order. It adds no entity, migration, route, DTO, WebAdmin mutation, credential UI, public/mobile/storefront contract, finance export format change, provider adapter, AI provider, bank API, or accounting API adapter.
 
@@ -53,4 +53,6 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts\check-go-live-readin
 
 ## Current Outcome
 
-The execution plan is local and target-neutral. Real completion still requires deployment-specific evidence from the selected staging and production environments.
+The execution plan is local and target-neutral. A local production-like evidence working copy was generated on 2026-06-18 under the ignored `artifacts\production-readiness\` path, with a non-secret summary covering the current branch, restored local PostgreSQL backup, build, focused test lanes, mobile resource-name preflight, and web toolchain preflight. That working copy is not committed because deployment evidence must remain outside source control.
+
+Real completion still requires deployment-specific evidence from the selected staging and production environments. The remaining blockers are external owner evidence for production-like staging sign-off, selected-provider MinIO controls and smoke, Azure readiness when in scope, dual-format e-invoice validation and accounting/tax sign-off, Android signed artifact and device/provider smoke, Stripe, DHL, Brevo, VIES, monitoring, rollback, and final owner approvals.
