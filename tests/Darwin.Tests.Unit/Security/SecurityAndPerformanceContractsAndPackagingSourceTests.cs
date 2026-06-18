@@ -261,6 +261,7 @@ public sealed class SecurityAndPerformanceContractsAndPackagingSourceTests : Sec
             "smoke-web-storefront-routes.ps1",
             "check-web-storefront-readiness.ps1",
             "check-mobile-resource-names.ps1",
+            "check-android-project-readiness.ps1",
             "check-android-launch-readiness.ps1",
             "check-production-readiness-report-bundle.ps1",
             "check-production-readiness-report-bundle-clean-smoke.ps1",
@@ -317,6 +318,7 @@ public sealed class SecurityAndPerformanceContractsAndPackagingSourceTests : Sec
             .And.Contain("scripts\\smoke-web-storefront-routes.ps1")
             .And.Contain("scripts\\check-web-storefront-readiness.ps1")
             .And.Contain("scripts\\check-mobile-resource-names.ps1")
+            .And.Contain("scripts\\check-android-project-readiness.ps1")
             .And.Contain("scripts\\check-android-launch-readiness.ps1")
             .And.Contain("docs\\archive-storage-provider-decision.md")
             .And.Contain("docs\\e-invoice-tooling-decision.md")
@@ -369,6 +371,8 @@ public sealed class SecurityAndPerformanceContractsAndPackagingSourceTests : Sec
         externalSmokeInputsSource.Should().Contain("DARWIN_ANDROID_RELEASE_ARTIFACT_REFERENCE");
         externalSmokeInputsSource.Should().Contain("scripts\\check-mobile-resource-names.ps1");
         externalSmokeInputsSource.Should().Contain("Mobile resource naming readiness");
+        externalSmokeInputsSource.Should().Contain("scripts\\check-android-project-readiness.ps1");
+        externalSmokeInputsSource.Should().Contain("Android project readiness");
         externalSmokeInputsSource.Should().Contain("production-like staging rehearsal");
         externalSmokeInputsSource.Should().Contain("Provider failures must remain `Unknown`");
         externalSmokeInputsSource.Should().NotContain("sk_live_");

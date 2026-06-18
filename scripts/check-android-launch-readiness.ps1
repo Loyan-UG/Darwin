@@ -2,6 +2,25 @@ param()
 
 $ErrorActionPreference = "Stop"
 
+$repoRoot = Split-Path -Parent $PSScriptRoot
+
+Push-Location $repoRoot
+try {
+    $projectReadinessOutput = & powershell -NoProfile -ExecutionPolicy Bypass -File "scripts\check-android-project-readiness.ps1" 2>&1
+    $projectReadinessExitCode = $LASTEXITCODE
+}
+finally {
+    Pop-Location
+}
+
+foreach ($line in $projectReadinessOutput) {
+    Write-Host $line
+}
+
+if ($projectReadinessExitCode -ne 0) {
+    exit $projectReadinessExitCode
+}
+
 function Get-EnvValue {
     param([Parameter(Mandatory = $true)][string]$Name)
 

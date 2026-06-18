@@ -24,7 +24,7 @@ This plan turns the current production-readiness decisions into an execution ord
 | 3 | MinIO production evidence | Real target endpoint, TLS, dedicated least-privilege identity, versioning, Object Lock or equivalent retention/legal hold, backup, restore test, monitoring, alerting, disposable-prefix smoke, and runbook owner. | System admin or DevOps owner |
 | 4 | Azure readiness preparation | Azure Blob preflight and runbook readiness as the next storage hardening lane; this is not a replacement for MinIO evidence unless the deployment explicitly selects Azure. | System admin or DevOps owner |
 | 5 | Dual e-invoice evidence | ZUGFeRD/Factur-X and XRechnung fixtures, generated artifacts, validation reports, storage/download smoke, and accounting/tax sign-off. | Accounting/tax owner |
-| 6 | Android-first launch evidence | Signed Android artifact, release channel, maps, push, Google sign-in when enabled, physical QR/device smoke, route compatibility, and passing mobile resource-name preflight. | Darwin technical owner with system admin owner |
+| 6 | Android-first launch evidence | Signed Android artifact, release channel, maps, push, Google sign-in when enabled, physical QR/device smoke, route compatibility, and passing mobile resource-name plus Android project preflights. | Darwin technical owner with system admin owner |
 | 7 | Provider smokes | Stripe, DHL, Brevo, VIES, and object-storage smokes according to deployment scope. | Area owners |
 | 8 | Final approval | Business, accounting/tax, operations, system administration, legal/compliance when required, and Darwin technical approvals. | Area owners |
 | 9 | Production execution | Run final deployment only after the filled evidence package passes `scripts\check-production-readiness-evidence-package.ps1`. | Darwin technical owner |
@@ -61,6 +61,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts\export-production-re
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\check-web-toolchain-readiness.ps1
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\check-web-storefront-readiness.ps1
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\check-mobile-resource-names.ps1
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\check-android-project-readiness.ps1
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\export-web-mobile-readiness-report.ps1 -Force
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\export-go-live-readiness-report.ps1 -Force
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\export-minio-production-readiness-report.ps1 -Force
@@ -89,14 +90,14 @@ The dedicated evidence-package validator smoke report proves the template and va
 
 The dedicated e-invoice report is a non-secret attachment reference for accounting or tax evidence. It does not replace the real ZUGFeRD/Factur-X and XRechnung artifact, validation-report, storage/download-smoke, and sign-off records.
 
-The dedicated Android report is a non-secret attachment reference for Android-first launch evidence. It does not replace the signed artifact, push/maps configuration smoke, physical device/camera smoke, route compatibility, or owner approval records.
+The dedicated Android report is a non-secret attachment reference for Android-first launch evidence. It first verifies checked-in Android project metadata and guards, then validates deployment-owner Android launch confirmations. It does not replace the signed artifact, push/maps configuration smoke, physical device/camera smoke, route compatibility, or owner approval records.
 
-The dedicated Web/Mobile report is a non-secret attachment reference for Web storefront toolchain/runtime readiness and deterministic mobile resource-name checks. It does not replace the real storefront build, route smoke, mobile package, device smoke, or owner approval records.
+The dedicated Web/Mobile report is a non-secret attachment reference for Web storefront toolchain/runtime readiness, deterministic mobile resource-name checks, and checked-in Android project metadata guards. It does not replace the real storefront build, route smoke, signed mobile package, device smoke, or owner approval records.
 
 The dedicated provider report is a non-secret attachment reference for Stripe, DHL, Brevo, and VIES evidence. It does not replace approved live execution, controlled provider smoke results, monitoring evidence, callback processing evidence, or operational playbook approvals.
 
 ## Current Outcome
 
-The execution plan is local and target-neutral. A local production-like evidence working copy was generated on 2026-06-18 under the ignored `artifacts\production-readiness\` path, with a non-secret summary covering the current branch, restored local PostgreSQL backup, build, focused test lanes, mobile resource-name preflight, and web toolchain preflight. That working copy is not committed because deployment evidence must remain outside source control.
+The execution plan is local and target-neutral. A local production-like evidence working copy was generated on 2026-06-18 under the ignored `artifacts\production-readiness\` path, with a non-secret summary covering the current branch, restored local PostgreSQL backup, build, focused test lanes, mobile resource-name and Android project preflights, and web toolchain preflight. That working copy is not committed because deployment evidence must remain outside source control.
 
 Real completion still requires deployment-specific evidence from the selected staging and production environments. The generated action plan can assign those blockers to owners, but it cannot approve them. The remaining blockers are external owner evidence for production-like staging sign-off, selected-provider MinIO controls and smoke, Azure readiness when in scope, dual-format e-invoice validation and accounting/tax sign-off, Android signed artifact and device/provider smoke, Stripe, DHL, Brevo, VIES, monitoring, rollback, and final owner approvals.

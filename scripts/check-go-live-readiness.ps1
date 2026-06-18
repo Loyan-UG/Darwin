@@ -53,6 +53,7 @@ $checks = @(
     @{ Name = "Web storefront route smoke prerequisites"; Command = @("powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", "scripts\smoke-web-storefront-routes.ps1"); ExpectedBlockedExitCode = 2 },
     @{ Name = "Web storefront readiness prerequisites"; Command = @("powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", "scripts\check-web-storefront-readiness.ps1"); ExpectedBlockedExitCode = 2 },
     @{ Name = "Mobile resource naming readiness prerequisites"; Command = @("powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", "scripts\check-mobile-resource-names.ps1"); ExpectedBlockedExitCode = 2 },
+    @{ Name = "Android project readiness prerequisites"; Command = @("powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", "scripts\check-android-project-readiness.ps1"); ExpectedBlockedExitCode = 2 },
     @{ Name = "Android launch readiness prerequisites"; Command = @("powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", "scripts\check-android-launch-readiness.ps1"); ExpectedBlockedExitCode = 2 }
 )
 

@@ -169,6 +169,7 @@ Manual approvals:
 
 - Configure Android Google Maps key with package and signing restrictions for first launch.
 - Configure Firebase production push settings for Android first; APNS follows when iOS enters launch scope.
+- Run `scripts\check-android-project-readiness.ps1` against the checked-out release candidate before building the signed Android artifact.
 - Validate Android signing profile and release artifact first; iOS/MacCatalyst signing profiles follow after Android evidence is complete.
 - Run `scripts\check-android-launch-readiness.ps1` after signed artifact, maps, push, route, and device smoke evidence exists.
 - Run Android Consumer smoke: login, discovery, map, QR generation, profile/account flows.

@@ -455,7 +455,7 @@ Web and mobile readiness summary:
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\export-web-mobile-readiness-report.ps1 -Force
 ```
 
-The Web/Mobile readiness report runs Web toolchain, local storefront build, Web storefront route-smoke configuration, Web storefront runtime, and mobile resource-name prerequisite checks and writes a non-secret summary under `artifacts\production-readiness\`. It does not run package installation, execute route smoke by default, run provider calls, store npm tokens, store environment files, or replace route/device smoke evidence.
+The Web/Mobile readiness report runs Web toolchain, local storefront build, Web storefront route-smoke configuration, Web storefront runtime, mobile resource-name, and Android project-metadata prerequisite checks and writes a non-secret summary under `artifacts\production-readiness\`. It does not run package installation, execute route smoke by default, run provider calls, build signed mobile packages, store npm tokens, store environment files, or replace route/device smoke evidence.
 
 Required non-secret URLs:
 
@@ -487,6 +487,14 @@ Mobile resource naming readiness:
 ```powershell
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\check-mobile-resource-names.ps1
 ```
+
+Android project readiness:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\check-android-project-readiness.ps1
+```
+
+The Android project preflight validates checked-in Consumer and Business MAUI Android metadata, application identifiers, version fields, manifest transport/backup/camera/notification guards, release Firebase guards, the Consumer Maps guard, and that Firebase mobile configuration files are not tracked in git. It does not read Firebase file contents, signing keys, keystore paths, API keys, OAuth secrets, private package artifacts, provider payloads, customer data, or device logs.
 
 The resource-name check is local and deterministic. It blocks MAUI image, splash, and app-icon assets whose filenames are not lowercase alphanumeric or underscore names, before Android-first launch evidence is accepted.
 
@@ -532,6 +540,7 @@ iOS/MacCatalyst push:
 Acceptance:
 
 - Signed Android release builds include production mobile configuration before Android launch.
+- `scripts\check-android-project-readiness.ps1` passes against the checked-out release candidate.
 - `scripts\check-android-launch-readiness.ps1` passes in the deployment shell.
 - Android device smoke registers push tokens and verifies logout/account-switch behavior.
 - Android physical camera QR scanning is validated with real device/camera input.
