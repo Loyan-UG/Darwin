@@ -132,6 +132,12 @@ $reports = @(
         NextAction = "Attach the ready release-candidate report; storefront build, signed mobile artifacts, and owner approvals still remain separate evidence."
     },
     @{
+        Name = "Evidence package validator tooling"
+        FileName = "evidence-package-validator-smoke.md"
+        Owner = "Darwin technical owner"
+        NextAction = "Attach the ready validator smoke report as tooling evidence; filled deployment evidence and owner approvals still remain separate evidence."
+    },
+    @{
         Name = "Web and mobile"
         FileName = "web-mobile-readiness-report.md"
         Owner = "Darwin technical owner with mobile/Web owner"

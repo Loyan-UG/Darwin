@@ -56,6 +56,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts\check-local-postgres
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\export-local-postgres-restore-readiness-report.ps1 -Force
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\check-local-release-candidate-readiness.ps1
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\export-local-release-candidate-readiness-report.ps1 -Force
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\export-production-readiness-evidence-validator-smoke.ps1 -Force
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\check-web-toolchain-readiness.ps1
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\check-web-storefront-readiness.ps1
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\check-mobile-resource-names.ps1
@@ -82,6 +83,8 @@ The dedicated local backup report verifies the local backup manifest, PostgreSQL
 The dedicated local PostgreSQL restore report restores the daily PostgreSQL dump into an isolated temporary database with `pg_restore --no-owner`, verifies application schema/table presence and EF migration history table presence, and removes the temporary database. It is local restore rehearsal evidence only; production restore approval still needs the deployment backup policy, offsite restore evidence, monitoring owner, and owner sign-off.
 
 The dedicated local release-candidate report runs focused .NET build/test lanes for WebAdmin, WebApi, Worker, Contracts compatibility, and Mobile Shared compatibility. It does not replace Web storefront npm build evidence, signed mobile artifacts, production-like route smoke, or owner approval; those remain covered by the Web/Mobile readiness and mobile launch evidence rows.
+
+The dedicated evidence-package validator smoke report proves the template and validator contract remains internally consistent, including required rows such as owner handoff. It is tooling evidence only; it does not replace a filled deployment evidence package or owner approvals.
 
 The dedicated e-invoice report is a non-secret attachment reference for accounting or tax evidence. It does not replace the real ZUGFeRD/Factur-X and XRechnung artifact, validation-report, storage/download-smoke, and sign-off records.
 

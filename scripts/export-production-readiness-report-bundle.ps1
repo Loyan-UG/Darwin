@@ -84,6 +84,11 @@ $reports = @(
         FileName = "local-release-candidate-readiness-report.md"
     },
     @{
+        Name = "Evidence package validator tooling"
+        Script = "scripts\export-production-readiness-evidence-validator-smoke.ps1"
+        FileName = "evidence-package-validator-smoke.md"
+    },
+    @{
         Name = "Web and mobile"
         Script = "scripts\export-web-mobile-readiness-report.ps1"
         FileName = "web-mobile-readiness-report.md"
