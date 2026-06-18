@@ -105,6 +105,66 @@ function Format-MissingEvidenceKeys {
     return $parts -join ", "
 }
 
+function Convert-EvidenceKeyToLabel {
+    param([Parameter(Mandatory = $true)][string]$Key)
+
+    $label = $Key
+    if ($label.StartsWith("DARWIN_", [StringComparison]::OrdinalIgnoreCase)) {
+        $label = $label.Substring(7)
+    }
+
+    $label = $label.Replace("_CONFIRMED", " confirmation").Replace("_REFERENCE", " evidence reference")
+    $label = $label.Replace("_", " ").ToLowerInvariant()
+    $label = (Get-Culture).TextInfo.ToTitleCase($label)
+    $label = $label.Replace("Api", "API")
+    $label = $label.Replace("Webapi", "WebApi")
+    $label = $label.Replace("Minio", "MinIO")
+    $label = $label.Replace("Dhl", "DHL")
+    $label = $label.Replace("Vies", "VIES")
+    $label = $label.Replace("Einvoice", "E-Invoice")
+    $label = $label.Replace("Zugferd", "ZUGFeRD")
+    $label = $label.Replace("Xrechnung", "XRechnung")
+    $label = $label.Replace("Qr", "QR")
+    $label = $label.Replace("Tls", "TLS")
+    $label = $label.Replace("Vat", "VAT")
+    $label = $label.Replace("Url", "URL")
+    $label = $label.Replace("Signoff", "Sign-Off")
+    $label = $label.Replace("Evidence Evidence Reference", "Evidence Reference")
+    $label = $label.Replace("Smoke Evidence Reference", "Smoke Reference")
+    $label = $label.Replace("Artifact Evidence Reference", "Artifact Reference")
+    $label = $label.Replace("Fixture Evidence Reference", "Fixture Reference")
+    $label = $label.Replace("Validation Report Evidence Reference", "Validation Report Reference")
+    $label = $label.Replace("Storage Download Smoke Evidence Reference", "Storage Download Smoke Reference")
+    $label = $label.Replace("Owner Sign-Off Evidence Reference", "Owner Sign-Off Reference")
+
+    return $label
+}
+
+function Format-EvidenceChecklist {
+    param([System.Collections.Generic.List[string]]$Keys)
+
+    if ($null -eq $Keys -or $Keys.Count -eq 0) {
+        return "No missing evidence listed"
+    }
+
+    $labels = [System.Collections.Generic.List[string]]::new()
+    $redactedCount = 0
+    foreach ($key in $Keys) {
+        if ($key -match '(?i)(API_KEY|API_SECRET|SECRET|TOKEN|PASSWORD|ACCESS_KEY|PRIVATE_KEY|CONNECTION_STRING|WEBHOOK_SECRET)') {
+            $redactedCount++
+            continue
+        }
+
+        $labels.Add((Convert-EvidenceKeyToLabel -Key $key))
+    }
+
+    if ($redactedCount -gt 0) {
+        $labels.Add("Sensitive secure configuration values: $redactedCount")
+    }
+
+    return $labels -join "; "
+}
+
 $repoRoot = Split-Path -Parent $PSScriptRoot
 $resolvedReportDirectory = $ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($ReportDirectory)
 $resolvedOutputPath = $ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($OutputPath)
@@ -213,10 +273,22 @@ foreach ($report in $reports) {
         throw "Readiness report appears to contain a sensitive assignment, private key, raw payload, private endpoint, provider response, or private evidence value: $($report.FileName)"
     }
 
+    $missingKeys = if ($report.Name -eq "Go-live aggregate") {
+        [System.Collections.Generic.List[string]]::new()
+    } else {
+        Get-MissingEvidenceKeys -Content $content
+    }
+
     $missingEvidence = if ($report.Name -eq "Go-live aggregate") {
         "See the dedicated readiness rows"
     } else {
-        Format-MissingEvidenceKeys -Keys (Get-MissingEvidenceKeys -Content $content)
+        Format-MissingEvidenceKeys -Keys $missingKeys
+    }
+
+    $evidenceChecklist = if ($report.Name -eq "Go-live aggregate") {
+        "Review each dedicated readiness row"
+    } else {
+        Format-EvidenceChecklist -Keys $missingKeys
     }
 
     $items.Add([pscustomobject]@{
@@ -225,6 +297,7 @@ foreach ($report in $reports) {
         ExitCode = Get-ReportExitCode -Content $content
         Owner = $report.Owner
         MissingEvidence = $missingEvidence
+        EvidenceChecklist = $evidenceChecklist
         NextAction = $report.NextAction
         FileName = $report.FileName
     })
@@ -267,10 +340,10 @@ $lines.Add("| Missing or unparseable | $missingCount |")
 $lines.Add("")
 $lines.Add("## Owner Action Rows")
 $lines.Add("")
-$lines.Add("| Evidence area | Result | Exit code | Owner | Missing evidence keys | Next action | Source report |")
-$lines.Add("| --- | --- | ---: | --- | --- | --- | --- |")
+$lines.Add("| Evidence area | Result | Exit code | Owner | Missing evidence keys | Next action | Evidence checklist | Source report |")
+$lines.Add("| --- | --- | ---: | --- | --- | --- | --- | --- |")
 foreach ($item in $items) {
-    $lines.Add("| $(Escape-MarkdownCell $item.Name) | $(Escape-MarkdownCell $item.Status) | $($item.ExitCode) | $(Escape-MarkdownCell $item.Owner) | $(Escape-MarkdownCell $item.MissingEvidence) | $(Escape-MarkdownCell $item.NextAction) | $(Escape-MarkdownCell $item.FileName) |")
+    $lines.Add("| $(Escape-MarkdownCell $item.Name) | $(Escape-MarkdownCell $item.Status) | $($item.ExitCode) | $(Escape-MarkdownCell $item.Owner) | $(Escape-MarkdownCell $item.MissingEvidence) | $(Escape-MarkdownCell $item.NextAction) | $(Escape-MarkdownCell $item.EvidenceChecklist) | $(Escape-MarkdownCell $item.FileName) |")
 }
 $lines.Add("")
 $lines.Add("A Ready row with exit code ``0`` means the local non-secret preflight report is ready to attach. It does not replace private deployment evidence or owner approval. A Blocked row with exit code ``2`` names the next evidence keys or owner action required before go-live can be approved. A Failed or missing row requires technical remediation before owner approval can rely on the artifact.")

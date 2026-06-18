@@ -345,10 +345,14 @@ public sealed class SecurityAndPerformanceContractsAndPackagingSourceTests : Sec
         ReadRepositoryFile(Path.Combine("scripts", "export-production-readiness-action-plan.ps1"))
             .Should()
             .Contain("Get-ReportExitCode")
+            .And.Contain("Evidence checklist")
+            .And.Contain("Convert-EvidenceKeyToLabel")
             .And.Contain("| Evidence area | Result | Exit code | Owner |");
         ReadRepositoryFile(Path.Combine("scripts", "export-production-readiness-owner-handoff.ps1"))
             .Should()
             .Contain("Get-ReportExitCode")
+            .And.Contain("Evidence checklist")
+            .And.Contain("Convert-EvidenceKeyToLabel")
             .And.Contain("| Evidence area | Result | Exit code | Missing evidence keys |");
         ReadRepositoryFile(Path.Combine("scripts", "check-production-readiness-report-bundle.ps1"))
             .Should()
