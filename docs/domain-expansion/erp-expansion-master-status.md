@@ -10,6 +10,7 @@ Darwin remains a single coherent ERP product. Module separation stays logical th
 
 | Area | Status | Completed outcome | Compatibility notes | Next action |
 | --- | --- | --- | --- | --- |
+| ERP benchmark and module gap audit | Complete for decision preparation. | Current Darwin module coverage is compared at a top level against large global ERP suites and German-market business-system expectations. Missing or incomplete module decisions are visible before detailed entity design starts. | This is documentation-only and does not import vendor-specific schemas, names, routes, entities, migrations, or adapters. Darwin keeps its own canonical English model. | Decide accepted P1 module gaps before designing manufacturing/MRP, project/service operations, quality, advanced finance, or target-specific adapters. |
 | Release-sensitive mobile foundation | Complete for current expansion baseline. | Identity/profile, business access, loyalty/scan, mobile API boundary, member commerce, order/invoice snapshot, and launch-sensitive surfaces were reviewed and guarded. | Mobile/member contracts stay stable unless a deliberate pre-release migration is designed and tested. | Keep contract and mobile smoke lanes green for every domain change. |
 | Foundation primitives | Complete for current ERP expansion needs. | `ExternalSystem`, `ExternalReference`, source-of-truth markers, custom fields, activities, notes, document metadata, number sequences, business events, audit trails, and feature areas exist. | These primitives are shared foundations, not replacements for specialized ledgers, invoice archives, loyalty ledgers, or provider records. | Reuse primitives in purchasing, inventory, HR, and automation slices. |
 | CRM expansion | Complete for current phase. | CRM core fields, customer bridge decisions, foundation primitive integration, and WebAdmin CRM exposure are implemented. | `Customer` does not own auth secrets, device tokens, provider tokens, phone verification tokens, push tokens, or loyalty balance. | Add CRM import/reference management only when an operational import flow is selected. |
@@ -136,6 +137,7 @@ The next ERP expansion step is production go-live evidence execution, starting w
 ## Operating Rules
 
 - Update `BACKLOG.md` before starting a major ERP slice when the backlog no longer matches the current implementation state.
+- Use [erp-benchmark-module-gap-audit.md](erp-benchmark-module-gap-audit.md) before detailed design for any missing ERP module family.
 - Update the relevant domain-expansion design document before schema, migration, public contract, mobile contract, or WebAdmin mutation changes.
 - Keep public WebApi, mobile/member, storefront, invoice archive/download, and issued snapshot compatibility guarded for every Sales, Finance, Purchasing, and Inventory change.
 - Use real columns for common, reportable, compliance-relevant, accounting-relevant, inventory-relevant, integration-key, or cross-module fields.

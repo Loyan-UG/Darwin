@@ -1,0 +1,386 @@
+{
+  "version": 1,
+  "reviewedUtc": "2026-06-19T00:00:00Z",
+  "tenantScope": "BusinessId",
+  "runtimeBehaviorChanged": false,
+  "readinessCategories": [
+    "base-required",
+    "independently-sellable",
+    "add-on",
+    "provider-add-on",
+    "platform-surface",
+    "not-safely-separable-yet"
+  ],
+  "capabilities": [
+    {
+      "code": "foundation-platform",
+      "name": "Foundation Platform",
+      "category": "base-required",
+      "ownedEntityGroups": ["Foundation"],
+      "requiredCapabilities": [],
+      "optionalCapabilities": ["ai-governance", "integrations-sync"],
+      "surfaces": ["webadmin-operations", "worker-operations"],
+      "readiness": "base-required"
+    },
+    {
+      "code": "identity-access",
+      "name": "Identity And Access",
+      "category": "base-required",
+      "ownedEntityGroups": ["Identity"],
+      "requiredCapabilities": ["foundation-platform"],
+      "optionalCapabilities": ["mobile-consumer", "mobile-business"],
+      "surfaces": ["webadmin-operations", "webapi-member", "webapi-business"],
+      "readiness": "base-required"
+    },
+    {
+      "code": "business-master",
+      "name": "Business Master",
+      "category": "base-required",
+      "ownedEntityGroups": ["Businesses"],
+      "requiredCapabilities": ["foundation-platform", "identity-access"],
+      "optionalCapabilities": ["communications", "mobile-business"],
+      "surfaces": ["webadmin-operations", "webapi-public", "webapi-member", "webapi-business"],
+      "readiness": "base-required"
+    },
+    {
+      "code": "cms",
+      "name": "Content Management",
+      "category": "independently-sellable",
+      "ownedEntityGroups": ["CMS"],
+      "requiredCapabilities": ["foundation-platform", "business-master"],
+      "optionalCapabilities": ["storefront"],
+      "surfaces": ["webadmin-operations", "webapi-public"],
+      "readiness": "not-safely-separable-yet"
+    },
+    {
+      "code": "storefront",
+      "name": "Storefront",
+      "category": "independently-sellable",
+      "ownedEntityGroups": ["Darwin.Web"],
+      "requiredCapabilities": ["cms", "catalog", "webapi-public"],
+      "optionalCapabilities": ["cart-checkout", "member-portal", "provider-stripe", "shipping"],
+      "surfaces": ["webapi-public"],
+      "readiness": "not-safely-separable-yet"
+    },
+    {
+      "code": "member-portal",
+      "name": "Member Portal",
+      "category": "add-on",
+      "ownedEntityGroups": ["Member WebApi", "Mobile.Shared"],
+      "requiredCapabilities": ["identity-access", "business-master", "webapi-member"],
+      "optionalCapabilities": ["loyalty", "cart-checkout", "payroll"],
+      "surfaces": ["webapi-member", "mobile-consumer"],
+      "readiness": "not-safely-separable-yet"
+    },
+    {
+      "code": "catalog",
+      "name": "Catalog",
+      "category": "independently-sellable",
+      "ownedEntityGroups": ["Catalog"],
+      "requiredCapabilities": ["foundation-platform", "business-master"],
+      "optionalCapabilities": ["storefront", "inventory", "cart-checkout"],
+      "surfaces": ["webadmin-operations", "webapi-public"],
+      "readiness": "not-safely-separable-yet"
+    },
+    {
+      "code": "cart-checkout",
+      "name": "Cart And Checkout",
+      "category": "add-on",
+      "ownedEntityGroups": ["CartCheckout"],
+      "requiredCapabilities": ["catalog", "billing"],
+      "optionalCapabilities": ["provider-stripe", "shipping", "tax-vat"],
+      "surfaces": ["webapi-public", "webapi-member", "mobile-consumer"],
+      "readiness": "not-safely-separable-yet"
+    },
+    {
+      "code": "crm",
+      "name": "CRM",
+      "category": "independently-sellable",
+      "ownedEntityGroups": ["CRM"],
+      "requiredCapabilities": ["foundation-platform", "business-master"],
+      "optionalCapabilities": ["sales", "loyalty", "communications"],
+      "surfaces": ["webadmin-operations"],
+      "readiness": "not-safely-separable-yet"
+    },
+    {
+      "code": "loyalty",
+      "name": "Loyalty",
+      "category": "independently-sellable",
+      "ownedEntityGroups": ["Loyalty", "Marketing"],
+      "requiredCapabilities": ["business-master", "identity-access"],
+      "optionalCapabilities": ["communications", "mobile-consumer", "mobile-business"],
+      "surfaces": ["webadmin-operations", "webapi-member", "webapi-business", "mobile-consumer", "mobile-business"],
+      "readiness": "not-safely-separable-yet"
+    },
+    {
+      "code": "inventory",
+      "name": "Inventory And Warehouse",
+      "category": "independently-sellable",
+      "ownedEntityGroups": ["Inventory"],
+      "requiredCapabilities": ["catalog", "business-master"],
+      "optionalCapabilities": ["procurement", "shipping"],
+      "surfaces": ["webadmin-operations"],
+      "readiness": "not-safely-separable-yet"
+    },
+    {
+      "code": "procurement",
+      "name": "Procurement",
+      "category": "independently-sellable",
+      "ownedEntityGroups": ["Inventory.Supplier", "Inventory.PurchaseOrder", "Inventory.GoodsReceipt"],
+      "requiredCapabilities": ["inventory", "finance"],
+      "optionalCapabilities": ["communications"],
+      "surfaces": ["webadmin-operations"],
+      "readiness": "not-safely-separable-yet"
+    },
+    {
+      "code": "sales",
+      "name": "Sales",
+      "category": "independently-sellable",
+      "ownedEntityGroups": ["Sales"],
+      "requiredCapabilities": ["crm", "billing"],
+      "optionalCapabilities": ["inventory", "shipping", "finance"],
+      "surfaces": ["webadmin-operations"],
+      "readiness": "not-safely-separable-yet"
+    },
+    {
+      "code": "billing",
+      "name": "Billing",
+      "category": "add-on",
+      "ownedEntityGroups": ["Billing.Payment", "Billing.Subscription"],
+      "requiredCapabilities": ["business-master"],
+      "optionalCapabilities": ["provider-stripe", "tax-vat", "e-invoice"],
+      "surfaces": ["webadmin-operations", "webapi-business", "webapi-member"],
+      "readiness": "not-safely-separable-yet"
+    },
+    {
+      "code": "finance",
+      "name": "Finance",
+      "category": "independently-sellable",
+      "ownedEntityGroups": ["Billing.Accounting", "Billing.SupplierInvoice", "Billing.SupplierPayment"],
+      "requiredCapabilities": ["billing"],
+      "optionalCapabilities": ["bank-treasury", "analytics"],
+      "surfaces": ["webadmin-operations"],
+      "readiness": "not-safely-separable-yet"
+    },
+    {
+      "code": "bank-treasury",
+      "name": "Bank Treasury",
+      "category": "add-on",
+      "ownedEntityGroups": ["Billing.BankTreasury"],
+      "requiredCapabilities": ["finance"],
+      "optionalCapabilities": ["integrations-sync"],
+      "surfaces": ["webadmin-operations"],
+      "readiness": "not-safely-separable-yet"
+    },
+    {
+      "code": "shipping",
+      "name": "Shipping",
+      "category": "add-on",
+      "ownedEntityGroups": ["Shipping", "Orders.Shipment"],
+      "requiredCapabilities": ["business-master"],
+      "optionalCapabilities": ["provider-dhl", "cart-checkout"],
+      "surfaces": ["webadmin-operations", "webapi-public", "worker-operations"],
+      "readiness": "not-safely-separable-yet"
+    },
+    {
+      "code": "communications",
+      "name": "Communications",
+      "category": "add-on",
+      "ownedEntityGroups": ["Integration.EmailDispatch", "Integration.ChannelDispatch", "Notifications"],
+      "requiredCapabilities": ["business-master"],
+      "optionalCapabilities": ["provider-brevo"],
+      "surfaces": ["webadmin-operations", "webapi-member", "worker-operations"],
+      "readiness": "not-safely-separable-yet"
+    },
+    {
+      "code": "provider-stripe",
+      "name": "Stripe Provider",
+      "category": "provider-add-on",
+      "ownedEntityGroups": ["ProviderCallback", "Billing.Payment"],
+      "requiredCapabilities": ["billing"],
+      "optionalCapabilities": ["cart-checkout"],
+      "surfaces": ["webapi-public", "worker-operations"],
+      "readiness": "not-safely-separable-yet"
+    },
+    {
+      "code": "provider-dhl",
+      "name": "DHL Provider",
+      "category": "provider-add-on",
+      "ownedEntityGroups": ["Integration.ShipmentProviderOperation"],
+      "requiredCapabilities": ["shipping"],
+      "optionalCapabilities": [],
+      "surfaces": ["webapi-public", "worker-operations"],
+      "readiness": "not-safely-separable-yet"
+    },
+    {
+      "code": "provider-brevo",
+      "name": "Brevo Provider",
+      "category": "provider-add-on",
+      "ownedEntityGroups": ["Integration.EmailDispatch"],
+      "requiredCapabilities": ["communications"],
+      "optionalCapabilities": [],
+      "surfaces": ["webapi-public", "worker-operations"],
+      "readiness": "not-safely-separable-yet"
+    },
+    {
+      "code": "tax-vat",
+      "name": "VAT And Tax Compliance",
+      "category": "add-on",
+      "ownedEntityGroups": ["Pricing.TaxCategory", "Billing.TaxCompliance"],
+      "requiredCapabilities": ["billing"],
+      "optionalCapabilities": ["worker-operations"],
+      "surfaces": ["webadmin-operations", "worker-operations"],
+      "readiness": "not-safely-separable-yet"
+    },
+    {
+      "code": "e-invoice",
+      "name": "E-Invoice",
+      "category": "add-on",
+      "ownedEntityGroups": ["InvoiceArchive", "DocumentRecord"],
+      "requiredCapabilities": ["billing", "finance"],
+      "optionalCapabilities": ["worker-operations"],
+      "surfaces": ["webadmin-operations", "webapi-member", "worker-operations"],
+      "readiness": "not-safely-separable-yet"
+    },
+    {
+      "code": "analytics",
+      "name": "Analytics",
+      "category": "add-on",
+      "ownedEntityGroups": ["Integration.AnalyticsExport"],
+      "requiredCapabilities": ["foundation-platform"],
+      "optionalCapabilities": ["finance"],
+      "surfaces": ["webadmin-operations"],
+      "readiness": "not-safely-separable-yet"
+    },
+    {
+      "code": "hr-time",
+      "name": "HR And Time",
+      "category": "independently-sellable",
+      "ownedEntityGroups": ["HumanResources"],
+      "requiredCapabilities": ["business-master", "identity-access"],
+      "optionalCapabilities": ["payroll"],
+      "surfaces": ["webadmin-operations"],
+      "readiness": "not-safely-separable-yet"
+    },
+    {
+      "code": "payroll",
+      "name": "Payroll",
+      "category": "add-on",
+      "ownedEntityGroups": ["HumanResources.Payroll"],
+      "requiredCapabilities": ["hr-time", "finance"],
+      "optionalCapabilities": ["bank-treasury", "member-portal"],
+      "surfaces": ["webadmin-operations", "webapi-member"],
+      "readiness": "not-safely-separable-yet"
+    },
+    {
+      "code": "ai-governance",
+      "name": "AI Governance",
+      "category": "add-on",
+      "ownedEntityGroups": ["Foundation.AI"],
+      "requiredCapabilities": ["foundation-platform"],
+      "optionalCapabilities": ["integrations-sync"],
+      "surfaces": ["webadmin-operations"],
+      "readiness": "not-safely-separable-yet"
+    },
+    {
+      "code": "integrations-sync",
+      "name": "Integration Sync",
+      "category": "add-on",
+      "ownedEntityGroups": ["Integration"],
+      "requiredCapabilities": ["foundation-platform"],
+      "optionalCapabilities": ["analytics"],
+      "surfaces": ["webadmin-operations", "worker-operations"],
+      "readiness": "not-safely-separable-yet"
+    },
+    {
+      "code": "mobile-consumer",
+      "name": "Mobile Consumer",
+      "category": "platform-surface",
+      "ownedEntityGroups": ["Darwin.Mobile.Consumer", "Darwin.Mobile.Shared"],
+      "requiredCapabilities": ["identity-access", "webapi-member"],
+      "optionalCapabilities": ["loyalty", "member-portal", "cart-checkout"],
+      "surfaces": ["mobile-consumer"],
+      "readiness": "not-safely-separable-yet"
+    },
+    {
+      "code": "mobile-business",
+      "name": "Mobile Business",
+      "category": "platform-surface",
+      "ownedEntityGroups": ["Darwin.Mobile.Business", "Darwin.Mobile.Shared"],
+      "requiredCapabilities": ["identity-access", "business-master", "webapi-business"],
+      "optionalCapabilities": ["loyalty", "communications"],
+      "surfaces": ["mobile-business"],
+      "readiness": "not-safely-separable-yet"
+    },
+    {
+      "code": "webadmin-operations",
+      "name": "WebAdmin Operations",
+      "category": "platform-surface",
+      "ownedEntityGroups": ["Darwin.WebAdmin"],
+      "requiredCapabilities": ["identity-access"],
+      "optionalCapabilities": [
+        "cms",
+        "catalog",
+        "crm",
+        "loyalty",
+        "inventory",
+        "procurement",
+        "sales",
+        "billing",
+        "finance",
+        "bank-treasury",
+        "shipping",
+        "communications",
+        "tax-vat",
+        "e-invoice",
+        "analytics",
+        "hr-time",
+        "payroll",
+        "ai-governance",
+        "integrations-sync"
+      ],
+      "surfaces": ["webadmin-operations"],
+      "readiness": "not-safely-separable-yet"
+    },
+    {
+      "code": "webapi-public",
+      "name": "Public WebApi",
+      "category": "platform-surface",
+      "ownedEntityGroups": ["Darwin.WebApi.Public"],
+      "requiredCapabilities": ["business-master"],
+      "optionalCapabilities": ["storefront", "cms", "catalog", "cart-checkout"],
+      "surfaces": ["webapi-public"],
+      "readiness": "not-safely-separable-yet"
+    },
+    {
+      "code": "webapi-member",
+      "name": "Member WebApi",
+      "category": "platform-surface",
+      "ownedEntityGroups": ["Darwin.WebApi.Member"],
+      "requiredCapabilities": ["identity-access"],
+      "optionalCapabilities": ["member-portal", "loyalty", "payroll"],
+      "surfaces": ["webapi-member"],
+      "readiness": "not-safely-separable-yet"
+    },
+    {
+      "code": "webapi-business",
+      "name": "Business WebApi",
+      "category": "platform-surface",
+      "ownedEntityGroups": ["Darwin.WebApi.Business"],
+      "requiredCapabilities": ["identity-access", "business-master"],
+      "optionalCapabilities": ["loyalty", "billing", "communications"],
+      "surfaces": ["webapi-business"],
+      "readiness": "not-safely-separable-yet"
+    },
+    {
+      "code": "worker-operations",
+      "name": "Worker Operations",
+      "category": "platform-surface",
+      "ownedEntityGroups": ["Darwin.Worker"],
+      "requiredCapabilities": ["foundation-platform"],
+      "optionalCapabilities": ["communications", "provider-stripe", "provider-dhl", "tax-vat", "e-invoice"],
+      "surfaces": ["worker-operations"],
+      "readiness": "not-safely-separable-yet"
+    }
+  ]
+}
