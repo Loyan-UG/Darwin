@@ -8,8 +8,8 @@ This backlog is ordered to make Darwin package-safe without rewriting the produc
 
 | Gap | Why it matters | Proposed next slice |
 | --- | --- | --- |
-| FeatureArea is not wired into UI/API/mobile/worker surfaces. | Tenant package settings cannot reliably hide or block disabled modules. | `Capability Enforcement Foundation Design Slice`. |
-| No shared `FeatureDisabled` response contract. | WebAdmin, WebApi, mobile, and Worker paths would fail differently. | `Module Disabled Behavior Guard Slice`. |
+| FeatureArea is not wired into UI/API/mobile/worker surfaces. | Tenant package settings cannot reliably hide or block disabled modules. | `Capability Enforcement Foundation Core Slice`. |
+| No shared `FeatureDisabled` response contract. | WebAdmin, WebApi, mobile, and Worker paths would fail differently. | `Module Disabled Behavior Guard Core Slice`. |
 | WebAdmin navigation is hardcoded by module section. | Disabled modules remain visible even when a tenant package should hide them. | `WebAdmin Capability Navigation Slice`. |
 | Direct WebAdmin URL access is permission-based, not capability-based. | A permitted operator could reach a disabled module. | `WebAdmin Capability Action Filter Slice`. |
 | WebApi lacks uniform capability attributes or filters. | Public/member/business routes can expose disabled features. | `WebApi Capability Filter Slice`. |
@@ -20,7 +20,7 @@ This backlog is ordered to make Darwin package-safe without rewriting the produc
 
 | Gap | Why it matters | Proposed next slice |
 | --- | --- | --- |
-| `BillingPlanFeatures` is not broad ERP package entitlement. | Subscription limits and ERP package enablement are different business concepts. | `Package Entitlement Model Design Slice`. |
+| `BillingPlanFeatures` is not broad ERP package entitlement. | Subscription limits and ERP package enablement are different business concepts. | `Package/Plan Foundation Core Slice` after tenant catalog. |
 | Procurement is implemented under Inventory schema. | Package ownership can be confused by schema-only analysis. | `Procurement Capability Boundary Source Guards`. |
 | Finance/payables/treasury live in Billing schema. | Billing, finance, and treasury packages need clear ownership. | `Finance Capability Boundary Source Guards`. |
 | Storefront crosses many owners. | Storefront disablement must stop checkout/order/payment/shipping side effects. | `Storefront Dependency Gate Design Slice`. |

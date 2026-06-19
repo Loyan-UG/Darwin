@@ -64,10 +64,10 @@ Package changes must not delete tenant data automatically. Data retention and de
 
 ## Implementation Sequence
 
-1. `Tenant Boundary And Package Entitlement Design Slice`: decide whether to introduce `PlatformTenant` now or bridge tenant entitlement through current `Business`.
+1. `Tenant Catalog And Domain Resolution Foundation Slice`: introduce tenant/domain catalog safely before broad entitlement or `TenantId` migration.
 2. `Package/Plan Foundation Core Slice`: add package, plan, mapping, assignment, and audit models after tenant boundary is locked.
-3. `Capability Enforcement Foundation Design Slice`: design runtime gates over `FeatureArea` and package assignments.
-4. `Module Disabled Behavior Guard Slice`: implement WebAdmin/WebApi/Worker/client disabled-mode behavior with source-contract tests.
+3. `Capability Enforcement Foundation Core Slice`: implement shared runtime gates over `FeatureArea` and package assignments using [capability-enforcement-design.md](capability-enforcement-design.md).
+4. `Module Disabled Behavior Guard Core Slice`: implement WebAdmin/WebApi/Worker/client disabled-mode behavior with source-contract tests.
 
 ## Non-Goals
 

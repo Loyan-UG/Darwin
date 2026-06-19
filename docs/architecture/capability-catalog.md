@@ -26,6 +26,7 @@ Commercial packages sit above these capabilities. A capability can be included i
 | Add-on capability | `member-portal`, `cart-checkout`, `billing`, `bank-treasury`, `shipping`, `communications`, `tax-vat`, `e-invoice`, `analytics`, `payroll`, `ai-governance`, `integrations-sync`. | Optional capability groups that depend on one or more package anchors. |
 | Provider or storage add-on | `provider-stripe`, `provider-dhl`, `provider-brevo`, storage profiles used by archive/export/document features. | Must require secure runtime configuration and readiness checks. They are not enabled by package assignment alone. |
 | Surface capability | `webadmin-operations`, `webapi-public`, `webapi-member`, `webapi-business`, `mobile-consumer`, `mobile-business`, `worker-operations`. | Delivery channels follow domain entitlement; they are not commercial packages by themselves. |
+| Future design-only capability | `manufacturing-mrp`, `quality`, `project-operations`, `service-management`, `support-case-management`, `advanced-pricing`, `strategic-sourcing`, `transportation-logistics`, `finance-controlling`, `fixed-assets`, `pos-retail`, `workforce-planning`, `master-data-import`, `provider-bank-api`. | Boundary design exists, but runtime implementation and disable-safe enforcement do not exist yet. |
 
 Most capabilities remain `not-safely-separable-yet` because current code does not consistently enforce package gates across WebAdmin, WebApi, mobile/Web navigation, workers, providers, and storage-backed features.
 
@@ -61,6 +62,20 @@ Most capabilities remain `not-safely-separable-yet` because current code does no
 | `payroll` | Payroll | add-on to HR/finance | payroll entities, member payslip WebApi, HR WebAdmin payroll pages. | Not safely separable yet. |
 | `ai-governance` | AI governance and automation review | add-on | AI entities, `AiGovernanceController`, scoped projection services. | Not safely separable yet. |
 | `integrations-sync` | External systems and sync/conflict | add-on/foundation | `ExternalSystem`, `ExternalReference`, `SyncState`, `SyncConflict`. | Foundation ready, target-specific disable safety depends on adapters. |
+| `manufacturing-mrp` | Manufacturing, BOM, routing, production, and MRP | independently-sellable future candidate | Design-only: `manufacturing-mrp-boundary-design.md`. | Not implemented and not safely separable yet. |
+| `quality` | Quality inspection and nonconformance | add-on future candidate | Design-only: `quality-nonconformance-boundary-design.md`. | Not implemented and not safely separable yet. |
+| `project-operations` | Project operations and project work management | add-on future candidate | Design-only: `project-operations-boundary-design.md`. | Not implemented and not safely separable yet. |
+| `service-management` | Service orders and field service | add-on future candidate | Design-only: `service-management-field-service-boundary-design.md`. | Not implemented and not safely separable yet. |
+| `support-case-management` | Support cases and SLA queues | add-on future candidate | Design-only: `support-case-management-boundary-design.md`. | Not implemented and not safely separable yet. |
+| `advanced-pricing` | Price agreements, contracts, and rebates | add-on future candidate | Design-only: `advanced-pricing-contracts-rebates-boundary-design.md`. | Not implemented and not safely separable yet. |
+| `strategic-sourcing` | Purchase requests, RFQ, supplier bids, and scorecards | add-on future candidate | Design-only: `strategic-sourcing-rfq-supplier-scoring-boundary-design.md`. | Not implemented and not safely separable yet. |
+| `transportation-logistics` | Transport load, route, and freight planning | add-on future candidate | Design-only: `transportation-logistics-planning-boundary-design.md`. | Not implemented and not safely separable yet. |
+| `finance-controlling` | Finance dimensions, budgets, allocations, and controlling | add-on future candidate | Design-only: `advanced-finance-controlling-boundary-design.md`. | Not implemented and not safely separable yet. |
+| `fixed-assets` | Fixed asset register and depreciation | add-on future candidate | Design-only: `fixed-assets-boundary-design.md`. | Not implemented and not safely separable yet. |
+| `pos-retail` | POS and physical retail | add-on future candidate | Design-only: `pos-retail-boundary-design.md`. | Not implemented and not safely separable yet. |
+| `workforce-planning` | Workforce demand and capacity planning | add-on future candidate | Design-only: `workforce-planning-boundary-design.md`. | Not implemented and not safely separable yet. |
+| `master-data-import` | Master-data import and coexistence workflows | add-on future candidate | Design-only: `master-data-import-coexistence-boundary-design.md`. | Not implemented and not safely separable yet. |
+| `provider-bank-api` | Bank API provider integration | provider-add-on future candidate | Design-only: `bank-api-target-adapter-boundary-design.md`. | Blocked by target selection and not safely separable yet. |
 | `mobile-consumer` | Consumer mobile app | platform-surface | `src/Darwin.Mobile.Consumer`, `Darwin.Mobile.Shared`, member routes. | Surface package metadata missing. |
 | `mobile-business` | Business mobile app | platform-surface | `src/Darwin.Mobile.Business`, business account/loyalty services. | Surface package metadata missing. |
 | `webadmin-operations` | WebAdmin operations | platform-surface | `src/Darwin.WebAdmin`, `_Layout.cshtml`, admin controllers. | Required for operators; module nav gating incomplete. |

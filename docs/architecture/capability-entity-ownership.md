@@ -33,6 +33,27 @@ This document maps capability ownership to current Domain entities and important
 | `payroll` | Payroll periods/rules/runs/payslips/payments/corrections under HumanResources. | HR employee records, finance posting, bank reconciliation. | Payroll owns salary settlement records and delegates accounting to finance posting. | `HumanResourcesConfiguration`, member payroll WebApi. |
 | `integrations-sync` | `ExternalSystem`, `ExternalReference`, `SyncState`, `SyncConflict`, webhook subscriptions/deliveries, provider callback inbox. | All sync-enabled domain records. | Integration services own sync metadata and callback inbox, not source domain facts. | `src/Darwin.Domain/Entities/Integration`. |
 
+## Future Design-Only Ownership
+
+These capability codes have boundary designs but no implemented domain entities yet. They are listed so package and enforcement work can use stable codes without implying runtime support.
+
+| Capability | Future owned entities | Read-only dependencies | Prohibited ownership |
+| --- | --- | --- | --- |
+| `manufacturing-mrp` | BOM, routing, work center, production order, MRP run/recommendation. | Catalog variants, inventory stock, procurement supply, finance costing. | No parallel stock ledger or finance posting shortcut. |
+| `quality` | Inspection plans, quality orders, results, nonconformance, corrective action. | Goods receipts, returns, lots/serials/HU, suppliers. | No refund, supplier invoice, or stock ledger ownership. |
+| `project-operations` | Projects, phases, tasks, resource assignments, project cost entries, billing milestones. | CRM, sales, HR/time, procurement, finance. | No invoice, payroll, or journal ownership. |
+| `service-management` | Service requests, service orders, tasks, parts/labor lines, service contracts/assets. | CRM, inventory, HR/time, sales/billing. | No direct stock, invoice, payment, or refund mutation. |
+| `support-case-management` | Support cases, case messages, SLA policy, resolution records. | CRM, communications, member/order/invoice context. | No operational order/payment/refund/provider success mutation. |
+| `advanced-pricing` | Price agreements, contract terms, rebate programs/accruals. | Catalog, CRM, sales, checkout snapshots, finance. | No historical order/invoice recomputation. |
+| `strategic-sourcing` | Purchase requests, RFQs, supplier bids, bid lines, scorecards. | Suppliers, purchase orders, goods receipts, quality, payables. | No automatic PO/supplier invoice/payment creation without owner handlers. |
+| `transportation-logistics` | Transport loads, routes, stops, freight estimates, exceptions. | Shipments, warehouse tasks, delivery notes, suppliers/carriers. | No carrier success, invoice, or finance posting ownership. |
+| `finance-controlling` | Finance dimensions, budget versions/lines, allocation rules/runs. | Journal entries, project/manufacturing/HR dimensions. | No posted journal rewrite. |
+| `fixed-assets` | Fixed assets, categories, depreciation books/schedules, asset transactions. | Supplier invoice lines, finance accounts, service assets. | No inventory stock ownership. |
+| `pos-retail` | POS terminals, cash sessions, POS sales/lines/tenders/returns. | Catalog, inventory, billing/payments, loyalty, tax. | No checkout, payment, refund, or stock owner bypass. |
+| `workforce-planning` | Workforce plans, demand lines, capacity snapshots, scenarios. | HR/time, project/service demand, analytics. | No payroll, time entry, or contract mutation. |
+| `master-data-import` | Import batches, mapping profiles, staged rows, validation issues, apply results. | External systems, sync conflicts, all target module handlers. | No direct table writes that bypass owning handlers. |
+| `provider-bank-api` | Future bank connection only if target design requires it. | Bank accounts, statement imports, sync state/conflict. | No direct settlement, credential storage, or payment mutation. |
+
 ## Cross-Capability Write Rules
 
 | Source capability | Target capability | Current risk | Future package-safe rule |

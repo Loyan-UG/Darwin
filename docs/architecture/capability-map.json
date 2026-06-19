@@ -293,6 +293,146 @@
       "readiness": "not-safely-separable-yet"
     },
     {
+      "code": "manufacturing-mrp",
+      "name": "Manufacturing And MRP",
+      "category": "independently-sellable",
+      "ownedEntityGroups": ["DesignOnly.Manufacturing"],
+      "requiredCapabilities": ["catalog", "inventory"],
+      "optionalCapabilities": ["procurement", "finance", "quality"],
+      "surfaces": ["webadmin-operations"],
+      "readiness": "not-safely-separable-yet"
+    },
+    {
+      "code": "quality",
+      "name": "Quality And Nonconformance",
+      "category": "add-on",
+      "ownedEntityGroups": ["DesignOnly.Quality"],
+      "requiredCapabilities": ["inventory"],
+      "optionalCapabilities": ["procurement", "manufacturing-mrp", "sales"],
+      "surfaces": ["webadmin-operations"],
+      "readiness": "not-safely-separable-yet"
+    },
+    {
+      "code": "project-operations",
+      "name": "Project Operations",
+      "category": "add-on",
+      "ownedEntityGroups": ["DesignOnly.ProjectOperations"],
+      "requiredCapabilities": ["crm", "sales"],
+      "optionalCapabilities": ["hr-time", "procurement", "finance"],
+      "surfaces": ["webadmin-operations"],
+      "readiness": "not-safely-separable-yet"
+    },
+    {
+      "code": "service-management",
+      "name": "Service Management",
+      "category": "add-on",
+      "ownedEntityGroups": ["DesignOnly.ServiceManagement"],
+      "requiredCapabilities": ["crm"],
+      "optionalCapabilities": ["inventory", "hr-time", "sales", "billing"],
+      "surfaces": ["webadmin-operations"],
+      "readiness": "not-safely-separable-yet"
+    },
+    {
+      "code": "support-case-management",
+      "name": "Support Case Management",
+      "category": "add-on",
+      "ownedEntityGroups": ["DesignOnly.Support"],
+      "requiredCapabilities": ["crm"],
+      "optionalCapabilities": ["communications", "service-management"],
+      "surfaces": ["webadmin-operations"],
+      "readiness": "not-safely-separable-yet"
+    },
+    {
+      "code": "advanced-pricing",
+      "name": "Advanced Pricing",
+      "category": "add-on",
+      "ownedEntityGroups": ["DesignOnly.AdvancedPricing"],
+      "requiredCapabilities": ["catalog"],
+      "optionalCapabilities": ["crm", "sales", "cart-checkout", "finance"],
+      "surfaces": ["webadmin-operations"],
+      "readiness": "not-safely-separable-yet"
+    },
+    {
+      "code": "strategic-sourcing",
+      "name": "Strategic Sourcing",
+      "category": "add-on",
+      "ownedEntityGroups": ["DesignOnly.StrategicSourcing"],
+      "requiredCapabilities": ["procurement"],
+      "optionalCapabilities": ["quality", "finance", "analytics"],
+      "surfaces": ["webadmin-operations"],
+      "readiness": "not-safely-separable-yet"
+    },
+    {
+      "code": "transportation-logistics",
+      "name": "Transportation Logistics",
+      "category": "add-on",
+      "ownedEntityGroups": ["DesignOnly.Transportation"],
+      "requiredCapabilities": ["shipping", "inventory"],
+      "optionalCapabilities": ["procurement", "finance", "provider-dhl"],
+      "surfaces": ["webadmin-operations"],
+      "readiness": "not-safely-separable-yet"
+    },
+    {
+      "code": "finance-controlling",
+      "name": "Finance Controlling",
+      "category": "add-on",
+      "ownedEntityGroups": ["DesignOnly.FinanceControlling"],
+      "requiredCapabilities": ["finance"],
+      "optionalCapabilities": ["project-operations", "manufacturing-mrp", "hr-time"],
+      "surfaces": ["webadmin-operations"],
+      "readiness": "not-safely-separable-yet"
+    },
+    {
+      "code": "fixed-assets",
+      "name": "Fixed Assets",
+      "category": "add-on",
+      "ownedEntityGroups": ["DesignOnly.FixedAssets"],
+      "requiredCapabilities": ["finance"],
+      "optionalCapabilities": ["procurement", "service-management"],
+      "surfaces": ["webadmin-operations"],
+      "readiness": "not-safely-separable-yet"
+    },
+    {
+      "code": "pos-retail",
+      "name": "POS Retail",
+      "category": "add-on",
+      "ownedEntityGroups": ["DesignOnly.PosRetail"],
+      "requiredCapabilities": ["catalog", "billing", "inventory"],
+      "optionalCapabilities": ["loyalty", "provider-stripe", "tax-vat"],
+      "surfaces": ["webadmin-operations"],
+      "readiness": "not-safely-separable-yet"
+    },
+    {
+      "code": "workforce-planning",
+      "name": "Workforce Planning",
+      "category": "add-on",
+      "ownedEntityGroups": ["DesignOnly.WorkforcePlanning"],
+      "requiredCapabilities": ["hr-time"],
+      "optionalCapabilities": ["project-operations", "service-management", "analytics"],
+      "surfaces": ["webadmin-operations"],
+      "readiness": "not-safely-separable-yet"
+    },
+    {
+      "code": "master-data-import",
+      "name": "Master Data Import",
+      "category": "add-on",
+      "ownedEntityGroups": ["DesignOnly.MasterDataImport"],
+      "requiredCapabilities": ["integrations-sync"],
+      "optionalCapabilities": ["catalog", "crm", "inventory", "finance"],
+      "surfaces": ["webadmin-operations", "worker-operations"],
+      "readiness": "not-safely-separable-yet"
+    },
+    {
+      "code": "provider-bank-api",
+      "name": "Bank API Provider",
+      "category": "provider-add-on",
+      "ownedEntityGroups": ["DesignOnly.BankApi"],
+      "requiredCapabilities": ["bank-treasury", "integrations-sync"],
+      "optionalCapabilities": [],
+      "surfaces": ["webadmin-operations", "worker-operations"],
+      "readiness": "not-safely-separable-yet"
+    },
+    {
       "code": "mobile-consumer",
       "name": "Mobile Consumer",
       "category": "platform-surface",

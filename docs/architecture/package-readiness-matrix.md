@@ -13,6 +13,7 @@ This matrix distinguishes product packaging from code existence. A capability ca
 | Add-on capability | Enhances a base or sellable module. | `member-portal`, `cart-checkout`, `shipping`, `communications`, `tax-vat`, `e-invoice`, `analytics`, `payroll`, `bank-treasury`, `ai-governance`. |
 | Provider add-on | External provider or target adapter. | `provider-stripe`, `provider-dhl`, `provider-brevo`. |
 | Platform surface | Delivery channel, not a domain package. | `webadmin-operations`, `webapi-public`, `webapi-member`, `webapi-business`, `mobile-consumer`, `mobile-business`, `worker-operations`. |
+| Future design-only capability | Boundary is documented, but runtime implementation and disabled-mode enforcement are not present yet. | `manufacturing-mrp`, `quality`, `project-operations`, `service-management`, `fixed-assets`, `pos-retail`, `master-data-import`. |
 | Not safely separable yet | Implemented or partially implemented, but disabled-mode enforcement is incomplete. | Most business modules until feature gates are wired. |
 
 ## Matrix
@@ -47,6 +48,22 @@ This matrix distinguishes product packaging from code existence. A capability ca
 | `payroll` | Add-on to HR and finance | HR, finance, bank-treasury for settlement. | Employee self-service. | Low. Member route exists; package metadata is incomplete. | Payroll entities and member payslip controller. |
 | `ai-governance` | Add-on | Foundation, business events. | Provider adapter, executors. | Low. Internal UI exists but package gating needs explicit checks. | AI governance entities/controller. |
 | `integrations-sync` | Add-on/foundation | ExternalSystem, ExternalReference. | Target adapters. | Medium for foundation, low for target-specific modules. | Integration entities and sync docs. |
+| `manufacturing-mrp` | Future independently sellable candidate | Inventory, procurement, finance/accounting. | Quality, workforce planning, analytics. | None. Boundary design only; no runtime implementation or gates. | `manufacturing-mrp-boundary-design.md`. |
+| `quality` | Future add-on | Inventory, procurement, manufacturing where enabled. | Supplier scorecards, service cases, analytics. | None. Boundary design only; no runtime implementation or gates. | `quality-nonconformance-boundary-design.md`. |
+| `project-operations` | Future add-on | CRM, sales, finance, HR/time where labor is used. | Service management, advanced pricing, analytics. | None. Boundary design only; no runtime implementation or gates. | `project-operations-boundary-design.md`. |
+| `service-management` | Future add-on | CRM, inventory, sales, finance. | Project operations, transportation, mobile business. | None. Boundary design only; no runtime implementation or gates. | `service-management-field-service-boundary-design.md`. |
+| `support-case-management` | Future add-on | CRM and communications. | Member portal, service management, analytics. | None. Boundary design only; no runtime implementation or gates. | `support-case-management-boundary-design.md`. |
+| `advanced-pricing` | Future add-on | Catalog, sales, billing. | CRM segments, rebates, analytics. | None. Boundary design only; no runtime implementation or gates. | `advanced-pricing-contracts-rebates-boundary-design.md`. |
+| `strategic-sourcing` | Future add-on | Procurement, supplier master, documents. | Quality scorecards, finance/payables. | None. Boundary design only; no runtime implementation or gates. | `strategic-sourcing-rfq-supplier-scoring-boundary-design.md`. |
+| `transportation-logistics` | Future add-on | Inventory, warehouse, shipping. | Provider carrier adapters, service management. | None. Boundary design only; no runtime implementation or gates. | `transportation-logistics-planning-boundary-design.md`. |
+| `finance-controlling` | Future add-on to finance | Finance posting, account dimensions, budgeting policy. | Analytics, consolidation, project operations. | None. Boundary design only; no runtime implementation or gates. | `advanced-finance-controlling-boundary-design.md`. |
+| `fixed-assets` | Future add-on to finance | Finance posting and supplier invoice/payables. | Procurement, maintenance/service management. | None. Boundary design only; no runtime implementation or gates. | `fixed-assets-boundary-design.md`. |
+| `pos-retail` | Future independently sellable candidate | Catalog, billing, tax, inventory. | Provider payments, loyalty, offline mode. | None. Boundary design only; no runtime implementation or gates. | `pos-retail-boundary-design.md`. |
+| `workforce-planning` | Future add-on to HR/time | HR/time and scheduling inputs. | Manufacturing, service management, project operations. | None. Boundary design only; no runtime implementation or gates. | `workforce-planning-boundary-design.md`. |
+| `master-data-import` | Future add-on/foundation | Owning handlers for each imported entity family. | External sync targets. | None. Boundary design only; no runtime implementation or gates. | `master-data-import-coexistence-boundary-design.md`. |
+| `analytics-bi` | Future add-on | Read models and metric definitions from enabled modules. | AI scoped context, finance reporting. | None. Boundary design only; no runtime implementation or gates. | `analytics-bi-semantic-layer-boundary-design.md`. |
+| `ai-operational-executors` | Future add-on | AI governance, approval governance, target command owners. | Provider AI adapters. | None. Boundary design only and blocked by selected command family. | `ai-operational-command-executors-boundary-design.md`. |
+| `provider-bank-api` | Future provider add-on | Bank treasury, secure credential owner, target bank selection. | Bank statement import automation. | None. Boundary design only and blocked by real target selection. | `bank-api-target-adapter-boundary-design.md`. |
 | platform surfaces | Platform surface | Their domain capabilities. | Client navigation metadata. | Low for capability gating. | WebAdmin, WebApi, mobile, Worker code. |
 
 ## Readiness Rule

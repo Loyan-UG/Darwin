@@ -59,3 +59,14 @@ The following values must not be stored in tenant/domain/package/feature/audit m
 - `BusinessFeatureOverride` owns scoped business exception only under tenant entitlement.
 - Authorization owns user permission.
 - Provider readiness owns whether configured provider operations can execute.
+
+## Approval And SoD Boundary
+
+High-risk actions need explicit approval governance before enterprise-grade enforcement is claimed. The detailed design lives in [security-sod-approval-governance-design.md](security-sod-approval-governance-design.md). Approval is separate from entitlement and permission:
+
+- entitlement decides whether the tenant can use a capability;
+- permission decides whether a user can request or perform an action;
+- approval decides whether a sensitive requested action is allowed to execute;
+- SoD decides whether the requester and approver can be the same actor.
+
+No implementation may use package enablement, role membership, or AI approval evidence as a substitute for the others.

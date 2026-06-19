@@ -134,6 +134,32 @@ The next ERP expansion step is production go-live evidence execution, starting w
 | Accounting API target adapter | Conditional. | Target-specific credential policy, payload mapping, delivery contract, error handling, and smoke strategy. | Finance export file-delivery foundation and selected real target. | File-delivery remains production-safe until a real API target is chosen. |
 | Accounting API target selection | Complete for no-target phase. | Provider-neutral selection criteria are locked for future accounting API adapters, with priority for widely used German accounting products, secure credential ownership, package mapping, external references, sync/conflict behavior, safe errors, and smoke strategy. | Finance export file-delivery foundation, `ExternalSystem`, `ExternalReference`, `SyncState`, and `SyncConflict`. | No target adapter is implemented until a real target is selected. |
 
+## Module Design Completion Program
+
+The module-design phase is complete for current planning purposes and remains documentation-only. It adds no entity, migration, route, DTO, WebAdmin mutation, mobile contract, worker registration, provider adapter, finance export format change, payment/refund change, inventory movement, journal entry, or invoice archive/download behavior.
+
+| Module design area | Status | Canonical document | Next action |
+| --- | --- | --- | --- |
+| Module design framework | Complete. | `docs/architecture/module-design-template.md`, `docs/architecture/module-design-master-index.md`, `docs/architecture/module-surface-action-matrix.md`. | Use the template for every implementation slice and keep the master index current. |
+| Capability enforcement and disabled mode | Boundary complete. | `docs/architecture/capability-enforcement-design.md`. | Implement `Capability Enforcement Foundation Core Slice`, then surface-specific guards. |
+| Security, SoD, and approval governance | Boundary complete. | `docs/architecture/security-sod-approval-governance-design.md`. | Implement approval governance foundation before high-risk module opt-ins. |
+| Manufacturing/MRP | Boundary complete. | `docs/domain-expansion/manufacturing-mrp-boundary-design.md`. | Implement manufacturing core master data before production orders, inventory posting, MRP runs, or costing. |
+| Quality and nonconformance | Boundary complete. | `docs/domain-expansion/quality-nonconformance-boundary-design.md`. | Implement inspection plan core before quality orders or inventory hold integration. |
+| Project operations | Boundary complete. | `docs/domain-expansion/project-operations-boundary-design.md`. | Implement project/task core before time, billing, WIP, or revenue recognition integration. |
+| Service management and field service | Boundary complete. | `docs/domain-expansion/service-management-field-service-boundary-design.md`. | Implement service request/order core before dispatch, parts, labor, or billing integration. |
+| Support and case management | Boundary complete. | `docs/domain-expansion/support-case-management-boundary-design.md`. | Implement support case core before member support portal or SLA workers. |
+| Advanced pricing, contracts, and rebates | Boundary complete. | `docs/domain-expansion/advanced-pricing-contracts-rebates-boundary-design.md`. | Implement price agreement core before pricing evaluation and rebate finance readiness. |
+| Strategic sourcing, RFQ, and supplier scoring | Boundary complete. | `docs/domain-expansion/strategic-sourcing-rfq-supplier-scoring-boundary-design.md`. | Implement purchase request core before RFQ and bid evaluation. |
+| Transportation and logistics planning | Boundary complete. | `docs/domain-expansion/transportation-logistics-planning-boundary-design.md`. | Implement transport load planning only after shipping/package gates are ready. |
+| Advanced finance and controlling | Boundary complete. | `docs/domain-expansion/advanced-finance-controlling-boundary-design.md`. | Implement finance dimensions core before budgets, allocations, period close, or consolidation. |
+| Fixed assets | Boundary complete. | `docs/domain-expansion/fixed-assets-boundary-design.md`. | Implement fixed asset register core before capitalization, depreciation, or disposal postings. |
+| POS and retail | Boundary complete. | `docs/domain-expansion/pos-retail-boundary-design.md`. | Implement terminal and cash-session core before POS sale/payment/stock posting. |
+| Workforce planning | Boundary complete. | `docs/domain-expansion/workforce-planning-boundary-design.md`. | Implement workforce plan core before capacity snapshots or project/service resource integration. |
+| Master data import and coexistence | Boundary complete. | `docs/domain-expansion/master-data-import-coexistence-boundary-design.md`. | Implement import batch and mapping profile foundation before apply workflows or target adapters. |
+| Analytics and BI semantic layer | Boundary complete. | `docs/domain-expansion/analytics-bi-semantic-layer-boundary-design.md`. | Implement semantic metric catalog core before dashboards or materialization workers. |
+| AI operational command executors | Boundary complete, target command required. | `docs/domain-expansion/ai-operational-command-executors-boundary-design.md`. | Select one concrete command family before direct module mutation. |
+| Bank API target adapters | Boundary complete, target required. | `docs/domain-expansion/bank-api-target-adapter-boundary-design.md`. | Select real bank or aggregation target before credentials, worker, or adapter implementation. |
+
 ## Operating Rules
 
 - Update `BACKLOG.md` before starting a major ERP slice when the backlog no longer matches the current implementation state.

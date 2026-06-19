@@ -151,6 +151,8 @@ This is the navigation hub for Darwin documentation. Keep this file short and us
 - [docs/architecture/module-design-master-index.md](architecture/module-design-master-index.md)
 - [docs/architecture/module-design-template.md](architecture/module-design-template.md)
 - [docs/architecture/module-surface-action-matrix.md](architecture/module-surface-action-matrix.md)
+- [docs/architecture/capability-enforcement-design.md](architecture/capability-enforcement-design.md)
+- [docs/architecture/security-sod-approval-governance-design.md](architecture/security-sod-approval-governance-design.md)
 - [docs/architecture/modularity-audit.md](architecture/modularity-audit.md)
 - [docs/architecture/capability-catalog.md](architecture/capability-catalog.md)
 - [docs/architecture/capability-entity-ownership.md](architecture/capability-entity-ownership.md)
@@ -170,6 +172,25 @@ This is the navigation hub for Darwin documentation. Keep this file short and us
 - [docs/architecture/capability-map.json](architecture/capability-map.json)
 - [docs/persistence-providers.md](persistence-providers.md)
 - [CONTRIBUTING.md](../CONTRIBUTING.md)
+
+### Module Boundary Designs
+
+- [docs/domain-expansion/manufacturing-mrp-boundary-design.md](domain-expansion/manufacturing-mrp-boundary-design.md)
+- [docs/domain-expansion/quality-nonconformance-boundary-design.md](domain-expansion/quality-nonconformance-boundary-design.md)
+- [docs/domain-expansion/project-operations-boundary-design.md](domain-expansion/project-operations-boundary-design.md)
+- [docs/domain-expansion/service-management-field-service-boundary-design.md](domain-expansion/service-management-field-service-boundary-design.md)
+- [docs/domain-expansion/support-case-management-boundary-design.md](domain-expansion/support-case-management-boundary-design.md)
+- [docs/domain-expansion/advanced-pricing-contracts-rebates-boundary-design.md](domain-expansion/advanced-pricing-contracts-rebates-boundary-design.md)
+- [docs/domain-expansion/strategic-sourcing-rfq-supplier-scoring-boundary-design.md](domain-expansion/strategic-sourcing-rfq-supplier-scoring-boundary-design.md)
+- [docs/domain-expansion/transportation-logistics-planning-boundary-design.md](domain-expansion/transportation-logistics-planning-boundary-design.md)
+- [docs/domain-expansion/advanced-finance-controlling-boundary-design.md](domain-expansion/advanced-finance-controlling-boundary-design.md)
+- [docs/domain-expansion/fixed-assets-boundary-design.md](domain-expansion/fixed-assets-boundary-design.md)
+- [docs/domain-expansion/pos-retail-boundary-design.md](domain-expansion/pos-retail-boundary-design.md)
+- [docs/domain-expansion/workforce-planning-boundary-design.md](domain-expansion/workforce-planning-boundary-design.md)
+- [docs/domain-expansion/master-data-import-coexistence-boundary-design.md](domain-expansion/master-data-import-coexistence-boundary-design.md)
+- [docs/domain-expansion/analytics-bi-semantic-layer-boundary-design.md](domain-expansion/analytics-bi-semantic-layer-boundary-design.md)
+- [docs/domain-expansion/ai-operational-command-executors-boundary-design.md](domain-expansion/ai-operational-command-executors-boundary-design.md)
+- [docs/domain-expansion/bank-api-target-adapter-boundary-design.md](domain-expansion/bank-api-target-adapter-boundary-design.md)
 
 ### Applications
 

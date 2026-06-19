@@ -4,6 +4,8 @@ Reviewed: 2026-06-19
 
 This document defines target disabled-mode behavior. It documents future guard behavior and does not change runtime behavior in this audit.
 
+The implementation boundary and rollout order for these guards is defined in [capability-enforcement-design.md](capability-enforcement-design.md).
+
 ## Target Semantics
 
 | Surface | Expected behavior when tenant lacks capability | Notes |

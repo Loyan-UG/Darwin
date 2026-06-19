@@ -17,6 +17,27 @@ This matrix describes example commercial packages on top of capability codes. Th
 | Enterprise Full Suite | All core business capabilities: storefront, commerce, CRM, loyalty, operations, finance, HR/time, payroll, AI governance, integration foundation. | All base capabilities. | Provider add-ons, target adapters, advanced storage. | Provider/API targets without readiness and credential owner. | All WebAdmin and selected public/member/business/mobile surfaces. | Workers and providers enabled only where configured and entitled. | Full historical preservation; package changes are auditable. |
 | On-Premise Enterprise | Enterprise Full Suite with self-hosted deployment assumptions. | All base capabilities and deployment-ready storage/provider choices. | Local MinIO/S3-compatible storage, file-delivery exports, customer-owned provider profiles. | Cloud provider add-on without customer-approved credential policy. | Same as Enterprise Full Suite. | Self-hosted object storage and provider readiness evidence. | Same preservation rules; deployment evidence is required before enablement claims. |
 
+## Future Module Positioning
+
+These capability codes now have boundary designs but no runtime implementation claim.
+
+| Future capability | Package positioning | Required package context | Business reason | Runtime claim |
+| --- | --- | --- | --- | --- |
+| `manufacturing-mrp` | Operations/Inventory or Enterprise add-on. | Catalog and Inventory. | Product-producing customers need BOM, routing, production orders, and MRP. | Design-only; no implementation or disable-safe claim. |
+| `quality` | Operations/Inventory, Manufacturing, or regulated-goods add-on. | Inventory. | Regulated, serialized, expiring, or supplier-sensitive goods need inspection and nonconformance. | Design-only. |
+| `project-operations` | CRM/Sales/Service or Enterprise add-on. | CRM and Sales. | Project-based businesses need tasks, resource planning, project cost, and billing readiness. | Design-only. |
+| `service-management` | CRM/Sales/Operations add-on. | CRM. | Repair, maintenance, installation, and field-service businesses need service orders. | Design-only. |
+| `support-case-management` | CRM add-on. | CRM. | Support-heavy customers need cases, queues, SLA, and resolution evidence. | Design-only. |
+| `advanced-pricing` | Commerce/Sales/Enterprise add-on. | Catalog. | Contract prices, volume terms, and rebates need formal ownership. | Design-only. |
+| `strategic-sourcing` | Procurement add-on. | Procurement. | Procurement-heavy customers need purchase requests, RFQ, bid comparison, and supplier scoring. | Design-only. |
+| `transportation-logistics` | Operations/Shipping add-on. | Shipping and Inventory. | Route/load/freight planning goes beyond carrier label execution. | Design-only. |
+| `finance-controlling` | Finance/Accounting or Enterprise add-on. | Finance. | Enterprise finance needs dimensions, budgets, allocations, and management accounting. | Design-only. |
+| `fixed-assets` | Finance/Accounting add-on. | Finance. | Capital assets need register, depreciation, disposal, and audit evidence. | Design-only. |
+| `pos-retail` | Commerce/Retail add-on. | Catalog, Billing, Inventory. | Physical retail needs counter sale, cash session, receipt, returns, and device policy. | Design-only. |
+| `workforce-planning` | HR/Time add-on. | HR/time. | Managers need workforce demand/capacity planning beyond schedules and timesheets. | Design-only. |
+| `master-data-import` | Enterprise/onboarding add-on. | Integrations/sync and target module. | Migrations and coexistence need validated import batches and conflict review. | Design-only. |
+| `provider-bank-api` | Provider add-on. | Bank/treasury and integrations/sync. | Automated statement import requires a selected bank or aggregation target. | Blocked by target selection. |
+
 ## Safe Commercial Claims
 
 | Claim type | Allowed now | Reason |
